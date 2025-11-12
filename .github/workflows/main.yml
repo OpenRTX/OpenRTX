@@ -40,17 +40,17 @@ jobs:
             ls build_cm7/ &&
             ls build_arm/ &&
             ls build_linux/ &&
-            mv build_cm7/openrtx_cs7000p_wrap openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm7/openrtx_cs7000p_dfu openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu &&
-            mv build_arm/openrtx_cs7000_bin openrtx_cs7000_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_cs7000_dfu openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu &&
-            mv build_arm/openrtx_dm1701_wrap openrtx_dm1701_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_dm1801_bin.sgl openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl &&
-            mv build_arm/openrtx_gd77_bin.sgl openrtx_gd77_${{ env.BRANCH_NAME }}.sgl &&
-            mv build_linux/openrtx_linux openrtx_linux_${{ env.BRANCH_NAME }} &&
-            mv build_arm/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
+            mv build_cm7/openrtx_cs7000p_wrap 'openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin' &&
+            mv build_cm7/openrtx_cs7000p_dfu 'openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu' &&
+            mv build_arm/openrtx_cs7000_bin 'openrtx_cs7000_${{ env.BRANCH_NAME }}.bin' &&
+            mv build_arm/openrtx_cs7000_dfu 'openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu' &&
+            mv build_arm/openrtx_dm1701_wrap 'openrtx_dm1701_${{ env.BRANCH_NAME }}.bin' &&
+            mv build_arm/openrtx_dm1801_bin.sgl 'openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl' &&
+            mv build_arm/openrtx_gd77_bin.sgl 'openrtx_gd77_${{ env.BRANCH_NAME }}.sgl' &&
+            mv build_linux/openrtx_linux 'openrtx_linux_${{ env.BRANCH_NAME }}' &&
+            mv build_arm/openrtx_md3x0_wrap 'openrtx_md3x0_${{ env.BRANCH_NAME }}.bin' &&
+            mv build_arm/openrtx_mduv3x0_wrap 'openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin' &&
+            mv build_arm/openrtx_mod17_bin 'openrtx_mod17_${{ env.BRANCH_NAME }}.bin'
       - uses: actions/upload-artifact@v4
         with:
           name: release-bins
