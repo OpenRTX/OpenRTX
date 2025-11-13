@@ -61,6 +61,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/protocols/M17/M17DSP.cpp',
                'openrtx/src/protocols/M17/M17Golay.cpp',
+               'openrtx/src/protocols/M17/MetaText.cpp',
                'openrtx/src/protocols/M17/Callsign.cpp',
                'openrtx/src/protocols/M17/M17Modulator.cpp',
                'openrtx/src/protocols/M17/M17Demodulator.cpp',
@@ -1100,6 +1101,10 @@ m17_callsign_test = executable('m17_callsign_test',
                       sources : unit_test_src + ['tests/unit/M17_callsign.cpp'],
                       kwargs  : unit_test_opts)
 
+m17_metatext_test = executable('m17_metatext_test',
+                      sources : unit_test_src + ['tests/unit/M17_metatext.cpp'],
+                      kwargs  : unit_test_opts)
+                 
 m17_demodulator_test = executable('m17_demodulator_test',
                             sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
                             kwargs: unit_test_opts)
@@ -1129,6 +1134,7 @@ test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
 test('M17 RRC Test',          m17_rrc_test)
 test('M17 Callsign Unit Test',          m17_callsign_test)
+test('M17 Meta Text Unit Test',         m17_metatext_test)
 test('Codeplug Test',         cps_test)
 ## test('Linux InputStream Test', linux_inputStream_test)
 test('minmea conversion Test', minmea_conversion_test)
