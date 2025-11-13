@@ -24,6 +24,15 @@ extern "C" {
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /**
+ * Perform division of two integer numbers, with rounding up of the result.
+ *
+ * @param n: dividend
+ * @param d: divisor
+ * @return ceil(n/d)
+ */
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+
+/**
  * This function allows to obtain the value of a given calibration parameter for
  * frequencies outside the calibration points. It works by searching the two
  * calibration points containing the target frequency and then by linearly

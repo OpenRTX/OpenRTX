@@ -52,6 +52,8 @@ scripts           # Build and utility scripts
 subprojects       # Git submodules of other projects that are needed to either build, develop, or test OpenRTX
 ```
 
+Within protocol code, care should be given to structure it according to the OSI Model's layers 1-3. For example, single frame features like LSF, packet, and stream are all layer 2. Audio streams or blocks of packets are layer 3. Each module of protocol code should fit within a clear OSI layer and appropriately serve or be served by the adjacent layers.
+
 More details about the individual components can be found on the [developer pages](https://openrtx.org/#/software).
 
 ## Testing
