@@ -59,6 +59,12 @@ target_compile_definitions(app
     GIT_VERSION="${GIT_VER_ID}"
 )
 
+# Add RTTI support
+target_compile_options(app PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>:-frtti>
+    $<$<COMPILE_LANGUAGE:CXX>:-fexceptions>
+)
+
 target_include_directories(app
   PRIVATE
 
@@ -110,6 +116,7 @@ target_sources(app
     openrtx/src/protocols/M17/M17FrameEncoder.cpp
     openrtx/src/protocols/M17/M17FrameDecoder.cpp
     openrtx/src/protocols/M17/M17LinkSetupFrame.cpp
+    openrtx/src/protocols/M17/Metadata.cpp
 
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c

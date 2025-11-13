@@ -35,7 +35,6 @@ cpp_args    = [
                '-Werror=return-type',
                '-g',
                '-fno-exceptions',
-               '-fno-rtti',
                '-D__NO_EXCEPTIONS',
                '-std=c++14',
                '-mcpu=cortex-m4',           # Cortex-M4 CPU
