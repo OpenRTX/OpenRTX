@@ -23,6 +23,7 @@
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
 #include "protocols/M17/M17Callsign.hpp"
+#include "protocols/M17/Metadata.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
 #include <errno.h>
@@ -205,33 +206,24 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
             {
                 dataValid = true;
 
+                uint8_t metadataStorage[M17::MetadataFactory::getMaxStorageSize()];
+                M17::Metadata* metadata = M17::MetadataFactory::create(lsf, metadataStorage);
+                if (auto* extCall = dynamic_cast<M17::ExtendedCallsignMetadata*>(metadata)) {
+                    extendedCall = true;
+                    strncpy(status->M17_src, extCall->getCall1().c_str(), 10);
+                    strncpy(status->M17_refl, extCall->getCall2().c_str(), 10);
+                } else if(auto* textBlock = dynamic_cast<M17::TextBlockMetadata*>(metadata)) {
+                    metaTextHandler.addBlock(textBlock->getMeta());
+                    const char* metatext = metaTextHandler.get();
+                    if(metatext != nullptr && strlen(metatext) > 0) {
+                        strncpy(status->M17_meta_text, metatext, 53);
+                    }
+                }
+                metadata->~Metadata();
+
                 // Retrieve stream source and destination data
                 std::string dst = lsf.getDestination();
                 std::string src = lsf.getSource();
-
-                // Retrieve extended callsign data
-                streamType_t streamType = lsf.getType();
-
-                if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
-                   (streamType.fields.encSubType == M17_META_EXTD_CALLSIGN))
-                {
-                    extendedCall = true;
-
-                    meta_t& meta = lsf.metadata();
-                    std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
-                    std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
-
-                    //
-                    // The source callsign only contains the last link when
-                    // receiving extended callsign data: in order to always store
-                    // the true source of a transmission, we need to store the first
-                    // extended callsign in M17_src.
-                    //
-                    strncpy(status->M17_src,  exCall1.c_str(), 10);
-                    strncpy(status->M17_refl, exCall2.c_str(), 10);
-
-                    extendedCall = true;
-                }
 
                 // Set source and destination fields.
                 // If we have received an extended callsign the src will be the RF link address
@@ -245,7 +237,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
                 // Check CAN on RX, if enabled.
                 // If check is disabled, force match to true.
-                bool canMatch =  (streamType.fields.CAN == status->can)
+                bool canMatch =  (lsf.getType().fields.CAN == status->can)
                               || (status->canRxEn == false);
 
                 // Check if the destination callsign of the incoming transmission
@@ -290,9 +282,11 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid     = false;
         extendedCall  = false;
+        status->M17_meta_text[0] = '\0';
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
 
+        metaTextHandler.reset();
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
