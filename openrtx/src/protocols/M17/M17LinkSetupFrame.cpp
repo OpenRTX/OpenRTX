@@ -41,24 +41,24 @@ void M17LinkSetupFrame::clear()
     data.dst.fill(0xFF);
 }
 
-void M17LinkSetupFrame::setSource(const std::string& callsign)
+void M17LinkSetupFrame::setSource(const Callsign& callsign)
 {
-    encode_callsign(callsign, data.src);
+    data.src = callsign;
 }
 
-std::string M17LinkSetupFrame::getSource()
+Callsign M17LinkSetupFrame::getSource()
 {
-    return decode_callsign(data.src);
+    return Callsign(data.src);
 }
 
-void M17LinkSetupFrame::setDestination(const std::string& callsign)
+void M17LinkSetupFrame::setDestination(const Callsign& callsign)
 {
-    encode_callsign(callsign, data.dst);
+    data.dst = callsign;
 }
 
-std::string M17LinkSetupFrame::getDestination()
+Callsign M17LinkSetupFrame::getDestination()
 {
-    return decode_callsign(data.dst);
+    return Callsign(data.dst);
 }
 
 streamType_t M17LinkSetupFrame::getType()

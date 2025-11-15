@@ -206,8 +206,9 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 dataValid = true;
 
                 // Retrieve stream source and destination data
-                std::string dst = lsf.getDestination();
-                std::string src = lsf.getSource();
+                Callsign dst = lsf.getDestination();
+                Callsign src = lsf.getSource();
+                strncpy(status->M17_dst, dst, 10);
 
                 // Retrieve extended callsign data
                 streamType_t streamType = lsf.getType();
@@ -218,8 +219,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     extendedCall = true;
 
                     meta_t& meta = lsf.metadata();
-                    std::string exCall1 = decode_callsign(meta.extended_call_sign.call1);
-                    std::string exCall2 = decode_callsign(meta.extended_call_sign.call2);
+                    Callsign exCall1(meta.extended_call_sign.call1);
+                    Callsign exCall2(meta.extended_call_sign.call2);
 
                     //
                     // The source callsign only contains the last link when
@@ -227,21 +228,16 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     // the true source of a transmission, we need to store the first
                     // extended callsign in M17_src.
                     //
-                    strncpy(status->M17_src,  exCall1.c_str(), 10);
-                    strncpy(status->M17_refl, exCall2.c_str(), 10);
-
-                    extendedCall = true;
+                    strncpy(status->M17_src,  exCall1, 10);
+                    strncpy(status->M17_refl, exCall2, 10);
+                    strncpy(status->M17_link, src, 10);
+                } else {
+                    strncpy(status->M17_src, src, 10);
                 }
 
                 // Set source and destination fields.
                 // If we have received an extended callsign the src will be the RF link address
                 // The M17_src will already be stored from the extended callsign
-                strncpy(status->M17_dst, dst.c_str(), 10);
-
-                if(extendedCall)
-                    strncpy(status->M17_link, src.c_str(), 10);
-                else
-                    strncpy(status->M17_src, src.c_str(), 10);
 
                 // Check CAN on RX, if enabled.
                 // If check is disabled, force match to true.
@@ -250,7 +246,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
                 // Check if the destination callsign of the incoming transmission
                 // matches with ours
-                bool callMatch = compareCallsigns(std::string(status->source_address), dst);
+                bool callMatch = (Callsign(status->source_address) == dst)
+                               || dst.isSpecial();
 
                 // Open audio path only if CAN and callsign match
                 uint8_t pthSts = audioPath_getStatus(rxAudioPath);
@@ -306,13 +303,14 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     {
         startTx = false;
 
-        std::string src(status->source_address);
-        std::string dst(status->destination_address);
         M17LinkSetupFrame lsf;
 
         lsf.clear();
-        lsf.setSource(src);
-        if(!dst.empty()) lsf.setDestination(dst);
+        lsf.setSource(status->source_address);
+
+        Callsign dst(status->destination_address);
+        if(!dst.isEmpty())
+            lsf.setDestination(dst);
 
         streamType_t type;
         type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
