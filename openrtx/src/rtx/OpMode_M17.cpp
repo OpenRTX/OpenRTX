@@ -247,7 +247,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 // Check if the destination callsign of the incoming transmission
                 // matches with ours
                 bool callMatch = (Callsign(status->source_address) == dst)
-                               | dst.isSpecial();
+                               || dst.isSpecial();
 
                 // Open audio path only if CAN and callsign match
                 uint8_t pthSts = audioPath_getStatus(rxAudioPath);
