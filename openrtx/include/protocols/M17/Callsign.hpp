@@ -115,7 +115,8 @@ public:
     bool operator==(const Callsign &other) const;
 
 private:
-    static constexpr size_t MAX_CALLSIGN_LEN = 9;
+    static constexpr size_t MAX_CALLSIGN_CHARS = 9;
+    static constexpr size_t MAX_CALLSIGN_LEN = MAX_CALLSIGN_CHARS + 1;
     char call[MAX_CALLSIGN_LEN];
 };
 

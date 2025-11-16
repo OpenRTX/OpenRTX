@@ -27,22 +27,18 @@ static const char BROADCAST_CALL[] = "ALL";
 static const char INVALID_CALL[] = "INVALID";
 static const char charMap[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/.";
 
-Callsign::Callsign()
+Callsign::Callsign() : Callsign(INVALID_CALL)
 {
-    std::memset(call, 0, sizeof(call));
-    std::strncpy(call, INVALID_CALL, sizeof(call));
 }
 
-Callsign::Callsign(const std::string callsign)
+Callsign::Callsign(const std::string callsign) : Callsign(callsign.c_str())
 {
-    std::memset(call, 0, sizeof(call));
-    std::strncpy(call, callsign.c_str(), sizeof(call));
 }
 
 Callsign::Callsign(const char *callsign)
 {
     std::memset(call, 0, sizeof(call));
-    std::strncpy(call, callsign, sizeof(call));
+    std::strncpy(call, callsign, MAX_CALLSIGN_CHARS);
 }
 
 Callsign::Callsign(const call_t &encodedCall)
@@ -76,12 +72,9 @@ Callsign::Callsign(const call_t &encodedCall)
     std::copy(encodedCall.rbegin(), encodedCall.rend(), p);
 
     size_t pos = 0;
-    for (; encoded != 0; encoded /= 40) {
-        if (pos >= sizeof(call))
-            break;
-
-        call[pos] = charMap[encoded % 40];
-        pos += 1;
+    while (encoded != 0 && pos < MAX_CALLSIGN_CHARS) {
+        call[pos++] = charMap[encoded % 40];
+        encoded /= 40;
     }
 }
 
