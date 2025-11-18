@@ -1,0 +1,2 @@
+../../openrtx/include/core/string_utils.h:48:static inline int safe_strcat(char *dest, const char *src, size_t dest_size)
+../../openrtx/include/core/string_utils.h:70:#define SAFE_STRCAT(dest, src) safe_strcat(dest, src, sizeof(dest))
