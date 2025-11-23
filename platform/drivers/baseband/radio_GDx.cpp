@@ -223,6 +223,15 @@ void radio_enableTx()
         at1846s.enableTone(17500);
     }
 
+    if (config->dtmfPressed != 0)
+    {
+        DtmfKeyEntry entry = lookupDtmfFreq(config->dtmfPressed);
+        const uint16_t scaleFactor = 10; // Convert Hz to AT1846S frequency units (0.1 Hz)
+        if (entry.symbol != '\0') {
+            at1846s.enableDtmfTone(entry.freqLow * scaleFactor, entry.freqHigh * scaleFactor);
+        }
+    }
+
     radioStatus = TX;
 }
 
