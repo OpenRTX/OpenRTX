@@ -60,7 +60,14 @@ def svgToBytes(filename, height):
 
 
 first_ascii = 32  # Start at ascii d32 which is " " per https://www.rapidtables.com/code/text/ascii-table.html
-dont_edit_banner = "// This is a generated file, please do not edit it! Use generate_symbols.py\n"
+dont_edit_banner  = "/*\n"
+dont_edit_banner += " * SPDX-License-Identifier: GPL-3.0-or-later\n"
+dont_edit_banner += " * Copyright (C) 2020-2025 OpenRTX Contributors\n"
+dont_edit_banner += " *\n"
+dont_edit_banner += " * This file is part of OpenRTX.\n"
+dont_edit_banner += " */\n"
+dont_edit_banner += "\n"
+dont_edit_banner += "// This is a generated file, please do not edit it! Use generate_symbols.py\n"
 
 class FontDefinition:
     scalar = 1.6  # this number is used to roughly convert from pt to px
