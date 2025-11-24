@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 version = 1
 
 # Miosix sources are GPL v2.0
@@ -27,7 +30,6 @@ SPDX-License-Identifier = "Ubuntu-font-1.0"
 SPDX-FileCopyrightText = "2012 Adafruit Industries"
 precedence = "override"
 
-
 # This section is for OpenRTX sources that cannot have comments in them, like `json` files
 [[annotations]]
 path = [
@@ -50,11 +52,9 @@ path = [
     "subprojects/codec2.wrap",
     "subprojects/XPowersLib.wrap",
     "scripts/uf2families.json",
-    "scripts/uf2conv.py",
     "scripts/plot_m17_demod_csv2.py",
     "scripts/plot_m17_demod_csv.py",
     "scripts/add_dc_offset.cpp",
-    "scripts/bin2sgl.py",
     "scripts/get_demod_log.c",
     "scripts/generate_symbols.py",
 ]

@@ -18,3 +18,5 @@ jobs:
           sudo apt-get install -y clang-format
       - name: Check if there are format errors
         run: ./scripts/clang_format.sh --check
+      - name: REUSE Compliance Check (confirm copyright and licenses)
+        uses: fsfe/reuse-action@v6
