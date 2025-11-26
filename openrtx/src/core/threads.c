@@ -104,8 +104,8 @@ void *ui_threadFunc(void *arg)
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
             strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
 
+            
             pthread_mutex_unlock(&rtx_mutex);
-
             rtx_configure(&rtx_cfg);
             sync_rtx = false;
         }

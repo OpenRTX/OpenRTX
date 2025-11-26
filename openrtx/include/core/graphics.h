@@ -164,6 +164,13 @@ void gfx_fillScreen(color_t color);
 void gfx_setPixel(point_t pos, color_t color);
 
 /**
+ * Get the color of a single pixel.
+ * @param pos: x,y coordinates of the pixel.
+ * @return: pixel color, in rgb565_t format.
+ */
+color_t gfx_getPixel(point_t pos);
+
+/**
  * Draw a line from start to end coordinates, ends included.
  * @param start: line start point, in pixel coordinates.
  * @param end: line end point, in pixel coordinates.

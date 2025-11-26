@@ -23,6 +23,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define SP_MULTIPLIER_MAX_STEPS 5 // Number of steps for spectrum multiplier
+
 /**
  * This function initialises the User Interface, starting the
  * Finite State Machine describing the user interaction.
