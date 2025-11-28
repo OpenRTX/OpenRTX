@@ -1,0 +1,40 @@
+../../openrtx/src/core/openrtx.c:53:    // Load codeplug from nonvolatile memory, create a new one in case of failure.
+../../openrtx/src/core/state.c:48:     * Try loading settings from nonvolatile memory and default to sane values
+../../openrtx/src/core/state.c:58:     * Try loading VFO configuration from nonvolatile memory and default to sane
+../../openrtx/src/core/crypto_utils.c:163:        volatile uint8_t *vptr = (volatile uint8_t *)ptr;
+../../openrtx/include/core/memory_utils.h:159:        // Use volatile to prevent compiler optimization
+../../openrtx/include/core/memory_utils.h:160:        volatile unsigned char *vptr = (volatile unsigned char *)ptr;
+../../openrtx/include/core/thread_utils.h:139:    volatile int32_t value;
+../../openrtx/include/core/nvmem_access.h:33: * Perform a byte-aligned read operation on a nonvolatile memory.
+../../openrtx/include/core/nvmem_access.h:46: * Perform a write operation on a nonvolatile memory.
+../../openrtx/include/core/nvmem_access.h:59: * Perform an erase operation on a nonvolatile memory. Acceptable offset and
+../../openrtx/include/interfaces/nvmem.h:34: * Enumeration field for nonvolatile memory device type.
+../../openrtx/include/interfaces/nvmem.h:38:    NVM_FLASH  = 0,   ///< FLASH type non volatile memory
+../../openrtx/include/interfaces/nvmem.h:39:    NVM_EEPROM,       ///< EEPROM type non volatile memory
+../../openrtx/include/interfaces/nvmem.h:40:    NVM_FILE,         ///< File type non volatile memory
+../../openrtx/include/interfaces/nvmem.h:41:    NVM_EEEPROM       ///< Emulated EEPROM type non volatile memory
+../../openrtx/include/interfaces/nvmem.h:45: * Enumeration field for nonvolatile memory properties.
+../../openrtx/include/interfaces/nvmem.h:55: * Nonvolatile memory device information block. The content of this data structure
+../../openrtx/include/interfaces/nvmem.h:69: * Nonvolatile memory device driver.
+../../openrtx/include/interfaces/nvmem.h:74:     * Read data from nonvolatile memory device.
+../../openrtx/include/interfaces/nvmem.h:85:     * Write data to nonvolatile memory device. On flash memory devices the area
+../../openrtx/include/interfaces/nvmem.h:98:     * Erase part or all of the nonvolatile memory.
+../../openrtx/include/interfaces/nvmem.h:129: * Data structure representing a partition of a nonvolatile memory. The offset
+../../openrtx/include/interfaces/nvmem.h:139: * Nonvolatile memory descriptor. This data structure contains all the data
+../../openrtx/include/interfaces/nvmem.h:140: * relative to an area of nonvolatile memory with a fixed size, managed by a
+../../openrtx/include/interfaces/nvmem.h:163: * Obtain the descriptor of a given nonvolatile memory.
+../../openrtx/include/interfaces/nvmem.h:165: * @param index: index of the nonvolatile memory.
+../../openrtx/include/interfaces/nvmem.h:172: * Load calibration data from nonvolatile memory.
+../../openrtx/include/interfaces/nvmem.h:179: * Load all or some hardware information parameters from nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:57: * Read one contact from table stored in nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:66: * Read one channel entry from table stored in nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:93: * Overwrite one contact to the codeplug stored in nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:102: * Overwrite one channel to the codeplug stored in nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:111: * Overwrite one bank header to the codeplug stored in nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:130: * Insert one contact to the codeplug stored in nonvolatile memory,
+../../openrtx/include/interfaces/cps_io.h:140: * Insert one channel to the codeplug stored in nonvolatile memory,
+../../openrtx/include/interfaces/cps_io.h:150: * Insert one bank header to the codeplug stored in nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:169: * Delete one contact to the codeplug stored in nonvolatile memory,
+../../openrtx/include/interfaces/cps_io.h:178: * Delete one channel to the codeplug stored in nonvolatile memory,
+../../openrtx/include/interfaces/cps_io.h:187: * Delete one bank header to the codeplug stored in nonvolatile memory.
+../../openrtx/include/interfaces/cps_io.h:195: * Delete one bank entry to the codeplug stored in nonvolatile memory.

@@ -1,0 +1,23 @@
+../../openrtx/src/core/voicePrompts.c:378:        // If the hash key is down, set vpLevel to high, if beep or less.
+../../openrtx/src/core/crypto_utils.c:181: * @brief M17 encryption key validation
+../../openrtx/src/core/crypto_utils.c:207: * @brief M17 encryption key generation
+../../openrtx/src/ui/default/ui.c:1481:                // use of the hash key in FM mode for the 1750Hz tone.
+../../openrtx/include/core/crypto_utils.h:113: * @brief M17 encryption key validation
+../../openrtx/include/core/crypto_utils.h:120: * @brief M17 encryption key generation
+../../openrtx/include/core/crypto_utils.h:127: * @brief M17 encryption
+../../openrtx/include/core/crypto_utils.h:131: * @param ciphertext Ciphertext buffer
+../../openrtx/include/core/crypto_utils.h:132: * @param ciphertext_size Size of ciphertext buffer
+../../openrtx/include/core/crypto_utils.h:135:int m17_encrypt(const secure_key_t *key, const uint8_t *plaintext, 
+../../openrtx/include/core/crypto_utils.h:136:                size_t plaintext_size, uint8_t *ciphertext, 
+../../openrtx/include/core/crypto_utils.h:137:                size_t ciphertext_size);
+../../openrtx/include/core/crypto_utils.h:140: * @brief M17 decryption
+../../openrtx/include/core/crypto_utils.h:142: * @param ciphertext Ciphertext data
+../../openrtx/include/core/crypto_utils.h:143: * @param ciphertext_size Size of ciphertext
+../../openrtx/include/core/crypto_utils.h:148:int m17_decrypt(const secure_key_t *key, const uint8_t *ciphertext, 
+../../openrtx/include/core/crypto_utils.h:149:                size_t ciphertext_size, uint8_t *plaintext, 
+../../openrtx/include/core/crypto_utils.h:153: * @brief Cryptographic hash function (SHA-256)
+../../openrtx/include/core/crypto_utils.h:154: * @param data Data to hash
+../../openrtx/include/core/crypto_utils.h:156: * @param hash Hash output buffer (32 bytes)
+../../openrtx/include/core/crypto_utils.h:159:int crypto_hash_sha256(const uint8_t *data, size_t data_size, uint8_t *hash);
+../../openrtx/include/core/cps.h:177: * M17 channel encryption.
+../../openrtx/include/core/cps.h:181:    PLAIN     = 0,              //< No encryption, plaintext data is sent
