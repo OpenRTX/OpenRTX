@@ -37,25 +37,25 @@
         /* Reserve 2048kB for ota_0 partition */
         slot0_partition: partition@10000 {
             label = "ota_0";
-            reg = <0x00010000 0x00210000>;
+            reg = <0x00010000 0x00410000>;
         };
 
         /* Reserve 2048kB for ota_1 partition */
-        slot1_partition: partition@210000 {
+        slot1_partition: partition@410000 {
             label = "ota_1";
-            reg = <0x00210000 0x00410000>;
+            reg = <0x00410000 0x00810000>;
         };
 
         /* Reserve 256kB for uf2 partition */
-        uf2_partition: partition@410000 {
+        uf2_partition: partition@810000 {
             label = "uf2";
-            reg = <0x00410000 0x00450000>;
+            reg = <0x00810000 0x00850000>;
         };
 
         /* Reserve 11968kB for storage partition (ffat) */
-        storage_partition: partition@450000 {
+        storage_partition: partition@850000 {
             label = "ffat";
-            reg = <0x00450000 0x00bb0000>;
+            reg = <0x00850000 0x010a0000>;
         };
     };
 };
