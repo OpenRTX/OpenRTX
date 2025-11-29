@@ -48,22 +48,22 @@ static uint32_t lastValueUpdate=0;
 
 const char *display_timer_values[] =
 {
-    "OFF",
-    "5 s",
-    "10 s",
-    "15 s",
-    "20 s",
-    "25 s",
-    "30 s",
-    "1 min",
-    "2 min",
-    "3 min",
-    "4 min",
-    "5 min",
-    "15 min",
-    "30 min",
-    "45 min",
-    "1 hour"
+    gettext("OFF"),
+    gettext("5 s"),
+    gettext("10 s"),
+    gettext("15 s"),
+    gettext("20 s"),
+    gettext("25 s"),
+    gettext("30 s"),
+    gettext("1 min"),
+    gettext("2 min"),
+    gettext("3 min"),
+    gettext("4 min"),
+    gettext("5 min"),
+    gettext("15 min"),
+    gettext("30 min"),
+    gettext("45 min"),
+    gettext("1 hour")
 };
 void _ui_reset_menu_anouncement_tracking()
  {
@@ -337,8 +337,8 @@ int _ui_getSettingsGPSValueName(char *buf, uint8_t max_len, uint8_t index)
                 tz_hr *= (-1);
                 tz_mn *= (-1);
             }
-
-            sniprintf(buf, max_len, "%c%d.%d", sign, tz_hr, tz_mn);
+            // i18n: Print timezone offset in format +/-HH.MM
+            sniprintf(buf, max_len, gettext("%c%d.%d"), sign, tz_hr, tz_mn);
         }
             break;
 #endif
@@ -397,22 +397,26 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
 
     if(value >= 1000000)
     {
-        prefix = 'M';
+        // i18n: SI prefix for mega
+        prefix = gettext("M")[0];
         div    = 1000000;
     }
     else if(value >= 1000)
     {
-        prefix = 'k';
+        // i18n: SI prefix for kilo
+        prefix = gettext("k")[0];
         div    = 1000;
     }
 
     // NOTE: casts are there only to squelch -Wformat warnings on the
     // sniprintf.
     char str[16];
-    sniprintf(str, sizeof(str), "%u.%u", (unsigned int)(value / div),
+    // i18n: frequency value
+    sniprintf(str, sizeof(str), gettext("%u.%u"), (unsigned int)(value / div),
                                         (unsigned int)(value % div));
     stripTrailingZeroes(str);
-    sniprintf(buf, max_len, "%s%cHz", str, prefix);
+    // i18n: frequency value with unit prefix
+    sniprintf(buf, max_len, gettext("%s%cHz"), str, prefix);
 
     return 0;
 }
@@ -467,7 +471,8 @@ int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
     switch (index) {
         case CTCSS_Tone: {
             uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
-            sniprintf(buf, max_len, "%d.%d", (tone / 10), (tone % 10));
+            // i18n: decimal number
+            sniprintf(buf, max_len, gettext("%d.%d"), (tone / 10), (tone % 10));
             break;
         }
 
@@ -551,17 +556,20 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             // to mantissa for rounding to nearest integer
             uint16_t volt  = (last_state.v_bat + 50) / 1000;
             uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
-            sniprintf(buf, max_len, "%d.%dV", volt, mvolt);
+            // i18n: decimal number with volts
+            sniprintf(buf, max_len, gettext("%d.%dV"), volt, mvolt);
         }
             break;
         case 2: // Battery charge
-            sniprintf(buf, max_len, "%d%%", last_state.charge);
+            // i18n: battery charge percentage
+            sniprintf(buf, max_len, gettext("%d%%"), last_state.charge);
             break;
         case 3: // RSSI
-            sniprintf(buf, max_len, "%"PRIi32"dBm", last_state.rssi);
+
+            sniprintf(buf, max_len, gettext("%"PRIi32"dBm"), last_state.rssi);
             break;
         case 4: // Heap usage
-            sniprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
+            sniprintf(buf, max_len, gettext("%dB"), getHeapSize() - getCurrentFreeHeap());
             break;
         case 5: // Band
             sniprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? currentLanguage->VHF : "", hwinfo->uhf_band ? currentLanguage->UHF : "");
@@ -673,7 +681,8 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
 #ifdef CONFIG_GPS
 void _ui_drawMenuGPS()
 {
-    char *fix_buf, *type_buf;
+    const char *fix_buf = NULL;
+    const char *type_buf = NULL;
     gfx_clearScreen();
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -697,17 +706,17 @@ void _ui_drawMenuGPS()
         switch(last_state.gps_data.fix_quality)
         {
             case FIX_QUALITY_GPS:
-                fix_buf = "GPS";
+                fix_buf = gettext("GPS");
                 break;
             case FIX_QUALITY_DGPS:
-                fix_buf = "DGPS";
+                fix_buf = gettext("DGPS");
                 break;
             case FIX_QUALITY_PPS:
-                fix_buf = "PPS";
+                fix_buf = gettext("PPS");
                 break;
             case FIX_QUALITY_RTK:
             case FIX_QUALITY_RTK_FLOAT:
-                fix_buf = "RTK";
+                fix_buf = gettext("RTK");
                 break;
             default:
                 fix_buf = (char*)currentLanguage->error;
@@ -720,10 +729,12 @@ void _ui_drawMenuGPS()
                 type_buf = "";
                 break;
             case FIX_TYPE_2D:
-                type_buf = "2D";
+            // i18n: type of GPS fix
+                type_buf = gettext("2D");
                 break;
+            // i18n: type of GPS fix
             case FIX_TYPE_3D:
-                type_buf = "3D";
+                type_buf = gettext("3D");
                 break;
             default:
                 type_buf = (char*)currentLanguage->error;
@@ -736,7 +747,8 @@ void _ui_drawMenuGPS()
         int32_t latitude     = abs(last_state.gps_data.latitude);
         uint8_t latitude_int = latitude / 1000000;
         int32_t latitude_dec = latitude % 1000000;
-        char *direction_lat  = (last_state.gps_data.latitude < 0) ? "S     " : "N     ";
+        // i18n: latitude direction, string length critical
+        const char *direction_lat  = (last_state.gps_data.latitude < 0) ? gettext("S     ") : gettext("N     ");
 
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, direction_lat);
@@ -749,14 +761,16 @@ void _ui_drawMenuGPS()
         int32_t longitude     = abs(last_state.gps_data.longitude);
         uint8_t longitude_int = longitude / 1000000;
         int32_t longitude_dec = longitude % 1000000;
-        char *direction_lon   = (last_state.gps_data.longitude < 0) ? "W     " : "E     ";
+        // i18n: longitude direction, string length critical
+        const char *direction_lon   = (last_state.gps_data.longitude < 0) ? gettext("W     ") : gettext("E     ");
 
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, direction_lon);
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%d.%.6d", longitude_int, longitude_dec);
         gfx_print(layout.bottom_pos, layout.bottom_font, TEXT_ALIGN_CENTER,
-                  color_white, "S %dkm/h  A %dm",
+            // i18n: speed and altitude in GPS screen
+                  color_white, gettext("S %dkm/h  A %dm"),
                   last_state.gps_data.speed,
                   last_state.gps_data.altitude);
     }
@@ -931,10 +945,10 @@ void _ui_drawSettingsTimeDate()
               color_white, currentLanguage->timeAndDate);
     // Print current time and date
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d/%02d/%02d",
+              color_white, gettext("%02d/%02d/%02d"),
               local_time.date, local_time.month, local_time.year);
     gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d",
+              color_white, gettext("%02d:%02d:%02d"),
               local_time.hour, local_time.minute, local_time.second);
 }
 
@@ -948,8 +962,10 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
               color_white, currentLanguage->timeAndDate);
     if(ui_state->input_position <= 0)
     {
-        strcpy(ui_state->new_date_buf, "__/__/__");
-        strcpy(ui_state->new_time_buf, "__:__:00");
+        // i18n: date placeholder for setting date; string length critical
+        strcpy(ui_state->new_date_buf, gettext("__/__/__"));
+        // i18n: time placeholder for setting time; string length critical
+        strcpy(ui_state->new_time_buf, gettext("__:__:00"));
     }
     else
     {
@@ -1095,13 +1111,13 @@ void _ui_drawSettingsRadio(ui_state_t* ui_state)
 
         // NOTE: casts are there only to squelch -Wformat warnings on the
         // sniprintf.
-        sniprintf(buf, sizeof(buf), "%u.%u", (unsigned int)(ui_state->new_offset / div),
+        sniprintf(buf, sizeof(buf), gettext("%u.%u"), (unsigned int)(ui_state->new_offset / div),
                                             (unsigned int)(ui_state->new_offset % div));
         stripTrailingZeroes(buf);
 
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
-                      TEXT_ALIGN_CENTER, color_white, "%s%cHz", buf, prefix);
+                      TEXT_ALIGN_CENTER, color_white, gettext("%s%cHz"), buf, prefix);
     }
     else
     {
@@ -1272,7 +1288,8 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     unsigned int power_int = (last_state.channel.power / 1000);
     unsigned int power_dec = (last_state.channel.power % 1000) / 100;
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white, "%d.%dW", power_int, power_dec);
+        // i18n: transmit power setting
+              color_white, gettext("%d.%dW"), power_int, power_dec);
 
     // Third row
 #if defined(CONFIG_UI_NO_KEYBOARD)
@@ -1305,10 +1322,12 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
               yellow_fab413, "9        ");
     if( ui_state->input_locked == true )
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                  color_white, "Unlk");
+    // i18n: "Unlk" means "Unlock", string length critical
+                  color_white, gettext("Unlk"));
     else
         gfx_print(layout.line3_large_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                    color_white, "Lck");
+    // i18n: "Lck" means "Lock", string length critical
+                    color_white, gettext("Lck"));
 
     // Draw S-meter bar
     _ui_drawMainBottom();

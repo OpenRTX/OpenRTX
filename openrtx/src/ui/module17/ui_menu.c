@@ -328,7 +328,7 @@ void _ui_drawMenuTop(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Menu" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Menu");
+              color_white, gettext("Menu"));
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getMenuTopEntryName);
 }
@@ -340,33 +340,33 @@ void _ui_drawMenuGPS()
     gfx_clearScreen();
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "GPS");
+              color_white, gettext("GPS"));
     point_t fix_pos = {layout.line2_pos.x, CONFIG_SCREEN_HEIGHT * 2 / 5};
     // Print GPS status, if no fix, hide details
     if(!last_state.settings.gps_enabled)
         gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
-                  color_white, "GPS OFF");
+                  color_white, gettext("GPS OFF"));
     else if (last_state.gps_data.fix_quality == 0)
         gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
-                  color_white, "No Fix");
+                  color_white, gettext("No Fix"));
     else if (last_state.gps_data.fix_quality == 6)
         gfx_print(fix_pos, layout.line3_font, TEXT_ALIGN_CENTER,
-                  color_white, "Fix Lost");
+                  color_white, gettext("Fix Lost"));
     else
     {
         switch(last_state.gps_data.fix_quality)
         {
             case 1:
-                fix_buf = "SPS";
+                fix_buf = gettext("SPS");
                 break;
             case 2:
-                fix_buf = "DGPS";
+                fix_buf = gettext("DGPS");
                 break;
             case 3:
-                fix_buf = "PPS";
+                fix_buf = gettext("PPS");
                 break;
             default:
-                fix_buf = "ERROR";
+                fix_buf = gettext("ERROR");
                 break;
         }
 
@@ -376,33 +376,33 @@ void _ui_drawMenuGPS()
                 type_buf = "";
                 break;
             case 2:
-                type_buf = "2D";
+                type_buf = gettext("2D");
                 break;
             case 3:
-                type_buf = "3D";
+                type_buf = gettext("3D");
                 break;
             default:
-                type_buf = "ERROR";
+                type_buf = gettext("ERROR");
                 break;
         }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, fix_buf);
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
-                  color_white, "N     ");
+                  color_white, gettext("N     "));
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%8.6f", last_state.gps_data.latitude);
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, type_buf);
         // Convert from signed longitude, to unsigned + direction
         float longitude = last_state.gps_data.longitude;
-        char *direction = (longitude < 0) ? "W     " : "E     ";
+        char *direction = (longitude < 0) ? gettext("W     ") : gettext("E     ");
         longitude = (longitude < 0) ? -longitude : longitude;
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, direction);
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, "%8.6f", longitude);
         gfx_print(layout.bottom_pos, layout.bottom_font, TEXT_ALIGN_CENTER,
-                  color_white, "S %4.1fkm/h  A %4.1fm",
+                  color_white, gettext("S %4.1fkm/h  A %4.1fm"),
                   last_state.gps_data.speed,
                   last_state.gps_data.altitude);
     }
@@ -428,7 +428,7 @@ void _ui_drawMenuSettings(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Settings");
+              color_white, gettext("Settings"));
     // Print menu entries
     _ui_drawMenuList(ui_state->menu_selected, _ui_getSettingsEntryName);
 }
@@ -438,7 +438,7 @@ void _ui_drawMenuInfo(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Info" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Info");
+              color_white, gettext("Info"));
     // Print menu entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getInfoEntryName,
                            _ui_getInfoValueName);
@@ -450,7 +450,7 @@ void _ui_drawMenuAbout(ui_state_t* ui_state)
 
     point_t openrtx_pos = {layout.horizontal_pad, layout.line3_h};
     gfx_print(openrtx_pos, layout.line3_font, TEXT_ALIGN_CENTER, color_white,
-              "OpenRTX");
+              gettext("OpenRTX"));
 
     point_t pos = {CONFIG_SCREEN_WIDTH / 7, CONFIG_SCREEN_HEIGHT - (layout.menu_h * 3) - 5};
     uint8_t entries_in_screen = (CONFIG_SCREEN_HEIGHT - 1 - pos.y) / layout.menu_h + 1;
@@ -472,7 +472,7 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Display" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Display");
+              color_white, gettext("Display"));
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getDisplayEntryName,
                            _ui_getDisplayValueName);
@@ -484,7 +484,7 @@ void _ui_drawSettingsGPS(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "GPS Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "GPS Settings");
+              color_white, gettext("GPS Settings"));
     // Print display settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
                           _ui_getSettingsGPSEntryName,
@@ -500,13 +500,13 @@ void _ui_drawSettingsTimeDate()
                                            last_state.settings.utc_timezone);
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Time&Date");
+              color_white, gettext("Time&Date"));
     // Print current time and date
     gfx_print(layout.line2_pos, layout.input_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d/%02d/%02d",
+              color_white, gettext("%02d/%02d/%02d"),
               local_time.date, local_time.month, local_time.year);
     gfx_print(layout.line3_pos, layout.input_font, TEXT_ALIGN_CENTER,
-              color_white, "%02d:%02d:%02d",
+              color_white, gettext("%02d:%02d:%02d"),
               local_time.hour, local_time.minute, local_time.second);
 }
 
@@ -517,11 +517,11 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Time&Date" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Time&Date");
+              color_white, gettext("Time&Date"));
     if(ui_state->input_position <= 0)
     {
-        strcpy(ui_state->new_date_buf, "__/__/__");
-        strcpy(ui_state->new_time_buf, "__:__:00");
+        strcpy(ui_state->new_date_buf, gettext("__/__/__"));
+        strcpy(ui_state->new_time_buf, gettext("__:__:00"));
     }
     else
     {
@@ -555,13 +555,13 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "M17 Settings");
+              color_white, gettext("M17 Settings"));
 
     if(ui_state->edit_mode)
     {
         gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                     layout.horizontal_pad, layout.menu_font,
-                    TEXT_ALIGN_LEFT, color_white, "Callsign:");
+                    TEXT_ALIGN_LEFT, color_white, gettext("Callsign:"));
 
         // uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
         // uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
@@ -574,9 +574,9 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
         // Print Button Info
         gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
-                  color_white, "Cancel");
+                  color_white, gettext("Cancel"));
         gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
-                  color_white, "Accept");
+                  color_white, gettext("Accept"));
     }
     else
     {
@@ -590,7 +590,7 @@ void _ui_drawSettingsModule17(ui_state_t* ui_state)
     gfx_clearScreen();
     // Print "Module17 Settings" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Module17 Settings");
+              color_white, gettext("Module17 Settings"));
     // Print Module17 settings entries
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getModule17EntryName,
                            _ui_getModule17ValueName);
@@ -605,16 +605,16 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
 
     gfx_clearScreen();
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, "Reset to Defaults");
+              color_white, gettext("Reset to Defaults"));
 
     // Make text flash yellow once every 1s
     color_t textcolor = drawcnt % 2 == 0 ? color_white : yellow_fab413;
     gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
-                  TEXT_ALIGN_CENTER, textcolor, "To reset:");
+                  TEXT_ALIGN_CENTER, textcolor, gettext("To reset:"));
     gfx_printLine(2, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                   layout.horizontal_pad, layout.top_font,
-                  TEXT_ALIGN_CENTER, textcolor, "Press Enter twice");
+                  TEXT_ALIGN_CENTER, textcolor, gettext("Press Enter twice"));
 
     if((getTick() - lastDraw) > 1000)
     {

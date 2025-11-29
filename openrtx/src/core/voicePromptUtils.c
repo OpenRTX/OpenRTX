@@ -368,7 +368,8 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
             vp_queuePrompt(PROMPT_TONE);
 
         uint16_t tone = ctcss_tone[rxTone];
-        sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+        // i18n: decimal number
+        sniprintf(buffer, sizeof(buffer), gettext("%d.%d"), (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
@@ -387,7 +388,8 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         }
 
         uint16_t tone = ctcss_tone[rxTone];
-        sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+        // i18n: decimal number
+        sniprintf(buffer, sizeof(buffer), gettext("%d.%d"), (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
@@ -401,7 +403,8 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         }
 
         uint16_t tone = ctcss_tone[txTone];
-        sniprintf(buffer, sizeof(buffer), "%d.%d", (tone / 10), (tone % 10));
+        // i18n: decimal number
+        sniprintf(buffer, sizeof(buffer), gettext("%d.%d"), (tone / 10), (tone % 10));
 
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
