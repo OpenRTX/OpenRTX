@@ -902,7 +902,6 @@ objcopy     = find_program('objcopy',                          required:false, d
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
 dfu_util    = find_program('dfu-util',                         required:false, disabler:true)
 west        = find_program('west',                             required:false, disabler:true)
-uf2conv     = find_program('scripts/uf2conv.py',               required:false, disabler:true)
 dfu_convert = find_program('scripts/dfu-convert.py',           required:false, disabler:true)
 cs7000_wrap = find_program('scripts/cs7000_wrap.py',           required:false, disabler:true)
 
@@ -940,20 +939,11 @@ foreach t : targets
                                     '-b', t['name']+'/esp32s3/procpu',
                                     '-d', '.', '..'])
 
-      uf2 = custom_target(name+'_uf2',
-                          input   : bin,
-                          output  : name+'.uf2',
-                          command : [uf2conv,
-                                    'zephyr/zephyr.bin',
-                                    '-c',
-                                    '-f', 'ESP32S3',
-                                    '-b', '0x0',
-                                    '-o', '@OUTPUT@'])
-
       custom_target(name+'_flash',
-                    input   : uf2,
+                    input   : bin,
                     output  : name+'_flash',
-                    command : [uf2conv, '-D', '@INPUT@'])
+                    command : [west,
+                              'flash'])
 
   else
 

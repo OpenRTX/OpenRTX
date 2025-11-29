@@ -9,7 +9,7 @@
 #include <dt-bindings/input/input-event-codes.h>
 #include <zephyr/dt-bindings/pinctrl/esp32s3-gpio-sigmap.h>
 #include <zephyr/dt-bindings/led/led.h>
-#include "partitions_0x1000_tinyuf2_16M.dtsi"
+#include <espressif/partitions_0x0_amp.dtsi>
 
 / {
     aliases {
