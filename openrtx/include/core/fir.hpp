@@ -63,19 +63,40 @@ public:
      */
     float operator()(const float& input)
     {
-        hist[pos] = input;
-        pos = (pos + 1) % N;
+        constexpr size_t Nval = N;
 
-        float  result = 0.0;
-        size_t index  = pos;
+        //move forward
+        size_t p = pos;
+        p = (p == 0 ? Nval - 1 : p - 1);
 
-        for(size_t i = 0; i < N; i++)
+        //store new sample in 2 places
+        hist[p]        = input;
+        hist[p + Nval] = input;
+
+        const float* __restrict hp = &hist[p];
+        const float* __restrict tp = taps.data();
+
+        float acc = 0.0f;
+
+        //unroll loop by 4
+        size_t i = 0;
+        size_t limit = Nval & ~size_t(3);  //get the last multiple of 4
+
+        for (; i < limit; i += 4)
         {
-            index   = (index != 0 ? index - 1 : N - 1);
-            result += hist[index] * taps[i];
+            acc += hp[i]     * tp[i];
+            acc += hp[i + 1] * tp[i + 1];
+            acc += hp[i + 2] * tp[i + 2];
+            acc += hp[i + 3] * tp[i + 3];
         }
 
-        return result;
+        //remaining taps
+        for (; i < Nval; i++)
+            acc += hp[i] * tp[i];
+
+        pos = p;
+        
+        return acc;
     }
 
     /**
@@ -90,7 +111,7 @@ public:
 private:
 
     const std::array< float, N >& taps;    ///< FIR filter coefficients.
-    std::array< float, N >        hist;    ///< History of past inputs.
+    std::array< float, 2*N >      hist;    ///< History of past inputs.
     size_t                        pos;     ///< Current position in history.
 };
 
