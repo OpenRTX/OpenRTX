@@ -14,6 +14,10 @@
         radio-prg-reset = &radio_prg_reset;
         sh1106-alt = &sh1106_alt;
     };
+
+    zephyr,user {
+        io-channels = <&adc0 0>;
+    };
 };
 
 &leds {
@@ -63,4 +67,24 @@
             bias-pull-up;
         };
     };
+};
+
+&adc0 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel@0 {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+
+    dmas = <&dma 2>;
+};
+
+&dma {
+    status = "okay";
 };

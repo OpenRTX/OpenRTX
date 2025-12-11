@@ -225,6 +225,9 @@ void platform_init()
 
     // Connect SA868s to PA
     pmu_setAudioSwitch(false);
+
+    // XXX: test ADC
+    // start_adc_test();
 }
 
 void platform_terminate()
