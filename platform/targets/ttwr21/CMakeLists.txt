@@ -34,6 +34,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/display/SH1106_ttwr.c
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_ttwr.c
     ${OPENRTX_ROOT}/platform/drivers/program/program_RL78.c
+    ${OPENRTX_ROOT}/platform/drivers/ADC/adc_zephyr.c
 
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
 
