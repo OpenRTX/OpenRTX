@@ -82,7 +82,7 @@ const stringsTable_t englishStrings =
     .openRTX           = "OpenRTX",
     .gpsSettings       = "GPS Settings",
     .m17settings       = "M17 Settings",
-    .callsign          = "Callsign:",
+    .callsign          = "Callsign",
     .resetToDefaults   = "Reset to Defaults",
     .toReset           = "To reset:",
     .pressEnterTwice   = "Press Enter twice",
@@ -106,5 +106,7 @@ const stringsTable_t englishStrings =
     .direction         = "Direction",
     .step              = "Step",
     .radio             = "Radio",
+    .CAN               = "CAN",
+    .canRxCheck        = "CAN RX Check",
 };
 #endif  // ENGLISHSTRINGS_H

@@ -83,7 +83,7 @@ const stringsTable_t spanishStrings =
     .openRTX           = "OpenRTX",
     .gpsSettings       = "Ajustes de GPS",
     .m17settings       = "Ajustes de M17",
-    .callsign          = "Licencia:",
+    .callsign          = "Licencia",
     .resetToDefaults   = "Reseatear a fábrica",
     .toReset           = "Para resetear:",
     .pressEnterTwice   = "Apretar Enter 2 veces",
@@ -107,5 +107,7 @@ const stringsTable_t spanishStrings =
     .direction         = "Dirección",
     .step              = "Paso",
     .radio             = "Radio",
+    .CAN               = "CAN",
+    .canRxCheck        = "CAN RX Check",
 };
 #endif  // SPANISHSTRINGS_H

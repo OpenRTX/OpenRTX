@@ -110,6 +110,8 @@ typedef struct
     const char* direction;
     const char* step;
     const char* radio;
+    const char* CAN;
+    const char* canRxCheck;
 }
 stringsTable_t;
 
