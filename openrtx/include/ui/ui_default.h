@@ -145,9 +145,10 @@ enum settingsAccessibilityItems
 
 enum settingsRadioItems
 {
-    R_OFFSET,
+    R_SHIFT,
     R_DIRECTION,
     R_STEP,
+    R_PPM
 };
 
 enum settingsM17Items
@@ -235,7 +236,9 @@ typedef struct ui_state_t
     char new_time_buf[9];
 #endif
     char new_callsign[10];
-    freq_t new_offset;
+    freq_t new_shift;
+    uint16_t new_ppm;
+    int8_t new_ppm_sign;
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 #if defined(CONFIG_UI_NO_KEYBOARD)
