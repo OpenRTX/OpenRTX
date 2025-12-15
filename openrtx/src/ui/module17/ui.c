@@ -284,7 +284,7 @@ void ui_drawSplashScreen()
     gfx_clearScreen();
 
     point_t origin = {0, (CONFIG_SCREEN_HEIGHT / 2) - 6};
-    gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
+    gfx_print(origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, gettext("O P N\nR T X"));
 }
 
 #ifdef CONFIG_RTC
