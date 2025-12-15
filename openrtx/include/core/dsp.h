@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include "interfaces/audio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,6 +60,42 @@ static inline void dsp_removeDcOffset(struct dcBlock *dcb, int16_t *buffer,
     for (size_t i = 0; i < length; i++)
         buffer[i] = dsp_dcBlockFilter(dcb, buffer[i]);
 }
+
+/**
+ * Data structure holding the internal state of an oversampling filter.
+ */
+struct oversamplingBlock {
+    uint8_t oversampling;
+    uint8_t count;
+    uint32_t accumulator;
+};
+
+/**
+ * @brief Set the oversampling factor for a decimation filter.
+ *
+ * @param oversamplingBlock: pointer to the oversampling filter state.
+ * @param oversampling: oversampling factor, must be >= 1.
+ */
+void dsp_oversamplingSetOversampling(
+    struct oversamplingBlock *oversamplingBlock, uint8_t oversampling);
+
+/**
+ * @brief Run a single step of the oversampling decimation filter.
+ *
+ * Accumulates input samples and returns their truncated integer average
+ * once the oversampling factor number of samples have been collected.
+ *
+ * Input samples are treated as unsigned values for accumulation. Callers
+ * must ensure that the samples are non-negative (e.g. raw ADC readings)
+ * before the DC offset has been removed.
+ *
+ * @param oversamplingBlock: pointer to the oversampling filter state.
+ * @param sample: pointer to the input sample; overwritten with the
+ * decimated output when the function returns true.
+ * @return true when a decimated sample is ready, false otherwise.
+ */
+bool dsp_oversamplingDecimate(struct oversamplingBlock *oversamplingBlock,
+                              stream_sample_t *sample);
 
 #ifdef __cplusplus
 }

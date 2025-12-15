@@ -23,3 +23,27 @@ int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 
     return static_cast<int16_t>(dcb->prevOut);
 }
+
+void dsp_oversamplingSetOversampling(
+    struct oversamplingBlock *oversamplingBlock, uint8_t oversampling)
+{
+    oversamplingBlock->oversampling = oversampling;
+}
+
+bool dsp_oversamplingDecimate(struct oversamplingBlock *oversamplingBlock,
+                              stream_sample_t *sample)
+{
+    oversamplingBlock->accumulator += (uint16_t)*sample;
+    oversamplingBlock->count++;
+    if (oversamplingBlock->count >= oversamplingBlock->oversampling) {
+        // Integer division truncates toward zero; this is intentional as
+        // rounding is unnecessary for audio signal averaging.
+        *sample = oversamplingBlock->accumulator
+                / oversamplingBlock->oversampling;
+        oversamplingBlock->accumulator = 0;
+        oversamplingBlock->count = 0;
+        return true;
+    }
+
+    return false;
+}
