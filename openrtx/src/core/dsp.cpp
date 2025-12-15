@@ -23,3 +23,20 @@ int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 
     return static_cast<int16_t>(dcb->prevOut);
 }
+
+bool dsp_decimator(struct decimatorState *state, int16_t *sample,
+                   uint16_t ratio)
+{
+    state->accumulator += *sample;
+    state->count++;
+    if (state->count >= ratio) {
+        // Integer division truncates toward zero; this is intentional as
+        // rounding is unnecessary for audio signal averaging.
+        *sample = state->accumulator / ratio;
+        state->accumulator = 0;
+        state->count = 0;
+        return true;
+    }
+
+    return false;
+}
