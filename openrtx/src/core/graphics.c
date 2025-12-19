@@ -33,6 +33,8 @@
 #include <math.h>
 #include "core/utils.h"
 
+#include "qrcode.h"
+
 #include "fonts/adafruit/gfxfont.h"
 #include "fonts/adafruit/TomThumb.h"
 #include "fonts/adafruit/FreeSans6pt7b.h"
@@ -999,4 +1001,51 @@ void gfx_plotData(point_t start, uint16_t width, uint16_t height,
         if (first_iteration)
             first_iteration = false;
     }
+}
+
+void gfx_drawQrCodeString(color_t color, color_t background_color, const char *data)
+{
+    gfx_drawQrCodeBytes(color, background_color, (uint8_t*)data, strlen(data));
+
+}
+
+static inline uint8_t computeQrCodeVersion() {
+    // Calculate the maximum qr code version based on screen size
+    // A qr code is square, thus we first determine the smallest screen side
+    // Then we divide this size by two to get two screen pixels per qr code pixel
+    // Then we subtract 4 from this for a border araund the qr code
+    // We then subtract 17 which is based on the minimum qr code size of 21
+    // But because every version increases the size by 4, we want to get 1 from version 1, thus (21 - 17) /4 = 1
+	return (((CONFIG_SCREEN_WIDTH < CONFIG_SCREEN_HEIGHT ? CONFIG_SCREEN_WIDTH : CONFIG_SCREEN_HEIGHT)/2) - 4 - 17) / 4;
+}
+
+void gfx_drawQrCodeBytes(color_t color, color_t background_color, uint8_t *data, uint16_t length)
+{
+	point_t start = {.x = 0, .y = 0};
+	uint16_t width = CONFIG_SCREEN_WIDTH;
+	uint16_t height = CONFIG_SCREEN_HEIGHT;
+    uint16_t qr_code_pixel_border = 1;
+    uint16_t smallest_side_length = width < height ? width : height;
+	uint8_t qrcode_version = computeQrCodeVersion();
+    QRCode qrcode;
+
+    uint8_t qrcodeData[qrcode_getBufferSize(qrcode_version)];
+    qrcode_initBytes(&qrcode, qrcodeData, qrcode_version, 0, data, length);
+
+    gfx_drawRect(start, width, height, background_color, true);
+
+    uint16_t qr_code_pixel_length = qrcode.size;
+
+    uint16_t pixel_size = smallest_side_length / (qr_code_pixel_length + (2*qr_code_pixel_border));
+    uint16_t offset_left = (width-(pixel_size*qr_code_pixel_length))/2;
+    uint16_t offset_top = (height-(pixel_size*qr_code_pixel_length))/2;;
+    for (int i = 0; i<qr_code_pixel_length; i++) {
+        for (int j = 0; j<qr_code_pixel_length; j++) {
+            point_t origin = {offset_left + i*pixel_size, offset_top + j*pixel_size};
+
+            color_t pixel_color = qrcode_getModule(&qrcode, i, j) ? color : background_color;
+            gfx_drawRect(origin, pixel_size, pixel_size, pixel_color, 1);
+        }
+    }
+
 }
