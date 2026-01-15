@@ -81,7 +81,8 @@ const char *m17_items[] =
 {
     "Callsign",
     "CAN",
-    "CAN RX Check"
+    "CAN RX Check",
+    "TX Level"
 };
 
 const char *module17_items[] =
@@ -329,6 +330,12 @@ static void _ui_changeBrightness(int variation)
 
     state.settings.brightness += variation;
     display_setBacklightLevel(state.settings.brightness);
+}
+
+static inline void _ui_changeM17TxLevel(int variation)
+{
+    uint8_t gain = state.settings.m17_tx_level;
+    state.settings.m17_tx_level = (gain + variation) % 255;
 }
 
 static void _ui_changeCAN(int variation)
@@ -681,6 +688,9 @@ void ui_updateFSM(bool *sync_rtx)
                             case M_CAN_RX:
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
                                 break;
+                            case M_TX_LEVEL:
+                                _ui_changeM17TxLevel(-1);
+                                break;
                             default:
                                 state.ui_screen = SETTINGS_M17;
                         }
@@ -694,6 +704,9 @@ void ui_updateFSM(bool *sync_rtx)
                                 break;
                             case M_CAN_RX:
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
+                                break;
+                            case M_TX_LEVEL:
+                                _ui_changeM17TxLevel(+1);
                                 break;
                             default:
                                 state.ui_screen = SETTINGS_M17;
