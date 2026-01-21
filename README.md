@@ -99,7 +99,7 @@ All this is possible by the huge reverse engineering effort of Travis Goodspeed 
 
 A huge thanks goes to Roger Clark, and his [OpenGD77](https://github.com/rogerclarkmelbourne/OpenGD77) (repo no longer available) which not only inspired this project, but as a precursor, provided a working code example for the GD77 radio family.
 
-A warm thank you goes to SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware.
+A warm thank you goes to Wojciech Kaczmarski SP5WWP and the [M17](https://m17project.org) community for bringing their libre protocol into our obscure undocumented hardware.
 
 Also, a thank you for donating hardware to this project goes to:
 * M17 Project
