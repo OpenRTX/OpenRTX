@@ -747,8 +747,8 @@ void OpMode_M17::txPacketState(rtxStatus_t *const status)
 	memcpy((char*)&full_packet_data[1], state.sms_message, strlen(state.sms_message));
 	numPacketbytes                     = strlen(state.sms_message) + 2; //0x05 and 0x00
 	uint16_t packet_crc                = lsf.m17Crc(full_packet_data, numPacketbytes);
-	full_packet_data[numPacketbytes]   = packet_crc >> 8;
-	full_packet_data[numPacketbytes+1] = packet_crc & 0xFF;
+	full_packet_data[numPacketbytes]   = packet_crc & 0xFF;
+	full_packet_data[numPacketbytes+1] = packet_crc >> 8;
 	numPacketbytes += 2; //count 2-byte CRC too
 
 	streamType_t type;
@@ -853,4 +853,5 @@ void OpMode_M17::q_to_rtx(int32_t* lat, int32_t* lon, int32_t qlat, int32_t qlon
 		*lon = qlon * 21 + qlon / 2 - qlon / 23 + qlon / 867;  //180e6/(2^23-1) - (21 + 1/2 - 1/23 + 1/867)  = ~0
 	}
 }
+
 
