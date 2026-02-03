@@ -62,12 +62,14 @@ openrtx/include/protocols/M17/M17FrameDecoder.hpp
 openrtx/include/protocols/APRS/constants.h
 openrtx/include/protocols/APRS/Demodulator.hpp
 openrtx/include/protocols/APRS/Slicer.hpp
+openrtx/include/protocols/APRS/HDLC.hpp
 openrtx/src/core/dsp.cpp
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/protocols/M17/Callsign.cpp
 openrtx/src/protocols/M17/M17FrameDecoder.cpp
 openrtx/src/protocols/APRS/Demodulator.cpp
 openrtx/src/protocols/APRS/Slicer.cpp
+openrtx/src/protocols/APRS/HDLC.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/MAX9814.h
 platform/drivers/baseband/MCP4551.h
