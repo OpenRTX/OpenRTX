@@ -72,7 +72,8 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/PacketFramer.cpp',
                'openrtx/src/protocols/M17/SmsPacket.cpp',
                'openrtx/src/protocols/APRS/Slicer.cpp',
-               'openrtx/src/protocols/APRS/FrameDecoder.cpp']
+               'openrtx/src/protocols/APRS/FrameDecoder.cpp',
+               'openrtx/src/protocols/APRS/Demodulator.cpp']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
