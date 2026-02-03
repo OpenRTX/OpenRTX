@@ -71,6 +71,8 @@ openrtx/include/protocols/M17/PacketFrame.hpp
 openrtx/include/protocols/M17/MetaText.hpp
 openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
+openrtx/include/protocols/APRS/constants.h
+openrtx/include/protocols/APRS/Slicer.hpp
 openrtx/src/core/dsp.cpp
 openrtx/src/core/audio_codec.c
 openrtx/src/core/input.c
