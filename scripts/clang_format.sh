@@ -64,6 +64,8 @@ openrtx/include/peripherals/rtc.h
 openrtx/include/protocols/M17/Callsign.hpp
 openrtx/include/protocols/M17/M17FrameDecoder.hpp
 openrtx/src/core/crc.c
+openrtx/include/protocols/APRS/constants.h
+openrtx/include/protocols/APRS/Slicer.hpp
 openrtx/src/core/dsp.cpp
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
