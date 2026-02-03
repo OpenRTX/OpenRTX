@@ -59,10 +59,13 @@ openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
 openrtx/include/protocols/M17/Callsign.hpp
 openrtx/include/protocols/M17/M17FrameDecoder.hpp
+openrtx/include/protocols/APRS/constants.h
+openrtx/include/protocols/APRS/Demodulator.hpp
 openrtx/src/core/dsp.cpp
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/protocols/M17/Callsign.cpp
 openrtx/src/protocols/M17/M17FrameDecoder.cpp
+openrtx/src/protocols/APRS/Demodulator.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/MAX9814.h
 platform/drivers/baseband/MCP4551.h
