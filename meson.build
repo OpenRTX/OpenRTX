@@ -1143,6 +1143,9 @@ m17_packet_test = executable('m17_packet_test',
 aprs_packet_test = executable('aprs_packet_test',
                               sources : unit_test_src + ['tests/unit/APRS_packet.cpp'],
                               kwargs  : unit_test_opts)
+aprs_test = executable('aprs-test',
+                       sources : unit_test_src + ['tests/unit/APRS.cpp'],
+                       kwargs  : unit_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
@@ -1154,8 +1157,6 @@ test('Codeplug Test',         cps_test)
 ## test('Linux InputStream Test', linux_inputStream_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
-<<<<<<< HEAD
 test('M17 Packet Frame Test', m17_packet_test)
-=======
 test('APRS Packet Test', aprs_packet_test)
->>>>>>> 8eef065f (APRS: packet: add packet structs and functions)
+test('APRS Test', aprs_test)
