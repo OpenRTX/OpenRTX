@@ -187,6 +187,20 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             break;
         }
         #endif
+
+        #ifdef CONFIG_APRS
+        case OPMODE_APRS: ;
+            /* Print how many packets we have received and stored */
+            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+
+            /* Display it */
+            gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
+                      color_white, "APRS");
+            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white, "%d/%d", last_state.aprsStoredPktsSize, rtxStatus.aprsRecv);
+            break;
+
+        #endif
     }
 }
 
@@ -302,6 +316,12 @@ void _ui_drawMainBottom()
                                 true);
             break;
         #endif
+    #ifdef CONFIG_APRS
+    case OPMODE_APRS:
+        gfx_drawSmeterLevel(meter_pos, meter_width, meter_height, rssi,
+                            mic_level, volume, true);
+        break;
+    #endif
     }
 }
 
