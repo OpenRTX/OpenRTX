@@ -1094,6 +1094,10 @@ minmea_conversion_test = executable('minmea_conversion_test',
                                      sources : unit_test_src + ['tests/unit/convert_minmea_coord.c'],
                                      kwargs  : unit_test_opts)
 
+aprs_test = executable('aprs-test',
+                       sources : unit_test_src + ['tests/unit/APRS.cpp'],
+                       kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 ## test('M17 Demodulator Test',  m17_demodulator_test) # Skipped for now as this test no longer works after an M17 refactor
@@ -1104,3 +1108,4 @@ test('Codeplug Test',         cps_test)
 ## test('Sine Test',             sine_test)
 ## test('Voice Prompts Test',    vp_test) # Skipped for now as this test no longer works
 test('minmea conversion Test', minmea_conversion_test)
+test('APRS Test', aprs_test)
