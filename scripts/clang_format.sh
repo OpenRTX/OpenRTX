@@ -107,6 +107,7 @@ tests/unit/M17_golay.cpp
 tests/unit/M17_rrc.cpp
 tests/unit/M17_viterbi.cpp
 tests/unit/ui_check_standby.cpp
+tests/unit/APRS.cpp
 EOF
 )
 
