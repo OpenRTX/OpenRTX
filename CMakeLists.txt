@@ -117,6 +117,8 @@ target_sources(app
     openrtx/src/protocols/M17/PacketDeframer.cpp
     openrtx/src/protocols/M17/PacketFramer.cpp
     openrtx/src/protocols/M17/SmsPacket.cpp
+    openrtx/src/protocols/APRS/packet.c
+    openrtx/src/protocols/APRS/packet_list.c
 
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c

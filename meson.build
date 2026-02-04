@@ -73,7 +73,9 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/SmsPacket.cpp',
                'openrtx/src/protocols/APRS/Slicer.cpp',
                'openrtx/src/protocols/APRS/FrameDecoder.cpp',
-               'openrtx/src/protocols/APRS/Demodulator.cpp']
+               'openrtx/src/protocols/APRS/Demodulator.cpp',
+               'openrtx/src/protocols/APRS/packet.c',
+               'openrtx/src/protocols/APRS/packet_list.c']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -1202,6 +1204,10 @@ m17_packet_opmode_test = executable('m17_packet_opmode_test',
                                      sources : unit_test_src + ['tests/unit/M17_packet_opmode.cpp'],
                                      kwargs  : unit_test_opts)
 
+aprs_packet_test = executable('aprs_packet_test',
+                              sources : unit_test_src + ['tests/unit/APRS_packet.cpp'],
+                              kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1224,3 +1230,4 @@ test('M17 Packet Disassembly Test', m17_packet_disassembly_test)
 test('M17 Packet Framing Test', m17_packet_framing_test)
 test('M17 SMS Packet Test', m17_sms_packet_test)
 test('M17 Packet OpMode Test', m17_packet_opmode_test)
+test('APRS Packet Test', aprs_packet_test)
