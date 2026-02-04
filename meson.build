@@ -1321,6 +1321,11 @@ aprs_packet_test = executable('aprs_packet_test',
                               sources : unit_test_src + ['tests/unit/aprs_test_frame.cpp',
                                                         'tests/unit/APRS_packet.cpp'],
                               kwargs  : unit_test_opts)
+aprs_test_opts = unit_test_opts + {'cpp_args' : linux_cpp_args +
+      ['-DAPRS_ASSET_DIR="' + meson.project_source_root() / 'tests/unit/assets' + '"']}
+aprs_test = executable('aprs_test',
+                       sources : unit_test_src + ['tests/unit/APRS.cpp'],
+                       kwargs  : aprs_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
@@ -1345,3 +1350,4 @@ test('M17 Packet OpMode Test', m17_packet_opmode_test)
 test('Messages Test', messages_test)
 test('M17 SMS Source Test', m17_sms_test)
 test('APRS Packet Test', aprs_packet_test)
+test('APRS Test', aprs_test)
