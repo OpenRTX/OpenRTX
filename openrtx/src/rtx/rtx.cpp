@@ -10,6 +10,7 @@
 #include "rtx/rtx.h"
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
+#include "rtx/OpMode_APRS.hpp"
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -22,6 +23,9 @@ static OpMode     noMode;               // Empty opMode handler for opmode::NONE
 static OpMode_FM  fmMode;               // FM mode handler
 #ifdef CONFIG_M17
 static OpMode_M17 m17Mode;              // M17 mode handler
+#endif
+#ifdef CONFIG_APRS
+static OpMode_APRS aprsMode;            // APRS mode handler
 #endif
 
 
@@ -52,6 +56,9 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_dst[0]    = '\0';
     rtxStatus.M17_link[0]   = '\0';
     rtxStatus.M17_refl[0]   = '\0';
+    rtxStatus.aprsRecv      = 0;
+    rtxStatus.aprsPkts      = NULL;
+    rtxStatus.aprsPktsSize  = 0;
     currMode = &noMode;
 
     /*
@@ -144,6 +151,9 @@ void rtx_task()
                 #ifdef CONFIG_M17
                 case OPMODE_M17:  currMode = &m17Mode; break;
                 #endif
+		#ifdef CONFIG_APRS
+		case OPMODE_APRS: currMode = &aprsMode; break;
+		#endif
                 default:   currMode = &noMode;
             }
 
