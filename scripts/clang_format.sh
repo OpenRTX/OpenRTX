@@ -118,6 +118,7 @@ tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
 tests/unit/APRS_packet.cpp
+tests/unit/APRS.cpp
 EOF
 )
 
