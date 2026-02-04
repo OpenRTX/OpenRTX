@@ -1281,7 +1281,6 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
               yellow_fab413, "5");
 
-    char mode_str[12] = "";
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
@@ -1295,10 +1294,12 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          M17");
             break;
 #endif
+#ifdef CONFIG_APRS
+        case OPMODE_APRS:
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "           APRS");
+            break;
+#endif
     }
-
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, mode_str);
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 5)

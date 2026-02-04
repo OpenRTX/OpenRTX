@@ -267,6 +267,18 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
+// available modes as set by config parameters
+static const enum opmode modes[] =
+{
+    OPMODE_FM,
+#ifdef CONFIG_M17
+    OPMODE_M17,
+#endif
+#ifdef CONFIG_APRS
+    OPMODE_APRS,
+#endif
+};
+
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
@@ -1006,18 +1018,21 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
         case 5:
-            // Cycle through radio modes
-            #ifdef CONFIG_M17
-            if(state.channel.mode == OPMODE_FM)
-                state.channel.mode = OPMODE_M17;
-            else if(state.channel.mode == OPMODE_M17)
-                state.channel.mode = OPMODE_FM;
-            else //catch any invalid states so they don't get locked out
-            #endif
-                state.channel.mode = OPMODE_FM;
+        {
+            // The next mode in the cycle; one not in it goes back to the first
+            size_t next = 0;
+
+            for (size_t i = 0; i < ARRAY_SIZE(modes); i++)
+            {
+                if (modes[i] == state.channel.mode)
+                    next = (i + 1) % ARRAY_SIZE(modes);
+            }
+
+            state.channel.mode = modes[next];
             *sync_rtx = true;
             vp_announceRadioMode(state.channel.mode, queueFlags);
             break;
+        }
         case 6:
 
             switch(state.channel.power)
