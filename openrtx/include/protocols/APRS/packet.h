@@ -18,9 +18,9 @@ extern "C" {
 
 struct aprsAddress {
     char addr[7]; /* include null termination */
-    uint8_t ssid      : 4;
+    uint8_t ssid         : 4;
     uint8_t commandHeard : 1;
-    uint8_t __unused  : 3;
+    uint8_t __unused     : 3;
 };
 
 struct aprsPacket {
