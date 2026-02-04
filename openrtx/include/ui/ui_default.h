@@ -15,6 +15,7 @@
 #include "core/event.h"
 #include "hwconfig.h"
 #include "core/ui.h"
+#include "protocols/APRS/packet.h"
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -52,7 +53,8 @@ enum uiScreen
     SETTINGS_FM,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+    APRS_PKT
 };
 
 enum SetRxTx
@@ -228,6 +230,9 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+#ifdef CONFIG_APRS
+    aprsPacket_t *pkt; // selected APRS packet
+#endif
 }
 ui_state_t;
 
