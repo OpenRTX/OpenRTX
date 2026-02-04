@@ -63,6 +63,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/protocols/M17/DSP.cpp',
                'openrtx/src/protocols/M17/Golay.cpp',
+               'openrtx/src/rtx/OpMode_APRS.cpp',
                'openrtx/src/protocols/M17/MetaText.cpp',
                'openrtx/src/protocols/M17/Callsign.cpp',
                'openrtx/src/protocols/M17/Modulator.cpp',
@@ -1327,6 +1328,11 @@ aprs_test = executable('aprs_test',
                        sources : unit_test_src + ['tests/unit/APRS.cpp'],
                        kwargs  : aprs_test_opts)
 
+aprs_opmode_test = executable('aprs_opmode_test',
+                              sources : unit_test_src
+                                        + ['tests/unit/APRS_opmode.cpp'],
+                              kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1351,3 +1357,4 @@ test('Messages Test', messages_test)
 test('M17 SMS Source Test', m17_sms_test)
 test('APRS Packet Test', aprs_packet_test)
 test('APRS Test', aprs_test)
+test('APRS OpMode Test', aprs_opmode_test)
