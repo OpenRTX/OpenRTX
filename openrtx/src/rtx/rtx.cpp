@@ -11,6 +11,7 @@
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "rtx/OpMode_APRS.hpp"
+#include "protocols/APRS/packet_list.h"
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -58,8 +59,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_refl[0]   = '\0';
     rtxStatus.M17_meta_text[0] = '\0';
     rtxStatus.aprsRecv      = 0;
-    rtxStatus.aprsPkts      = NULL;
-    rtxStatus.aprsPktsSize  = 0;
+    rtxStatus.aprsPkts      = aprsPktList_init();
     currMode = &noMode;
 
     /*
