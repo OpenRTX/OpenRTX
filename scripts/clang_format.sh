@@ -72,6 +72,8 @@ openrtx/include/protocols/APRS/frame.h
 openrtx/include/protocols/APRS/Slicer.hpp
 openrtx/include/protocols/APRS/Decoder.hpp
 openrtx/include/protocols/APRS/Demodulator.hpp
+openrtx/include/protocols/APRS/packet.h
+openrtx/include/protocols/APRS/packet_list.h
 openrtx/src/core/dsp.cpp
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
@@ -80,6 +82,8 @@ openrtx/src/protocols/M17/FrameDecoder.cpp
 openrtx/src/protocols/APRS/Slicer.cpp
 openrtx/src/protocols/APRS/Decoder.cpp
 openrtx/src/protocols/APRS/Demodulator.cpp
+openrtx/src/protocols/APRS/packet.c
+openrtx/src/protocols/APRS/packet_list.c
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/file_source.h
 platform/drivers/audio/file_source.c
@@ -113,6 +117,7 @@ tests/unit/M17_viterbi.cpp
 tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
+tests/unit/APRS_packet.cpp
 EOF
 )
 
