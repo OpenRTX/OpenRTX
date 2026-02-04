@@ -81,6 +81,7 @@ openrtx/src/protocols/APRS/Decoder.cpp
 openrtx/src/protocols/APRS/Demodulator.cpp
 openrtx/src/protocols/APRS/packet.c
 openrtx/src/rtx/OpMode_APRS.cpp
+openrtx/src/ui/default/ui_aprs.c
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/file_source.h
 platform/drivers/audio/file_source.c
