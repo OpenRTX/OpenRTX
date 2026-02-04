@@ -8,7 +8,7 @@
 #define RTX_H
 
 #include "core/datatypes.h"
-#include "protocols/APRS/packet.h"
+#include "protocols/APRS/packet_list.h"
 #include <stdint.h>
 #include "core/cps.h"
 #include <pthread.h>
@@ -55,10 +55,9 @@ typedef struct
     char     M17_refl[10];             /**  M17 LSF reflector module   */
     char     M17_meta_text[53];        /**< M17 Meta Text              */
 
-    uint16_t     aprsRecv;             /* Total APRS packets received  */
-    struct aprsPacket *aprsPkts;            /* Linked list of newly received
+    uint16_t aprsRecv;                 /* Total APRS packets received  */
+    struct   aprsPktList aprsPkts;     /* Linked list of newly received
                                           APRS packets, new to old      */
-    uint8_t      aprsPktsSize;         /* Size of new packets list      */
 }
 rtxStatus_t;
 
