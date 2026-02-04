@@ -24,6 +24,8 @@
 #include "core/messages.h"
 #include "core/m17_sms.h"
 #include "core/beeps.h"
+#include "protocols/APRS/packet_list.h"
+#include "protocols/APRS/constants.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -70,6 +72,7 @@ void *ui_threadFunc(void *arg)
         }
 
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
+
         ui_updateFSM(&sync_rtx);            // Update UI FSM
         ui_saveState();                     // Save local state copy
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
@@ -143,6 +146,11 @@ void *main_thread(void *arg)
     (void) arg;
 
     long long time = 0;
+#ifdef CONFIG_APRS
+    uint8_t aprsFrame[APRS_PACLEN];
+    struct pktDesc aprsDesc = { 0 };
+    struct aprsPacket *packet;
+#endif
 
     #if defined(CONFIG_GPS)
     const struct gpsDevice *gps = platform_initGps();
@@ -171,6 +179,32 @@ void *main_thread(void *arg)
 
         // Run state update task
         state_task();
+
+#ifdef CONFIG_APRS
+        if (state.channel.mode == OPMODE_APRS) {
+            switch (aprsDesc.status) {
+                case PKT_STATUS_IDLE:
+                    aprsDesc.buffer = aprsFrame;
+                    aprsDesc.size = APRS_PACLEN;
+                    rtx_addPacketRx(&aprsDesc);
+                    break;
+
+                case PKT_STATUS_SUBMITTED:
+                    break;
+
+                case PKT_STATUS_DONE:
+                    packet = aprsPktFromFrame(aprsDesc.buffer, aprsDesc.size);
+                    state.aprsStoredPkts = aprsPktList_insert(state.aprsStoredPkts,
+                                                    packet);
+                    /* fallthrough */
+                case PKT_STATUS_ERROR:
+                    aprsDesc.status = PKT_STATUS_IDLE;
+                    aprsDesc.size = APRS_PACLEN;
+                    rtx_addPacketRx(&aprsDesc);
+                    break;
+            }
+        }
+#endif
 
         // Run this loop once every 5ms
         time += 5;
