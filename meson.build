@@ -70,7 +70,9 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
                'openrtx/src/protocols/APRS/Slicer.cpp',
                'openrtx/src/protocols/APRS/Decoder.cpp',
-               'openrtx/src/protocols/APRS/Demodulator.cpp']
+               'openrtx/src/protocols/APRS/Demodulator.cpp',
+               'openrtx/src/protocols/APRS/packet.c',
+               'openrtx/src/protocols/APRS/packet_list.c']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -1132,6 +1134,10 @@ ui_check_standby_test = executable('ui_check_standby_test',
                                     sources : unit_test_src + ['tests/unit/ui_check_standby.cpp'],
                                     kwargs  : unit_test_opts)
 
+aprs_packet_test = executable('aprs_packet_test',
+                              sources : unit_test_src + ['tests/unit/APRS_packet.cpp'],
+                              kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1142,4 +1148,4 @@ test('Codeplug Test',         cps_test)
 ## test('Linux InputStream Test', linux_inputStream_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
-
+test('APRS Packet Test', aprs_packet_test)
