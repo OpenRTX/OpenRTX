@@ -1321,6 +1321,9 @@ m17_sms_test = executable('m17_sms_test',
 aprs_packet_test = executable('aprs_packet_test',
                               sources : unit_test_src + ['tests/unit/APRS_packet.cpp'],
                               kwargs  : unit_test_opts)
+aprs_test = executable('aprs-test',
+                       sources : unit_test_src + ['tests/unit/APRS.cpp'],
+                       kwargs  : unit_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
@@ -1345,3 +1348,4 @@ test('M17 Packet OpMode Test', m17_packet_opmode_test)
 test('Messages Test', messages_test)
 test('M17 SMS Source Test', m17_sms_test)
 test('APRS Packet Test', aprs_packet_test)
+test('APRS Test', aprs_test)
