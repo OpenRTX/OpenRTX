@@ -28,6 +28,9 @@ enum Mod17Flags
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Device supports APRS mode */
+#define CONFIG_APRS
+
 #ifdef __cplusplus
 }
 #endif
