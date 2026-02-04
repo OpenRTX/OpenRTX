@@ -74,6 +74,7 @@ openrtx/include/protocols/APRS/Decoder.hpp
 openrtx/include/protocols/APRS/Demodulator.hpp
 openrtx/include/protocols/APRS/packet.h
 openrtx/include/protocols/APRS/packet_list.h
+openrtx/include/rtx/OpMode_APRS.hpp
 openrtx/src/core/dsp.cpp
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
@@ -84,6 +85,7 @@ openrtx/src/protocols/APRS/Decoder.cpp
 openrtx/src/protocols/APRS/Demodulator.cpp
 openrtx/src/protocols/APRS/packet.c
 openrtx/src/protocols/APRS/packet_list.c
+openrtx/src/rtx/OpMode_APRS.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/file_source.h
 platform/drivers/audio/file_source.c

@@ -70,6 +70,11 @@ struct frameData &Demodulator::getFrame()
     return decoder.getFrame();
 }
 
+bool Demodulator::getDCD()
+{
+    return slicer.getDCD();
+}
+
 bool Demodulator::update(dataBlock_t baseband)
 {
     // operate on the baseband audio sample-by-sample

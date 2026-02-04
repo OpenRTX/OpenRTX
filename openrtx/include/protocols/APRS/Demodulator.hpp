@@ -65,6 +65,13 @@ public:
      */
     struct frameData &getFrame();
 
+    /**
+     * @brief Gets the digital carrier detect (DCD) state from the slicer
+     *
+     * @return Whether or not a DCD is detected
+     */
+    bool getDCD();
+
 private:
     /**
      * @brief Demodulates baseband audio by mark and space frequencies

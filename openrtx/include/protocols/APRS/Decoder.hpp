@@ -62,6 +62,8 @@ public:
 
     /**
      * @brief Gets the ready frame and sets newFrame to false
+     *
+     * @return The ready frame
      */
     struct frameData &getFrame();
 

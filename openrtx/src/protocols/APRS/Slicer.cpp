@@ -22,6 +22,7 @@ bool Slicer::getDCD()
         return true;
     return false;
 }
+
 int8_t Slicer::slice(const int16_t input)
 {
     int8_t result = -1;
