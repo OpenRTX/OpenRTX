@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <cstdio>
+#include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <random>
 #include <array>
@@ -15,13 +15,13 @@
 
 using namespace std;
 
-default_random_engine rng;
+static default_random_engine rng;
 
 /**
- * Insert radom bit flips in input data.
+ * Insert random bit flips in input data.
  */
 template < size_t N >
-void generateErrors(array< uint8_t, N >& data)
+static void generateErrors(array< uint8_t, N >& data)
 {
     uniform_int_distribution< uint8_t > numErrs(0, 4);
     uniform_int_distribution< uint8_t > errPos(0, N);
@@ -34,7 +34,7 @@ void generateErrors(array< uint8_t, N >& data)
     }
 }
 
-int main()
+TEST_CASE("Viterbi decode recovers punctured convolutional encoding", "[m17][viterbi]")
 {
     uniform_int_distribution< uint8_t > rndValue(0, 255);
 
@@ -62,13 +62,8 @@ int main()
 
     for(size_t i = 0; i < result.size(); i++)
     {
-        if(source[i] != result[i])
-        {
-            printf("Error at pos %ld: got %02x, expected %02x\n", i, result[i],
-                                                                     source[i]);
-            return -1;
-        }
+        INFO("Position " << i << ": got 0x" << hex << static_cast<int>(result[i])
+             << " expected 0x" << static_cast<int>(source[i]));
+        REQUIRE(source[i] == result[i]);
     }
-
-    return 0;
 }

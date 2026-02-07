@@ -114,6 +114,11 @@ else
   codec2_dep = cpp.find_library('codec2')
 endif
 
+# Catch2, C++ testing framework (only for native/linux builds)
+if not meson.is_cross_build()
+  catch2_dep = dependency('catch2-with-main', fallback: ['catch2', 'catch2_with_main_dep'])
+endif
+
 # XPowersLib, library for x-powers power management series
 xpowerslib_proj = subproject('XPowersLib')
 
@@ -1042,10 +1047,12 @@ endforeach
 ## ----------------------------------- Unit Tests ------------------------------
 ##
 
+if not meson.is_cross_build()
+
 unit_test_opts = {'c_args'             : linux_c_args,
                   'cpp_args'           : linux_cpp_args,
                   'include_directories': linux_inc,
-                  'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
+                  'dependencies'       : [sdl_dep, threads_dep, codec2_dep, catch2_dep],
                   'link_args'          : linux_l_args}
 
 unit_test_src = linux_src + ui_src_default
@@ -1061,17 +1068,13 @@ m17_viterbi_test = executable('m17_viterbi_test',
 m17_callsign_test = executable('m17_callsign_test',
                       sources : unit_test_src + ['tests/unit/M17_callsign.cpp'],
                       kwargs  : unit_test_opts)
-                 
-m17_demodulator_test = executable('m17_demodulator_test',
-                            sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
-                            kwargs: unit_test_opts)
 
 m17_rrc_test = executable('m17_rrc_test',
                           sources: unit_test_src + ['tests/unit/M17_rrc.cpp'],
                           kwargs: unit_test_opts)
 
 cps_test = executable('cps_test',
-                      sources : unit_test_src + ['tests/unit/cps.c'],
+                      sources : unit_test_src + ['tests/unit/cps.cpp'],
                       kwargs  : unit_test_opts)
 
 linux_inputStream_test = executable('linux_inputStream_test',
@@ -1087,12 +1090,16 @@ vp_test = executable('vp_test',
                       kwargs  : unit_test_opts)
 
 minmea_conversion_test = executable('minmea_conversion_test',
-                                     sources : unit_test_src + ['tests/unit/convert_minmea_coord.c'],
+                                     sources : unit_test_src + ['tests/unit/convert_minmea_coord.cpp'],
                                      kwargs  : unit_test_opts)
+
+## TODO: Re-enable ui_check_standby_test once _ui_checkStandby is made non-static or testable
+## ui_check_standby_test = executable('ui_check_standby_test',
+##                                     sources : unit_test_src + ['tests/unit/ui_check_standby.cpp'],
+##                                     kwargs  : unit_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
-## test('M17 Demodulator Test',  m17_demodulator_test) # Skipped for now as this test no longer works after an M17 refactor
 test('M17 RRC Test',          m17_rrc_test)
 test('M17 Callsign Unit Test',          m17_callsign_test)
 test('Codeplug Test',         cps_test)
@@ -1100,3 +1107,6 @@ test('Codeplug Test',         cps_test)
 ## test('Sine Test',             sine_test)
 ## test('Voice Prompts Test',    vp_test) # Skipped for now as this test no longer works
 test('minmea conversion Test', minmea_conversion_test)
+## test('UI Check Standby Test', ui_check_standby_test)
+
+endif
