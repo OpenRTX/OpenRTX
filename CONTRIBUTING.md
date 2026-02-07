@@ -60,6 +60,25 @@ Changes made to this project need to be verified either manually, using automati
 
 Automated tests can be run locally using meson. For example: `meson setup build && meson test -C build "M17 Golay Unit Test"`.
 
+## Code Coverage
+
+To generate a code coverage report for the unit tests:
+
+```bash
+bash scripts/coverage.sh
+```
+
+This builds with coverage instrumentation, runs the test suite, and produces:
+- **HTML report**: `build_coverage/coverage/index.html` — open in a browser to see per-file line-by-line coverage highlighting
+- **Cobertura XML**: `build_coverage/coverage/cobertura.xml` — machine-readable format used by CI
+
+Coverage is scoped to `openrtx/src/` and `openrtx/include/` only. Third-party code, platform drivers, and test files are excluded.
+
+### Requirements
+
+- GCC (coverage uses `gcov` internally)
+- Python with `gcovr` installed: `pip install gcovr`
+
 ## Making Changes
 
 OpenRTX uses Git for source code management. Each commit should represent a distinct change, and as such often PRs will contain multiple commits. It isn't OK, though, for a commit to contain broken or incomplete changes. Keep your branch's revision history tidy using strategies like squashing.

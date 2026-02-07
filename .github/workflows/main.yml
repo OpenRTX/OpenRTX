@@ -111,9 +111,23 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
+      - name: Install Python tools
+        run: pip install "gcovr>=7.2"
       - name: setup meson
         run: |
           cd ${{github.workspace}}
-          meson setup build
+          meson setup build -Db_coverage=true
       - name: Run unit tests
         run: meson test -C build --print-errorlogs
+      - name: Generate coverage report
+        if: always()
+        run: bash scripts/coverage.sh --ci build
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/cobertura.xml
+      - name: Add coverage to Github step summary
+        run: |
+          cat build/coverage/coverage.md >> $GITHUB_STEP_SUMMARY
