@@ -50,11 +50,8 @@ static inline size_t scrollTextGetDisplayPos(size_t scrollPosition,
 static inline bool scrollTextPeek(const char *buf, char *printBuf,
                                   size_t printBufSize, size_t scrollPosition)
 {
-    if (printBufSize <= 1) {
-        if (printBufSize == 1)
-            printBuf[0] = '\0';
+    if (printBufSize <= 1)
         return false;
-    }
 
     size_t window = printBufSize - 1;
     size_t bufLen = strlen(buf);

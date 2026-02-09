@@ -99,6 +99,7 @@ typedef struct
     const char* radio;
     const char* CAN;
     const char* canRxCheck;
+    const char* metaText;
 }
 stringsTable_t;
 
