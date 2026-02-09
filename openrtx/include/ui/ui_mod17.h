@@ -110,6 +110,7 @@ enum settingsGPSItems
 enum m17Items
 {
     M_CALLSIGN = 0,
+    M_METATEXT,
     M_CAN,
     M_CAN_RX
 };
@@ -168,6 +169,7 @@ typedef struct layout_t
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;
+    fontSize_t message_font;
     fontSize_t mode_font_big;
     fontSize_t mode_font_small;
 } layout_t;
@@ -201,6 +203,8 @@ typedef struct ui_state_t
     char new_time_buf[9];
 #endif
     char new_callsign[10];
+    char new_message[53];
+    bool edit_message;
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 }

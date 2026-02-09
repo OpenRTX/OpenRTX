@@ -182,6 +182,19 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
         case M_CALLSIGN:
             snprintf(buf, max_len, "%s", last_state.settings.callsign);
             return 0;
+        case M_METATEXT:
+            // limit display to 8 characters
+            if (strlen(last_state.settings.M17_meta_text) > 7)
+            {
+                char tmp[9];
+                memcpy(tmp, last_state.settings.M17_meta_text, 7);
+                tmp[8] = 0;
+                // append asterisk to indicate more characters than displayed
+                snprintf(buf, max_len, "%s*", tmp);
+            }
+            else
+                snprintf(buf, max_len, "%s", last_state.settings.M17_meta_text);
+            break;
         case M_CAN:
             snprintf(buf, max_len, "%d", last_state.settings.m17_can);
             break;
@@ -558,6 +571,23 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.input_font,
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+        // Print Button Info
+        gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
+                  color_white, "Cancel");
+        gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_RIGHT,
+                  color_white, "Accept");
+    }
+    else
+    if((ui_state->edit_message) && (ui_state->menu_selected == M_METATEXT))
+    {
+        gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                    layout.horizontal_pad, layout.menu_font,
+                    TEXT_ALIGN_LEFT, color_white, "Meta Txt:");
+
+        // Print M17 message being typed
+        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.message_font,
+                      TEXT_ALIGN_CENTER, color_white, ui_state->new_message);
         // Print Button Info
         gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
                   color_white, "Cancel");
