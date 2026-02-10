@@ -52,6 +52,7 @@ void MetaText::setText(char* srcText)
     }
     memset(text, 0, META_TEXT_MAX_LEN);
     strncpy(text, srcText, META_TEXT_MAX_LEN);
+    resetBlockPaging();
 }
 
 void MetaText::getBlock(meta_t &meta, uint8_t index)
