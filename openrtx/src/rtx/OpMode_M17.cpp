@@ -340,18 +340,6 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.sendPreamble();
         modulator.sendFrame(m17Frame);
     }
-
-    if(state.settings.gps_enabled) {
-        gpsTimer++;
-
-        if(gpsTimer >= GPS_UPDATE_TICKS) {
-            auto lsf = encoder.getCurrentLsf();
-            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
-            encoder.updateLsfData(lsf);
-            gpsTimer = 0;
-        }
-    }
-
     payload_t dataFrame;
     bool      lastFrame = false;
 
@@ -368,6 +356,27 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
     encoder.encodeStreamFrame(dataFrame, m17Frame, lastFrame);
     modulator.sendFrame(m17Frame);
+
+    // After encoding a stream frame the encoder advances its LICH counter.
+    // When it wraps back to zero a new superframe begins and the encoder
+    // will accept an updated LSF.  Schedule the next meta-text block or
+    // GPS update at this boundary so the new data is transmitted during
+    // the upcoming superframe.
+    if(encoder.superframeBoundary())
+    {
+        if(state.settings.gps_enabled)
+        {
+            gpsTimer++;
+
+            if(gpsTimer >= GPS_UPDATE_TICKS)
+            {
+                auto lsf = encoder.getCurrentLsf();
+                lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+                encoder.updateLsfData(lsf);
+                gpsTimer = 0;
+            }
+        }
+    }
 
     if(lastFrame)
     {

@@ -121,7 +121,9 @@ private:
      */
     bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
 
-    static constexpr uint16_t GPS_UPDATE_TICKS = 5 * 30;
+    // GPS update interval in superframes. Each superframe is 6 LICH frames
+    // (~240 ms), so 25 superframes ≈ 6 seconds.
+    static constexpr uint16_t GPS_UPDATE_TICKS = 25;
 
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
