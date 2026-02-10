@@ -323,6 +323,12 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
         lsf.setType(type);
 
+        if(strlen(state.settings.M17_meta_text) > 0) {
+            metaText.setText(state.settings.M17_meta_text);
+            metaText.resetBlockPaging();
+            metaText.getNextBlock(lsf.metadata());
+        }
+
         if(state.settings.gps_enabled) {
             lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
             gpsTimer = 0;
@@ -364,6 +370,13 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     // the upcoming superframe.
     if(encoder.superframeBoundary())
     {
+        if(strlen(state.settings.M17_meta_text) > 0)
+        {
+            auto lsf = encoder.getCurrentLsf();
+            metaText.getNextBlock(lsf.metadata());
+            encoder.updateLsfData(lsf);
+        }
+
         if(state.settings.gps_enabled)
         {
             gpsTimer++;
