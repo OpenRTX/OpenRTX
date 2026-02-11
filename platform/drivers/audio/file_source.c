@@ -40,14 +40,16 @@ static int fileSource_data(struct streamCtx *ctx, stream_sample_t **buf)
         return -1;
 
     FILE *fp  = (FILE *) ctx->priv;
-    stream_sample_t *dest = *buf;
     size_t size = ctx->bufSize;
-    size_t i;
 
     if(ctx->bufMode == BUF_CIRC_DOUBLE)
         size /= 2;
 
+    stream_sample_t *dest = ctx->buffer;
+    *buf = dest;
+
     // Read data from the file, rollover when end is reached
+    size_t i = 0;
     while (i < size)
     {
         size_t n = fread(dest + i, sizeof(stream_sample_t), size - i, fp);
