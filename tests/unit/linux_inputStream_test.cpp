@@ -15,17 +15,15 @@
 
 #include "core/audio_stream.h"
 
-static const char* files[] = {"MIC.raw", "RTX.raw", "MCU.raw"};
+static const char *files[] = { "MIC.raw", "RTX.raw", "MCU.raw" };
 
 static void test_linear()
 {
-    for (int fn = 0; fn < 3; fn++)
-    {
+    for (int fn = 0; fn < 3; fn++) {
         // Write a mock audio file
-        FILE* fp = fopen(files[fn], "wb");
+        FILE *fp = fopen(files[fn], "wb");
         REQUIRE(fp);
-        for (int i = 0; i < 13; i++)
-        {
+        for (int i = 0; i < 13; i++) {
             REQUIRE(fputc(i, fp) == i);
             REQUIRE(fputc(0, fp) == 0);
         }
@@ -33,26 +31,30 @@ static void test_linear()
 
         // Start inputStream using that file as source
         stream_sample_t tmp[128];
-        auto id = inputStream_start(
-            static_cast<AudioSource>(fn), AudioPriority::PRIO_PROMPT, tmp,
-            sizeof(tmp) / sizeof(tmp[0]), BufMode::BUF_LINEAR, 44100);
+        auto id = inputStream_start(static_cast<AudioSource>(fn),
+                                    AudioPriority::PRIO_PROMPT, tmp,
+                                    sizeof(tmp) / sizeof(tmp[0]),
+                                    BufMode::BUF_LINEAR, 44100);
         REQUIRE(id != -1);
 
         // Should fail
-        auto id_2 = inputStream_start(
-            static_cast<AudioSource>(fn), AudioPriority::PRIO_BEEP, tmp,
-            sizeof(tmp) / sizeof(tmp[0]), BufMode::BUF_LINEAR, 44100);
+        auto id_2 = inputStream_start(static_cast<AudioSource>(fn),
+                                      AudioPriority::PRIO_BEEP, tmp,
+                                      sizeof(tmp) / sizeof(tmp[0]),
+                                      BufMode::BUF_LINEAR, 44100);
         REQUIRE(id_2 == -1);
 
-        auto id_3 = inputStream_start(
-            static_cast<AudioSource>(fn), AudioPriority::PRIO_RX, tmp,
-            sizeof(tmp) / sizeof(tmp[0]), BufMode::BUF_LINEAR, 44100);
+        auto id_3 = inputStream_start(static_cast<AudioSource>(fn),
+                                      AudioPriority::PRIO_RX, tmp,
+                                      sizeof(tmp) / sizeof(tmp[0]),
+                                      BufMode::BUF_LINEAR, 44100);
         REQUIRE(id_3 == -1);
 
         // This should work, as it has higher priority
-        auto id_4 = inputStream_start(
-            static_cast<AudioSource>(fn), AudioPriority::PRIO_TX, tmp,
-            sizeof(tmp) / sizeof(tmp[0]), BufMode::BUF_LINEAR, 44100);
+        auto id_4 = inputStream_start(static_cast<AudioSource>(fn),
+                                      AudioPriority::PRIO_TX, tmp,
+                                      sizeof(tmp) / sizeof(tmp[0]),
+                                      BufMode::BUF_LINEAR, 44100);
         REQUIRE(id_4 != -1);
 
         {
@@ -67,12 +69,11 @@ static void test_linear()
 
         int c_ptr = 0;
         // getData multiple times
-        for (int i = 0; i < 20; i++)
-        {
+        for (int i = 0; i < 20; i++) {
             using namespace std::chrono;
-            auto t1              = steady_clock::now();
-            auto db              = inputStream_getData(id);
-            auto t2              = steady_clock::now();
+            auto t1 = steady_clock::now();
+            auto db = inputStream_getData(id);
+            auto t2 = steady_clock::now();
             const uint64_t delta = duration_cast<microseconds>(t2 - t1).count();
             const uint64_t expected = (128 * 1000000 / 44100);
 
@@ -82,8 +83,7 @@ static void test_linear()
 
             // Check the contents
             REQUIRE(db.len == 128);
-            for (int i = 0; i < 128; i++)
-            {
+            for (int i = 0; i < 128; i++) {
                 REQUIRE(tmp[i] == (c_ptr % 13));
                 REQUIRE(db.data[i] == (c_ptr % 13));
                 c_ptr++;
@@ -96,28 +96,26 @@ static void test_linear()
     }
 }
 
-static void test_ring_buffer(uint64_t n_bytes,
-                              uint64_t n_iter,
-                              const uint64_t buf_size)
+static void test_ring_buffer(uint64_t n_bytes, uint64_t n_iter,
+                             const uint64_t buf_size)
 {
-    for (int fn = 0; fn < 3; fn++)
-    {
-        FILE* fp = fopen(files[fn], "wb");
+    for (int fn = 0; fn < 3; fn++) {
+        FILE *fp = fopen(files[fn], "wb");
         REQUIRE(fp);
 
-        for (uint64_t i = 0; i < n_bytes; i++)
-        {
-            uint16_t j   = i;
-            uint8_t* buf = (uint8_t*)&j;
+        for (uint64_t i = 0; i < n_bytes; i++) {
+            uint16_t j = i;
+            uint8_t *buf = (uint8_t *)&j;
             REQUIRE(fputc(buf[0], fp) == buf[0]);
             REQUIRE(fputc(buf[1], fp) == buf[1]);
         }
         fclose(fp);
 
         std::vector<stream_sample_t> tmp(buf_size);
-        auto id = inputStream_start(
-            static_cast<AudioSource>(fn), AudioPriority::PRIO_BEEP, tmp.data(),
-            tmp.size(), BufMode::BUF_CIRC_DOUBLE, 44100);
+        auto id = inputStream_start(static_cast<AudioSource>(fn),
+                                    AudioPriority::PRIO_BEEP, tmp.data(),
+                                    tmp.size(), BufMode::BUF_CIRC_DOUBLE,
+                                    44100);
         REQUIRE(id != -1);
 
         using namespace std::chrono;
@@ -125,16 +123,14 @@ static void test_ring_buffer(uint64_t n_bytes,
 
         uint64_t ctr = 0;
         std::vector<stream_sample_t> tmp2(buf_size / 2);
-        for (uint64_t i = 0; i < n_iter; i++)
-        {
+        for (uint64_t i = 0; i < n_iter; i++) {
             {
                 auto db = inputStream_getData(id);
 
                 REQUIRE(db.len > 0);
                 REQUIRE(db.data == &tmp[0]);
                 memcpy(tmp2.data(), db.data, db.len * sizeof(stream_sample_t));
-                for (uint64_t i = 0; i < db.len; i++)
-                {
+                for (uint64_t i = 0; i < db.len; i++) {
                     REQUIRE(uint16_t(tmp2[i]) == uint16_t(ctr % n_bytes));
                     ctr++;
                 }
@@ -146,16 +142,15 @@ static void test_ring_buffer(uint64_t n_bytes,
                 REQUIRE(db.len > 0);
                 REQUIRE(db.data == &tmp[buf_size / 2]);
                 memcpy(tmp2.data(), db.data, db.len * sizeof(stream_sample_t));
-                for (uint64_t i = 0; i < db.len; i++)
-                {
+                for (uint64_t i = 0; i < db.len; i++) {
                     REQUIRE(uint16_t(tmp2[i]) == uint16_t(ctr % n_bytes));
                     ctr++;
                 }
             }
         }
 
-        auto t2                 = steady_clock::now();
-        const uint64_t delta    = duration_cast<microseconds>(t2 - t0).count();
+        auto t2 = steady_clock::now();
+        const uint64_t delta = duration_cast<microseconds>(t2 - t0).count();
         const uint64_t expected = (buf_size * n_iter * 1000000lu / 44100);
         REQUIRE(delta > expected);
         REQUIRE(delta < expected * 2);

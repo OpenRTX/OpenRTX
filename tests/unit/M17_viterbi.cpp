@@ -20,28 +20,26 @@ static default_random_engine rng;
 /**
  * Insert random bit flips in input data.
  */
-template < size_t N >
-static void generateErrors(array< uint8_t, N >& data)
+template <size_t N> static void generateErrors(array<uint8_t, N> &data)
 {
-    uniform_int_distribution< uint8_t > numErrs(0, 4);
-    uniform_int_distribution< uint8_t > errPos(0, N);
+    uniform_int_distribution<uint8_t> numErrs(0, 4);
+    uniform_int_distribution<uint8_t> errPos(0, N);
 
-    for(uint8_t i = 0; i < numErrs(rng); i++)
-    {
+    for (uint8_t i = 0; i < numErrs(rng); i++) {
         uint8_t pos = errPos(rng);
-        bool    bit = M17::getBit(data, pos);
+        bool bit = M17::getBit(data, pos);
         M17::setBit(data, pos, !bit);
     }
 }
 
-TEST_CASE("Viterbi decode recovers punctured convolutional encoding", "[m17][viterbi]")
+TEST_CASE("Viterbi decode recovers punctured convolutional encoding",
+          "[m17][viterbi]")
 {
-    uniform_int_distribution< uint8_t > rndValue(0, 255);
+    uniform_int_distribution<uint8_t> rndValue(0, 255);
 
-    array< uint8_t, 18 > source;
+    array<uint8_t, 18> source;
 
-    for(auto& byte : source)
-    {
+    for (auto &byte : source) {
         byte = rndValue(rng);
     }
 
@@ -56,14 +54,14 @@ TEST_CASE("Viterbi decode recovers punctured convolutional encoding", "[m17][vit
 
     generateErrors(punctured);
 
-    array< uint8_t, 18 > result;
+    array<uint8_t, 18> result;
     M17::M17HardViterbi decoder;
     decoder.decodePunctured(punctured, result, M17::DATA_PUNCTURE);
 
-    for(size_t i = 0; i < result.size(); i++)
-    {
-        INFO("Position " << i << ": got 0x" << hex << static_cast<int>(result[i])
-             << " expected 0x" << static_cast<int>(source[i]));
+    for (size_t i = 0; i < result.size(); i++) {
+        INFO("Position " << i << ": got 0x" << hex
+                         << static_cast<int>(result[i]) << " expected 0x"
+                         << static_cast<int>(source[i]));
         REQUIRE(source[i] == result[i]);
     }
 }

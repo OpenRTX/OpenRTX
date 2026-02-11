@@ -19,11 +19,10 @@ static default_random_engine rng;
 static uint32_t generateErrorMask(uint8_t numErrors)
 {
     uint32_t errorMask = 0;
-    uniform_int_distribution< uint8_t > errPos(0, 23);
+    uniform_int_distribution<uint8_t> errPos(0, 23);
 
     // Keep adding error bits until we have enough distinct positions
-    while(static_cast< uint8_t >(__builtin_popcount(errorMask)) < numErrors)
-    {
+    while (static_cast<uint8_t>(__builtin_popcount(errorMask)) < numErrors) {
         errorMask |= 1 << errPos(rng);
     }
 
@@ -32,10 +31,9 @@ static uint32_t generateErrorMask(uint8_t numErrors)
 
 TEST_CASE("Golay24 encode/decode without errors", "[m17][golay]")
 {
-    uniform_int_distribution< uint16_t > rndValue(0, 2047);
+    uniform_int_distribution<uint16_t> rndValue(0, 2047);
 
-    for(uint32_t i = 0; i < 10000; i++)
-    {
+    for (uint32_t i = 0; i < 10000; i++) {
         uint16_t value = rndValue(rng);
         uint32_t cword = M17::golay24_encode(value);
         uint16_t decoded = M17::golay24_decode(cword);
@@ -46,10 +44,9 @@ TEST_CASE("Golay24 encode/decode without errors", "[m17][golay]")
 
 TEST_CASE("Golay24 corrects 1 bit error", "[m17][golay]")
 {
-    uniform_int_distribution< uint16_t > rndValue(0, 2047);
+    uniform_int_distribution<uint16_t> rndValue(0, 2047);
 
-    for(uint32_t i = 0; i < 10000; i++)
-    {
+    for (uint32_t i = 0; i < 10000; i++) {
         uint16_t value = rndValue(rng);
         uint32_t cword = M17::golay24_encode(value);
         uint32_t emask = generateErrorMask(1);
@@ -61,10 +58,9 @@ TEST_CASE("Golay24 corrects 1 bit error", "[m17][golay]")
 
 TEST_CASE("Golay24 corrects 2 bit errors", "[m17][golay]")
 {
-    uniform_int_distribution< uint16_t > rndValue(0, 2047);
+    uniform_int_distribution<uint16_t> rndValue(0, 2047);
 
-    for(uint32_t i = 0; i < 10000; i++)
-    {
+    for (uint32_t i = 0; i < 10000; i++) {
         uint16_t value = rndValue(rng);
         uint32_t cword = M17::golay24_encode(value);
         uint32_t emask = generateErrorMask(2);
@@ -76,10 +72,9 @@ TEST_CASE("Golay24 corrects 2 bit errors", "[m17][golay]")
 
 TEST_CASE("Golay24 corrects 3 bit errors", "[m17][golay]")
 {
-    uniform_int_distribution< uint16_t > rndValue(0, 2047);
+    uniform_int_distribution<uint16_t> rndValue(0, 2047);
 
-    for(uint32_t i = 0; i < 10000; i++)
-    {
+    for (uint32_t i = 0; i < 10000; i++) {
         uint16_t value = rndValue(rng);
         uint32_t cword = M17::golay24_encode(value);
         uint32_t emask = generateErrorMask(3);
@@ -89,16 +84,16 @@ TEST_CASE("Golay24 corrects 3 bit errors", "[m17][golay]")
     }
 }
 
-TEST_CASE("Golay24 with 4+ bit errors returns 0xFFFF or incorrect correction", "[m17][golay]")
+TEST_CASE("Golay24 with 4+ bit errors returns 0xFFFF or incorrect correction",
+          "[m17][golay]")
 {
-    uniform_int_distribution< uint16_t > rndValue(0, 2047);
-    uniform_int_distribution< uint8_t > numErrs(4, 5);
+    uniform_int_distribution<uint16_t> rndValue(0, 2047);
+    uniform_int_distribution<uint8_t> numErrs(4, 5);
 
-    for(uint32_t i = 0; i < 10000; i++)
-    {
+    for (uint32_t i = 0; i < 10000; i++) {
         uint16_t value = rndValue(rng);
         uint32_t cword = M17::golay24_encode(value);
-        uint8_t  nerrs = numErrs(rng);
+        uint8_t nerrs = numErrs(rng);
         uint32_t emask = generateErrorMask(nerrs);
         uint16_t decoded = M17::golay24_decode(cword ^ emask);
 
@@ -109,9 +104,8 @@ TEST_CASE("Golay24 with 4+ bit errors returns 0xFFFF or incorrect correction", "
         // be silently returning the original value (which would mean the
         // error mask had no net effect, but that's impossible since we
         // guarantee popcount >= 4).
-        INFO("Value: " << value << " Error mask: " << emask
-             << " Errors: " << static_cast<int>(nerrs)
-             << " Decoded: " << decoded);
+        INFO("Value: " << value << " Error mask: " << emask << " Errors: "
+                       << static_cast<int>(nerrs) << " Decoded: " << decoded);
         CHECK((decoded == 0xFFFF || decoded != value || decoded == value));
     }
 }
