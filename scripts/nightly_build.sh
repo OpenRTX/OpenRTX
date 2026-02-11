@@ -65,25 +65,25 @@ TARGETS=(
 )
 
 #Preparation
-rm -rf build_arm
+rm -rf build_cm4
 git reset --hard
 git clean -fd
 git pull
 
 #Building
 
-meson setup --cross-file cross_arm.txt build_arm
+meson setup --cross-file cross_cm4.txt build_cm4
 
 for i in "${!TARGETS[@]}"; do
-   meson compile -C build_arm "${TARGETS[$i]}"
+   meson compile -C build_cm4 "${TARGETS[$i]}"
    if [ "$T" -eq "1" ]; then
      GIT_HASH=`git rev-parse --short HEAD`
      DATE=`date '+%Y%m%d'`
-     mv build_arm/${TARGETS[$i]}* "build_arm/${TARGETS[$i]}-$DATE-$GIT_HASH-nightly.bin"  
+     mv build_cm4/${TARGETS[$i]}* "build_cm4/${TARGETS[$i]}-$DATE-$GIT_HASH-nightly.bin"  
    fi 
 done
 
-cd build_arm
+cd build_cm4
 #Using command line option to upload to a scp server
 scp *_wrap* "${@: -1}"
 

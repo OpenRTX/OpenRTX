@@ -20,7 +20,7 @@ c_args      = [
                '-Wall',
                '-Werror=return-type',
                '-g',
-               '-mcpu=cortex-m7',           # Cortex-M4 CPU
+               '-mcpu=cortex-m7',           # Cortex-M7 CPU
                '-mthumb',                   # ARM Thumb2 ISA
                '-mfloat-abi=hard',          # Hard floating point support
                '-mfpu=fpv5-d16',
@@ -38,7 +38,7 @@ cpp_args    = [
                '-fno-rtti',
                '-D__NO_EXCEPTIONS',
                '-std=c++14',
-               '-mcpu=cortex-m7',           # Cortex-M4 CPU
+               '-mcpu=cortex-m7',           # Cortex-M7 CPU
                '-mthumb',                   # ARM Thumb2 ISA
                '-mfloat-abi=hard',          # Hard floating point support
                '-mfpu=fpv5-d16',
@@ -71,5 +71,5 @@ cpp_link_args = c_link_args
 [host_machine]
 system = 'none'
 cpu_family = 'arm'
-cpu = 'cortex-m4'
+cpu = 'cortex-m7'
 endian = 'little'
