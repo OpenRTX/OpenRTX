@@ -40,9 +40,9 @@ static int fileSource_data(struct streamCtx *ctx, stream_sample_t **buf)
         return -1;
 
     FILE *fp  = (FILE *) ctx->priv;
-    stream_sample_t *dest = *buf;
+    stream_sample_t *dest = ctx->buffer;
     size_t size = ctx->bufSize;
-    size_t i;
+    size_t i = 0;
 
     if(ctx->bufMode == BUF_CIRC_DOUBLE)
         size /= 2;
@@ -57,6 +57,7 @@ static int fileSource_data(struct streamCtx *ctx, stream_sample_t **buf)
         i += n;
     }
 
+    *buf = dest;
     return size;
 }
 
