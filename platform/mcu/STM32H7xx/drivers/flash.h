@@ -22,18 +22,22 @@ extern "C" {
 /**
  * Erase one sector of the MCU flash memory.
  *
- * @param secNum: sector number.
+ * @param secNum: sector number. Sectors from bank 2 are numbered 8->15. 
  * @return true for successful erase, false otherwise.
  */
 bool flash_eraseSector(const uint8_t secNum);
 
 /**
- * Write data to the MCU flash memory.
+ * Write data to the MCU flash memory. The address MUST be a multiple of 32
+ * (32 bytes aligned). The length MUST be a multiple of 32. The length MUST
+ * be a multiple of 32 bytes. This is to prevent ECC errors as the memory is
+ * designed with 10 bits of ECC for 256 bits of memory.
  *
  * @param address: starting address for the write operation.
  * @param data: data to be written.
  * @param len: data length.
- * @return true for successful write, false otherwise
+
+ * @return true on successful write, false otherwise.
  */
 bool flash_write(const uint32_t address, const void *data, const size_t len);
 
