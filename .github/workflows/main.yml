@@ -20,37 +20,37 @@ jobs:
         with:
           runCmd: |
             meson setup build_linux &&
-            meson setup --cross-file cross_arm.txt build_arm &&
+            meson setup --cross-file cross_cm4.txt build_cm4 &&
             meson setup --cross-file cross_cm7.txt build_cm7 &&
             meson compile -C build_linux openrtx_linux &&
             meson compile -C build_linux openrtx_linux_smallscreen &&
             meson compile -C build_linux openrtx_linux_mod17 &&
-            meson compile -C build_arm openrtx_cs7000_bin &&
-            meson compile -C build_arm openrtx_cs7000_dfu &&
-            meson compile -C build_arm openrtx_dm1701_wrap &&
-            meson compile -C build_arm openrtx_dm1801_wrap &&
-            meson compile -C build_arm openrtx_md3x0_wrap &&
-            meson compile -C build_arm openrtx_md9600_wrap &&
-            meson compile -C build_arm openrtx_mduv3x0_wrap &&
-            meson compile -C build_arm openrtx_mod17_bin &&
-            meson compile -C build_arm openrtx_gd77_wrap &&
+            meson compile -C build_cm4 openrtx_cs7000_bin &&
+            meson compile -C build_cm4 openrtx_cs7000_dfu &&
+            meson compile -C build_cm4 openrtx_dm1701_wrap &&
+            meson compile -C build_cm4 openrtx_dm1801_wrap &&
+            meson compile -C build_cm4 openrtx_md3x0_wrap &&
+            meson compile -C build_cm4 openrtx_md9600_wrap &&
+            meson compile -C build_cm4 openrtx_mduv3x0_wrap &&
+            meson compile -C build_cm4 openrtx_mod17_bin &&
+            meson compile -C build_cm4 openrtx_gd77_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_dfu &&
             chmod -R 777 * &&
             ls build_cm7/ &&
-            ls build_arm/ &&
+            ls build_cm4/ &&
             ls build_linux/ &&
             mv build_cm7/openrtx_cs7000p_wrap openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin &&
             mv build_cm7/openrtx_cs7000p_dfu openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu &&
-            mv build_arm/openrtx_cs7000_bin openrtx_cs7000_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_cs7000_dfu openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu &&
-            mv build_arm/openrtx_dm1701_wrap openrtx_dm1701_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_dm1801_bin.sgl openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl &&
-            mv build_arm/openrtx_gd77_bin.sgl openrtx_gd77_${{ env.BRANCH_NAME }}.sgl &&
+            mv build_cm4/openrtx_cs7000_bin openrtx_cs7000_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_cs7000_dfu openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu &&
+            mv build_cm4/openrtx_dm1701_wrap openrtx_dm1701_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_dm1801_bin.sgl openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl &&
+            mv build_cm4/openrtx_gd77_bin.sgl openrtx_gd77_${{ env.BRANCH_NAME }}.sgl &&
             mv build_linux/openrtx_linux openrtx_linux_${{ env.BRANCH_NAME }} &&
-            mv build_arm/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
-            mv build_arm/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
+            mv build_cm4/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
       - uses: actions/upload-artifact@v4
         with:
           name: release-bins

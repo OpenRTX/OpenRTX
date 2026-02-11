@@ -4,14 +4,14 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "setup arm build",
+      "label": "setup cm4 build",
       "type": "shell",
-      "command": "meson setup --cross-file cross_arm.txt build_arm"
+      "command": "meson setup --cross-file cross_cm4.txt build_cm4"
     },
     {
       "label": "build TYT MD-380, MD-390, Retevis RT3, Retevis RT8",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_md3x0",
+      "command": "meson compile -C build_cm4 openrtx_md3x0",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",
@@ -20,7 +20,7 @@
     {
       "label": "build TYT MD-UV380, MD-UV390, Retevis RT3s",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_mduv3x0",
+      "command": "meson compile -C build_cm4 openrtx_mduv3x0",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",
@@ -29,7 +29,7 @@
     {
       "label": "build TYT MD-9600",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_md9600",
+      "command": "meson compile -C build_cm4 openrtx_md9600",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",
@@ -38,7 +38,7 @@
     {
       "label": "build Radioddity GD-77",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_gd77",
+      "command": "meson compile -C build_cm4 openrtx_gd77",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",
@@ -47,7 +47,7 @@
     {
       "label": "build Baofeng DM1701",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_dm1701",
+      "command": "meson compile -C buildbuild_cm4_arm openrtx_dm1701",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",
@@ -56,7 +56,7 @@
     {
       "label": "build Baofeng DM1801",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_dm1801",
+      "command": "meson compile -C build_cm4 openrtx_dm1801",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",
@@ -65,7 +65,7 @@
     {
       "label": "build Module17",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_mod17",
+      "command": "meson compile -C build_cm4 openrtx_mod17",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",
@@ -74,7 +74,7 @@
     {
       "label": "build Connect Systems CS7000-M17",
       "type": "shell",
-      "command": "meson compile -C build_arm openrtx_cs7000",
+      "command": "meson compile -C build_cm4 openrtx_cs7000",
       "dependsOrder": "sequence",
       "dependsOn": [
         "setup arm build",

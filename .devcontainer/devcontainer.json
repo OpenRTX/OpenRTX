@@ -15,5 +15,5 @@
       ]
     }
   },
-  "postCreateCommand": "meson setup --cross-file cross_arm.txt build_arm && meson setup --cross-file cross_cm7.txt build_cm7 && meson setup build_linux"
+  "postCreateCommand": "meson setup --cross-file cross_cm4.txt build_cm4 && meson setup --cross-file cross_cm7.txt build_cm7 && meson setup build_linux"
 }
