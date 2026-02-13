@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #include "core/dsp.h"
 #include "protocols/APRS/constants.h"
 #include "protocols/APRS/Demodulator.hpp"
