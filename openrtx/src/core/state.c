@@ -80,9 +80,11 @@ void state_init()
 
 void state_terminate()
 {
+#ifdef CONFIG_APRS
     /* free APRS packets that have been stored */
     for (aprsPacket_t *pkt = state.aprsStoredPkts; pkt; pkt = pkt->next)
         aprsPktFree(pkt);
+#endif
 
     // Never store a brightness of 0 to avoid booting with a black screen
     if(state.settings.brightness == 0)
