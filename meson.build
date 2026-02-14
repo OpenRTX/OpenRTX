@@ -12,13 +12,6 @@ project('OpenRTX', ['c', 'cpp'],
 openrtx_def = {}
 
 ##
-## UI font configuration, only one uncommented at a time
-##
-
-openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
-# openrtx_def += {'FONT_FREE_SANS': ''}
-
-##
 ## Firmware configuration parameters
 ##
 
@@ -124,6 +117,41 @@ xpowerslib_proj = subproject('XPowersLib')
 locale = get_option('locale')
 ui_strings_generated = files('openrtx/src/core/locale_generated/ui_strings_' + locale + '.c')
 openrtx_src += ui_strings_generated
+
+##
+## Font generation - build Unicode bitmap fonts from TTF at build time
+##
+
+font_file = get_option('font')
+gen_font = find_program('scripts/gen_font.py')
+
+if locale == 'en_US'
+  text_font_generated = custom_target(
+    'text_font_generated',
+    input  : 'openrtx/include/ui/ui_strings.h',
+    output : 'text_font_generated.c',
+    command: [gen_font,
+              '--font', font_file,
+              '--struct', '@INPUT0@',
+              '--sizes', '5,6,8,9,10,12,16',
+              '--output', '@OUTPUT@'],
+  )
+else
+  text_font_generated = custom_target(
+    'text_font_generated',
+    input  : ['openrtx/include/ui/ui_strings.h',
+               'openrtx/src/locale' / (locale + '.po')],
+    output : 'text_font_generated.c',
+    command: [gen_font,
+              '--font', font_file,
+              '--struct', '@INPUT0@',
+              '--po', '@INPUT1@',
+              '--sizes', '5,6,8,9,10,12,16',
+              '--output', '@OUTPUT@'],
+  )
+endif
+
+openrtx_src += [text_font_generated]
 
 ##
 ## RTOS

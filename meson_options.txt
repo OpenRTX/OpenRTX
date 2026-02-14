@@ -2,3 +2,4 @@ option('asan', type : 'boolean', value : false, description : 'Compile the softw
 option('ubsan', type : 'boolean', value : false, description : 'Compile the software with Undefined Behaviour Sanitizer')
 option('test', type: 'string', description: 'Replace the main OpenRTX source file with a specialized test')
 option('locale', type: 'string', value: 'en_US', description: 'Locale for UI strings (e.g. en_US, es, fr, de)')
+option('font', type: 'string', value: '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf', description: 'Path to TrueType font file for UI text rendering')

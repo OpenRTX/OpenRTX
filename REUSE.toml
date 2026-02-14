@@ -14,7 +14,7 @@ precedence = "override"
 
 [[annotations]]
 path = "openrtx/include/fonts/adafruit/**/*"
-SPDX-License-Identifier = "Ubuntu-font-1.0"
+SPDX-License-Identifier = "BSD-2-Clause"
 SPDX-FileCopyrightText = "2012 Adafruit Industries"
 precedence = "override"
 
