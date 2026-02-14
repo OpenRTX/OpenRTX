@@ -535,7 +535,7 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
         uint8_t w = glyph->width, h = glyph->height;
         int8_t xo = glyph->xOffset,
                yo = glyph->yOffset;
-        uint8_t xx, yy, bits = 0, bit = 0;
+        uint8_t xx, yy;
         line_h = h;
 
         // Handle wrap around
@@ -547,31 +547,82 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
             start.y += f->yAdvance;
         }
 
-        // Draw bitmap
-        for (yy = 0; yy < h; yy++)
+        // Draw bitmap — use separate loops for 1-bit (fast) and N-bit (alpha)
+        if (f->bitsPerPixel == 1)
         {
-            for (xx = 0; xx < w; xx++)
+            // Original 1-bit drawing path (no alpha blending overhead)
+            uint8_t bits = 0, bit = 0;
+            for (yy = 0; yy < h; yy++)
             {
-                if (!(bit++ & 7))
+                for (xx = 0; xx < w; xx++)
                 {
-                    bits = bitmap[bo++];
-                }
-
-                if (bits & 0x80)
-                {
-                    if (start.y + yo + yy < CONFIG_SCREEN_HEIGHT &&
-                        start.x + xo + xx < CONFIG_SCREEN_WIDTH &&
-                        start.y + yo + yy > 0 &&
-                        start.x + xo + xx > 0)
+                    if (!(bit++ & 7))
                     {
-                        point_t pos;
-                        pos.x = start.x + xo + xx;
-                        pos.y = start.y + yo + yy;
-                        gfx_setPixel(pos, color);
+                        bits = bitmap[bo++];
+                    }
+
+                    if (bits & 0x80)
+                    {
+                        if (start.y + yo + yy < CONFIG_SCREEN_HEIGHT &&
+                            start.x + xo + xx < CONFIG_SCREEN_WIDTH &&
+                            start.y + yo + yy > 0 &&
+                            start.x + xo + xx > 0)
+                        {
+                            point_t pos;
+                            pos.x = start.x + xo + xx;
+                            pos.y = start.y + yo + yy;
+                            gfx_setPixel(pos, color);
+                        }
+                    }
+
+                    bits <<= 1;
+                }
+            }
+        }
+        else
+        {
+            // N-bit anti-aliased drawing path
+            const uint8_t bpp = f->bitsPerPixel;
+            const uint8_t maxVal = (1 << bpp) - 1;
+            uint8_t bitsLeft = 0;
+            uint8_t bits = 0;
+
+            for (yy = 0; yy < h; yy++)
+            {
+                for (xx = 0; xx < w; xx++)
+                {
+                    // Refill bits buffer when empty
+                    if (bitsLeft < bpp)
+                    {
+                        bits = bitmap[bo++];
+                        bitsLeft = 8;
+                    }
+
+                    // Extract top N bits
+                    uint8_t alpha_val = (bits >> (8 - bpp)) & maxVal;
+                    bits <<= bpp;
+                    bitsLeft -= bpp;
+
+                    if (alpha_val > 0)
+                    {
+                        int16_t px = start.x + xo + xx;
+                        int16_t py = start.y + yo + yy;
+                        if (py < CONFIG_SCREEN_HEIGHT &&
+                            px < CONFIG_SCREEN_WIDTH &&
+                            py > 0 && px > 0)
+                        {
+                            point_t pos;
+                            pos.x = px;
+                            pos.y = py;
+                            color_t c = color;
+                            // Scale alpha_val to 0-255 range
+                            c.alpha = (bpp == 8) ? alpha_val
+                                    : (uint8_t)((uint16_t)alpha_val * 255 / maxVal);
+                            gfx_setPixel(pos, c);
+                        }
                     }
                 }
-
-                bits <<= 1;
+                // Contiguous packing: do NOT reset bitsLeft between rows
             }
         }
 

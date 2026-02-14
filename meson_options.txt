@@ -3,3 +3,5 @@ option('ubsan', type : 'boolean', value : false, description : 'Compile the soft
 option('test', type: 'string', description: 'Replace the main OpenRTX source file with a specialized test')
 option('locale', type: 'string', value: 'en_US', description: 'Locale for UI strings (e.g. en_US, es, fr, de)')
 option('font', type: 'string', value: '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf', description: 'Path to TrueType font file for UI text rendering')
+option('font_bpp', type: 'integer', value: 1, min: 1, max: 8,
+       description: 'Bits per pixel for font anti-aliasing (1=mono, 2/4/8=anti-aliased). Use 1 for BW displays, 4 for RGB565.')

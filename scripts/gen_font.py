@@ -130,11 +130,30 @@ def collect_locale_codepoints(struct_path, po_path=None):
 ADAFRUIT_DPI = 141
 
 
-def render_font_size(font_path, pt_size, codepoints):
+def pack_nbits(values, bpp):
+    """Pack a list of N-bit values into bytes, MSB-first."""
+    packed = bytearray()
+    bits_in_byte = 0
+    current_byte = 0
+    for v in values:
+        current_byte = (current_byte << bpp) | (v & ((1 << bpp) - 1))
+        bits_in_byte += bpp
+        if bits_in_byte >= 8:
+            packed.append(current_byte & 0xFF)
+            current_byte = 0
+            bits_in_byte = 0
+    # Flush remaining bits (pad with zeros)
+    if bits_in_byte > 0:
+        current_byte <<= (8 - bits_in_byte)
+        packed.append(current_byte & 0xFF)
+    return packed
+
+
+def render_font_size(font_path, pt_size, codepoints, bpp=1):
     """Render all requested codepoints at the given point size.
 
     Returns (bitmap_bytes, glyphs_list, y_advance) where:
-        bitmap_bytes: packed 1-bit bitmap data (contiguous, not row-aligned)
+        bitmap_bytes: packed N-bit bitmap data (contiguous, not row-aligned)
         glyphs_list: list of dicts with glyph metadata, sorted by codepoint
         y_advance: line height in pixels
     """
@@ -146,7 +165,14 @@ def render_font_size(font_path, pt_size, codepoints):
 
     bitmap_data = bytearray()
     glyphs = []
-    bit_pos = 0  # current bit position in the packed output
+
+    # Choose FreeType load flags based on bpp
+    if bpp == 1:
+        load_flags = freetype.FT_LOAD_RENDER | freetype.FT_LOAD_TARGET_MONO
+    else:
+        load_flags = freetype.FT_LOAD_RENDER
+
+    max_val = (1 << bpp) - 1
 
     for cp in codepoints:
         # Load glyph
@@ -155,8 +181,7 @@ def render_font_size(font_path, pt_size, codepoints):
             # Glyph not available in this font — skip
             continue
 
-        face.load_char(chr(cp),
-                       freetype.FT_LOAD_RENDER | freetype.FT_LOAD_TARGET_MONO)
+        face.load_char(chr(cp), load_flags)
         ft_bitmap = face.glyph.bitmap
         ft_width = ft_bitmap.width
         ft_height = ft_bitmap.rows
@@ -170,25 +195,36 @@ def render_font_size(font_path, pt_size, codepoints):
         # Record bitmap offset (in bytes, since we byte-align each glyph)
         byte_offset = len(bitmap_data)
 
-        # Pack bitmap bits contiguously (matching Adafruit format)
-        glyph_bits = []
-        for row in range(ft_height):
-            for col in range(ft_width):
-                byte_idx = row * ft_pitch + col // 8
-                bit_mask = 0x80 >> (col % 8)
-                if byte_idx < len(ft_buffer) and (ft_buffer[byte_idx] & bit_mask):
-                    glyph_bits.append(1)
-                else:
-                    glyph_bits.append(0)
+        if bpp == 1:
+            # Pack bitmap bits contiguously (matching Adafruit format)
+            glyph_bits = []
+            for row in range(ft_height):
+                for col in range(ft_width):
+                    byte_idx = row * ft_pitch + col // 8
+                    bit_mask = 0x80 >> (col % 8)
+                    if byte_idx < len(ft_buffer) and (ft_buffer[byte_idx] & bit_mask):
+                        glyph_bits.append(1)
+                    else:
+                        glyph_bits.append(0)
 
-        # Pack bits into bytes
-        packed = bytearray()
-        for i in range(0, len(glyph_bits), 8):
-            byte_val = 0
-            for j in range(8):
-                if i + j < len(glyph_bits):
-                    byte_val |= (glyph_bits[i + j] << (7 - j))
-            packed.append(byte_val)
+            # Pack bits into bytes
+            packed = bytearray()
+            for i in range(0, len(glyph_bits), 8):
+                byte_val = 0
+                for j in range(8):
+                    if i + j < len(glyph_bits):
+                        byte_val |= (glyph_bits[i + j] << (7 - j))
+                packed.append(byte_val)
+        else:
+            # Grayscale mode: read 8-bit coverage, quantize to N bits, pack
+            pixel_values = []
+            for row in range(ft_height):
+                for col in range(ft_width):
+                    idx = row * ft_pitch + col
+                    coverage = ft_buffer[idx] if idx < len(ft_buffer) else 0
+                    quantized = round(coverage * max_val / 255.0)
+                    pixel_values.append(quantized)
+            packed = pack_nbits(pixel_values, bpp)
 
         # Empty glyph (e.g. space) — ensure at least one byte
         if len(packed) == 0:
@@ -251,7 +287,7 @@ def format_glyph_array(name, glyphs):
     return "\n".join(lines)
 
 
-def generate_c_source(font_path, sizes, codepoints, output_path):
+def generate_c_source(font_path, sizes, codepoints, output_path, bpp=1):
     """Generate the complete C source file with all font sizes."""
 
     # Map point sizes to array indices matching fontSize_t enum
@@ -260,7 +296,7 @@ def generate_c_source(font_path, sizes, codepoints, output_path):
     all_fonts = []
     for pt in size_list:
         bitmap_data, glyphs, y_advance = render_font_size(
-            font_path, pt, codepoints
+            font_path, pt, codepoints, bpp
         )
         all_fonts.append({
             'pt': pt,
@@ -279,6 +315,7 @@ def generate_c_source(font_path, sizes, codepoints, output_path):
     out.append(f" * Font: {os.path.basename(font_path)}")
     out.append(f" * Sizes: {', '.join(str(s) for s in size_list)}pt")
     out.append(f" * Codepoints: {len(codepoints)}")
+    out.append(f" * Bits per pixel: {bpp}")
     out.append(" * DO NOT EDIT")
     out.append(" */")
     out.append("")
@@ -306,7 +343,7 @@ def generate_c_source(font_path, sizes, codepoints, output_path):
         ya = font_info['y_advance']
         out.append(
             f"    {{ (const uint8_t *){safe_name}_bitmaps, "
-            f"{safe_name}_glyphs, {n}, {ya} }},  // {pt}pt"
+            f"{safe_name}_glyphs, {n}, {ya}, {bpp} }},  // {pt}pt, {bpp}bpp"
         )
     out.append("};")
     out.append("")
@@ -350,6 +387,10 @@ def main():
         "--output", required=True,
         help="Output C source file path"
     )
+    parser.add_argument(
+        "--bpp", type=int, default=1, choices=[1, 2, 4, 8],
+        help="Bits per pixel for glyph bitmaps (1=mono, 2/4/8=anti-aliased)"
+    )
 
     args = parser.parse_args()
 
@@ -379,7 +420,7 @@ def main():
     print(f"Generating {len(sizes)} font sizes from {os.path.basename(args.font)}...",
           file=sys.stderr)
 
-    generate_c_source(args.font, sizes, codepoints, args.output)
+    generate_c_source(args.font, sizes, codepoints, args.output, args.bpp)
 
 
 if __name__ == "__main__":

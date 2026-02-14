@@ -41,10 +41,11 @@ typedef struct {
 
 /// Unicode font — supports arbitrary codepoint subsets via sorted glyph table
 typedef struct {
-  const uint8_t  *bitmap;    ///< Glyph bitmaps, concatenated
-  const UniGlyph *glyphs;    ///< Glyph array, sorted by codepoint
-  uint16_t        numGlyphs; ///< Number of glyphs in array
-  uint8_t         yAdvance;  ///< Newline distance (y axis)
+  const uint8_t  *bitmap;       ///< Glyph bitmaps, concatenated
+  const UniGlyph *glyphs;       ///< Glyph array, sorted by codepoint
+  uint16_t        numGlyphs;    ///< Number of glyphs in array
+  uint8_t         yAdvance;     ///< Newline distance (y axis)
+  uint8_t         bitsPerPixel; ///< 1, 2, 4, or 8 — bits per glyph pixel
 } UniFont;
 
 /// Text font table, generated at build time by gen_font.py

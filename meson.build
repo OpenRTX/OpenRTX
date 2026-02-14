@@ -123,6 +123,7 @@ openrtx_src += ui_strings_generated
 ##
 
 font_file = get_option('font')
+font_bpp = get_option('font_bpp').to_string()
 gen_font = find_program('scripts/gen_font.py')
 
 if locale == 'en_US'
@@ -133,6 +134,7 @@ if locale == 'en_US'
     command: [gen_font,
               '--font', font_file,
               '--struct', '@INPUT0@',
+              '--bpp', font_bpp,
               '--sizes', '5,6,8,9,10,12,16',
               '--output', '@OUTPUT@'],
   )
@@ -146,6 +148,7 @@ else
               '--font', font_file,
               '--struct', '@INPUT0@',
               '--po', '@INPUT1@',
+              '--bpp', font_bpp,
               '--sizes', '5,6,8,9,10,12,16',
               '--output', '@OUTPUT@'],
   )
