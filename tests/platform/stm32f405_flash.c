@@ -19,17 +19,6 @@
  * This test is made to test the implementation of the STM32Flash nvm driver.
  * It will mess-up the data stored in flash, use at your own risk!!
  * 
- * These tests must succeed:
- * - Initialization of driver with a good config
- *
- * These tests must fail:
- * - Initialization of driver across different page sizes
- * - Initialization of driver with incorrect page size
- * - Initialization of driver with misaligned address
- * - Initialization of driver outside device memory capabilities (128K pages only)
- * - Initialization of driver with a length below one page
- * 
- * 
  */
 
  int main(void)
@@ -77,7 +66,7 @@
         int ret = nvm_devWrite(&flash_driver_128k, base_address + (i*4), (void*)(data), sizeof(data));
         if(ret < 0)
         {
-            printf("Error %d while writing to flash.\r\n", ret);
+            printf("Test 5 failed: error %d while writing to flash.\r\n", ret);
             results[4] = false;
         }
     }
@@ -115,7 +104,7 @@
     results[21] = (nvm_devWrite(&flash_driver_128k, top_addr - 2, &buffer, sizeof(buffer)) == -EINVAL); // Write in 16K sector
     results[22] = (nvm_devErase(&flash_driver_128k, top_addr - 131072 , 2*131072) == -EINVAL); // off-by-1
 
-    // Check that we read consecutive numbers.
+    // Check that we still read consecutive numbers.
     results[23] = true;
     for(size_t i = 0; i < area_size/4; i++)
     {
@@ -124,7 +113,7 @@
         if(number != i)
         {
             results[23] = false;
-            printf("Test 6 failed at i=%d. Read-back %ld.\r\n", i, number);
+            printf("Test 24 failed at i=%d. Read-back %ld.\r\n", i, number);
         }
     }
 
@@ -140,7 +129,7 @@
         if(number != i)
         {
             results[25] = false;
-            printf("Test 8 failed at i=%d. Read-back %ld.\r\n", i, number);
+            printf("Test 26 failed at i=%d. Read-back %ld.\r\n", i, number);
         }
     }
 
@@ -153,7 +142,7 @@
         if(number != 0Xffffffff)
         {
             results[26] = false;
-            printf("Test 9 failed at i=%d. Read-back %ld.\r\n", i, number);
+            printf("Test 27 failed at i=%d. Read-back %ld.\r\n", i, number);
         }
     }    
 
@@ -165,7 +154,7 @@
         int ret = nvm_devWrite(&flash_driver_128k, base_address + area_size/2 + i, (void*)(&data), sizeof(data));
         if(ret < 0)
         {
-            printf("Test 10 failed: error %d while writing to flash.\r\n", ret);
+            printf("Test 28 failed: error %d while writing to flash.\r\n", ret);
             results[27] = false;
         }
         data++;
@@ -180,7 +169,7 @@
         if(number != (i%UINT8_MAX) )
         {
             results[28] = false;
-            printf("Test 11 failed at i=%d. Read-back %d.\r\n", i, number);
+            printf("Test 29 failed at i=%d. Read-back %d.\r\n", i, number);
         }
     }
 
