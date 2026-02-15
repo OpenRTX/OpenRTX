@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -109,14 +109,14 @@ bool flash_eraseSector_bank(const uint8_t secNum, const uint8_t bank)
 
 bool flash_eraseSector(const uint8_t secNum)
 {
-    return flash_eraseSector_bank(secNum%8, secNum/8);
+    return flash_eraseSector_bank(secNum%8, 1 + (secNum/8) );
 }
 
 bool flash_write(const uint32_t address, const void *data, const size_t len)
 {
     if((data == NULL) || (len == 0)) return false;
 
-    if( (address & 0x1F) || (len & 0x1F)) return false; // area is not fully 32 bytes aligned
+    if((address & 0x1F) || (len & 0x1F)) return false; // area is not fully 32 bytes aligned
 
     if(address < 0x8100000)
     {
@@ -128,30 +128,28 @@ bool flash_write(const uint32_t address, const void *data, const size_t len)
         if(unlock_bank2() == false) return false;
     }
 
-    size_t bank1_len = 0;
+    size_t total_words = len/4; // Number of 32 bits words
+    size_t bank1_words = 0;
     if(address < 0x8100000)
     {
-        bank1_len = (0x8100000-address);
-        if(bank1_len > len)
-            bank1_len = len;
-    }        
-
-    // We will write 32 bits words. Divide all lengths by 4
-    bank1_len /= 4;
-    size_t const len32 = len/4;
+        bank1_words = (0x8100000-address)/4;
+        if(bank1_words > total_words)
+            bank1_words = total_words;
+    }
 
     // Write data to memory, 32 bits at a time
     const uint32_t *buf = ((uint32_t *) data);
     uint32_t *mem       = ((uint32_t *) address);
-    
+
     size_t i = 0;
-    if(bank1_len > 0) // Writes to bank 1
+    if(bank1_words > 0) // Writes to bank 1
     {
         while((FLASH->SR1 & FLASH_SR_BSY) != 0) ;
         FLASH->CR1 = FLASH_CR_PG;
 
-        while(i < bank1_len)
+        while(i < bank1_words)
         {
+            // Write 8 words
             for(size_t j = 0; j < 8; i++,j++)
             {
                 *mem = buf[i];
@@ -161,14 +159,14 @@ bool flash_write(const uint32_t address, const void *data, const size_t len)
             while((FLASH->SR1 & FLASH_SR_QW) != 0) ;
         }
 
-        FLASH->CR1 &= ~FLASH_CR_PG;   
+        FLASH->CR1 &= ~FLASH_CR_PG;
     }
-    if(i < len32) // Writes to bank 2
+    if(i < total_words) // Writes to bank 2
     {
         while((FLASH->SR2 & FLASH_SR_BSY) != 0) ;
         FLASH->CR2 = FLASH_CR_PG;
 
-        while(i < len32)
+        while(i < total_words)
         {
             for(size_t j = 0; j < 8; i++,j++)
             {
@@ -179,7 +177,7 @@ bool flash_write(const uint32_t address, const void *data, const size_t len)
             while((FLASH->SR2 & FLASH_SR_QW) != 0) ;
         }
 
-        FLASH->CR2 &= ~FLASH_CR_PG;  
+        FLASH->CR2 &= ~FLASH_CR_PG;
     }
 
     return true;
