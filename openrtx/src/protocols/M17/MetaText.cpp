@@ -35,12 +35,20 @@ uint8_t MetaText::getBlockIndex(const meta_t &meta)
     return mask ? __builtin_ctz(mask) : 0;
 }
 
-uint8_t MetaText::setBlockIndex(meta_t &meta, uint8_t index)
+// typedef struct __attribute((packed))
+// {
+//     uint8_t block_index   : 4,
+//             total_blocks  : 4;
+//     char    text[13];
+// }
+// text_t;
+
+void MetaText::setBlockIndex(meta_t &meta, uint8_t index)
 {
     // set control byte lower nibble to block id
     // 0001 = blk1, 0010 = blk2, 0100 = blk3, 1000 = blk4
-    meta.text.block_index = (1 << index);
-    return meta.text.block_index;
+    uint8_t lowerNibble = (1 << index); 
+    meta.raw_data[0] = (meta.raw_data[0] & 0xf0) | lowerNibble;
 }
 
 uint8_t MetaText::getTotalBlocks(const meta_t &meta)
@@ -50,12 +58,12 @@ uint8_t MetaText::getTotalBlocks(const meta_t &meta)
     return __builtin_popcount(mask);
 }
 
-uint8_t MetaText::setTotalBlocks(meta_t &meta, uint8_t totalBlocks)
+void MetaText::setTotalBlocks(meta_t &meta, uint8_t totalBlocks)
 {
     // set control byte upper nibble for number of text blocks
     // 0001 = 1 blk. 0011 = 2 blks, 0111 = 3 blks, 1111 = 4 blks
-    meta.text.total_blocks = (0x0f >> (4 - totalBlocks));
-    return meta.text.total_blocks;
+    uint8_t upperNibble = (0x0f >> (4 - totalBlocks)) << 4;
+    meta.raw_data[0] = (meta.raw_data[0] & 0x0f) | upperNibble;
 }
 
 /**

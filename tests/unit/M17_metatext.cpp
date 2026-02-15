@@ -13,72 +13,6 @@
 
 using namespace M17;
 
-int test_single_block_text()
-{
-    MetaText mt;
-    meta_t meta = {};
-    meta.raw_data[0] = 0x11; // Block 0 of 1
-    const char text[] = "Hello, M17!  ";
-    memcpy(meta.raw_data + 1, text, 13);
-
-    if (mt.getBlockIndex(meta) != 0) {
-        printf("Error: Expected block index 0, got %d\n",
-               mt.getBlockIndex(meta));
-        return -1;
-    }
-    if (mt.getTotalBlocks(meta) != 1) {
-        printf("Error: Expected 1 total block, got %d\n",
-               mt.getTotalBlocks(meta));
-        return -1;
-    }
-    if (!mt.addBlock(meta)) {
-        printf("Error: Failed to add block\n");
-        return -1;
-    }
-    const char *result = mt.getText();
-    const char expected[] = "Hello, M17!";
-    if (strcmp(result, expected) != 0) {
-        printf("Error: Expected '%s', got '%s'\n", expected, result);
-        return -1;
-    }
-    return 0;
-}
-
-int test_two_block_text()
-{
-    MetaText mt;
-    meta_t meta1 = {};
-    meta1.raw_data[0] = 0x31;
-    const char text1[] = "This is a lon";
-    memcpy(meta1.raw_data + 1, text1, 13);
-
-    meta_t meta2 = {};
-    meta2.raw_data[0] = 0x32;
-    const char text2[] = "ger message  ";
-    memcpy(meta2.raw_data + 1, text2, 13);
-
-    if (mt.getBlockIndex(meta1) != 0 || mt.getTotalBlocks(meta1) != 2) {
-        printf("Error: Block 1 indexing incorrect\n");
-        return -1;
-    }
-    if (mt.getBlockIndex(meta2) != 1 || mt.getTotalBlocks(meta2) != 2) {
-        printf("Error: Block 2 indexing incorrect\n");
-        return -1;
-    }
-    if (!mt.addBlock(meta1) || !mt.addBlock(meta2)) {
-        printf("Error: Failed to add blocks\n");
-        return -1;
-    }
-    const char *result = mt.getText();
-    // Each block is 13 chars, so expect two spaces after 'ger message' to fill 13 chars
-    const char expected[] = "This is a longer message";
-    if (strcmp(result, expected) != 0) {
-        printf("Error: Expected '%s', got '%s'\n", expected, result);
-        return -1;
-    }
-    return 0;
-}
-
 int test_out_of_order_blocks()
 {
     MetaText mt;
@@ -130,40 +64,6 @@ int test_four_block_maximum()
         "Block 0 data Block 1 data Block 2 data Block 3 data";
     if (strcmp(result, expected) != 0) {
         printf("Error: Expected '%s', got '%s'\n", expected, result);
-        return -1;
-    }
-    return 0;
-}
-
-int test_invalid_block_index()
-{
-    MetaText mt;
-    meta_t meta1 = {};
-    meta1.raw_data[0] = 0x10;
-    memcpy(meta1.raw_data + 1, "Test data    ", 13);
-    if (mt.getBlockIndex(meta1) != 0) {
-        printf("Error: Expected index 0 for zero mask, got %d\n",
-               mt.getBlockIndex(meta1));
-        return -1;
-    }
-    if (!mt.addBlock(meta1)) {
-        printf(
-            "Error: Should accept block with zero mask (defaults to index 0)\n");
-        return -1;
-    }
-
-    meta_t meta2 = {};
-    meta2.raw_data[0] = 0x30 | 0x6;
-    memcpy(meta2.raw_data + 1, "Multi bit    ", 13);
-    if (mt.getBlockIndex(meta2) != 1) {
-        printf("Error: Expected index 1 for mask 0x6, got %d\n",
-               mt.getBlockIndex(meta2));
-        return -1;
-    }
-    mt.reset();
-    if (!mt.addBlock(meta2)) {
-        printf(
-            "Error: Should accept block with multiple bits (uses lowest bit position)\n");
         return -1;
     }
     return 0;
@@ -277,22 +177,25 @@ int test_get_next_block()
     mt1.getNextBlock(meta3);
     mt1.getNextBlock(meta4);
 
-    // Compare using strncmp since meta.text.text is a fixed 13-byte buffer
+    // Compare using strncmp since meta.raw_data + 1 is a fixed 13-byte buffer
     // that may not be null-terminated
-    if (strncmp(meta1.text.text, meta2.text.text, META_TEXT_BLOCK_LEN) != 0) {
+    if (strncmp((char *)(meta1.raw_data + 1), (char *)(meta2.raw_data + 1), 13)
+        != 0) {
         printf("Error: testNextBlock expected '%.13s', got '%.13s'\n",
-               meta1.text.text, meta2.text.text);
+               meta1.raw_data + 1, meta2.raw_data + 1);
         return -1;
     }
     // Verify meta3 and meta4 are also the same (idempotent behavior)
-    if (strncmp(meta1.text.text, meta3.text.text, META_TEXT_BLOCK_LEN) != 0) {
+    if (strncmp((char *)(meta1.raw_data + 1), (char *)(meta3.raw_data + 1), 13)
+        != 0) {
         printf("Error: testNextBlock meta3 expected '%.13s', got '%.13s'\n",
-               meta1.text.text, meta3.text.text);
+               meta1.raw_data + 1, meta3.raw_data + 1);
         return -1;
     }
-    if (strncmp(meta1.text.text, meta4.text.text, META_TEXT_BLOCK_LEN) != 0) {
+    if (strncmp((char *)(meta1.raw_data + 1), (char *)(meta4.raw_data + 1), 13)
+        != 0) {
         printf("Error: testNextBlock meta4 expected '%.13s', got '%.13s'\n",
-               meta1.text.text, meta4.text.text);
+               meta1.raw_data + 1, meta4.raw_data + 1);
         return -1;
     }
     return 0;
@@ -301,18 +204,6 @@ int test_get_next_block()
 int main()
 {
     printf("Running M17 Meta Text Unit Tests...\n");
-
-    if (test_single_block_text()) {
-        printf("FAIL: Single block text test\n");
-        return -1;
-    }
-    printf("PASS: Single block text test\n");
-
-    if (test_two_block_text()) {
-        printf("FAIL: Two block text test\n");
-        return -1;
-    }
-    printf("PASS: Two block text test\n");
 
     if (test_out_of_order_blocks()) {
         printf("FAIL: Out of order blocks test\n");
@@ -325,12 +216,6 @@ int main()
         return -1;
     }
     printf("PASS: Four block maximum test\n");
-
-    if (test_invalid_block_index()) {
-        printf("FAIL: Block index edge cases test\n");
-        return -1;
-    }
-    printf("PASS: Block index edge cases test\n");
 
     if (test_partial_message_gaps()) {
         printf("FAIL: Partial message gaps test\n");

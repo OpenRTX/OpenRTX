@@ -94,14 +94,6 @@ typedef struct __attribute__((packed))
 }
 gnssData_t;
 
-typedef struct __attribute((packed))
-{
-    uint8_t block_index   : 4,
-            total_blocks  : 4;
-    char    text[13];
-}
-text_t;
-
 /**
  * Data structure for M17 extended callsign metadata field.
  */
@@ -120,7 +112,6 @@ typedef union
 {
     extdCall_t extended_call_sign;
     gnssData_t gnss_data;
-    text_t text;
     uint8_t    raw_data[14];
 }
 meta_t;
