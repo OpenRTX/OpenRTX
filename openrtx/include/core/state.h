@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include "core/cps.h"
 #include "core/gps.h"
+#include "protocols/APRS/packet.h"
 
 /**
  * Part of this structure has been commented because the corresponding
@@ -48,6 +49,9 @@ typedef struct
     bool       restore_eflash;
     bool       txDisable;
     uint8_t    step_index;
+
+    aprsPacket_t *aprsStoredPkts;
+    uint16_t     aprsStoredPktsSize;
 }
 state_t;
 

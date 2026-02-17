@@ -1185,6 +1185,19 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                   color_white, encdec_str);
     }
 #endif
+#ifdef CONFIG_APRS
+    else if (last_state.channel.mode == OPMODE_APRS)
+    {
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  yellow_fab413, "1");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "  PKTS");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                  yellow_fab413, "2");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                  yellow_fab413, "3        ");
+    }
+#endif
 
     // Second row
     // Calculate symmetric second row position, line2_pos is asymmetric like main screen
@@ -1197,7 +1210,8 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
               yellow_fab413, "4");
 
-    if (last_state.channel.mode == OPMODE_FM)
+    if ((last_state.channel.mode == OPMODE_FM) ||
+        (last_state.channel.mode == OPMODE_APRS))
     {
         char bw_str[12] = { 0 };
         switch (last_state.channel.bandwidth)
@@ -1228,7 +1242,6 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
               yellow_fab413, "5");
 
-    char mode_str[12] = "";
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
@@ -1242,10 +1255,15 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          M17");
             break;
 #endif
+#ifdef CONFIG_APRS
+        case OPMODE_APRS: ;
+            // "APRS" doesn't fit comfortably in the macro menu
+            // adjust position and font size
+            point_t adjPos2 = {pos_2.x, pos_2.y - 1};
+            gfx_print(adjPos2, FONT_SIZE_6PT, TEXT_ALIGN_CENTER, color_white, "            APRS");
+            break;
+#endif
     }
-
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, mode_str);
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 5)

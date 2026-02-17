@@ -8,6 +8,7 @@
 #define RTX_H
 
 #include "core/datatypes.h"
+#include "protocols/APRS/packet.h"
 #include <stdint.h>
 #include "core/cps.h"
 #include <pthread.h>
@@ -52,6 +53,11 @@ typedef struct
     char     M17_src[10];              /**  M17 LSF source             */
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
+
+    uint16_t     aprsRecv;             /* Total APRS packets received  */
+    aprsPacket_t *aprsPkts;            /* Linked list of newly received
+                                          APRS packets, new to old      */
+    uint8_t      aprsPktsSize;         /* Size of new packets list      */
 }
 rtxStatus_t;
 
@@ -72,7 +78,8 @@ enum opmode
     OPMODE_NONE = 0,        /**< No opMode selected */
     OPMODE_FM   = 1,        /**< Analog FM          */
     OPMODE_DMR  = 2,        /**< DMR                */
-    OPMODE_M17  = 3         /**< M17                */
+    OPMODE_M17  = 3,        /**< M17                */
+    OPMODE_APRS = 4         /**< APRS               */
 };
 
 /**

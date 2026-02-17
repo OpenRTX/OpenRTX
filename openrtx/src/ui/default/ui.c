@@ -104,6 +104,14 @@ extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
+
+#ifdef CONFIG_APRS
+/* UI APRS functions. Their implementation is in "ui_aprs.c" */
+extern void ui_aprsPktDraw(ui_state_t *ui_state);
+extern void ui_aprsPktInput(ui_state_t *ui_state, state_t *state,
+                            kbd_msg_t msg);
+#endif
+
 // TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
 {
@@ -252,6 +260,18 @@ static const char *symbols_ITU_T_E161_callsign[] =
     ""
 };
 
+// available modes as set by config parameters
+static const enum opmode modes[] =
+{
+	OPMODE_FM,
+#ifdef CONFIG_M17
+    OPMODE_M17,
+#endif
+#ifdef CONFIG_APRS
+    OPMODE_APRS
+#endif
+};
+
 // Calculate number of menu entries
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
@@ -268,6 +288,7 @@ const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
 const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
+const uint8_t modesNum= sizeof(modes)/sizeof(modes[0]);
 
 const color_t color_black = {0, 0, 0, 255};
 const color_t color_grey = {60, 60, 60, 255};
@@ -901,6 +922,9 @@ int _ui_handleToneSelectScroll(bool direction_up)
 
 static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 {
+    // used when looking up the current mode
+    uint8_t i;
+
     // If there is no keyboard left and right select the menu entry to edit
 #if defined(CONFIG_UI_NO_KEYBOARD)
     if (msg.keys & KNOB_LEFT)
@@ -936,6 +960,15 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                     state.channel.fm.txToneEn, state.channel.fm.txTone,
                     queueFlags | vpqIncludeDescriptions);
             }
+#ifdef CONFIG_APRS
+            else if (state.channel.mode == OPMODE_APRS)
+            {
+                ui_state.pkt = state.aprsStoredPkts;
+                state.ui_screen = APRS_PKT;
+                macro_latched = false;
+                macro_menu = false;
+            }
+#endif
             break;
         case 2:
             if (state.channel.mode == OPMODE_FM)
@@ -984,15 +1017,9 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
         case 5:
-            // Cycle through radio modes
-            #ifdef CONFIG_M17
-            if(state.channel.mode == OPMODE_FM)
-                state.channel.mode = OPMODE_M17;
-            else if(state.channel.mode == OPMODE_M17)
-                state.channel.mode = OPMODE_FM;
-            else //catch any invalid states so they don't get locked out
-            #endif
-                state.channel.mode = OPMODE_FM;
+            for (i = 0; ((modes[i] != state.channel.mode) && (i < modesNum)); i++);
+            // set the mode to the next one
+            state.channel.mode = modes[(i + 1) % modesNum];
             *sync_rtx = true;
             vp_announceRadioMode(state.channel.mode, queueFlags);
             break;
@@ -2501,6 +2528,11 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+#ifdef CONFIG_APRS
+            case APRS_PKT:
+                ui_aprsPktInput(&ui_state, &state, msg);
+                break;
+#endif
         }
 
         // Enable Tx only if in MAIN_VFO or MAIN_MEM states
@@ -2673,6 +2705,11 @@ bool ui_updateGUI()
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
             break;
+#ifdef CONFIG_APRS
+        case APRS_PKT:
+            ui_aprsPktDraw(&ui_state);
+            break;
+#endif
     }
 
     // If MACRO menu is active draw it
