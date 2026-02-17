@@ -97,16 +97,13 @@ int STM32Flash_terminate(struct nvmDevice *dev)
 /**
  * Performs sanity checks before accessing the flash memory. 
  * Checks that access is within memory bounds (accounts for variable page size)
- * and aligned
  * 
  * @param dev pointer to the device for which to perform the sanity checks
  * @param address address that will be used for later access
  * @param len length of the data to read/write/erase
- * @param access_size alignment for that access
  * @return 0 if the checks succeed, negative error code otherwise
  */
-int STM32Flash_check(const struct nvmDevice *dev, const uint32_t address,
-                    const size_t len, const size_t access_size)
+int STM32Flash_check(const struct nvmDevice *dev, const uint32_t address, const size_t len)
 {
     const struct STM32FlashArea *config = (struct STM32FlashArea *)(dev->priv);
     
@@ -118,15 +115,13 @@ int STM32Flash_check(const struct nvmDevice *dev, const uint32_t address,
     }
     else if(address + len > config->address_high) return -EINVAL; // Above address space
 
-    if( (address%access_size) || (len%access_size) ) return -EINVAL; // non-aligned access
-
     return 0;
 }
 
 static int nvm_api_read(const struct nvmDevice *dev, uint32_t address,
                         void *data, size_t len)
 {   
-    int ret = STM32Flash_check(dev, address, len, 1);
+    int ret = STM32Flash_check(dev, address, len);
     if(ret < 0) return ret;
     
     uint32_t* flash_addr_32 = (uint32_t*)(address);
@@ -150,7 +145,7 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t address,
 static int nvm_api_write(const struct nvmDevice *dev, uint32_t address,
                          const void *data, size_t len)
 {
-    int ret = STM32Flash_check(dev, address, len, dev->info->write_size);
+    int ret = STM32Flash_check(dev, address, len);
     if(ret < 0) return ret;
 
     if(flash_write(address, data, len)) return 0;
@@ -160,7 +155,7 @@ static int nvm_api_write(const struct nvmDevice *dev, uint32_t address,
 static int nvm_api_erase(const struct nvmDevice *dev, uint32_t address, size_t len)
 {
     const struct STM32FlashArea *config = (const struct STM32FlashArea*)(dev->priv);
-    int ret = STM32Flash_check(dev, address, len, dev->info->erase_size);
+    int ret = STM32Flash_check(dev, address, len);
     if(ret < 0) return ret;
 
     size_t first_sector = config->first_sector;
