@@ -79,14 +79,7 @@ static inline int nvm_devRead(const struct nvmDevice *dev, uint32_t address,
  * @param len: number of bytes to write.
  * @return zero on success, a negative error code otherwise.
  */
-static inline int nvm_devWrite(const struct nvmDevice *dev, uint32_t address,
-                               const void *data, size_t len)
-{
-    if (dev->ops->write == NULL)
-        return -ENOTSUP;
-
-    return dev->ops->write(dev, address, data, len);
-}
+int nvm_devWrite(const struct nvmDevice *dev, uint32_t address, const void *data, size_t len);
 
 /**
  * Perform an erase operation on an NVM area. Acceptable offset and size depend

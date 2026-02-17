@@ -91,6 +91,30 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
     return nvm_devErase(nvm->dev, nvm->baseAddr + offset, size);
 }
 
+int nvm_devWrite(const struct nvmDevice *dev, uint32_t address, const void *data, size_t len)
+{
+    if (dev->ops->write == NULL)
+        return -ENOTSUP;
+
+    // Start address must be aligned to the erase size
+    if ((address % dev->info->write_size) != 0)
+        return -EINVAL;
+
+    // Total size must be aligned to the erase size
+    if ((len % dev->info->write_size) != 0)
+        return -EINVAL;        
+
+    int ret = dev->ops->write(dev, address, data, len);
+    if(ret < 0)
+        return ret;
+
+    ret = nvm_devSync(dev);
+    if( (ret < 0) && (ret != ENOTSUP) ) 
+        return ret;   
+    
+    return 0;
+}
+
 int nvm_devErase(const struct nvmDevice *dev, uint32_t address, size_t size)
 {
     // Erase operation is allowed
