@@ -7,6 +7,7 @@
 #include "stm32h743xx.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include "flash.h"
 
 /**
@@ -141,7 +142,7 @@ bool flash_write(const uint32_t address, const void *data, const size_t len)
     const uint32_t *buf = ((uint32_t *) data);
     uint32_t *mem       = ((uint32_t *) address);
 
-    size_t i = 0;
+    size_t i = 0; // Written words
     if(bank1_words > 0) // Writes to bank 1
     {
         while((FLASH->SR1 & FLASH_SR_BSY) != 0) ;
@@ -149,12 +150,9 @@ bool flash_write(const uint32_t address, const void *data, const size_t len)
 
         while(i < bank1_words)
         {
-            // Write 8 words
-            for(size_t j = 0; j < 8; i++,j++)
-            {
-                *mem = buf[i];
-                mem++;
-            }
+            memcpy(mem, buf+i, 8);
+            mem += 8;
+            i += 8;
 
             while((FLASH->SR1 & FLASH_SR_QW) != 0) ;
         }
@@ -168,12 +166,10 @@ bool flash_write(const uint32_t address, const void *data, const size_t len)
 
         while(i < total_words)
         {
-            for(size_t j = 0; j < 8; i++,j++)
-            {
-                *mem = buf[i];
-                mem++;
-            }
-
+            memcpy(mem, buf+i, 8);
+            mem += 8;
+            i += 8;
+            
             while((FLASH->SR2 & FLASH_SR_QW) != 0) ;
         }
 
