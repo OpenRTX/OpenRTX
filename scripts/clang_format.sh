@@ -82,7 +82,14 @@ platform/targets/linux/emulator/sdl_engine.h
 platform/targets/ttwrplus/pmu.h
 tests/platform/mic_test.c
 tests/platform/codec2_encode_test.c
+tests/unit/convert_minmea_coord.cpp
+tests/unit/cps.cpp
+tests/unit/linux_inputStream_test.cpp
 tests/unit/M17_callsign.cpp
+tests/unit/M17_golay.cpp
+tests/unit/M17_rrc.cpp
+tests/unit/M17_viterbi.cpp
+tests/unit/ui_check_standby.cpp
 EOF
 )
 

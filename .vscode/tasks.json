@@ -139,6 +139,13 @@
       "dependsOn": [
         "build linux with address sanitizer",
       ]
+    },
+    {
+      "label": "run coverage",
+      "type": "shell",
+      "command": "bash scripts/coverage.sh",
+      "group": "test",
+      "problemMatcher": []
     }
   ]
 }
