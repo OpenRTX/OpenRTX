@@ -998,6 +998,10 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             break;
         case 6:
             if (state.channel.power == 1000)
+                state.channel.power = 2000;
+            else if (state.channel.power == 2000)
+                state.channel.power = 3000;
+            else if (state.channel.power == 3000)
                 state.channel.power = 5000;
             else
                 state.channel.power = 1000;
