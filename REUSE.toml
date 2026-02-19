@@ -136,3 +136,8 @@ path = [
 ]
 SPDX-License-Identifier = "GPL-2.0-or-later"
 SPDX-FileCopyrightText = "Roger VK3KYY"
+
+[[annotations]]
+path = "lib/QRCode/**/*"
+SPDX-License-Identifier = "MIT"
+SPDX-FileCopyrightText = "Richard Moore"
