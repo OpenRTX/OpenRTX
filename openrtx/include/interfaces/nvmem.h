@@ -30,9 +30,8 @@ enum nvmType {
  * Enumeration field for nonvolatile memory properties.
  */
 enum nvmProperties {
-    NVM_WRITE = 0x100,    ///< Device allows write access
-    NVM_BITWRITE = 0x200, ///< Device allows to change the value of single bits
-    NVM_ERASE = 0x400,    ///< Device memory needs to be erased before writing
+    NVM_WRITE = 0x100, ///< Device allows write access
+    NVM_ERASE = 0x200, ///< Device memory needs to be erased before writing
 };
 
 /**

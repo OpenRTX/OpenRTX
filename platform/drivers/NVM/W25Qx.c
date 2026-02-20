@@ -313,7 +313,7 @@ const struct nvmInfo W25Qx_info =
     .write_size   = 1,
     .erase_size   = SECT_SIZE,
     .erase_cycles = 100000,
-    .device_info  = NVM_FLASH | NVM_WRITE | NVM_BITWRITE | NVM_ERASE
+    .device_info  = NVM_FLASH | NVM_WRITE | NVM_ERASE
 };
 
 const struct nvmInfo W25Qx_secReg_info =
