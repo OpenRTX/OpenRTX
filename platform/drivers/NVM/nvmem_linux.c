@@ -35,7 +35,7 @@ const struct nvmDescriptor stateNvm =
     .dev        = (const struct nvmDevice *) &stateDevice,
     .baseAddr   = 0x00000000,
     .size       = 1024,
-    .partNum    = sizeof(statePartitions) / sizeof(struct nvmPartition),
+    .nbPart     = sizeof(statePartitions) / sizeof(struct nvmPartition),
     .partitions = statePartitions
 };
 

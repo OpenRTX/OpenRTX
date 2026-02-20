@@ -125,8 +125,8 @@ struct nvmDescriptor {
     const struct nvmDevice *dev;           ///< Associated device driver
     const size_t baseAddr;                 ///< Base address of the area
     const size_t size;                     ///< Area size, in bytes
-    const size_t partNum;                  ///< Number of partitions
-    const struct nvmPartition *partitions; ///< Partion table
+    const size_t nbPart;                   ///< Number of partitions
+    const struct nvmPartition *partitions; ///< Partition table
 };
 
 /**

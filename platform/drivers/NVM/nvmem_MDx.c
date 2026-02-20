@@ -34,7 +34,7 @@ static const struct nvmDescriptor nvmDevices[] =
         .dev        = &eflash,
         .baseAddr   = 0x00000000,
         .size       = 0x1000000,    // 16 MB, 128 Mbit
-        .partNum    = 0,
+        .nbPart     = 0,
         .partitions = NULL
     },
     {
@@ -42,7 +42,7 @@ static const struct nvmDescriptor nvmDevices[] =
         .dev        = &secReg,
         .baseAddr   = 0x1000,
         .size       = 0x100,        // 256 byte
-        .partNum    = 0,
+        .nbPart     = 0,
         .partitions = NULL
     },
     {
@@ -50,7 +50,7 @@ static const struct nvmDescriptor nvmDevices[] =
         .dev        = &secReg,
         .baseAddr   = 0x2000,
         .size       = 0x100,        // 256 byte
-        .partNum    = 0,
+        .nbPart     = 0,
         .partitions = NULL
     }
 };
