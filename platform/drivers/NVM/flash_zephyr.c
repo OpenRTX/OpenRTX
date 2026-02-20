@@ -39,7 +39,7 @@ int zephirFlash_init(const struct nvmDevice* dev)
     nvm_info->write_size   = info->write_block_size;
     nvm_info->erase_size   = 4096;
     nvm_info->erase_cycles = 100000;
-    nvm_info->device_info  = NVM_FLASH | NVM_WRITE | NVM_BITWRITE | NVM_ERASE;
+    nvm_info->device_info  = NVM_FLASH | NVM_WRITE | NVM_ERASE;
 
     return 0;
 }
