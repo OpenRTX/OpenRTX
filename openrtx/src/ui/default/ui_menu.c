@@ -69,9 +69,13 @@ static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
 
     if (strcmp(menuName, priorSelectedMenuName) != 0)
     {
-        strcpy(priorSelectedMenuName, menuName);
+        strncpy(priorSelectedMenuName, menuName, sizeof(priorSelectedMenuName) - 1);
+        priorSelectedMenuName[sizeof(priorSelectedMenuName) - 1] = '\0';
         if (menuValue != NULL)
-            strcpy(priorSelectedMenuValue, menuValue);
+        {
+            strncpy(priorSelectedMenuValue, menuValue, sizeof(priorSelectedMenuValue) - 1);
+            priorSelectedMenuValue[sizeof(priorSelectedMenuValue) - 1] = '\0';
+        }
         else
             *priorSelectedMenuValue = '\0'; // reset it since we've changed menu item.
 
@@ -87,7 +91,8 @@ static bool DidSelectedMenuItemChange(char* menuName, char* menuValue)
         lastValueUpdate = now;
         if (interval < 1000)
             return false;
-        strcpy(priorSelectedMenuValue, menuValue);
+        strncpy(priorSelectedMenuValue, menuValue, sizeof(priorSelectedMenuValue) - 1);
+        priorSelectedMenuValue[sizeof(priorSelectedMenuValue) - 1] = '\0';
         return true;
     }
 
@@ -571,7 +576,10 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
             uint8_t major, minor, patch, release;
             const char *fwVer = sa8x8_getFwVersion();
 
-            sscanf(fwVer, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
+            if (sscanf(fwVer, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release) != 4) {
+                // Handle parsing error - set default values
+                major = minor = patch = release = 0;
+            }
             sniprintf(buf, max_len,"v%hhu.%hhu.%hhu.r%hhu", major, minor, patch, release);
         }
             break;
@@ -934,8 +942,10 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
               color_white, currentLanguage->timeAndDate);
     if(ui_state->input_position <= 0)
     {
-        strcpy(ui_state->new_date_buf, "__/__/__");
-        strcpy(ui_state->new_time_buf, "__:__:00");
+        strncpy(ui_state->new_date_buf, "__/__/__", sizeof(ui_state->new_date_buf) - 1);
+        ui_state->new_date_buf[sizeof(ui_state->new_date_buf) - 1] = '\0';
+        strncpy(ui_state->new_time_buf, "__:__:00", sizeof(ui_state->new_time_buf) - 1);
+        ui_state->new_time_buf[sizeof(ui_state->new_time_buf) - 1] = '\0';
     }
     else
     {
