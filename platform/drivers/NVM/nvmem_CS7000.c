@@ -64,7 +64,7 @@ static const struct nvmDescriptor extMem[] =
 #else
         .size       = 0x1000000,        // 16 MB, 128 Mbit
 #endif
-        .partNum    = sizeof(memPartitions)/sizeof(struct nvmPartition),
+        .nbPart     = sizeof(memPartitions)/sizeof(struct nvmPartition),
         .partitions = memPartitions
     },
     {
@@ -72,7 +72,7 @@ static const struct nvmDescriptor extMem[] =
         .dev        = &eeep,
         .baseAddr   = 0x00000000,
         .size       = 0xFFFFFFFF,
-        .partNum    = 0,
+        .nbPart     = 0,
         .partitions = NULL
     }
 };

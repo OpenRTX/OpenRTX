@@ -17,7 +17,7 @@ static const struct nvmDescriptor nvMemory =
     .dev        = &eflash,
     .baseAddr   = 0x00000000,
     .size       = FIXED_PARTITION_SIZE(storage_partition),
-    .partNum    = 0,
+    .nbPart     = 0,
     .partitions = NULL
 };
 
