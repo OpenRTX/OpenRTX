@@ -6,7 +6,7 @@
 
 #include "interfaces/cps_io.h"
 #include "interfaces/delays.h"
-#include "core/nvmem_access.h"
+#include "core/nvmem_device.h"
 #include <string.h>
 #include "wchar.h"
 #include "core/utils.h"

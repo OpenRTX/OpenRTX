@@ -8,7 +8,7 @@
 #include <string.h>
 #include "interfaces/nvmem.h"
 #include "interfaces/delays.h"
-#include "core/nvmem_access.h"
+#include "core/nvmem_device.h"
 #include "core/utils.h"
 #include "cps_data_MDUV3x0.h"
 #include "drivers/NVM/W25Qx.h"

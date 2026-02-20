@@ -8,7 +8,7 @@
 #include "wchar.h"
 #include "interfaces/delays.h"
 #include "interfaces/cps_io.h"
-#include "core/nvmem_access.h"
+#include "core/nvmem_device.h"
 #include "core/utils.h"
 #include "drivers/NVM/AT24Cx.h"
 #include "drivers/NVM/W25Qx.h"

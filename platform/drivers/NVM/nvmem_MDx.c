@@ -7,7 +7,7 @@
 #include "interfaces/nvmem.h"
 #include "interfaces/delays.h"
 #include "calibration/calibInfo_MDx.h"
-#include "core/nvmem_access.h"
+#include "core/nvmem_device.h"
 #include "drivers/SPI/spi_stm32.h"
 #include <string.h>
 #include "wchar.h"
