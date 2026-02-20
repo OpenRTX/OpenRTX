@@ -80,6 +80,7 @@ const char *display_items[] =
 const char *m17_items[] =
 {
     "Callsign",
+    "Meta Txt",
     "CAN",
     "CAN RX Check"
 };
@@ -197,6 +198,8 @@ static layout_t _ui_calculateLayout()
     const fontSize_t input_font = FONT_SIZE_8PT;
     // Menu font
     const fontSize_t menu_font = FONT_SIZE_6PT;
+    // Message font
+    const fontSize_t message_font = FONT_SIZE_6PT;
     // Mode screen frequency font: 9 pt
     const fontSize_t mode_font_big = FONT_SIZE_9PT;
     // Mode screen details font: 6 pt
@@ -248,6 +251,7 @@ static layout_t _ui_calculateLayout()
         bottom_font,
         input_font,
         menu_font,
+        message_font,
         mode_font_big,
         mode_font_small
     };
@@ -517,6 +521,22 @@ void ui_updateFSM(bool *sync_rtx)
                     else
                         _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
+                else if(ui_state.edit_message)
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        _ui_textInputConfirm(ui_state.new_message);
+                        // Save selected message and disable input mode
+                        strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
+                        ui_state.edit_message = false;
+                        *sync_rtx = true;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        // Discard selected message and disable input mode
+                        ui_state.edit_message = false;
+                    else
+                        _ui_textInputArrows(ui_state.new_message, 52, msg);
+                }
                 else
                 {
                     if(msg.keys & KEY_ENTER)
@@ -668,6 +688,22 @@ void ui_updateFSM(bool *sync_rtx)
                     else
                         _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
+                else if(ui_state.edit_message)
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        _ui_textInputConfirm(ui_state.new_message);
+                        // Save selected message and disable input mode
+                        strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
+                        ui_state.edit_message = false;
+                        ui_state.edit_mode = false;
+                    }
+                    else if(msg.keys & KEY_ESC)
+                        // Discard selected message and disable input mode
+                        ui_state.edit_message = false;
+                    else
+                        _ui_textInputArrows(ui_state.new_message, 52, msg);
+                }
                 else
                 {
                     // Not in edit mode: handle CAN setting
@@ -707,6 +743,11 @@ void ui_updateFSM(bool *sync_rtx)
                             case M_CALLSIGN:
                                 ui_state.edit_mode = true;
                                 _ui_textInputReset(ui_state.new_callsign);
+                                break;
+                            // Enable meta text input
+                            case M_METATEXT:
+                                ui_state.edit_message = true;
+                                _ui_textInputReset(ui_state.new_message);
                                 break;
                             default:
                                 state.ui_screen = SETTINGS_M17;

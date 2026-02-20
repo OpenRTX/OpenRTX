@@ -102,6 +102,20 @@ public:
         updateLsf = true;
     }
 
+    /**
+     * Check if a superframe boundary has just occurred, that is, if all six
+     * LICH segments of the current LSF have been sent. When this returns true,
+     * it is safe to call updateLsfData() knowing the new data will be applied
+     * at the start of the next superframe.
+     *
+     * @return true if the most recent encodeStreamFrame() completed a
+     * superframe (LICH counter wrapped to 0).
+     */
+    bool superframeBoundary() const
+    {
+        return currentLich == 0;
+    }
+
 private:
 
     M17ConvolutionalEncoder  encoder;           ///< Convolutional encoder.

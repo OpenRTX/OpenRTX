@@ -140,6 +140,7 @@ enum settingsRadioItems
 enum settingsM17Items
 {
     M17_CALLSIGN = 0,
+    M17_METATEXT,
     M17_CAN,
     M17_CAN_RX
 };
@@ -192,6 +193,7 @@ typedef struct layout_t
     fontSize_t bottom_font;
     fontSize_t input_font;
     fontSize_t menu_font;
+    fontSize_t message_font;
 } layout_t;
 
 /**
@@ -215,6 +217,10 @@ typedef struct ui_state_t
     freq_t new_tx_frequency;
     char new_rx_freq_buf[14];
     char new_tx_freq_buf[14];
+    size_t m17_meta_text_scroll_position;
+    long long m17_meta_text_last_scroll_tick;
+    char new_message[53];
+    bool edit_message;
 #ifdef CONFIG_RTC
     // Variables used for Time & Date input
     datetime_t new_timedate;

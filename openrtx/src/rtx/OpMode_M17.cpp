@@ -199,35 +199,47 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 Callsign dst = lsf.getDestination();
                 Callsign src = lsf.getSource();
                 strncpy(status->M17_dst, dst, 10);
+                
+                // Copy source callsign (may be overridden for extended callsigns)
+                strncpy(status->M17_src, src, 10);
 
                 // Retrieve extended callsign data
                 streamType_t streamType = lsf.getType();
 
-                if((streamType.fields.encType    == M17_ENCRYPTION_NONE) &&
-                   (streamType.fields.encSubType == M17_META_EXTD_CALLSIGN))
+                if(streamType.fields.encType == M17_ENCRYPTION_NONE)
                 {
-                    extendedCall = true;
-
                     meta_t& meta = lsf.metadata();
-                    Callsign exCall1(meta.extended_call_sign.call1);
-                    Callsign exCall2(meta.extended_call_sign.call2);
 
-                    //
-                    // The source callsign only contains the last link when
-                    // receiving extended callsign data: in order to always store
-                    // the true source of a transmission, we need to store the first
-                    // extended callsign in M17_src.
-                    //
-                    strncpy(status->M17_src,  exCall1, 10);
-                    strncpy(status->M17_refl, exCall2, 10);
-                    strncpy(status->M17_link, src, 10);
-                } else {
-                    strncpy(status->M17_src, src, 10);
+                    switch(streamType.fields.encSubType)
+                    {
+                        case M17_META_EXTD_CALLSIGN:
+                        {
+                            extendedCall = true;
+                            Callsign exCall1(meta.extended_call_sign.call1);
+                            Callsign exCall2(meta.extended_call_sign.call2);
+
+                            // The source callsign only contains the last link when
+                            // receiving extended callsign data: store the first
+                            // extended callsign in M17_src.
+                            strncpy(status->M17_src,  exCall1, 10);
+                            strncpy(status->M17_refl, exCall2, 10);
+                            strncpy(status->M17_link, src, 10);
+                            break;
+                        }
+                        case M17_META_TEXT:
+                        {
+                            metaText.addBlock(meta);
+                            const char* txt = metaText.getText();
+                            if(txt[0] != '\0')
+                                strncpy(status->M17_meta_text, txt, sizeof(status->M17_meta_text) - 1);
+                            break;
+                        }
+                        default:
+                            // M17_src already set above
+                            break;
+                    }
                 }
-
-                // Set source and destination fields.
-                // If we have received an extended callsign the src will be the RF link address
-                // The M17_src will already be stored from the extended callsign
+                // M17_src already set above for non-encrypted streams
 
                 // Check CAN on RX, if enabled.
                 // If check is disabled, force match to true.
@@ -277,9 +289,11 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid     = false;
         extendedCall  = false;
+        status->M17_meta_text[0] = '\0';
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
 
+        metaText.reset();
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
     }
@@ -309,6 +323,12 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
         lsf.setType(type);
 
+        if(strlen(state.settings.M17_meta_text) > 0) {
+            metaText.setText(state.settings.M17_meta_text);
+            metaText.resetBlockPaging();
+            metaText.getNextBlock(lsf.metadata());
+        }
+
         if(state.settings.gps_enabled) {
             lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
             gpsTimer = 0;
@@ -326,18 +346,6 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.sendPreamble();
         modulator.sendFrame(m17Frame);
     }
-
-    if(state.settings.gps_enabled) {
-        gpsTimer++;
-
-        if(gpsTimer >= GPS_UPDATE_TICKS) {
-            auto lsf = encoder.getCurrentLsf();
-            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
-            encoder.updateLsfData(lsf);
-            gpsTimer = 0;
-        }
-    }
-
     payload_t dataFrame;
     bool      lastFrame = false;
 
@@ -354,6 +362,34 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
     encoder.encodeStreamFrame(dataFrame, m17Frame, lastFrame);
     modulator.sendFrame(m17Frame);
+
+    // After encoding a stream frame the encoder advances its LICH counter.
+    // When it wraps back to zero a new superframe begins and the encoder
+    // will accept an updated LSF.  Schedule the next meta-text block or
+    // GPS update at this boundary so the new data is transmitted during
+    // the upcoming superframe.
+    if(encoder.superframeBoundary())
+    {
+        if(strlen(state.settings.M17_meta_text) > 0)
+        {
+            auto lsf = encoder.getCurrentLsf();
+            metaText.getNextBlock(lsf.metadata());
+            encoder.updateLsfData(lsf);
+        }
+
+        if(state.settings.gps_enabled)
+        {
+            gpsTimer++;
+
+            if(gpsTimer >= GPS_UPDATE_TICKS)
+            {
+                auto lsf = encoder.getCurrentLsf();
+                lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+                encoder.updateLsfData(lsf);
+                gpsTimer = 0;
+            }
+        }
+    }
 
     if(lastFrame)
     {

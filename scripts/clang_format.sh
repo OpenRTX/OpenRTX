@@ -59,6 +59,8 @@ openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
 openrtx/include/protocols/M17/Callsign.hpp
 openrtx/include/protocols/M17/M17FrameDecoder.hpp
+openrtx/include/protocols/M17/MetaText.hpp
+openrtx/include/ui/utils.h
 openrtx/src/core/dsp.cpp
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/protocols/M17/Callsign.cpp
@@ -83,6 +85,7 @@ platform/targets/ttwrplus/pmu.h
 tests/platform/mic_test.c
 tests/platform/codec2_encode_test.c
 tests/unit/M17_callsign.cpp
+tests/unit/M17_metatext.cpp
 EOF
 )
 
