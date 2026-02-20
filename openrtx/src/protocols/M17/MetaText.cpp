@@ -35,14 +35,6 @@ uint8_t MetaText::getBlockIndex(const meta_t &meta)
     return mask ? __builtin_ctz(mask) : 0;
 }
 
-// typedef struct __attribute((packed))
-// {
-//     uint8_t block_index   : 4,
-//             total_blocks  : 4;
-//     char    text[13];
-// }
-// text_t;
-
 void MetaText::setBlockIndex(meta_t &meta, uint8_t index)
 {
     // set control byte lower nibble to block id
@@ -75,11 +67,8 @@ void MetaText::setText(char* srcText)
         text[0] = '\0';
         return;
     }
+    memset(text, 0, META_TEXT_MAX_LEN);
     strncpy(text, srcText, META_TEXT_MAX_LEN);
-    text[META_TEXT_MAX_LEN] = '\0'; // Always null-terminate
-    // Optionally, null-terminate earlier if srcText is shorter
-    size_t len = strnlen(srcText, META_TEXT_MAX_LEN);
-    text[len] = '\0';
 }
 
 meta_t MetaText::getBlock(meta_t &meta, uint8_t index)
