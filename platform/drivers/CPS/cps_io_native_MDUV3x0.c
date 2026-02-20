@@ -7,7 +7,7 @@
 #include "wchar.h"
 #include <string.h>
 #include "core/nvmem_access.h"
-#include "interfaces/delays.h"
+#include "core/nvmem_device.h"
 #include "interfaces/cps_io.h"
 #include "core/utils.h"
 #include "cps_data_MDUV3x0.h"

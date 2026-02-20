@@ -46,6 +46,7 @@ openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
 openrtx/include/core/memory_profiling.h
 openrtx/include/core/nvmem_access.h
+openrtx/include/core/nvmem_device.h
 openrtx/include/core/openrtx.h
 openrtx/include/core/ui.h
 openrtx/include/core/utils.h
