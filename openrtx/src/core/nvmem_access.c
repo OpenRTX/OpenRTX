@@ -6,6 +6,7 @@
 
 #include "interfaces/nvmem.h"
 #include "core/nvmem_access.h"
+#include "core/nvmem_device.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <errno.h>
@@ -89,21 +90,4 @@ int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size)
         return ret;
 
     return nvm_devErase(nvm->dev, nvm->baseAddr + offset, size);
-}
-
-int nvm_devErase(const struct nvmDevice *dev, uint32_t address, size_t size)
-{
-    // Erase operation is allowed
-    if (dev->ops->erase == NULL)
-        return -ENOTSUP;
-
-    // Start address must be aligned to the erase size
-    if ((address % dev->info->erase_size) != 0)
-        return -EINVAL;
-
-    // Total size must be aligned to the erase size
-    if ((size % dev->info->erase_size) != 0)
-        return -EINVAL;
-
-    return dev->ops->erase(dev, address, size);
 }
