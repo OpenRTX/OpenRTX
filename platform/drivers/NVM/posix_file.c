@@ -90,5 +90,5 @@ const struct nvmInfo posix_file_info =
     .write_size   = 1,
     .erase_size   = 1,
     .erase_cycles = INT_MAX,
-    .device_info  = NVM_FILE | NVM_WRITE | NVM_BITWRITE
+    .device_info  = NVM_FILE | NVM_WRITE
 };
