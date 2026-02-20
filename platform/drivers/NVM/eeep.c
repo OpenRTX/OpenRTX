@@ -276,7 +276,7 @@ int eeep_init(const struct nvmDevice *dev, const uint32_t nvm,
     if(desc == NULL)
         return -EINVAL;
 
-    if(part >= desc->partNum)
+    if(part >= desc->nbPart)
         return -EINVAL;
 
     uint32_t partAddr = desc->partitions[part].offset;

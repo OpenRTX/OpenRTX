@@ -32,7 +32,7 @@ static inline int getAbsOffset(const struct nvmDescriptor *nvm, const int part,
 
     // Offset is relative to a partition
     if (part >= 0) {
-        if ((size_t)part >= nvm->partNum)
+        if ((size_t)part >= nvm->nbPart)
             return -EINVAL;
 
         np = &nvm->partitions[part];
