@@ -13,7 +13,8 @@
 #include <string.h>
 #include "posix_file.h"
 
-int posixFile_init(struct nvmFileDevice *dev, const char *fileName)
+int posixFile_init(struct nvmFileDevice *dev, const char *fileName,
+                   const size_t size)
 {
     // struct nvmFileDevice *pDev = (struct nvmFileDevice *)(dev);
 
@@ -29,7 +30,7 @@ int posixFile_init(struct nvmFileDevice *dev, const char *fileName)
         return fd;
 
     // Truncate to size, pad with zeroes if extending.
-    ftruncate(fd, dev->size);
+    ftruncate(fd, size);
 
     dev->fd = fd;
 
@@ -60,9 +61,6 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset,
     if(pDev->fd < 0)
         return -EBADF;
 
-    if((offset + len) >= pDev->size)
-        return -EINVAL;
-
     lseek(pDev->fd, offset, SEEK_SET);
     return read(pDev->fd, data, len);
 }
@@ -74,9 +72,6 @@ static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset,
 
     if(pDev->fd < 0)
         return -EBADF;
-
-    if((offset + len) > pDev->size)
-        return -EINVAL;
 
     lseek(pDev->fd, offset, SEEK_SET);
     return write(pDev->fd, data, len);

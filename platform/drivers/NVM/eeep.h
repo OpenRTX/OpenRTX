@@ -45,7 +45,6 @@ struct nvmDevice name =                 \
     .priv = &eeepData_##name,           \
     .ops  = &eeep_ops,                  \
     .info = &eeep_info,                 \
-    .size = 65536                       \
 };
 
 /**

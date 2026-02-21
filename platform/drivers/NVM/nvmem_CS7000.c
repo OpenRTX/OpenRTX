@@ -23,12 +23,7 @@ static const struct W25QxCfg cfg =
     .cs  = { FLASH_CS }
 };
 
-#ifdef PLATFORM_CS7000P
-W25Qx_DEVICE_DEFINE(eflash, cfg, 0x2000000)        // 32 MB, 256 Mbit
-#else
-W25Qx_DEVICE_DEFINE(eflash, cfg, 0x1000000)        // 16 MB, 128 Mbit
-#endif
-
+W25Qx_DEVICE_DEFINE(eflash, cfg)
 EEEP_DEVICE_DEFINE(eeep)
 
 const struct nvmPartition memPartitions[] =
@@ -63,12 +58,20 @@ static const struct nvmDescriptor extMem[] =
     {
         .name       = "External flash",
         .dev        = &eflash,
+        .baseAddr   = 0x00000000,
+#ifdef PLATFORM_CS7000P
+        .size       = 0x2000000,        // 32 MB, 256 Mbit
+#else
+        .size       = 0x1000000,        // 16 MB, 128 Mbit
+#endif
         .partNum    = sizeof(memPartitions)/sizeof(struct nvmPartition),
         .partitions = memPartitions
     },
     {
         .name       = "Virtual EEPROM",
         .dev        = &eeep,
+        .baseAddr   = 0x00000000,
+        .size       = 0xFFFFFFFF,
         .partNum    = 0,
         .partitions = NULL
     }

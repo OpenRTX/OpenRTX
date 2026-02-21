@@ -9,12 +9,14 @@
 #include "interfaces/nvmem.h"
 #include "flash_zephyr.h"
 
-ZEPHYR_FLASH_DEVICE_DEFINE(eflash, flash, FIXED_PARTITION_SIZE(storage_partition));
+ZEPHYR_FLASH_DEVICE_DEFINE(eflash, flash);
 
 static const struct nvmDescriptor nvMemory =
 {
     .name       = "External flash",
     .dev        = &eflash,
+    .baseAddr   = 0x00000000,
+    .size       = FIXED_PARTITION_SIZE(storage_partition),
     .partNum    = 0,
     .partitions = NULL
 };

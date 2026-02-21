@@ -57,10 +57,10 @@ bool flash_eraseSector(const uint8_t secNum)
     return true;
 }
 
-void flash_write(const uint32_t address, const void *data, const size_t len)
+bool flash_write(const uint32_t address, const void *data, const size_t len)
 {
-    if(unlock() == false) return;
-    if((data == NULL) || (len == 0)) return;
+    if(unlock() == false) return false;
+    if((data == NULL) || (len == 0)) return false;
 
     // Write data to memory, 8 bit at a time
     const uint8_t *buf = ((uint8_t *) data);
@@ -76,4 +76,11 @@ void flash_write(const uint32_t address, const void *data, const size_t len)
         while((FLASH->SR & FLASH_SR_BSY) != 0) ;
         FLASH->CR &= ~FLASH_CR_PG;
     }
+
+    return true;
+}
+
+uint16_t flash_size()
+{
+    return *(uint16_t*)(0x1FFF7A22);
 }

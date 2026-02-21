@@ -15,7 +15,7 @@
 
 #define NVM_MAX_PATHLEN 256
 
-POSIX_FILE_DEVICE_DEFINE(stateDevice, 1024)
+POSIX_FILE_DEVICE_DEFINE(stateDevice)
 
 const struct nvmPartition statePartitions[] =
 {
@@ -33,6 +33,8 @@ const struct nvmDescriptor stateNvm =
 {
     .name       = "Device state NVM area",
     .dev        = (const struct nvmDevice *) &stateDevice,
+    .baseAddr   = 0x00000000,
+    .size       = 1024,
     .partNum    = sizeof(statePartitions) / sizeof(struct nvmPartition),
     .partitions = statePartitions
 };
@@ -120,7 +122,7 @@ void nvm_init()
 
     strcat(memory_path, "state.bin");
 
-    int ret = posixFile_init(&stateDevice, memory_path);
+    int ret = posixFile_init(&stateDevice, memory_path, 1024);
     if(ret < 0)
         printf("Opening of state file failed with status %d\n", ret);
 

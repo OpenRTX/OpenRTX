@@ -215,6 +215,7 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
                  'platform/drivers/keyboard/cap1206.c',
+                 'platform/drivers/NVM/flash_stm32.c',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
 stm32f405_inc = ['platform/mcu/CMSIS/Include',
@@ -270,6 +271,7 @@ stm32h743_src = ['platform/mcu/STM32H7xx/boot/startup.cpp',
                  'platform/mcu/STM32H7xx/boot/libc_integration.cpp',
                  'platform/mcu/STM32H7xx/drivers/rcc.cpp',
                  'platform/mcu/STM32H7xx/drivers/delays.cpp',
+                 'platform/mcu/STM32H7xx/drivers/flash.c',
                  'platform/drivers/GPIO/gpio_stm32.c',
                  'platform/drivers/ADC/adc_stm32h7.c',
                  'platform/drivers/SPI/spi_stm32h7.c',
@@ -277,6 +279,7 @@ stm32h743_src = ['platform/mcu/STM32H7xx/boot/startup.cpp',
                  'platform/drivers/GPS/nmea_rbuf.c',
                  'platform/drivers/audio/stm32_dac.cpp',
                  'platform/drivers/audio/stm32_adc.cpp',
+                 'platform/drivers/NVM/flash_stm32.c',
                  'platform/mcu/CMSIS/Device/ST/STM32H7xx/Source/system_stm32h7xx.c']
 
 stm32h743_inc = ['platform/mcu/CMSIS/Include',

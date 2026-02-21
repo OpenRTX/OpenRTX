@@ -22,20 +22,24 @@ static const struct W25QxCfg eflashCfg =
     .cs  = { FLASH_CS }
 };
 
-W25Qx_DEVICE_DEFINE(eflash, eflashCfg, 0x100000)  // 1 MB,  8 Mbit
-AT24Cx_DEVICE_DEFINE(eeprom, 0x10000)             // 64 kB, 512 kbit
+W25Qx_DEVICE_DEFINE(eflash, eflashCfg)
+AT24Cx_DEVICE_DEFINE(eeprom)
 
 static const struct nvmDescriptor nvmDevices[] =
 {
     {
         .name       = "External flash",
         .dev        = &eflash,
+        .baseAddr   = 0x00000000,
+        .size       = 0x100000,     // 1 MB,  8 Mbit
         .partNum    = 0,
         .partitions = NULL
     },
     {
         .name       = "EEPROM",
         .dev        = &eeprom,
+        .baseAddr   = 0x00000000,
+        .size       = 0x10000,      // 64 kB, 512 kbit
         .partNum    = 0,
         .partitions = NULL
     }
