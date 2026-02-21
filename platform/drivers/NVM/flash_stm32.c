@@ -124,21 +124,8 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t address,
     int ret = STM32Flash_check(dev, address, len);
     if(ret < 0) return ret;
     
-    uint32_t* flash_addr_32 = (uint32_t*)(address);
-
-    size_t i = 0;
-    for(; i < len/4; i++)
-    {
-        ((uint32_t *)data)[i] = flash_addr_32[i];
-    }
-
-    char* flash_addr_8 = (char*)(address);
-
-    for(i *= 4; i < len; i++)
-    {
-        ((char *)data)[i] = flash_addr_8[i];
-    }
-
+    memcpy(data, address, len);
+    
     return 0;
 }
 
