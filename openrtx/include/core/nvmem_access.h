@@ -14,6 +14,15 @@ extern "C" {
 #endif
 
 /**
+ * Obtain the descriptor of a given nonvolatile memory area.
+ *
+ * @param index: index of the nonvolatile memory area.
+ * @return a pointer to the memory descriptor or NULL if the requested
+ * descriptor does not exist.
+ */
+const struct nvmDescriptor *nvm_getDesc(const uint32_t index);
+
+/**
  * Perform a byte-aligned read operation on a nonvolatile memory.
  *
  * @param dev: NVM device number.
