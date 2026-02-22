@@ -421,7 +421,6 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
         case M17_CALLSIGN:
             sniprintf(buf, max_len, "%s", last_state.settings.callsign);
             break;
-
         case M17_METATEXT:
             // limit display to 8 characters
             if (strlen(last_state.settings.M17_meta_text) > 7)
@@ -435,9 +434,11 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
             else
                 sniprintf(buf, max_len, "%s", last_state.settings.M17_meta_text);
         break;
-
-        case M17_CAN:
-            sniprintf(buf, max_len, "%d", last_state.settings.m17_can);
+        case M17_RX_CAN:
+            sniprintf(buf, max_len, "%d", last_state.channel.rx_can);
+            break;
+        case M17_TX_CAN:
+            sniprintf(buf, max_len, "%d", last_state.channel.tx_can);
             break;
         case M17_CAN_RX:
             sniprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ?

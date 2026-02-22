@@ -183,14 +183,12 @@ enum m17gps_t
  */
 typedef struct
 {
-    uint8_t  rxCan : 4,         //< Channel Access Number for RX
-             txCan : 4;         //< Channel Access Number for TX
-    uint8_t  mode  : 4,         //< Channel operation mode
-             encr  : 4;         //< Encryption mode
-    uint8_t gps_mode;           //< Channel GPS mode
-    uint16_t contact_index;     //< Index to retrieve data from contact list
+    uint8_t  mode  : 4,         ///< Channel operation mode
+             encr  : 4;         ///< Encryption mode
+    uint8_t gps_mode;           ///< Channel GPS mode
+    uint16_t contact_index;     ///< Index to retrieve data from contact list
 }
-__attribute__((packed)) m17Info_t; // 5B
+__attribute__((packed)) m17Info_t; // 4B
 
 /**
  * Data structure describing M17-specific contact fields.
@@ -231,6 +229,7 @@ typedef struct
             rx_only        : 1,    //< 1 means RX-only channel
             _unused        : 5;    //< Padding to 8 bits
 
+    uint8_t  sqlLevel;             //< Squelch level
     uint32_t power;                //< Tx power, in mW
 
     freq_t  rx_frequency;          //< RX Frequency, in Hz
@@ -243,6 +242,13 @@ typedef struct
     char    descr[CPS_STR_SIZE];   //< Description of the channel
     geo_t   ch_location;           //< Transmitter geolocation
 
+    // These three values should really be in m17Info_t below but
+    // because these can be changed in the settings at any time,
+    // they can not be dependant on the selected opMode.
+    uint8_t rx_can : 4,             ///< Channel Access Number for RX
+            tx_can : 4;             ///< Channel Access Number for TX
+    char    m17_dest[10];           ///< M17 destination
+
     union
     {
         fmInfo_t  fm;              //< Information block for FM channels
@@ -250,7 +256,7 @@ typedef struct
         m17Info_t m17;             //< Information block for M17 channels
     };
 }
-__attribute__((packed)) channel_t; // 59B
+__attribute__((packed)) channel_t; // 105B
 
 /**
  * Data structure describing a codeplug contact.
