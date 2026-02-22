@@ -1,10 +1,11 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "interfaces/platform.h"
+#include <string.h>
 #include "core/cps.h"
 
 const uint16_t ctcss_tone[CTCSS_FREQ_NUM] =
@@ -23,10 +24,21 @@ channel_t cps_getDefaultChannel()
     channel.mode      = OPMODE_M17;
     #else
     channel.mode      = OPMODE_FM;
+    channel.fm.rxToneEn = 0; //disabled
+    channel.fm.rxTone   = 0; //and no ctcss/dcs selected
+    channel.fm.txToneEn = 0;
+    channel.fm.txTone   = 0;
     #endif
     channel.bandwidth = BW_25;
+    channel.sqlLevel  = 4;      // S3
     channel.power     = 1000;   // 1W
     channel.rx_only   = false;  // Enable tx by default
+
+    // These 3 should be in channel.m17 but can be changed
+    // at any time so can not depend on current opmode.
+    channel.m17_can = 0;
+    strcpy(channel.m17_dest, "ALL");
+    strcpy(channel.M17_meta_text, "OpenRTX");
 
     // Set initial frequency based on supported bands
     const hwInfo_t* hwinfo  = platform_getHwInfo();
@@ -41,9 +53,5 @@ channel_t cps_getDefaultChannel()
         channel.tx_frequency = 144000000;
     }
 
-    channel.fm.rxToneEn = 0; //disabled
-    channel.fm.rxTone   = 0; //and no ctcss/dcs selected
-    channel.fm.txToneEn = 0;
-    channel.fm.txTone   = 0;
     return channel;
 }
