@@ -474,8 +474,8 @@ void vp_announceM17Info(const channel_t *channel, bool isEditing,
 
     if (isEditing) {
         vp_queuePrompt(PROMPT_EDIT);
-    } else if (state.settings.m17_dest[0] != '\0') {
-        vp_queueString(state.settings.m17_dest, vpAnnounceCommonSymbols);
+    } else if (state.channel.m17_dest[0] != '\0') {
+        vp_queueString(state.channel.m17_dest, vpAnnounceCommonSymbols);
     } else if ((channel != NULL) && (channel->m17.contact_index != 0)) {
         if (!vp_announceContactWithIndex(channel->m17.contact_index, flags))
             vp_queueStringTableEntry(&currentLanguage->broadcast);
