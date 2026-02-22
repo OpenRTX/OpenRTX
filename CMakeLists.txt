@@ -103,6 +103,7 @@ target_sources(app
     openrtx/src/core/voicePromptData.S
     openrtx/src/core/nvmem_access.c
     openrtx/src/core/data_slicer.c
+    openrtx/src/core/settings.c
     openrtx/src/core/vfo.c
     openrtx/src/rtx/rtx.cpp
     openrtx/src/rtx/OpMode_FM.cpp
