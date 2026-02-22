@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -10,26 +10,42 @@
 #include "hwconfig.h"
 #include <stdbool.h>
 
-typedef enum
-{
-    TIMER_OFF =  0,
-    TIMER_5S  =  1,
-    TIMER_10S =  2,
-    TIMER_15S =  3,
-    TIMER_20S =  4,
-    TIMER_25S =  5,
-    TIMER_30S =  6,
-    TIMER_1M  =  7,
-    TIMER_2M  =  8,
-    TIMER_3M  =  9,
-    TIMER_4M  = 10,
-    TIMER_5M  = 11,
+/** \file
+ * The settings.h file is the header defining the structure for the device
+ * settings structure and the functions to load/save the settings to
+ * non-volatile memory.
+ * The settings are saved across two partitions using an A/B partitions scheme.
+ * The settings are thus saved first in partition A then partition B and so on.
+ * Each new settings structure is appended to the last one in the partition.
+ * When the partition is full, it is erased. Because of the A/B partition
+ * scheme, this ensures that there is always a copy of the settings existing
+ * on the device. If an error occurs during the save, or if the latest copy
+ * gets corruptes, there is at lease one previous copy stored in the other
+ * partition.
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    TIMER_OFF = 0,
+    TIMER_5S = 1,
+    TIMER_10S = 2,
+    TIMER_15S = 3,
+    TIMER_20S = 4,
+    TIMER_25S = 5,
+    TIMER_30S = 6,
+    TIMER_1M = 7,
+    TIMER_2M = 8,
+    TIMER_3M = 9,
+    TIMER_4M = 10,
+    TIMER_5M = 11,
     TIMER_15M = 12,
     TIMER_30M = 13,
     TIMER_45M = 14,
-    TIMER_1H  = 15
-}
-display_timer_t;
+    TIMER_1H = 15
+} display_timer_t;
 
 typedef struct
 {
@@ -53,30 +69,95 @@ typedef struct
 }
 __attribute__((packed)) settings_t;
 
-
-static const settings_t default_settings =
-{
-    100,                          // Brightness
+static const settings_t default_settings = {
+    100,                     // Brightness
 #ifdef CONFIG_SCREEN_CONTRAST
-    CONFIG_DEFAULT_CONTRAST,      // Contrast
+    CONFIG_DEFAULT_CONTRAST, // Contrast
 #else
-    255,                          // Contrast
+    255,        // Contrast
 #endif
-    4,                            // Squelch level, 4 = S3
-    0,                            // Vox level
-    0,                            // UTC Timezone
-    false,                        // GPS enabled
-    "",                           // Empty callsign
-    TIMER_30S,                    // 30 seconds
-    0,                            // M17 CAN
-    0,                            // Voice prompts off
-    0,                            // Phonetic spell off
-    1,                            // Automatic latch of macro menu enabled
-    0,                            // not used
-    false,                        // Check M17 CAN on RX
-    "",                           // Empty M17 destination
-    false,                        // Display battery icon
-    false,                        // Update RTC with GPS
+    4,         // Squelch level, 4 = S3
+    0,         // Vox level
+    0,         // UTC Timezone
+    false,     // GPS enabled
+    "",        // Empty callsign
+    TIMER_30S, // 30 seconds
+    0,         // M17 CAN
+    0,         // Voice prompts off
+    0,         // Phonetic spell off
+    1,         // Automatic latch of macro menu enabled
+    0,         // not used
+    false,     // Check M17 CAN on RX
+    "",        // Empty M17 destination
+    false,     // Display battery icon
+    false,     // Update RTC with GPS
 };
+
+typedef enum { CLEAN , EMPTY, CORRUPTED } part_status;
+
+/**
+ * Structure defining the binary layout of the settings in NVM memory
+ */
+typedef struct {
+    uint32_t MAGIC; ///< Must be 0x584E504F ("OPNX")
+    uint16_t
+        length; ///< Total length of the structure (incl. MAGIC, counter, length and CRC)
+    uint16_t
+        counter; ///< Free-running counter, incremented each time settings are savec
+    settings_t settings; ///< Device settings
+    uint16_t
+        crc; ///< CRC-16 (CCITT) checksum of the structure (excl. crc field itself)
+} __attribute__((packed)) settings_store_t;
+
+typedef struct settings_storage_s {
+    int dev;                       ///< NVM device number
+    int part_A;                    ///< NVM partition number for partition A
+    int part_B;                    ///< NVM partition number for partition B
+    size_t part_A_offset;          ///< Offset to free space in partition A
+    size_t part_B_offset;          ///< Offset to free space in partition B
+    settings_store_t latest_store; ///< Contains the most up-to-date settings
+    bool initialized; ///< Do latest settings contain the settings read from nvm?
+    bool write_needed; ///< Do we need to write the settings (settings have changed or are an old version)
+    part_status part_A_status; ///< Is partition A clean, empty, or corrupted
+    part_status part_B_status; ///< Is partition B clean, empty, or corrupted
+} settings_storage_t;
+
+void print_store(settings_store_t *store);
+void print_settings(settings_t *settings);
+
+/**
+ * Initialize a settings_storage_t structure to save and load device settings.
+ *
+ * @param s pointer to a pre-allocated settings_storage_t structure to be initialized
+ * @param nvm_dev NVM device number in which to store the device settings
+ * @param part_A NVM device partition number for storage partition A
+ * @param part_B NVM device partition number for storage partition B
+ * @return 0 if successful, negative error code otherwise
+ */
+int settings_storage_init(settings_storage_t *s, const int nvm_dev,
+                          const int part_A, const int part_B);
+
+/**
+ * Load device settings from non-volatile memory.
+ *
+ * @param s pointer to an initialized settings_storage_t structure
+ * @param settings pointer to a settings_t structure where to write the loaded settings
+ * @return 0 if successful, negative error code otherwise
+ */
+int settings_storage_load(settings_storage_t *s, settings_t *settings);
+
+/**
+ * Save device settings to non-volatile memory. Will not perform any actual write
+ * if the settings haven't changed.
+ *
+ * @param s pointer to an initialized settings_storage_t structure
+ * @param settings pointer to a settings_t structure containing the settings to save
+ * @return 0 if successful, negative error code otherwise
+ */
+int settings_storage_save(settings_storage_t *s, const settings_t *settings);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SETTINGS_H */
