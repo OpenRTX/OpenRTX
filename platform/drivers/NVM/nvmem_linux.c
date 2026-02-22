@@ -142,14 +142,6 @@ void nvm_terminate()
     posixFile_terminate(&stateDevice);
 }
 
-const struct nvmDescriptor *nvm_getDesc(const size_t index)
-{
-    if(index > 0)
-        return NULL;
-
-    return &stateNvm;
-}
-
 void nvm_readHwInfo(hwInfo_t *info)
 {
     /* Linux devices does not have any hardware info in the external flash. */

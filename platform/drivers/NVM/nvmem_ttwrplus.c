@@ -36,14 +36,6 @@ void nvm_terminate()
 
 }
 
-const struct nvmDescriptor *nvm_getDesc(const size_t index)
-{
-    if(index >= 0)
-        return NULL;
-
-    return &nvMemory;
-}
-
 void nvm_readCalibData(void *buf)
 {
     (void) buf;

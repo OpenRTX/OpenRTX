@@ -51,6 +51,14 @@ static inline int getAbsOffset(const struct nvmDescriptor *nvm, const int part,
     return 0;
 }
 
+const struct nvmDescriptor *nvm_getDesc(const uint32_t index)
+{
+    if (index >= nvmTab.nbAreas)
+        return NULL;
+
+    return &nvmTab.areas[index];
+}
+
 int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
              size_t len)
 {
