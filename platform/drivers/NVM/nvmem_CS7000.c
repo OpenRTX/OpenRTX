@@ -77,6 +77,11 @@ static const struct nvmDescriptor extMem[] =
     }
 };
 
+const struct nvmTable nvmTab = {
+    .areas = extMem,
+    .nbAreas = ARRAY_SIZE(extMem),
+};
+
 static uint16_t settingsCrc;
 static uint16_t vfoCrc;
 

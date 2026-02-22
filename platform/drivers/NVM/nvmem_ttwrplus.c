@@ -21,6 +21,10 @@ static const struct nvmDescriptor nvMemory =
     .partitions = NULL
 };
 
+const struct nvmTable nvmTab = {
+    .areas = &nvMemory,
+    .nbAreas = 1,
+};
 
 void nvm_init()
 {

@@ -39,6 +39,10 @@ const struct nvmDescriptor stateNvm =
     .partitions = statePartitions
 };
 
+const struct nvmTable nvmTab = {
+    .areas = &stateNvm,
+    .nbAreas = 1,
+};
 
 /**
  * Creates a directory if it does not exist.
