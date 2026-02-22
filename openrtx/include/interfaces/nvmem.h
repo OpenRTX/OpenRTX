@@ -111,8 +111,8 @@ struct nvmDevice {
  * of the partition is referred to the beginning of the memory area.
  */
 struct nvmPartition {
-    const size_t offset; ///< Offset from the beginning of the NVM area
-    const size_t size;   ///< Size in bytes
+    size_t offset; ///< Offset from the beginning of the NVM area
+    size_t size;   ///< Size in bytes
 };
 
 /**

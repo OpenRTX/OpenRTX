@@ -8,6 +8,7 @@
 #define NVMEM_ACCESS_H
 
 #include <stdint.h>
+#include "interfaces/nvmem.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +22,20 @@ extern "C" {
  * descriptor does not exist.
  */
 const struct nvmDescriptor *nvm_getDesc(const uint32_t index);
+
+/**
+ * Obtain the descriptor of a given nonvolatile memory area partition.
+ * The partition index zero represents the entire NVM area, while actual
+ * partitions information are accessed with an index from 1 to nbPart.
+ *
+ *
+ * @param idx: index of the nonvolatile memory area.
+ * @param part: index of the partition within the memory area.
+ * @param pInfo: pointer to a nvmPartition data structure.
+ * @return zero on success, a negative error code otherwise.
+ */
+int nvm_getPart(const uint32_t idx, const uint32_t part,
+                struct nvmPartition *pInfo);
 
 /**
  * Perform a byte-aligned read operation on a nonvolatile memory.

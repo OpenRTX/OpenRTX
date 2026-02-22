@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "interfaces/nvmem.h"
 #include "core/nvmem_access.h"
 #include "core/nvmem_device.h"
 #include <stdbool.h>
@@ -57,6 +56,26 @@ const struct nvmDescriptor *nvm_getDesc(const uint32_t index)
         return NULL;
 
     return &nvmTab.areas[index];
+}
+
+int nvm_getPart(const uint32_t idx, const uint32_t part,
+                struct nvmPartition *pInfo)
+{
+    const struct nvmDescriptor *desc = nvm_getDesc(idx);
+    if (desc == NULL)
+        return -EINVAL;
+
+    if (part == 0) {
+        pInfo->offset = 0;
+        pInfo->size = desc->size;
+    } else {
+        if (part > desc->nbPart)
+            return -EINVAL;
+
+        *pInfo = desc->partitions[part - 1];
+    }
+
+    return 0;
 }
 
 int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
