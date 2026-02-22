@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -9,6 +9,22 @@
 
 #include "hwconfig.h"
 #include <stdbool.h>
+
+/**
+ * \file
+ * This file contains the definition for the device settings data structure and
+ * the functions to load/save its content from non-volatile memory.
+ *
+ * Settings are saved alternately across two partitions using an A/B partitions
+ * scheme to ensure that there is always a valid copy of the settings on the
+ * device. If an error occurs during the save, or if the latest copy gets
+ * corruptes, there is at lease one previous copy stored in the other
+ * partition.
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum
 {
@@ -31,7 +47,7 @@ typedef enum
 }
 display_timer_t;
 
-typedef struct
+struct settings
 {
     uint8_t brightness;           // Display brightness
     uint8_t contrast;             // Display contrast
@@ -52,7 +68,9 @@ typedef struct
     bool    gpsSetTime;           // Use GPS to ajust RTC time
     char    M17_meta_text[53];    // M17 Meta Text to send
 }
-__attribute__((packed)) settings_t;
+__attribute__((packed));
+
+typedef struct settings settings_t;
 
 
 static const settings_t default_settings =
@@ -80,5 +98,38 @@ static const settings_t default_settings =
     false,                        // Update RTC with GPS
     "OpenRTX",                    // Default M17 meta text
 };
+
+/**
+ * Initialize a settings storage.
+ *
+ * @param devA: NVM device number for storage partition A
+ * @param partA: partition number for storage partition A
+ * @param devB: NVM device number for storage partition B
+ * @param partB: partition number for storage partition B
+ * @return 0 if successful, a negative error code otherwise
+ */
+int settings_init(const uint32_t devA, const uint32_t partA,
+                  const uint32_t devB, const uint32_t partB);
+
+/**
+ * Load device settings from non-volatile memory.
+ *
+ * @param settings: pointer to settings data structure
+ * @return 0 if successful, a negative error code otherwise
+ */
+int settings_load(struct settings *settings);
+
+/**
+ * Save device settings to non-volatile memory.
+ * Will not perform any actual write if the settings haven't changed.
+ *
+ * @param settings: pointer to settings data structure
+ * @return 0 if successful, a negative error code otherwise
+ */
+int settings_save(const struct settings *settings);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SETTINGS_H */
