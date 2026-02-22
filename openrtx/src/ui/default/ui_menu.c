@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -421,7 +421,6 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
         case M17_CALLSIGN:
             sniprintf(buf, max_len, "%s", last_state.settings.callsign);
             break;
-
         case M17_METATEXT:
             // limit display to 8 characters
             if (strlen(last_state.settings.M17_meta_text) > 7)
@@ -435,9 +434,8 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
             else
                 sniprintf(buf, max_len, "%s", last_state.settings.M17_meta_text);
         break;
-
         case M17_CAN:
-            sniprintf(buf, max_len, "%d", last_state.settings.m17_can);
+            sniprintf(buf, max_len, "%d", last_state.channel.m17_can);
             break;
         case M17_CAN_RX:
             sniprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ?
