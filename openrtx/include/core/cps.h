@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -16,8 +16,8 @@
 #define CPS_MAGIC 0x43585452
 // Codeplug version v0.1
 #define CPS_VERSION_MAJOR  0
-#define CPS_VERSION_MINOR  1
-#define CPS_VERSION_NUMBER (CPS_VERSION_MAJOR << 8) | CPS_VERSION_MINOR
+#define CPS_VERSION_MINOR  2
+#define CPS_VERSION_NUMBER ((CPS_VERSION_MAJOR << 8) | CPS_VERSION_MINOR)
 #define CPS_STR_SIZE 32
 
 
@@ -183,14 +183,12 @@ enum m17gps_t
  */
 typedef struct
 {
-    uint8_t  rxCan : 4,         //< Channel Access Number for RX
-             txCan : 4;         //< Channel Access Number for TX
-    uint8_t  mode  : 4,         //< Channel operation mode
-             encr  : 4;         //< Encryption mode
-    uint8_t gps_mode;           //< Channel GPS mode
-    uint16_t contact_index;     //< Index to retrieve data from contact list
+    uint8_t  mode  : 4,         ///< Channel operation mode
+             encr  : 4;         ///< Encryption mode
+    uint8_t gps_mode;           ///< Channel GPS mode
+    uint16_t contact_index;     ///< Index to retrieve data from contact list
 }
-__attribute__((packed)) m17Info_t; // 5B
+__attribute__((packed)) m17Info_t; // 4B
 
 /**
  * Data structure describing M17-specific contact fields.
@@ -229,8 +227,10 @@ typedef struct
 
     uint8_t bandwidth      : 2,    //< Bandwidth
             rx_only        : 1,    //< 1 means RX-only channel
-            _unused        : 5;    //< Padding to 8 bits
+            m17_can        : 4,    ///< M17 Channel Access Number (should move to m17Info_t)
+            _unused        : 1;     //< Padding to 8 bits
 
+    uint8_t  sqlLevel;             //< Squelch level
     uint32_t power;                //< Tx power, in mW
 
     freq_t  rx_frequency;          //< RX Frequency, in Hz
@@ -243,6 +243,12 @@ typedef struct
     char    descr[CPS_STR_SIZE];   //< Description of the channel
     geo_t   ch_location;           //< Transmitter geolocation
 
+    // These 2 values alogn with m17_can above should be in m17Info_t below
+    // but because these can be changed in the settings at any time,
+    // they can not be dependant on the selected opMode.
+    char    m17_dest[10];           ///< M17 destination
+    char    M17_meta_text[53];     ///< M17 Meta Text to send
+
     union
     {
         fmInfo_t  fm;              //< Information block for FM channels
@@ -250,7 +256,7 @@ typedef struct
         m17Info_t m17;             //< Information block for M17 channels
     };
 }
-__attribute__((packed)) channel_t; // 59B
+__attribute__((packed)) channel_t; // 158B
 
 /**
  * Data structure describing a codeplug contact.
