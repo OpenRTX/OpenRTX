@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -198,7 +198,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 Callsign dst = lsf.getDestination();
                 Callsign src = lsf.getSource();
                 strncpy(status->M17_dst, dst, 10);
-                
+
                 // Copy source callsign (may be overridden for extended callsigns)
                 strncpy(status->M17_src, src, 10);
 
@@ -242,7 +242,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
                 // Check CAN on RX, if enabled.
                 // If check is disabled, force match to true.
-                bool canMatch =  (streamType.fields.CAN == status->can)
+                bool canMatch =  (streamType.fields.CAN == status->m17_can)
                               || (status->canRxEn == false);
 
                 // Check if the destination callsign of the incoming transmission
@@ -318,12 +318,12 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         streamType_t type;
         type.fields.dataMode = DATAMODE_STREAM;     // Stream
         type.fields.dataType = DATATYPE_VOICE;      // Voice data
-        type.fields.CAN      = status->can;             // Channel access number
+        type.fields.CAN      = status->m17_can;      // Channel access number
 
         lsf.setType(type);
 
-        if(strlen(state.settings.M17_meta_text) > 0) {
-            metaText.setText(state.settings.M17_meta_text);
+        if(strlen(state.channel.M17_meta_text) > 0) {
+            metaText.setText(state.channel.M17_meta_text);
             metaText.getNextBlock(lsf.metadata());
         }
 
@@ -368,7 +368,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     // the upcoming superframe.
     if(encoder.superframeBoundary())
     {
-        if(strlen(state.settings.M17_meta_text) > 0) {
+        if(strlen(state.channel.M17_meta_text) > 0) {
             auto lsf = encoder.getCurrentLsf();
             metaText.getNextBlock(lsf.metadata());
             encoder.updateLsfData(lsf);
