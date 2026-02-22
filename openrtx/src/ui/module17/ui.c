@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -335,9 +335,9 @@ static void _ui_changeBrightness(int variation)
     display_setBacklightLevel(state.settings.brightness);
 }
 
-static void _ui_changeCAN(int variation)
+static void _ui_changeM17CAN(int variation)
 {
-    int8_t can = state.settings.m17_can + variation;
+    int8_t can = state.channel.m17_can + variation;
 
     // M17 CAN ranges from 0 to 15
     if(can > 15)
@@ -346,7 +346,7 @@ static void _ui_changeCAN(int variation)
     if(can < 0)
         can = 15;
 
-    state.settings.m17_can = can;
+    state.channel.m17_can = can;
 }
 
 static void _ui_changeWiper(uint16_t *wiper, int variation)
@@ -512,7 +512,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_callsign);
                         // Save selected callsign and disable input mode
-                        strncpy(state.settings.m17_dest, ui_state.new_callsign, 10);
+                        strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
                         *sync_rtx = true;
                         ui_state.edit_mode = false;
                     }
@@ -527,7 +527,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_meta_text);
                         // Save selected message and disable input mode
-                        strncpy(state.settings.M17_meta_text, ui_state.new_meta_text, 52);
+                        strncpy(state.channel.M17_meta_text, ui_state.new_meta_text, 52);
                         ui_state.edit_meta_text = false;
                         *sync_rtx = true;
                     }
@@ -694,8 +694,10 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_meta_text);
                         // Save selected message and disable input mode
-                        strncpy(state.settings.M17_meta_text, ui_state.new_meta_text, 52);
-                        ui_state.edit_meta_text = false;
+==== BASE ====
+                        strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
+                        ui_state.edit_message = false;
+==== BASE ====
                         ui_state.edit_mode = false;
                     }
                     else if(msg.keys & KEY_ESC)
@@ -712,7 +714,7 @@ void ui_updateFSM(bool *sync_rtx)
                         switch(ui_state.menu_selected)
                         {
                             case M_CAN:
-                                _ui_changeCAN(-1);
+                                _ui_changeM17CAN(-1);
                                 break;
                             case M_CAN_RX:
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
@@ -726,7 +728,7 @@ void ui_updateFSM(bool *sync_rtx)
                         switch(ui_state.menu_selected)
                         {
                             case M_CAN:
-                                _ui_changeCAN(+1);
+                                _ui_changeM17CAN(+1);
                                 break;
                             case M_CAN_RX:
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
