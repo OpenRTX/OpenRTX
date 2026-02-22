@@ -94,11 +94,13 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
 
                 // Print CAN
                 gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-                          color_white, "CAN %02d", state.settings.m17_can);
-                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "RX CAN %02d", state.channel.rx_can);
+                gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                          color_white, "TX CAN %02d", state.channel.tx_can);
+                gfx_print(layout.line3_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, last);
                 // Print M17 Destination ID on line 2
-                gfx_print(layout.line3_pos, layout.line3_font, TEXT_ALIGN_CENTER,
+                gfx_print(layout.line4_pos, layout.line3_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", dst);
                 if (ui_state->edit_mode)
                 {

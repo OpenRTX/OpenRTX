@@ -231,7 +231,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
                 // Check CAN on RX, if enabled.
                 // If check is disabled, force match to true.
-                bool canMatch =  (streamType.fields.CAN == status->can)
+                bool canMatch =  (streamType.fields.CAN == status->rx_can)
                               || (status->canRxEn == false);
 
                 // Check if the destination callsign of the incoming transmission
@@ -305,7 +305,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         streamType_t type;
         type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
         type.fields.dataType = M17_DATATYPE_VOICE;      // Voice data
-        type.fields.CAN      = status->can;             // Channel access number
+        type.fields.CAN      = status->tx_can;          // Channel access number
 
         lsf.setType(type);
 
