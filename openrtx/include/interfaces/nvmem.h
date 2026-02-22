@@ -130,6 +130,18 @@ struct nvmDescriptor {
 };
 
 /**
+ * Nonvolatile memory device table.
+ * This data structure carries information about the nonvolatile memory areas
+ * available on the device.
+ */
+struct nvmTable {
+    const struct nvmDescriptor *areas; ///< List of available NVM areas
+    const size_t nbAreas;              ///< Number of NVM areas
+};
+
+extern const struct nvmTable nvmTab;
+
+/**
  * Initialise NVM driver.
  */
 void nvm_init();

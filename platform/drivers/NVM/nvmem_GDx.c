@@ -46,6 +46,11 @@ static const struct nvmDescriptor nvmDevices[] =
     }
 };
 
+const struct nvmTable nvmTab = {
+    .areas = nvmDevices,
+    .nbAreas = ARRAY_SIZE(nvmDevices),
+};
+
 #if defined(PLATFORM_GD77)
 static const uint32_t UHF_CAL_BASE = 0x8F000;
 static const uint32_t VHF_CAL_BASE = 0x8F070;

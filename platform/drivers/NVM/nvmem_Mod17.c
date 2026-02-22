@@ -36,6 +36,11 @@ memory_t *memory = ((memory_t *) baseAddress);
 
 mod17Calib_t mod17CalData;   // Calibration data, to be saved and loaded
 
+const struct nvmTable nvmTab = {
+    .areas = NULL,
+    .nbAreas = 0,
+};
+
 /**
  * \internal
  * Utility function to find the currently active data block inside memory, that

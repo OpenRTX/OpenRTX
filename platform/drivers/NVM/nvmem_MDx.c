@@ -55,6 +55,10 @@ static const struct nvmDescriptor nvmDevices[] =
     }
 };
 
+const struct nvmTable nvmTab = {
+    .areas = nvmDevices,
+    .nbAreas = ARRAY_SIZE(nvmDevices),
+};
 
 void nvm_init()
 {
