@@ -78,14 +78,6 @@ void nvm_terminate()
     W25Qx_terminate(&eflash);
 }
 
-const struct nvmDescriptor *nvm_getDesc(const size_t index)
-{
-    if(index >= ARRAY_SIZE(nvmDevices))
-        return NULL;
-
-    return &nvmDevices[index];
-}
-
 void nvm_readCalibData(void *buf)
 {
     uint32_t freqs[18];

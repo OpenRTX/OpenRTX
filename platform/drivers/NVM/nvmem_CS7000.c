@@ -110,14 +110,6 @@ void nvm_terminate()
 #endif
 }
 
-const struct nvmDescriptor *nvm_getDesc(const size_t index)
-{
-    if(index > 2)
-        return NULL;
-
-    return &extMem[index];
-}
-
 void nvm_readCalibData(void *buf)
 {
     struct CS7000Calib *calData = (struct CS7000Calib *) buf;

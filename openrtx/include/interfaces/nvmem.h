@@ -152,15 +152,6 @@ void nvm_init();
 void nvm_terminate();
 
 /**
- * Obtain the descriptor of a given nonvolatile memory.
- *
- * @param index: index of the nonvolatile memory.
- * @return a pointer to the memory descriptor or NULL if the requested descriptor
- * does not exist.
- */
-const struct nvmDescriptor *nvm_getDesc(const size_t index);
-
-/**
  * Load calibration data from nonvolatile memory.
  *
  * @param buf: destination buffer for calibration data.
