@@ -48,7 +48,6 @@ openrtx/include/core/cps.h
 openrtx/include/core/ctcssDetector.hpp
 openrtx/include/core/datetime.h
 openrtx/include/core/event.h
-openrtx/include/core/fir.hpp
 openrtx/include/core/goertzel.hpp
 openrtx/include/core/gps.h
 openrtx/include/core/iir.hpp

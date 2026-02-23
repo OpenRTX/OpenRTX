@@ -139,7 +139,7 @@ TEST_CASE("RRC 24kHz filter impulse response matches tap coefficients",
           "[m17][demodulator]")
 {
     constexpr size_t NTAPS = M17::rrc_taps_24k.size();
-    Fir<NTAPS> rrc(M17::rrc_taps_24k);
+    Fir<float, NTAPS> rrc(M17::rrc_taps_24k);
     std::array<float, NTAPS> output{};
 
     output[0] = rrc(1.0f);
@@ -195,7 +195,7 @@ static std::vector<int16_t> rrcBaseband(const std::vector<int8_t> &symbols,
     static constexpr size_t SPS = SAMPLES_PER_SYM;
     static constexpr size_t NTAPS = M17::rrc_taps_24k.size();
 
-    Fir<NTAPS> txRrc(M17::rrc_taps_24k);
+    Fir<float, NTAPS> txRrc(M17::rrc_taps_24k);
 
     std::vector<int16_t> out;
     out.reserve(symbols.size() * SPS);
