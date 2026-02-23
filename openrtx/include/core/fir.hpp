@@ -19,18 +19,16 @@
  * Class for FIR filter with configurable coefficients.
  * Adapted from the original implementation by Rob Riggs, Mobilinkd LLC.
  */
-template < size_t N >
-class Fir
+template <typename T, size_t N> class Fir
 {
 public:
-
     /**
      * Constructor.
      *
      * @param taps: reference to a std::array of floating poing values representing
      * the FIR filter coefficients.
      */
-    Fir(const std::array< float, N >& taps) : taps(taps), pos(0)
+    Fir(const std::array<T, N> &taps) : taps(taps), pos(0)
     {
         reset();
     }
@@ -38,7 +36,9 @@ public:
     /**
      * Destructor.
      */
-    ~Fir() { }
+    ~Fir()
+    {
+    }
 
     /**
      * Perform one step of the FIR filter, computing a new output value given
@@ -47,9 +47,9 @@ public:
      * @param input: FIR input value for the current time step.
      * @return FIR output as a function of the current and past input values.
      */
-    float operator()(const float& input)
+    T operator()(const T &input)
     {
-        float acc = 0.0f;
+        T acc = 0;
         size_t i;
 
         pos = (pos == 0 ? N - 1 : pos - 1);
@@ -81,10 +81,9 @@ public:
     }
 
 private:
-
-    const std::array< float, N >& taps;    ///< FIR filter coefficients.
-    std::array< float, 2 * N >    hist;    ///< History of past inputs.
-    size_t                        pos;     ///< Current position in history.
+    const std::array<T, N> &taps; ///< FIR filter coefficients.
+    std::array<T, 2 * N> hist;    ///< History of past inputs.
+    size_t pos;                   ///< Current position in history.
 };
 
 #endif /* DSP_H */

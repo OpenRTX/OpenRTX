@@ -72,8 +72,8 @@ static constexpr std::array<float, 41> rrc_taps_24k =
 /*
  * FIR implementations of the RRC filter for baseband audio generation.
  */
-extern Fir< std::tuple_size< decltype(rrc_taps_48k) >::value > rrc_48k;
-extern Fir< std::tuple_size< decltype(rrc_taps_24k) >::value > rrc_24k;
+extern Fir< float, std::tuple_size< decltype(rrc_taps_48k) >::value > rrc_48k;
+extern Fir< float, std::tuple_size< decltype(rrc_taps_24k) >::value > rrc_24k;
 
 } /* M17 */
 
