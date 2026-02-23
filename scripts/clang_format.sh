@@ -44,6 +44,7 @@ openrtx/include/core/crc.h
 openrtx/include/core/dsp.h
 openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
+openrtx/include/core/fir.hpp
 openrtx/include/core/memory_profiling.h
 openrtx/include/core/nvmem_access.h
 openrtx/include/core/nvmem_device.h
