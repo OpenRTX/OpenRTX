@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -9,6 +9,7 @@
 #include "interfaces/delays.h"
 #include "interfaces/nvmem.h"
 #include "core/nvmem_access.h"
+#include "core/nvmem_device.h"
 #include "calibration/calibInfo_GDx.h"
 #include "drivers/SPI/spi_bitbang.h"
 #include "hwconfig.h"

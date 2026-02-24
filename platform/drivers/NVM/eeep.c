@@ -1,10 +1,11 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "core/nvmem_access.h"
+#include "core/nvmem_device.h"
 #include <stdint.h>
 #include <limits.h>
 #include <errno.h>
