@@ -39,41 +39,46 @@ int nvm_getPart(const uint32_t idx, const uint32_t part,
 
 /**
  * Perform a byte-aligned read operation on a nonvolatile memory.
+ * This function allows to read data from an NVM device starting at a given
+ * offset from the beginning of the device.
  *
- * @param dev: NVM device number.
- * @param part: partition number, -1 for direct device access.
- * @param address: offset for the read operation.
+ * @param idx: index of the nonvolatile memory area.
+ * @param part: partition number.
+ * @param offset: offset for the read operation.
  * @param data: pointer to a buffer where to store the data read.
  * @param len: number of bytes to read.
  * @return zero on success, a negative error code otherwise.
  */
-int nvm_read(const uint32_t dev, const int part, uint32_t offset, void *data,
-             size_t len);
+int nvm_read(const uint32_t idx, const uint32_t part, uint32_t offset,
+             void *data, size_t len);
 
 /**
  * Perform a write operation on a nonvolatile memory.
+ * This function allows to write data to an NVM device starting at a given
+ * offset from the beginning of the device.
  *
- * @param dev: NVM device number.
- * @param part: partition number, -1 for direct device access.
+ * @param idx: index of the nonvolatile memory area.
+ * @param part: partition number.
  * @param offset: offset for the write operation.
  * @param data: pointer to a buffer containing the data to write.
  * @param len: number of bytes to write.
  * @return zero on success, a negative error code otherwise.
  */
-int nvm_write(const uint32_t dev, const int part, uint32_t offset,
+int nvm_write(const uint32_t idx, const uint32_t part, uint32_t offset,
               const void *data, size_t len);
 
 /**
  * Perform an erase operation on a nonvolatile memory. Acceptable offset and
  * size depend on characteristics of the underlying device.
  *
- * @param dev: NVM device number.
- * @param part: partition number, -1 for direct device access.
+ * @param idx: index of the nonvolatile memory area.
+ * @param part: partition number.
  * @param offset: offset for the erase operation.
  * @param size: size of the area to be erased.
  * @return zero on success, a negative error code otherwise.
  */
-int nvm_erase(const uint32_t dev, const int part, uint32_t offset, size_t size);
+int nvm_erase(const uint32_t idx, const uint32_t part, uint32_t offset,
+              size_t size);
 
 #ifdef __cplusplus
 }
