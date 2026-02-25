@@ -337,8 +337,8 @@ void printCalibration_md3x0()
     struct md3x0FullCalib cal;
     uint8_t *rawData = (uint8_t *) &cal;
 
-    nvm_read(1, -1, 0x0000, rawData, 256);          // W25Qx security register 0x0000
-    nvm_read(2, -1, 0x0000, rawData + 256, 256);    // W25Qx security register 0x0100
+    nvm_read(1, 0, 0x0000, rawData, 256);          // W25Qx security register 0x0000
+    nvm_read(2, 0, 0x0000, rawData + 256, 256);    // W25Qx security register 0x0100
 
     printf("vox1:           %03d\r\n",  cal.vox1);
     printf("vox10:          %03d\r\n",  cal.vox10);
@@ -387,8 +387,8 @@ void printCalibration_mduv3x0()
     struct mduv3x0FullCalib cal;
     uint8_t *rawData = (uint8_t *) &cal;
 
-    nvm_read(1, -1, 0x0000, rawData, 256);          // W25Qx security register 0x0000
-    nvm_read(2, -1, 0x0000, rawData + 256, 256);    // W25Qx security register 0x0100
+    nvm_read(1, 0, 0x0000, rawData, 256);          // W25Qx security register 0x0000
+    nvm_read(2, 0, 0x0000, rawData + 256, 256);    // W25Qx security register 0x0100
 
     printf("vox1:           %03d\r\n",  cal.vox1);
     printf("vox10:          %03d\r\n",  cal.vox10);
