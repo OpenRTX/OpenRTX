@@ -1,223 +1,176 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-// Test private methods
-#define private public
+#include <catch2/catch_test_macros.hpp>
 
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "protocols/M17/M17DSP.h"
-#include "protocols/M17/M17Demodulator.h"
-#include "protocols/M17/M17Utils.h"
-#include "core/audio_stream.h"
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <vector>
 
-using namespace std;
+#include "protocols/M17/Correlator.hpp"
+#include "protocols/M17/M17Constants.hpp"
+#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/Synchronizer.hpp"
+#include "core/fir.hpp"
 
-/**
- * Test the different demodulation steps
- */
+// M17 demodulation constants
+static constexpr size_t SAMPLES_PER_SYM = 5; // 24000 Hz / 4800 baud
+static constexpr size_t N = M17::M17_SYNCWORD_SYMBOLS;
+static constexpr int32_t SCALE = 1000;
 
-int main()
+// M17 stream syncword symbols as used in M17Demodulator
+static constexpr std::array<int8_t, N> STREAM_SYNC = { -3, -3, -3, -3,
+                                                       +3, +3, -3, +3 };
+
+// Prime the correlator with zeros to fill its internal history
+static void primeCorrelator(Correlator<N, SAMPLES_PER_SYM> &corr)
 {
-    // Open file
-    FILE *baseband_file = fopen("../tests/unit/assets/M17_test_baseband_dc.raw",
-                                "rb");
-    FILE *baseband_out = fopen("M17_test_baseband_rrc.raw", "wb");
-    if (!baseband_file) {
-        perror("Error in reading test baseband");
-        return -1;
+    for (size_t i = 0; i < N * SAMPLES_PER_SYM; i++)
+        corr.sample(0);
+}
+
+// Feed one full syncword pattern (each symbol repeated SAMPLES_PER_SYM times)
+static void feedSyncword(Correlator<N, SAMPLES_PER_SYM> &corr,
+                         const std::array<int8_t, N> &syncword)
+{
+    for (auto sym : syncword)
+        for (size_t s = 0; s < SAMPLES_PER_SYM; s++)
+            corr.sample(static_cast<int16_t>(sym * SCALE));
+}
+
+TEST_CASE("Correlator peaks at maximum for matching M17 stream syncword",
+          "[m17][demodulator]")
+{
+    // Maximum possible correlation: num_symbols * amplitude^2 * SCALE
+    // symbol amplitude is 3, so 8 * 9 * 1000 = 72000
+    static constexpr int32_t PEAK_CORR = static_cast<int32_t>(N) * 9 * SCALE;
+
+    Correlator<N, SAMPLES_PER_SYM> corr;
+    primeCorrelator(corr);
+    feedSyncword(corr, STREAM_SYNC);
+
+    int32_t conv = corr.convolve(STREAM_SYNC);
+    REQUIRE(conv == PEAK_CORR);
+}
+
+TEST_CASE("Correlator convolution is proportional to syncword sum for DC signal",
+          "[m17][demodulator]")
+{
+    // The expected convolution against a constant-value signal equals the sum
+    // of all syncword symbols multiplied by the signal value.
+    // STREAM_SYNC = {-3,-3,-3,-3,+3,+3,-3,+3}, sum = -6.
+    static constexpr int32_t SYNC_SUM = -6;
+    static constexpr int32_t EXPECTED = SYNC_SUM * SCALE;
+
+    Correlator<N, SAMPLES_PER_SYM> corr;
+
+    // Fill with constant positive value
+    for (size_t i = 0; i < N * SAMPLES_PER_SYM * 2; i++)
+        corr.sample(SCALE);
+
+    int32_t conv = corr.convolve(STREAM_SYNC);
+    REQUIRE(conv == EXPECTED);
+}
+
+TEST_CASE(
+    "Synchronizer detects M17 stream syncword and returns valid sampling point",
+    "[m17][demodulator]")
+{
+    static constexpr int32_t PEAK_CORR = static_cast<int32_t>(N) * 9 * SCALE;
+    static constexpr int32_t THRESHOLD = PEAK_CORR / 2;
+
+    Correlator<N, SAMPLES_PER_SYM> corr;
+    Synchronizer<N, SAMPLES_PER_SYM> sync{ std::array<int8_t, N>{
+        -3, -3, -3, -3, +3, +3, -3, +3 } };
+
+    primeCorrelator(corr);
+    for (size_t i = 0; i < N * SAMPLES_PER_SYM; i++)
+        sync.update(corr, THRESHOLD, -THRESHOLD);
+
+    feedSyncword(corr, STREAM_SYNC);
+    for (size_t i = 0; i < N * SAMPLES_PER_SYM; i++)
+        sync.update(corr, THRESHOLD, -THRESHOLD);
+
+    // Feed zeros to let the trigger window fall and produce a detection
+    bool detected = false;
+    for (size_t i = 0; i < N * SAMPLES_PER_SYM && !detected; i++) {
+        corr.sample(0);
+        int8_t r = sync.update(corr, THRESHOLD, -THRESHOLD);
+        if (r != 0)
+            detected = true;
     }
 
-    // Get file size
-    fseek(baseband_file, 0L, SEEK_END);
-    long baseband_size = ftell(baseband_file);
-    unsigned baseband_samples = baseband_size / 2;
-    fseek(baseband_file, 0L, SEEK_SET);
-    printf("Baseband is %ld bytes!\n", baseband_size);
+    REQUIRE(detected);
+    REQUIRE(sync.samplingIndex() < SAMPLES_PER_SYM);
+}
 
-    // Read data from input file
-    int16_t *baseband_buffer = (int16_t *)malloc(baseband_size);
-    if (!baseband_buffer) {
-        perror("Error in memory allocation");
-        return -1;
+TEST_CASE(
+    "Synchronizer does not trigger when threshold exceeds maximum correlation",
+    "[m17][demodulator]")
+{
+    // A threshold higher than the theoretical maximum should never trigger
+    static constexpr int32_t PEAK_CORR = static_cast<int32_t>(N) * 9 * SCALE;
+    static constexpr int32_t HIGH_THRESHOLD = PEAK_CORR + 1;
+
+    Correlator<N, SAMPLES_PER_SYM> corr;
+    Synchronizer<N, SAMPLES_PER_SYM> sync{ std::array<int8_t, N>{
+        -3, -3, -3, -3, +3, +3, -3, +3 } };
+
+    primeCorrelator(corr);
+    feedSyncword(corr, STREAM_SYNC);
+
+    bool triggered = false;
+    for (size_t i = 0; i < N * SAMPLES_PER_SYM; i++) {
+        corr.sample(0);
+        int8_t r = sync.update(corr, HIGH_THRESHOLD, -HIGH_THRESHOLD);
+        if (r != 0)
+            triggered = true;
     }
-    size_t read_items = fread(baseband_buffer, 2, baseband_samples,
-                              baseband_file);
-    if (read_items != baseband_samples) {
-        perror("Error in reading input file");
-        return -1;
+
+    REQUIRE_FALSE(triggered);
+}
+
+TEST_CASE("RRC 24kHz filter impulse response matches tap coefficients",
+          "[m17][demodulator]")
+{
+    constexpr size_t NTAPS = M17::rrc_taps_24k.size();
+    Fir<NTAPS> rrc(M17::rrc_taps_24k);
+    std::array<float, NTAPS> output{};
+
+    output[0] = rrc(1.0f);
+    for (size_t i = 1; i < NTAPS; i++)
+        output[i] = rrc(0.0f);
+
+    for (size_t i = 0; i < NTAPS; i++) {
+        INFO("Tap " << i << ": expected " << M17::rrc_taps_24k[i] << " got "
+                    << output[i]);
+        REQUIRE(std::abs(output[i] - M17::rrc_taps_24k[i]) < 1e-5f);
     }
-    fclose(baseband_file);
+}
 
-    // Apply RRC on the baseband buffer
-    int16_t *filtered_buffer = (int16_t *)malloc(baseband_size);
-    for (size_t i = 0; i < baseband_samples; i++) {
-        float elem = static_cast<float>(baseband_buffer[i]);
-        filtered_buffer[i] = static_cast<int16_t>(M17::rrc(elem));
+TEST_CASE("RRC 24kHz filter has symmetric (linear phase) coefficients",
+          "[m17][demodulator]")
+{
+    const auto &taps = M17::rrc_taps_24k;
+    const size_t N2 = taps.size();
+
+    for (size_t i = 0; i < N2 / 2; i++) {
+        INFO("Taps " << i << " and " << (N2 - 1 - i) << " should be equal");
+        REQUIRE(std::abs(taps[i] - taps[N2 - 1 - i]) < 1e-10f);
     }
-    fwrite(filtered_buffer, baseband_samples, 2, baseband_out);
-    fclose(baseband_out);
+}
 
-    M17::M17Demodulator m17Demodulator = M17::M17Demodulator();
-    m17Demodulator.init();
-    dataBlock_t baseband = { nullptr, 0 };
-    baseband.data = filtered_buffer;
-    baseband.len = baseband_samples;
-    dataBlock_t old_baseband = m17Demodulator.baseband;
-    m17Demodulator.baseband = baseband;
+TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
+{
+    // Sum of all taps equals the DC gain; for a unit-gain RRC filter this
+    // should be very close to 1.0.
+    float sum = 0.0f;
+    for (float t : M17::rrc_taps_24k)
+        sum += t;
 
-    FILE *output_csv_1 = fopen("M17_demodulator_output_1.csv", "w");
-    fprintf(output_csv_1,
-            "Input,RRCSignal,LSFConvolution,FrameConvolution,Stddev\n");
-    // Test convolution
-    m17Demodulator.resetCorrelationStats();
-    for (unsigned i = 0; i < baseband_samples
-                                 - m17Demodulator.M17_SYNCWORD_SYMBOLS
-                                       * m17Demodulator.M17_SAMPLES_PER_SYMBOL;
-         i++) {
-        int32_t lsf_conv =
-            m17Demodulator.convolution(i, m17Demodulator.lsf_syncword,
-                                       m17Demodulator.M17_SYNCWORD_SYMBOLS);
-        int32_t stream_conv =
-            m17Demodulator.convolution(i, m17Demodulator.stream_syncword,
-                                       m17Demodulator.M17_SYNCWORD_SYMBOLS);
-        m17Demodulator.updateCorrelationStats(stream_conv);
-        fprintf(output_csv_1, "%" PRId16 ",%" PRId16 ",%d,%d,%f\n",
-                baseband_buffer[i], baseband.data[i],
-                lsf_conv + (int32_t)m17Demodulator.getCorrelationEma(),
-                stream_conv - (int32_t)m17Demodulator.getCorrelationEma(),
-                m17Demodulator.conv_threshold_factor
-                    * m17Demodulator.getCorrelationStddev());
-    }
-    fclose(output_csv_1);
-
-    // Test syncword detection
-    printf("Testing syncword detection!\n");
-    FILE *syncword_ref =
-        fopen("../tests/unit/assets/M17_test_baseband_dc_syncwords.txt", "r");
-    int32_t offset = 0;
-    M17::sync_t syncword = { -1, false };
-    m17Demodulator.resetCorrelationStats();
-    int i = 0;
-    do {
-        int expected_syncword = 0;
-        fscanf(syncword_ref, "%d\n", &expected_syncword);
-        syncword = m17Demodulator.nextFrameSync(offset);
-        offset = syncword.index
-               + m17Demodulator.M17_SYNCWORD_SYMBOLS
-                     * m17Demodulator.M17_SAMPLES_PER_SYMBOL;
-        printf("%d\n", syncword.index);
-        if (syncword.index != expected_syncword) {
-            fprintf(stderr, "Error in syncwords detection #%d!\n", i);
-            return -1;
-        } else {
-            printf("SYNC: %d...OK!\n", syncword.index);
-        }
-        i++;
-    } while (syncword.index != -1);
-    fclose(syncword_ref);
-
-    FILE *output_csv_2 = fopen("M17_demodulator_output_2.csv", "w");
-    fprintf(output_csv_2, "RRCSignal,SyncDetect,QntMax,QntMin,Symbol\n");
-    uint32_t detect = 0, symbol = 0;
-    offset = 0;
-    syncword = { -1, false };
-    m17Demodulator.resetCorrelationStats();
-    syncword = m17Demodulator.nextFrameSync(offset);
-    for (unsigned i = 0; i < baseband_samples
-                                 - m17Demodulator.M17_SYNCWORD_SYMBOLS
-                                       * m17Demodulator.M17_SAMPLES_PER_SYMBOL;
-         i++) {
-        if ((int)i == (syncword.index + 1)) {
-            if (syncword.lsf)
-                detect = -4000;
-            else
-                detect = 4000;
-            syncword = m17Demodulator.nextFrameSync(
-                syncword.index
-                + m17Demodulator.M17_SYNCWORD_SYMBOLS
-                      * m17Demodulator.M17_SAMPLES_PER_SYMBOL);
-        } else if (((int)i % 10) == ((syncword.index + 1) % 10)) {
-            m17Demodulator.updateQuantizationStats(i);
-            symbol = m17Demodulator.quantize(i) * 1000;
-            detect = 3000;
-        } else {
-            detect = 0;
-            symbol = 0;
-        }
-        fprintf(output_csv_2, "%" PRId16 ",%d,%f,%f,%d\n",
-                m17Demodulator.baseband.data[i]
-                    - (int16_t)m17Demodulator.getQuantizationEma(),
-                detect, m17Demodulator.getQuantizationMax() / 2,
-                m17Demodulator.getQuantizationMin() / 2, symbol);
-    }
-    fclose(output_csv_2);
-
-    // TODO: Test symbol quantization
-    FILE *symbols_ref = fopen("../tests/unit/assets/M17_test_baseband.bin",
-                              "rb");
-    // Skip preamble
-    fseek(symbols_ref, 0x30, SEEK_SET);
-    uint32_t failed_bytes = 0, total_bytes = 0;
-    syncword = { -1, false };
-    offset = 0;
-    syncword = m17Demodulator.nextFrameSync(offset);
-    std::array<uint8_t, m17Demodulator.M17_FRAME_BYTES> frame;
-    // Preheat quantizer
-    for (int i = 0; i < 10; i++)
-        m17Demodulator.updateQuantizationStats(i);
-    if (syncword.index != -1) {
-        // Next syncword does not overlap with current syncword
-        offset = syncword.index + m17Demodulator.M17_SAMPLES_PER_SYMBOL;
-        // Slice the input buffer to extract a frame and quantize
-        for (uint32_t j = 0;
-             syncword.index + 2
-                 + m17Demodulator.M17_SAMPLES_PER_SYMBOL * (j + i)
-             < m17Demodulator.baseband.len;
-             j += m17Demodulator.M17_FRAME_SYMBOLS) {
-            for (uint16_t i = 0; i < m17Demodulator.M17_FRAME_SYMBOLS; i++) {
-                // Quantize
-                uint32_t symbol_index = syncword.index + 2
-                                      + m17Demodulator.M17_SAMPLES_PER_SYMBOL
-                                            * (j + i);
-                m17Demodulator.updateQuantizationStats(symbol_index);
-                int8_t symbol = m17Demodulator.quantize(symbol_index);
-                setSymbol<m17Demodulator.M17_FRAME_BYTES>(frame, i, symbol);
-            }
-            for (uint16_t i = 0; i < m17Demodulator.M17_FRAME_BYTES; i += 2) {
-                if (i % 16 == 0)
-                    printf("\n");
-                printf(" %02X%02X", frame[i], frame[i + 1]);
-                // Check with reference bitstream
-                //uint8_t ref_byte = 0x00;
-                //fread(&ref_byte, 1, 1, symbols_ref);
-                //if (frame[i] != ref_byte)
-                //{
-                //    printf("Mismatch byte #%u!\n", i);
-                //    failed_bytes++;
-                //}
-                //fread(&ref_byte, 1, 1, symbols_ref);
-                //if (frame[i+1] != ref_byte)
-                //{
-                //    printf("Mismatch byte #%u!\n", i);
-                //    failed_bytes++;
-                //}
-                total_bytes += 1;
-            }
-            printf("\n");
-        }
-    }
-    printf("Failed decoding %d/%d bytes!\n", failed_bytes, total_bytes);
-
-    // TODO: when stream is over pad with zeroes to avoid corrupting the last symbols
-
-    m17Demodulator.baseband = old_baseband;
-    free(baseband_buffer);
-    free(filtered_buffer);
-    return 0;
+    REQUIRE(std::abs(sum - 1.0f) < 1e-3f);
 }
