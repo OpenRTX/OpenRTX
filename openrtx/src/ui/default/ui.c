@@ -816,7 +816,7 @@ static void _ui_changePhoneticSpell(bool newVal)
                                    state.settings.vpPhoneticSpell);
 }
 
-static bool _ui_checkStandby(long long time_since_last_event)
+bool _ui_checkStandby(long long time_since_last_event)
 {
     if (standby)
     {
