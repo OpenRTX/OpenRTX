@@ -21,8 +21,7 @@ int main()
 {
     // Open file
     FILE *baseband_out = fopen("M17_rrc_impulse_response.raw", "wb");
-    if (!baseband_out)
-    {
+    if (!baseband_out) {
         perror("Error in opening output file");
         return -1;
     }
@@ -33,10 +32,9 @@ int main()
 
     // Apply RRC on impulse signal
     int16_t filtered_impulse[IMPULSE_SIZE] = { 0 };
-    for(size_t i = 0; i < IMPULSE_SIZE; i++)
-    {
-        float elem = static_cast< float >(impulse[i]);
-        filtered_impulse[i] = static_cast< int16_t >(M17::rrc_48k(0.10 * elem));
+    for (size_t i = 0; i < IMPULSE_SIZE; i++) {
+        float elem = static_cast<float>(impulse[i]);
+        filtered_impulse[i] = static_cast<int16_t>(M17::rrc_48k(0.10 * elem));
     }
     fwrite(filtered_impulse, IMPULSE_SIZE, 1, baseband_out);
     fclose(baseband_out);
