@@ -1127,6 +1127,10 @@ minmea_conversion_test = executable('minmea_conversion_test',
                                      sources : unit_test_src + ['tests/unit/convert_minmea_coord.cpp'],
                                      kwargs  : unit_test_opts)
 
+ui_check_standby_test = executable('ui_check_standby_test',
+                                    sources : unit_test_src + ['tests/unit/ui_check_standby.cpp'],
+                                    kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
