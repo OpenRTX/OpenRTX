@@ -1108,7 +1108,7 @@ m17_rrc_test = executable('m17_rrc_test',
                           kwargs: unit_test_opts)
 
 cps_test = executable('cps_test',
-                      sources : unit_test_src + ['tests/unit/cps.c'],
+                      sources : unit_test_src + ['tests/unit/cps.cpp'],
                       kwargs  : unit_test_opts)
 
 linux_inputStream_test = executable('linux_inputStream_test',
@@ -1124,7 +1124,7 @@ vp_test = executable('vp_test',
                       kwargs  : unit_test_opts)
 
 minmea_conversion_test = executable('minmea_conversion_test',
-                                     sources : unit_test_src + ['tests/unit/convert_minmea_coord.c'],
+                                     sources : unit_test_src + ['tests/unit/convert_minmea_coord.cpp'],
                                      kwargs  : unit_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
