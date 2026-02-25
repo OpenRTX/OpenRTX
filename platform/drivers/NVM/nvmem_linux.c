@@ -150,7 +150,7 @@ void nvm_readHwInfo(hwInfo_t *info)
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    int ret = nvm_read(0, 0, 0, channel, sizeof(channel_t));
+    int ret = nvm_read(0, 1, 0, channel, sizeof(channel_t));
     if(ret < 0)
         return ret;
 
@@ -167,7 +167,7 @@ int nvm_readVfoChannelData(channel_t *channel)
 
 int nvm_readSettings(settings_t *settings)
 {
-    int ret = nvm_read(0, 1, 0, settings, sizeof(settings_t));
+    int ret = nvm_read(0, 2, 0, settings, sizeof(settings_t));
     if(ret < 0)
         return ret;
 
@@ -184,14 +184,14 @@ int nvm_readSettings(settings_t *settings)
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    return nvm_write(0, 1, 0, settings, sizeof(settings_t));
+    return nvm_write(0, 2, 0, settings, sizeof(settings_t));
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    int ret = nvm_write(0, 1, 0, settings, sizeof(settings_t));
+    int ret = nvm_write(0, 2, 0, settings, sizeof(settings_t));
     if(ret < 0)
         return ret;
 
-    return nvm_write(0, 0, 0, vfo, sizeof(channel_t));
+    return nvm_write(0, 1, 0, vfo, sizeof(channel_t));
 }
