@@ -17,14 +17,13 @@
 int main()
 {
     state.settings.vpLevel = 3;
-	vpQueueFlags_t flags = vp_getVoiceLevelQueueFlags();
+    vpQueueFlags_t flags = vp_getVoiceLevelQueueFlags();
 
     vp_init();
     vp_flush();
     vp_queueStringTableEntry(&currentLanguage->allChannels);
     vp_play();
-    while(true)
-    {
+    while (true) {
         vp_tick();
     }
 }

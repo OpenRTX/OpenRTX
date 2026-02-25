@@ -25,10 +25,9 @@ int16_t buffer[BUF_LEN] = { 0 };
 
 void fill_buffer_sine(int16_t *buffer, size_t len)
 {
-    for(size_t i = 0; i < len; i++)
-    {
-        buffer[i] = AMPLITUDE * sin(2 * PI * i *
-                    ((float) FREQUENCY / SAMPLE_RATE));
+    for (size_t i = 0; i < len; i++) {
+        buffer[i] = AMPLITUDE
+                  * sin(2 * PI * i * ((float)FREQUENCY / SAMPLE_RATE));
     }
 }
 
@@ -40,14 +39,9 @@ void play_sine_linear()
     fill_buffer_sine(buffer, BUF_LEN);
 
     // Play back sine wave
-    for(int i = 0; i < 10; i++)
-    {
-        id = outputStream_start(SINK_SPK,
-                                PRIO_PROMPT,
-                                buffer,
-                                BUF_LEN,
-                                BUF_LINEAR,
-                                SAMPLE_RATE);
+    for (int i = 0; i < 10; i++) {
+        id = outputStream_start(SINK_SPK, PRIO_PROMPT, buffer, BUF_LEN,
+                                BUF_LINEAR, SAMPLE_RATE);
     };
     outputStream_sync(id, false);
 
@@ -65,15 +59,10 @@ void play_sine_circular()
     fill_buffer_sine(buffer, BUF_LEN / 2);
 
     // Play back sine wave
-    id = outputStream_start(SINK_SPK,
-                            PRIO_PROMPT,
-                            buffer,
-                            BUF_LEN,
-                            BUF_CIRC_DOUBLE,
-                            SAMPLE_RATE);
+    id = outputStream_start(SINK_SPK, PRIO_PROMPT, buffer, BUF_LEN,
+                            BUF_CIRC_DOUBLE, SAMPLE_RATE);
 
-    for(int i = 0; i < 10; i++)
-    {
+    for (int i = 0; i < 10; i++) {
         buf = outputStream_getIdleBuffer(id);
         fill_buffer_sine(buf, BUF_LEN / 2);
         outputStream_sync(id, true);

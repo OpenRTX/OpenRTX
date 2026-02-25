@@ -6,7 +6,8 @@
 
 #include <stdio.h>
 
-int main() {
+int main()
+{
     if (1) {
         printf("PASS!\n");
         return 0;

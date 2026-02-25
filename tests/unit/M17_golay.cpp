@@ -19,11 +19,10 @@ default_random_engine rng;
 uint32_t generateErrorMask()
 {
     uint32_t errorMask = 0;
-    uniform_int_distribution< uint8_t > numErrs(0, 5);
-    uniform_int_distribution< uint8_t > errPos(0, 23);
+    uniform_int_distribution<uint8_t> numErrs(0, 5);
+    uniform_int_distribution<uint8_t> errPos(0, 23);
 
-    for(uint8_t i = 0; i < numErrs(rng); i++)
-    {
+    for (uint8_t i = 0; i < numErrs(rng); i++) {
         errorMask |= 1 << errPos(rng);
     }
 
@@ -32,10 +31,9 @@ uint32_t generateErrorMask()
 
 int main()
 {
-    uniform_int_distribution< uint16_t > rndValue(0, 2047);
+    uniform_int_distribution<uint16_t> rndValue(0, 2047);
 
-    for(uint32_t i = 0; i < 10000; i++)
-    {
+    for (uint32_t i = 0; i < 10000; i++) {
         uint16_t value = rndValue(rng);
         uint32_t cword = M17::golay24_encode(value);
         uint32_t emask = generateErrorMask();
@@ -48,24 +46,21 @@ int main()
         bool correcting_ok = false;
 
         // For four or more bit errors, decode should return 0xFFFF (uncorrectable error)
-        if((__builtin_popcount(emask) >= 4) && (decoded == 0xFFFF))
-        {
+        if ((__builtin_popcount(emask) >= 4) && (decoded == 0xFFFF)) {
             correcting_ok = true;
         }
 
         // Less than four errors should be corrected.
-        if(decoded == value) correcting_ok = true;
+        if (decoded == value)
+            correcting_ok = true;
 
         int input_error_count = __builtin_popcount(emask);
 
-        printf("Value %04x, emask %08x errs %d -> d %s, c %s\n",
-               value,
-               emask,
-               input_error_count,
-               decoding_ok   ? "OK" : "FAIL",
+        printf("Value %04x, emask %08x errs %d -> d %s, c %s\n", value, emask,
+               input_error_count, decoding_ok ? "OK" : "FAIL",
                correcting_ok ? "OK" : "FAIL");
 
-        if(input_error_count <= 4 && (!decoding_ok || !correcting_ok))
+        if (input_error_count <= 4 && (!decoding_ok || !correcting_ok))
             return -1;
     }
 
