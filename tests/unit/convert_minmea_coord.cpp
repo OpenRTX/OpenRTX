@@ -4,38 +4,42 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <minmea.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "core/gps.h"
+#include <catch2/catch_test_macros.hpp>
 
-static void assert_conversion(struct minmea_float *f, int32_t expected)
-{
-    int32_t result = minmea_tofixedpoint(f);
-    if (result != expected) {
-        printf("FAILED! result value %d - expected %d\n", result, expected);
-        exit(1);
-    }
+extern "C" {
+#include <minmea.h>
+#include "core/gps.h"
 }
 
-int main()
+TEST_CASE("minmea coordinate conversion", "[gps]")
 {
-    printf("minmea coordinate conversion test\n");
-    struct minmea_float test = { 5333735, 1000 };
-    assert_conversion(&test, 53562250);
-    test.scale = 1;
-    test.value = 0;
-    assert_conversion(&test, 0);
-    test.scale = 1000;
-    test.value = -5333735;
-    assert_conversion(&test, -53562250);
-    test.scale = 1000;
-    test.value = -330;
-    assert_conversion(&test, -5500);
-    test.scale = 1000;
-    test.value = -3296;
-    assert_conversion(&test, -54933);
-    printf("PASS\n");
+    SECTION("Standard positive coordinate")
+    {
+        struct minmea_float test = { 5333735, 1000 };
+        REQUIRE(minmea_tofixedpoint(&test) == 53562250);
+    }
 
-    return 0;
+    SECTION("Zero coordinate")
+    {
+        struct minmea_float test = { 0, 1 };
+        REQUIRE(minmea_tofixedpoint(&test) == 0);
+    }
+
+    SECTION("Negative coordinate")
+    {
+        struct minmea_float test = { -5333735, 1000 };
+        REQUIRE(minmea_tofixedpoint(&test) == -53562250);
+    }
+
+    SECTION("Small negative coordinate")
+    {
+        struct minmea_float test = { -330, 1000 };
+        REQUIRE(minmea_tofixedpoint(&test) == -5500);
+    }
+
+    SECTION("Negative coordinate with fractional part")
+    {
+        struct minmea_float test = { -3296, 1000 };
+        REQUIRE(minmea_tofixedpoint(&test) == -54933);
+    }
 }

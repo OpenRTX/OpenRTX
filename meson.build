@@ -1082,7 +1082,7 @@ linux = alias_target('linux', linux_targets)
 unit_test_opts = {'c_args'             : linux_c_args,
                   'cpp_args'           : linux_cpp_args,
                   'include_directories': linux_inc,
-                  'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
+                  'dependencies'       : [sdl_dep, threads_dep, codec2_dep, catch2_dep],
                   'link_args'          : linux_l_args}
 
 unit_test_src = linux_src + ui_src_default
