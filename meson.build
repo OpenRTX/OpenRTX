@@ -118,6 +118,11 @@ else
   codec2_dep = cpp.find_library('codec2')
 endif
 
+# Catch2, C++ testing framework (only for native/linux builds)
+if not meson.is_cross_build()
+  catch2_dep = dependency('catch2-with-main', fallback: ['catch2', 'catch2_with_main_dep'])
+endif
+
 # XPowersLib, library for x-powers power management series
 xpowerslib_proj = subproject('XPowersLib')
 
@@ -1132,3 +1137,5 @@ test('Codeplug Test',         cps_test)
 ## test('Sine Test',             sine_test)
 ## test('Voice Prompts Test',    vp_test) # Skipped for now as this test no longer works
 test('minmea conversion Test', minmea_conversion_test)
+test('UI Check Standby Test', ui_check_standby_test)
+
