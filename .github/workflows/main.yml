@@ -8,6 +8,75 @@ env:
   RADIO_TOOL_VERSION: 0.2.2
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
 jobs:
+  unit-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
+      - name: Install Python tools
+        run: pip install "gcovr>=7.2"
+      - name: setup meson
+        run: |
+          cd ${{github.workspace}}
+          meson setup build -Db_coverage=true
+      - name: Run unit tests
+        run: meson test -C build --print-errorlogs --test-args '--reporter junit'
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v6
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: '**/build/meson-logs/testlog.junit.xml'
+      - name: Generate coverage report
+        if: always()
+        run: bash scripts/coverage.sh --ci build
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/cobertura.xml
+      - name: Add coverage to Github step summary
+        run: |
+          cat build/coverage/coverage.md >> $GITHUB_STEP_SUMMARY
+  build-zephyr:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: app
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: app
+          toolchains: xtensa-espressif_esp32s3_zephyr-elf
+          sdk-version: 0.17.0
+      - name: Compile zephyr
+        run: |
+          cd app
+          meson setup build
+          meson compile -C build openrtx_ttwrplus_uf2
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zephyr-release-bins
+          path: |
+            app/build/openrtx_*.uf2
   build:
     runs-on: ubuntu-24.04
     steps:
@@ -67,72 +136,3 @@ jobs:
             ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
           if-no-files-found: error
-  build-zephyr:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          path: app
-      - name: install-deps
-        run: |
-          sudo apt update
-          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
-      - name: Setup Zephyr project
-        uses: zephyrproject-rtos/action-zephyr-setup@v1
-        with:
-          app-path: app
-          toolchains: xtensa-espressif_esp32s3_zephyr-elf
-          sdk-version: 0.17.0
-      - name: Compile zephyr
-        run: |
-          cd app
-          meson setup build
-          meson compile -C build openrtx_ttwrplus_uf2
-        shell: bash
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zephyr-release-bins
-          path: |
-            app/build/openrtx_*.uf2
-  unit-test:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: install-deps
-        run: |
-          sudo apt update
-          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
-      - name: Install Python tools
-        run: pip install "gcovr>=7.2"
-      - name: setup meson
-        run: |
-          cd ${{github.workspace}}
-          meson setup build -Db_coverage=true
-      - name: Run unit tests
-        run: meson test -C build --print-errorlogs --test-args '--reporter junit'
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v6
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: '**/build/meson-logs/testlog.junit.xml'
-      - name: Generate coverage report
-        if: always()
-        run: bash scripts/coverage.sh --ci build
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: build/coverage/cobertura.xml
-      - name: Add coverage to Github step summary
-        run: |
-          cat build/coverage/coverage.md >> $GITHUB_STEP_SUMMARY
