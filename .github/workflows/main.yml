@@ -118,7 +118,12 @@ jobs:
           cd ${{github.workspace}}
           meson setup build -Db_coverage=true
       - name: Run unit tests
-        run: meson test -C build --print-errorlogs
+        run: meson test -C build --print-errorlogs --test-args '--reporter junit'
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v6
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: '**/build/meson-logs/testlog.junit.xml'
       - name: Generate coverage report
         if: always()
         run: bash scripts/coverage.sh --ci build
