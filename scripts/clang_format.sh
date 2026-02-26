@@ -94,9 +94,7 @@ tests/unit/M17_demodulator.cpp
 tests/unit/M17_golay.cpp
 tests/unit/M17_rrc.cpp
 tests/unit/M17_viterbi.cpp
-tests/unit/play_sine.c
 tests/unit/ui_check_standby.cpp
-tests/unit/voice_prompts.c
 EOF
 )
 
