@@ -1115,14 +1115,6 @@ linux_inputStream_test = executable('linux_inputStream_test',
                                     sources : unit_test_src + ['tests/unit/linux_inputStream_test.cpp'],
                                     kwargs  : unit_test_opts)
 
-sine_test = executable('sine_test',
-                      sources : unit_test_src + ['tests/unit/play_sine.c'],
-                      kwargs  : unit_test_opts)
-
-vp_test = executable('vp_test',
-                      sources : unit_test_src + ['tests/unit/voice_prompts.c'],
-                      kwargs  : unit_test_opts)
-
 minmea_conversion_test = executable('minmea_conversion_test',
                                      sources : unit_test_src + ['tests/unit/convert_minmea_coord.cpp'],
                                      kwargs  : unit_test_opts)
@@ -1138,8 +1130,6 @@ test('M17 RRC Test',          m17_rrc_test)
 test('M17 Callsign Unit Test',          m17_callsign_test)
 test('Codeplug Test',         cps_test)
 ## test('Linux InputStream Test', linux_inputStream_test)
-## test('Sine Test',             sine_test)
-## test('Voice Prompts Test',    vp_test) # Skipped for now as this test no longer works
 test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 
