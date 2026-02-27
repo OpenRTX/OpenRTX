@@ -190,6 +190,7 @@ private:
     Correlator   < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
     Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +3, +3, +3, +3, -3, -3, +3, -3 }};
     Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
+    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > packetSync{{ +3, -3, +3, +3, -3, -3, -3, -3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
     ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;

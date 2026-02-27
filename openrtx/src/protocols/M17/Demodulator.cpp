@@ -350,6 +350,8 @@ void Demodulator::unlockedState()
         return;
     }
 
+    // If no stream, try packet sync
+    syncStatus = packetSync.update(correlator, syncThresh, -syncThresh);
     if(syncStatus != 0)
         demodState = DemodState::SYNCED;
 }
@@ -385,7 +387,14 @@ void Demodulator::syncedState()
 
     samplingPoint = streamSync.samplingIndex();
     quantizeSyncword(samplingPoint);
-    if (compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0))
+    if (compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0)) {
+        demodState = DemodState::LOCKED;
+        return;
+    }
+
+    samplingPoint = packetSync.samplingIndex();
+    quantizeSyncword(samplingPoint);
+    if (compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 0))
         demodState = DemodState::LOCKED;
     else
         demodState = DemodState::UNLOCKED;
@@ -413,7 +422,8 @@ void Demodulator::lockedState(int16_t sample)
 void Demodulator::syncUpdateState()
 {
    bool valid = compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 1)
-              | compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 1);
+              | compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 1)
+              | compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 1);
 
    bool eot = compareSyncwords(demodFrame->data(), EOT_SYNC_WORD, 1);
 
