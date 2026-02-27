@@ -16,6 +16,7 @@
 #include "ConvolutionalEncoder.hpp"
 #include "LinkSetupFrame.hpp"
 #include "StreamFrame.hpp"
+#include "PacketFrame.hpp"
 
 namespace M17
 {
@@ -77,6 +78,15 @@ public:
      * @param output: destination buffer for the encoded data.
      */
     void encodeEotFrame(frame_t& output);
+
+    /**
+     * Encode a packet data frame into a frame ready for transmission,
+     * prepended with the corresponding sync word.
+     *
+     * @param frame: PacketFrame with payload, EOF flag, and counter set.
+     * @param output: destination buffer for the encoded data.
+     */
+    void encodePacketFrame(const PacketFrame& frame, frame_t& output);
 
     /**
      * Get a copy of the LSF data belonging to the current transmission.

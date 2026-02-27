@@ -107,3 +107,26 @@ void M17::FrameEncoder::encodeEotFrame(M17::frame_t& output)
         output[i + 1] = 0x5D;
     }
 }
+
+void FrameEncoder::encodePacketFrame(const PacketFrame& frame,
+                                        frame_t& output)
+{
+    // Encode frame with convolutional encoder.
+    // Rate 1/2 coding produces 2*N bytes; +1 for the flush byte.
+    static constexpr size_t ENC_SIZE = PacketFrame::FRAME_SIZE * 2 + 1;
+    std::array<uint8_t, ENC_SIZE> encoded;
+    encoder.reset();
+    encoder.encode(&frame.frameData, encoded.data(), PacketFrame::FRAME_SIZE);
+    encoded[ENC_SIZE - 1] = encoder.flush();
+
+    std::array<uint8_t, 46> punctured;
+    puncture(encoded, punctured, PACKET_PUNCTURE);
+
+    interleave(punctured);
+    decorrelate(punctured);
+
+    // Copy data to output buffer, prepended with sync word.
+    auto oIt = std::copy(PACKET_SYNC_WORD.begin(), PACKET_SYNC_WORD.end(),
+                         output.begin());
+    std::copy(punctured.begin(), punctured.end(), oIt);
+}
