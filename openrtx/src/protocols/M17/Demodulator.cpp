@@ -331,8 +331,24 @@ void Demodulator::reset()
 
 void Demodulator::unlockedState()
 {
+    // Three synchronizers are checked per sample (LSF, stream, packet).
+    // Each convolve() is O(SYNCW_SIZE) = 8 MACs; the total overhead is ~50
+    // cycles per sample on the slowest supported target.
     int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
-    int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
+
+    // Try LSF sync first
+    int8_t syncStatus = lsfSync.update(correlator, syncThresh, -syncThresh);
+    if(syncStatus != 0) {
+        demodState = DemodState::SYNCED;
+        return;
+    }
+
+    // If no LSF, try stream sync
+    syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
+    if(syncStatus != 0) {
+        demodState = DemodState::SYNCED;
+        return;
+    }
 
     if(syncStatus != 0)
         demodState = DemodState::SYNCED;
@@ -360,11 +376,16 @@ void Demodulator::quantizeSyncword(const uint32_t samplePoint)
 
 void Demodulator::syncedState()
 {
+    samplingPoint = lsfSync.samplingIndex();
+    quantizeSyncword(samplingPoint);
+    if (compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 0)) {
+        demodState = DemodState::LOCKED;
+        return;
+    }
+
     samplingPoint = streamSync.samplingIndex();
     quantizeSyncword(samplingPoint);
-
-    bool valid = compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0);
-    if(valid)
+    if (compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0))
         demodState = DemodState::LOCKED;
     else
         demodState = DemodState::UNLOCKED;
@@ -391,8 +412,10 @@ void Demodulator::lockedState(int16_t sample)
 
 void Demodulator::syncUpdateState()
 {
-    bool valid = compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 1);
-    bool eot = compareSyncwords(demodFrame->data(), EOT_SYNC_WORD, 1);
+   bool valid = compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 1)
+              | compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 1);
+
+   bool eot = compareSyncwords(demodFrame->data(), EOT_SYNC_WORD, 1);
 
     if(valid)
         missedSyncs = 0;
