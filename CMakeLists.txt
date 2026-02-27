@@ -116,6 +116,8 @@ target_sources(app
     openrtx/src/protocols/M17/FrameDecoder.cpp
     openrtx/src/protocols/M17/LinkSetupFrame.cpp
     openrtx/src/protocols/M17/PacketDisassembler.cpp
+    openrtx/src/protocols/M17/PacketAssembler.cpp
+    openrtx/src/rtx/SmsTxPacket.cpp
 
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c

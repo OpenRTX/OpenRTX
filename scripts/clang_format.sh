@@ -106,8 +106,14 @@ tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
 tests/unit/M17_opmode_sms.cpp
 tests/unit/M17_packet_disassembly.cpp
+tests/unit/M17_sms_tx.cpp
+tests/unit/M17_packet_framing.cpp
 openrtx/include/rtx/SMSQueue.hpp
 openrtx/src/rtx/SMSQueue.cpp
+openrtx/include/rtx/SmsTxPacket.hpp
+openrtx/src/rtx/SmsTxPacket.cpp
+openrtx/include/protocols/M17/PacketAssembler.hpp
+openrtx/src/protocols/M17/PacketAssembler.cpp
 openrtx/include/protocols/M17/PacketDisassembler.hpp
 openrtx/src/protocols/M17/PacketDisassembler.cpp
 EOF
