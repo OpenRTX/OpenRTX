@@ -137,6 +137,17 @@ private:
     void syncUpdateState();
 
     /**
+     * Quantize the correlator syncword region using the given sampling point
+     * and check the hamming distance against the expected sync word.
+     *
+     * @param samplePoint: sampling point within the symbol period.
+     * @param syncWord: expected sync word to compare against.
+     * @return hamming distance between quantized syncword and expected one.
+     */
+    uint8_t testSyncword(const uint32_t samplePoint,
+                         const syncw_t& syncWord);
+
+    /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
      * at each update of the demodulator.
      */
@@ -183,7 +194,9 @@ private:
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
 
     Correlator   < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
+    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +3, +3, +3, +3, -3, -3, +3, -3 }};
     Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
+    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > packetSync{{ +3, -3, +3, +3, -3, -3, -3, -3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
     ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;
