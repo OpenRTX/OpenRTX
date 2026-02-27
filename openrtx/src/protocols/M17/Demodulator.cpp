@@ -338,24 +338,30 @@ void Demodulator::unlockedState()
         demodState = DemodState::SYNCED;
 }
 
-void Demodulator::syncedState()
+void Demodulator::quantizeSyncword(const uint32_t samplePoint)
 {
-    // Set sampling point and deviation, zero frame symbol count
-    samplingPoint  = streamSync.samplingIndex();
-    auto deviation = correlator.maxDeviation(samplingPoint);
-    frameIndex     = 0;
+    frameIndex = 0;
+    auto deviation = correlator.maxDeviation(samplePoint);
+
+    // Initialise deviation estimator before quantizing so that the
+    // quantizer thresholds are based on the actual signal level.
     devEstimator.init(deviation);
 
-    // Quantize the syncword taking data from the correlator
-    // memory.
+    // Quantize the syncword taking data from the correlator memory.
     for(size_t i = 0; i < SYNCWORD_SAMPLES; i++) {
         size_t  pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
 
-        if((pos % SAMPLES_PER_SYMBOL) == samplingPoint) {
+        if((pos % SAMPLES_PER_SYMBOL) == samplePoint) {
             int16_t val = correlator.data()[pos];
             quantize(val);
         }
     }
+}
+
+void Demodulator::syncedState()
+{
+    samplingPoint = streamSync.samplingIndex();
+    quantizeSyncword(samplingPoint);
 
     bool valid = compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0);
     if(valid)

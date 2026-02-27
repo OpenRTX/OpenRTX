@@ -134,6 +134,14 @@ private:
     void syncUpdateState();
 
     /**
+     * Set frameIndex to zero and quantize the correlator syncword region using
+     * the given sampling point.
+     *
+     * @param samplePoint: sampling point within the symbol period.
+     */
+    void quantizeSyncword(const uint32_t samplePoint);
+
+    /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
      * at each update of the demodulator.
      */
