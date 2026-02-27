@@ -27,7 +27,8 @@ enum class FrameType : uint8_t {
     LINK_SETUP = 1, ///< Frame is a Link Setup Frame.
     STREAM = 2,     ///< Frame is a stream data frame.
     PACKET = 3,     ///< Frame is a packet data frame.
-    UNKNOWN = 4     ///< Frame is unknown.
+    EOT = 4,        ///< Frame is an End Of Transmission frame.
+    UNKNOWN = 5     ///< Frame is unknown.
 };
 
 /**

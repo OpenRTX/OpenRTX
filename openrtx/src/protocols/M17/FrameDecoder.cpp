@@ -59,6 +59,9 @@ FrameType FrameDecoder::decodeFrame(const frame_t &frame)
             decodePacket(data);
             break;
 
+        case FrameType::EOT:
+            break; // EOT conveys termination only; no payload to decode.
+
         default:
             break;
     }
@@ -97,6 +100,15 @@ FrameType FrameDecoder::getFrameType(const std::array<uint8_t, 2> &syncWord)
 
     if (hammDistance < minDistance) {
         type = FrameType::PACKET;
+        minDistance = hammDistance;
+    }
+
+    // EOT frame
+    hammDistance = hammingDistance(syncWord[0], EOT_SYNC_WORD[0])
+                 + hammingDistance(syncWord[1], EOT_SYNC_WORD[1]);
+
+    if (hammDistance < minDistance) {
+        type = FrameType::EOT;
         minDistance = hammDistance;
     }
 
