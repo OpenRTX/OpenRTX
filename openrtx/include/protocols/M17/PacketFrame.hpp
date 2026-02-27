@@ -140,7 +140,7 @@ private:
         uint8_t metadata;
     } frameData;
 
-    friend class M17FrameDecoder;
+    friend class FrameDecoder;
 };
 
 } // namespace M17

@@ -17,6 +17,7 @@
 #include "LinkSetupFrame.hpp"
 #include "Viterbi.hpp"
 #include "StreamFrame.hpp"
+#include "PacketFrame.hpp"
 
 namespace M17
 {
@@ -26,7 +27,8 @@ enum class FrameType : uint8_t {
     LINK_SETUP = 1, ///< Frame is a Link Setup Frame.
     STREAM = 2,     ///< Frame is a stream data frame.
     PACKET = 3,     ///< Frame is a packet data frame.
-    UNKNOWN = 4     ///< Frame is unknown.
+    EOT = 4,        ///< Frame is an End Of Transmission frame.
+    UNKNOWN = 5     ///< Frame is unknown.
 };
 
 /**
@@ -54,7 +56,7 @@ public:
      * Decode an M17 frame, identifying its type. Frame data must contain the
      * sync word in the first two bytes.
      *
-     * @param frame: byte array containg frame data.
+     * @param frame: byte array containing frame data.
      * @return the type of frame recognized.
      */
     FrameType decodeFrame(const frame_t &frame);
@@ -80,6 +82,16 @@ public:
         return streamFrame;
     }
 
+    /**
+     * Get the latest packet data frame decoded.
+     *
+     * @return a reference to the latest packet data frame decoded.
+     */
+    const PacketFrame &getPacketFrame() const
+    {
+        return packetFrame;
+    }
+
 private:
     /**
      * Determine frame type by searching which syncword among the standard M17
@@ -96,7 +108,7 @@ private:
      * Decode Link Setup Frame data and update the internal LSF field with
      * the new frame data.
      *
-     * @param data: byte array containg frame data, without sync word.
+     * @param data: byte array containing frame data, without sync word.
      */
     void decodeLSF(const std::array<uint8_t, 46> &data);
 
@@ -104,9 +116,17 @@ private:
      * Decode stream data and update the internal LSF field with the new
      * frame data.
      *
-     * @param data: byte array containg frame data, without sync word.
+     * @param data: byte array containing frame data, without sync word.
      */
     void decodeStream(const std::array<uint8_t, 46> &data);
+
+    /**
+     * Decode packet data and update the internal packet frame field with the
+     * new frame data.
+     *
+     * @param data: byte array containing frame data, without sync word.
+     */
+    void decodePacket(const std::array<uint8_t, 46> &data);
 
     /**
      * Decode a LICH block.
@@ -122,6 +142,7 @@ private:
     LinkSetupFrame lsf;         ///< Latest LSF received.
     LinkSetupFrame lsfFromLich; ///< LSF assembled from LICH segments.
     StreamFrame streamFrame;    ///< Latest stream dat frame received.
+    PacketFrame packetFrame;    ///< Latest packet data frame received.
     HardViterbi viterbi;        ///< Viterbi decoder.
 
     ///< Maximum allowed hamming distance when determining the frame type.
