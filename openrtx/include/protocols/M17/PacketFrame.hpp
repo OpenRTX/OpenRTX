@@ -11,7 +11,7 @@
 #error This header is C++ only!
 #endif
 
-#include "M17Datatypes.hpp"
+#include "Datatypes.hpp"
 #include <cstring>
 
 namespace M17
