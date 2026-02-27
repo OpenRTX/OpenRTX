@@ -99,6 +99,29 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     return streamFrame.getFrameNumber();
 }
 
+void M17FrameEncoder::encodePacketFrame(const M17PacketFrame& frame,
+                                        frame_t& output)
+{
+    // Encode frame with convolutional encoder.
+    // Rate 1/2 coding produces 2*N bytes; +1 for the flush byte.
+    static constexpr size_t ENC_SIZE = sizeof(pktFrame_t) * 2 + 1;
+    std::array<uint8_t, ENC_SIZE> encoded;
+    encoder.reset();
+    encoder.encode(frame.getData(), encoded.data(), sizeof(pktFrame_t));
+    encoded[ENC_SIZE - 1] = encoder.flush();
+
+    std::array<uint8_t, 46> punctured;
+    puncture(encoded, punctured, PACKET_PUNCTURE);
+
+    interleave(punctured);
+    decorrelate(punctured);
+
+    // Copy data to output buffer, prepended with sync word.
+    auto oIt = std::copy(PACKET_SYNC_WORD.begin(), PACKET_SYNC_WORD.end(),
+                         output.begin());
+    std::copy(punctured.begin(), punctured.end(), oIt);
+}
+
 void M17::M17FrameEncoder::encodeEotFrame(M17::frame_t& output)
 {
     for(size_t i = 0; i < output.size(); i += 2)
