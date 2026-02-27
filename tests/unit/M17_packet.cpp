@@ -516,3 +516,97 @@ TEST_CASE("Reference vector: assemble, encode, decode SMS packet",
     REQUIRE(pf.getCounter() == 11);
     REQUIRE((pf.data()[25] & 0x03) == 0x00);
 }
+
+// ===========================================================================
+// SMS-specific PacketFrame tests
+// ===========================================================================
+
+TEST_CASE(
+    "SMS-typed PacketFrame round-trip preserves 0x05 application-layer type byte",
+    "[m17][packet][sms]")
+{
+    FrameEncoder encoder;
+    FrameDecoder decoder;
+
+    PacketFrame frame;
+    frame[0] = 0x05; // SMS type byte
+    const char payload[] = "SMS content";
+    std::copy_n(payload, sizeof(payload) - 1, &frame[1]);
+
+    frame_t encoded;
+    encoder.encodePacketFrame(frame, encoded);
+
+    FrameType type = decoder.decodeFrame(encoded);
+    REQUIRE(type == FrameType::PACKET);
+
+    const PacketFrame &decoded = decoder.getPacketFrame();
+    REQUIRE(decoded[0] == 0x05);
+    for (size_t i = 0; i < sizeof(payload) - 1; i++)
+        REQUIRE(decoded[1 + i] == static_cast<uint8_t>(payload[i]));
+}
+
+TEST_CASE(
+    "Multi-frame SMS packet encode/decode sequence preserves payload and metadata",
+    "[m17][packet][sms]")
+{
+    FrameEncoder encoder;
+    FrameDecoder decoder;
+
+    // Build three simulated SMS frames: two intermediate + one EOF.
+    // Payload: 25 bytes of sequential data per intermediate frame.
+    constexpr size_t NUM_FRAMES = 3;
+
+    PacketFrame txFrames[NUM_FRAMES];
+
+    // Frame 0: intermediate, counter = 0
+    for (size_t i = 0; i < PacketFrame::DATA_SIZE; i++)
+        txFrames[0][i] = static_cast<uint8_t>(i);
+    txFrames[0].setEof(false);
+    txFrames[0].setCounter(0);
+
+    // Frame 1: intermediate, counter = 1
+    for (size_t i = 0; i < PacketFrame::DATA_SIZE; i++)
+        txFrames[1][i] = static_cast<uint8_t>(i + PacketFrame::DATA_SIZE);
+    txFrames[1].setEof(false);
+    txFrames[1].setCounter(1);
+
+    // Frame 2: EOF, counter = number of valid bytes in last chunk (12)
+    constexpr uint8_t LAST_BYTES = 12;
+    for (size_t i = 0; i < LAST_BYTES; i++)
+        txFrames[2][i] = static_cast<uint8_t>(i + 2 * PacketFrame::DATA_SIZE);
+    txFrames[2].setEof(true);
+    txFrames[2].setCounter(LAST_BYTES);
+
+    // Encode then decode each frame independently and verify round-trip.
+    for (size_t f = 0; f < NUM_FRAMES; f++) {
+        frame_t encoded;
+        encoder.encodePacketFrame(txFrames[f], encoded);
+
+        REQUIRE(encoded[0] == PACKET_SYNC_WORD[0]);
+        REQUIRE(encoded[1] == PACKET_SYNC_WORD[1]);
+
+        FrameType type = decoder.decodeFrame(encoded);
+        REQUIRE(type == FrameType::PACKET);
+
+        const PacketFrame &rx = decoder.getPacketFrame();
+
+        // Payload bytes
+        REQUIRE(memcmp(txFrames[f].data(), rx.data(), PacketFrame::DATA_SIZE)
+                == 0);
+
+        // Metadata
+        REQUIRE(rx.isEof() == txFrames[f].isEof());
+        REQUIRE(rx.getCounter() == txFrames[f].getCounter());
+    }
+
+    // Extra checks for the last (EOF) frame.
+    {
+        frame_t encoded;
+        encoder.encodePacketFrame(txFrames[NUM_FRAMES - 1], encoded);
+        decoder.decodeFrame(encoded);
+        const PacketFrame &rx = decoder.getPacketFrame();
+
+        REQUIRE(rx.isEof() == true);
+        REQUIRE(rx.getCounter() == LAST_BYTES);
+    }
+}

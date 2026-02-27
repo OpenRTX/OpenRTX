@@ -68,7 +68,8 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/Demodulator.cpp',
                'openrtx/src/protocols/M17/FrameEncoder.cpp',
                'openrtx/src/protocols/M17/FrameDecoder.cpp',
-               'openrtx/src/protocols/M17/LinkSetupFrame.cpp']
+               'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
+               'openrtx/src/protocols/M17/PacketDisassembler.cpp']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -1140,6 +1141,10 @@ m17_opmode_sms_test = executable('m17_opmode_sms_test',
                                   sources : unit_test_src + ['tests/unit/M17_opmode_sms.cpp'],
                                   kwargs  : unit_test_opts)
 
+m17_packet_disassembly_test = executable('m17_packet_disassembly_test',
+                                         sources : unit_test_src + ['tests/unit/M17_packet_disassembly.cpp'],
+                                         kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1152,3 +1157,4 @@ test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('M17 OpMode SMS Unit Test', m17_opmode_sms_test)
+test('M17 Packet Disassembly Test', m17_packet_disassembly_test)

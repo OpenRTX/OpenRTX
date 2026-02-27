@@ -215,3 +215,19 @@ bool rtx_rxSquelchOpen()
 {
     return currMode->rxSquelchOpen();
 }
+
+bool rtx_getSMSMessage(uint8_t index, char *sender, size_t sender_len,
+                       char *message, size_t message_len)
+{
+    if(currMode->getID() == OPMODE_M17)
+        return currMode->getSMSMessage(index, sender, sender_len,
+                                       message, message_len);
+
+    return false;
+}
+
+void rtx_delSMSMessage(uint8_t index)
+{
+    if(currMode->getID() == OPMODE_M17)
+        currMode->delSMSMessage(index);
+}
