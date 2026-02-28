@@ -110,7 +110,7 @@ int main()
         for(size_t addr = 0; addr < nvm->size; addr += CHUNK_SIZE) {
             uint8_t chunk[CHUNK_SIZE];
 
-            nvm_devRead(nvm->dev, addr, chunk, sizeof(chunk));
+            nvm_read(i, 0, addr, chunk, sizeof(chunk));
             printChunk(addr, chunk, sizeof(chunk));
 
             // Exit in case of PTT press
