@@ -12,6 +12,7 @@
 #include "drivers/NVM/posix_file.h"
 #include "core/nvmem_access.h"
 #include "interfaces/nvmem.h"
+#include "core/settings.h"
 
 #define NVM_MAX_PATHLEN 256
 
@@ -24,8 +25,12 @@ const struct nvmPartition statePartitions[] =
         .size   = 512
     },
     {
-        .offset = 0x0200,   // Second partition, settings
+        .offset = 0x0200,   // Second partition, settings (Part A)
         .size   = 512
+    },
+    {
+        .offset = 0x0400,   // Third partition, settings (Part B)
+        .size   = 512,
     }
 };
 
@@ -34,7 +39,7 @@ const struct nvmDescriptor stateNvm =
     .name       = "Device state NVM area",
     .dev        = (const struct nvmDevice *) &stateDevice,
     .baseAddr   = 0x00000000,
-    .size       = 1024,
+    .size       = 1536,
     .nbPart     = sizeof(statePartitions) / sizeof(struct nvmPartition),
     .partitions = statePartitions
 };
@@ -43,6 +48,8 @@ const struct nvmTable nvmTab = {
     .areas = &stateNvm,
     .nbAreas = 1,
 };
+
+settings_storage_t settings_storage;
 
 /**
  * Creates a directory if it does not exist.
@@ -126,10 +133,14 @@ void nvm_init()
 
     strcat(memory_path, "state.bin");
 
-    int ret = posixFile_init(&stateDevice, memory_path, 1024);
+    int ret = posixFile_init(&stateDevice, memory_path, 1536);
     if(ret < 0)
+    {
         printf("Opening of state file failed with status %d\n", ret);
+        return;
+    }
 
+    settings_storage_init(&settings_storage, 0, 2, 3);
     return;
 
 toolong:
@@ -167,29 +178,21 @@ int nvm_readVfoChannelData(channel_t *channel)
 
 int nvm_readSettings(settings_t *settings)
 {
-    int ret = nvm_read(0, 2, 0, settings, sizeof(settings_t));
-    if(ret < 0)
-        return ret;
+    int ret = settings_storage_load(&settings_storage, settings);
+    printf("settings_storage_load returned %d.\r\n", ret);
+    print_settings(settings);
 
-    // TODO: implement a more serious integrity check
-    for(size_t i = 0; i < sizeof(settings_t); i++)
-    {
-        const uint8_t *p = (const uint8_t *) settings;
-        if(p[i] != 0x00)
-            return 0;
-    }
-
-    return -1;
+    return ret;
 }
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    return nvm_write(0, 2, 0, settings, sizeof(settings_t));
+    return settings_storage_save(&settings_storage, settings);
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    int ret = nvm_write(0, 2, 0, settings, sizeof(settings_t));
+    int ret = nvm_writeSettings(settings);
     if(ret < 0)
         return ret;
 
