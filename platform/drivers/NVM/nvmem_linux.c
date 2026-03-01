@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -11,6 +11,8 @@
 #include <sys/errno.h>
 #include "drivers/NVM/posix_file.h"
 #include "core/nvmem_access.h"
+#include "core/settings.h"
+#include "core/vfo.h"
 #include "interfaces/nvmem.h"
 
 #define NVM_MAX_PATHLEN 256
@@ -18,14 +20,9 @@
 POSIX_FILE_DEVICE_DEFINE(stateDevice)
 
 const struct nvmPartition statePartitions[] = {
-    {
-        .offset = 0x0000, // First partition, radio state
-        .size = 512,
-    },
-    {
-        .offset = 0x0200, // Second partition, settings
-        .size = 512,
-    },
+    NVM_PART_DEFINE(0x0000, 512), // First partition, radio state
+    NVM_PART_DEFINE(0x0200, 256), // Second partition, settings (Part A)
+    NVM_PART_DEFINE(0x0300, 256), // Second partition, settings (Part B)
 };
 
 const struct nvmDescriptor stateNvm = {
@@ -119,6 +116,9 @@ void nvm_init()
     if (ret < 0)
         printf("Opening of state file failed with status %d\n", ret);
 
+    settings_init(0, 2, 0, 3);  // Device 0, partitions 2 and 3
+    vfo_init(0, 1); // Device 0, partition 1
+
     return;
 
 toolong:
@@ -139,46 +139,20 @@ void nvm_readHwInfo(hwInfo_t *info)
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    int ret = nvm_read(0, 1, 0, channel, sizeof(channel_t));
-    if (ret < 0)
-        return ret;
-
-    // TODO: implement a more serious integrity check
-    for (size_t i = 0; i < sizeof(channel_t); i++) {
-        const uint8_t *p = (const uint8_t *)channel;
-        if (p[i] != 0x00)
-            return 0;
-    }
-
-    return -1;
+    return -1; // Deprecated API, to be removed
 }
 
 int nvm_readSettings(settings_t *settings)
 {
-    int ret = nvm_read(0, 2, 0, settings, sizeof(settings_t));
-    if (ret < 0)
-        return ret;
-
-    // TODO: implement a more serious integrity check
-    for (size_t i = 0; i < sizeof(settings_t); i++) {
-        const uint8_t *p = (const uint8_t *)settings;
-        if (p[i] != 0x00)
-            return 0;
-    }
-
-    return -1;
+    return -1; // Deprecated API, to be removed
 }
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    return nvm_write(0, 2, 0, settings, sizeof(settings_t));
+    return -1; // Deprecated API, to be removed
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    int ret = nvm_write(0, 2, 0, settings, sizeof(settings_t));
-    if (ret < 0)
-        return ret;
-
-    return nvm_write(0, 1, 0, vfo, sizeof(channel_t));
+    return -1; // Deprecated API, to be removed
 }
