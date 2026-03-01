@@ -1,48 +1,79 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
+#include "core/utils.h"
 #include "drivers/NVM/posix_file.h"
-#include "core/nvmem_access.h"
 #include "interfaces/nvmem.h"
+#include "core/settings.h"
+#include "drivers/NVM/emulated_flash.h"
+#include "drivers/NVM/eeep.h"
+#include "core/cps.h"
+#include "core/vfo.h"
 
 #define NVM_MAX_PATHLEN 256
 
 POSIX_FILE_DEVICE_DEFINE(stateDevice)
+EMULATED_FLASH_DEVICE_DEFINE(emulatedFlash)
+EEEP_DEVICE_DEFINE(eeepDevice)
 
 const struct nvmPartition statePartitions[] =
 {
     {
-        .offset = 0x0000,   // First partition, radio state
-        .size   = 512
+        .offset = 0x0000,   // Second partition, settings (Part A)
+        .size   = 1024
     },
     {
-        .offset = 0x0200,   // Second partition, settings
-        .size   = 512
+        .offset = 1024,   // Third partition, settings (Part B)
+        .size   = 1024,
     }
 };
 
-const struct nvmDescriptor stateNvm =
+const struct nvmDescriptor storage[] =
 {
-    .name       = "Device state NVM area",
-    .dev        = (const struct nvmDevice *) &stateDevice,
-    .baseAddr   = 0x00000000,
-    .size       = 1024,
-    .nbPart     = sizeof(statePartitions) / sizeof(struct nvmPartition),
-    .partitions = statePartitions
+    {
+        .name       = "Device state NVM area",
+        .dev        = (const struct nvmDevice *) &stateDevice,
+        .baseAddr   = 0x00000000,
+        .size       = 2048,
+        .nbPart     = ARRAY_SIZE(statePartitions),
+        .partitions = statePartitions
+    },
+    {
+        .name       = "Emulated flash area",
+        .dev        = (const struct nvmDevice *) &emulatedFlash,
+        .baseAddr   = 0x00000000,
+        .size       = 8192,
+        .nbPart     = 0,
+        .partitions = NULL
+    },
+{
+        .name       = "Emulated EEPROM area",
+        .dev        = (const struct nvmDevice *) &eeepDevice,
+        .baseAddr   = 0x00000000,
+        .size       = 0xFFFF, // Virtual address is 16 bits
+        .nbPart     = 0,
+        .partitions = NULL
+    }
 };
 
+
+
 const struct nvmTable nvmTab = {
-    .areas = &stateNvm,
-    .nbAreas = 1,
+    .areas = storage,
+    .nbAreas = ARRAY_SIZE(storage),
 };
+
+struct settings_storage settings_storage;
+struct vfo_storage vfo_storage;
 
 /**
  * Creates a directory if it does not exist.
@@ -83,6 +114,7 @@ void nvm_init()
     const char *openrtx        = "/OpenRTX/";
 
     char memory_path[NVM_MAX_PATHLEN];
+    char emulated_flash_path[NVM_MAX_PATHLEN];
 
     if(env_state_path)
     {
@@ -124,11 +156,41 @@ void nvm_init()
     if(create_dir(memory_path) != 0)
         exit(1);
 
-    strcat(memory_path, "state.bin");
+    strncpy(emulated_flash_path, memory_path, NVM_MAX_PATHLEN-1);
 
-    int ret = posixFile_init(&stateDevice, memory_path, 1024);
+    strcat(memory_path, "settings.bin");
+    strcat(emulated_flash_path, "flash.bin");
+
+    int ret = posixFile_init(&stateDevice, memory_path, 2048);
     if(ret < 0)
-        printf("Opening of state file failed with status %d\n", ret);
+    {
+        printf("Opening of settings file failed with status %d\n", ret);
+        return;
+    }
+
+    ret = settings_initStorage(&settings_storage, 0, 1, 2);
+    if(ret < 0)
+    {
+        printf("Intialization of settings storage failed with status %d\n", ret);
+        return;
+    }
+
+    ret = emulatedFlash_init(&emulatedFlash, emulated_flash_path, 8192);
+    if(ret < 0)
+    {
+        printf("Opening of flash file failed with status %d\n", ret);
+        return;
+    }
+
+    ret = eeep_init(&eeepDevice, 1, 0);
+    if(ret < 0)
+    {
+        printf("Initialization of emulated eeeprom failed with status %d\n", ret);
+        return;
+    }
+
+    ret = vfo_initStorage(&vfo_storage, 2, 0, 16, CPS_VERSION_NUMBER);
+
 
     return;
 
@@ -139,6 +201,7 @@ toolong:
 
 void nvm_terminate()
 {
+    emulatedFlash_terminate(&emulatedFlash);
     posixFile_terminate(&stateDevice);
 }
 
@@ -150,48 +213,24 @@ void nvm_readHwInfo(hwInfo_t *info)
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    int ret = nvm_read(0, 1, 0, channel, sizeof(channel_t));
-    if(ret < 0)
-        return ret;
-
-    // TODO: implement a more serious integrity check
-    for(size_t i = 0; i < sizeof(channel_t); i++)
-    {
-        const uint8_t *p = (const uint8_t *) channel;
-        if(p[i] != 0x00)
-            return 0;
-    }
-
-    return -1;
+    return vfo_load(&vfo_storage, channel);
 }
 
 int nvm_readSettings(settings_t *settings)
 {
-    int ret = nvm_read(0, 2, 0, settings, sizeof(settings_t));
-    if(ret < 0)
-        return ret;
-
-    // TODO: implement a more serious integrity check
-    for(size_t i = 0; i < sizeof(settings_t); i++)
-    {
-        const uint8_t *p = (const uint8_t *) settings;
-        if(p[i] != 0x00)
-            return 0;
-    }
-
-    return -1;
+    return settings_load(&settings_storage, settings);
 }
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    return nvm_write(0, 2, 0, settings, sizeof(settings_t));
+    return settings_save(&settings_storage, settings);
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    int ret = nvm_write(0, 2, 0, settings, sizeof(settings_t));
+    int ret = nvm_writeSettings(settings);
     if(ret < 0)
         return ret;
 
-    return nvm_write(0, 1, 0, vfo, sizeof(channel_t));
+    return vfo_save(&vfo_storage, vfo);
 }
