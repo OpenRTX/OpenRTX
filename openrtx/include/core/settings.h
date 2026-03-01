@@ -81,7 +81,7 @@ static const settings_t default_settings =
     0,                            // Vox level
     0,                            // UTC Timezone
     false,                        // GPS enabled
-    "",                           // Empty callsign
+    "OPNRTX",                     // Default callsign
     TIMER_30S,                    // 30 seconds
     0,                            // Voice prompts off
     0,                            // Phonetic spell off
