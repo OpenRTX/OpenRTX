@@ -95,17 +95,6 @@ int nvm_readVfoChannelData(channel_t *channel)
     return 0;
 }
 
-int nvm_readSettings(settings_t *settings)
-{
-    int block = findActiveBlock();
-
-    // Invalid data found
-    if(block < 0) return -1;
-
-    memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
-
-    return 0;
-}
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
@@ -113,6 +102,7 @@ int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
     int      block   = findActiveBlock();
     uint16_t prevCrc = 0;
 
+    nvm_writeSettings(settings);
     /*
      * Memory never initialised or save space finished: erase all the sector.
      * On STM32F405 the settings are saved in sector 11, starting at address
@@ -132,7 +122,7 @@ int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
     }
 
     dataBlock_t tmpBlock;
-    memcpy((&tmpBlock.settings), settings, sizeof(settings_t));
+
     memcpy((&tmpBlock.vfoData), vfo, sizeof(channel_t));
     tmpBlock.crc = crc_ccitt(&(tmpBlock.settings),
                              sizeof(settings_t) + sizeof(channel_t));
