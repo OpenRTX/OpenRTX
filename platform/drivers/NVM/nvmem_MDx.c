@@ -5,14 +5,14 @@
  */
 
 #include "interfaces/nvmem.h"
-#include "interfaces/delays.h"
 #include "calibration/calibInfo_MDx.h"
-#include "core/nvmem_device.h"
 #include "drivers/SPI/spi_stm32.h"
-#include <string.h>
-#include "wchar.h"
+#include "core/nvmem_access.h"
+#include "core/settings.h"
 #include "core/utils.h"
+#include "core/vfo.h"
 #include "drivers/NVM/W25Qx.h"
+#include "drivers/NVM/eeep.h"
 
 static const struct W25QxCfg eflashCfg = {
 #ifdef PLATFORM_MD9600
@@ -25,6 +25,19 @@ static const struct W25QxCfg eflashCfg = {
 
 W25Qx_DEVICE_DEFINE(eflash, eflashCfg);
 W25Qx_SECREG_DEFINE(secReg, eflashCfg);
+EEEP_DEVICE_DEFINE(eeepDev1)
+EEEP_DEVICE_DEFINE(eeepDev2)
+
+static const struct nvmPartition eFlashPartitions[] = {
+    NVM_PART_DEFINE(0x000000, 0xFFB000), // Codeplug
+    NVM_PART_DEFINE(0xFFB000, 12288), // EEEP device 1 (VFO and settings part A)
+    NVM_PART_DEFINE(0xFFE000, 8194),  // EEEP device 2 (settings part B)
+};
+
+static const struct nvmPartition eeepDev1Partitions[] = {
+    NVM_PART_DEFINE(0x0000, 4096), // VFO
+    NVM_PART_DEFINE(0x1000, 4096), // Settings part A
+};
 
 static const struct nvmDescriptor nvmDevices[] = {
     {
@@ -32,8 +45,8 @@ static const struct nvmDescriptor nvmDevices[] = {
         .dev = &eflash,
         .baseAddr = 0x00000000,
         .size = 0x1000000, // 16 MB, 128 Mbit
-        .nbPart = 0,
-        .partitions = NULL,
+        .nbPart = ARRAY_SIZE(eFlashPartitions),
+        .partitions = eFlashPartitions,
     },
     {
         .name = "Cal. data 1",
@@ -59,6 +72,22 @@ static const struct nvmDescriptor nvmDevices[] = {
         .nbPart = 0,
         .partitions = NULL,
     },
+    {
+        .name = "Emulated EEPROM 1",
+        .dev = &eeepDev1,
+        .baseAddr = 0x0000,
+        .size = 0xFFFF,
+        .nbPart = ARRAY_SIZE(eeepDev1Partitions),
+        .partitions = eeepDev1Partitions,
+    },
+    {
+        .name = "Emulated EEPROM 2",
+        .dev = &eeepDev2,
+        .baseAddr = 0x0000,
+        .size = 0xFFFF,
+        .nbPart = 0,
+        .partitions = NULL,
+    },
 };
 
 const struct nvmTable nvmTab = {
@@ -77,6 +106,11 @@ void nvm_init()
 #endif
 
     W25Qx_init(&eflash);
+    eeep_init(&eeepDev1, 0, 2); // Device 0, partition 2
+    eeep_init(&eeepDev2, 0, 3); // Device 0, partition 3
+
+    settings_init(4, 2, 5, 0); // Device 4, partition 2 and device 5
+    vfo_init(4, 1);            // Device 4, partition 1
 }
 
 void nvm_terminate()
