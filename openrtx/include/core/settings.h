@@ -47,7 +47,7 @@ typedef enum
 }
 display_timer_t;
 
-struct settings
+struct oldSettings
 {
     uint8_t brightness;           // Display brightness
     uint8_t contrast;             // Display contrast
@@ -70,10 +70,37 @@ struct settings
 }
 __attribute__((packed));
 
-typedef struct settings settings_t;
+typedef struct oldSettings settings_t;
 
+/**
+ * Device settings data structure.
+ *
+ * Updating the data structure MUST be done according to the following rules:
+ * - obsolete fields are never removed;
+ * - new fields have to be added at the end of the structure;
+ * - for entries requiring less than 8 bits, use bitfields;
+ * - do not use bool for true/false settings entries.
+ */
+struct settings
+{
+    uint8_t  brightness;           ///< Display brightness
+    uint8_t  contrast;             ///< Display contrast
+    uint8_t  voxLevel;             ///< Vox level
+    int8_t   utc_timezone;         ///< Timezone, in units of half hours
+    char     callsign[12];         ///< Plaintext callsign
+    uint32_t display_timer   : 4,  ///< Standby timer
+             vpLevel         : 3,  ///< Voice prompt level
+             vpPhoneticSpell : 1,  ///< Phonetic spell enabled
+             macroMenuLatch  : 1,  ///< Automatic latch of macro menu
+             gps_enabled     : 1,  ///< GPS active
+             gpsSetTime      : 1,  ///< Use GPS to ajust RTC time
+             m17_can_rx      : 1,  ///< Check M17 CAN on RX
+             showBatteryIcon : 1,  ///< Battery display true: icon, false: percentage
+             _reserved       : 19; ///< Reserved for future use, keep set to 0
+}
+__attribute__((packed));
 
-static const settings_t default_settings =
+static const struct settings default_settings =
 {
     100,                          // Brightness
 #ifdef CONFIG_SCREEN_CONTRAST
@@ -81,22 +108,18 @@ static const settings_t default_settings =
 #else
     255,                          // Contrast
 #endif
-    4,                            // Squelch level, 4 = S3
     0,                            // Vox level
     0,                            // UTC Timezone
-    false,                        // GPS enabled
     "N0CALL",                     // Default callsign
     TIMER_30S,                    // 30 seconds
-    0,                            // M17 CAN
     0,                            // Voice prompts off
-    0,                            // Phonetic spell off
-    1,                            // Automatic latch of macro menu enabled
+    false,                        // Phonetic spell off
+    true,                         // Automatic latch of macro menu enabled
+    false,                        // GPS disabled
+    false,                        // Don't update RTC with GPS
+    false,                        // Do not check M17 CAN on RX
+    false,                        // No battery icon
     0,                            // not used
-    false,                        // Check M17 CAN on RX
-    "",                           // Empty M17 destination
-    false,                        // Display battery icon
-    false,                        // Update RTC with GPS
-    "OpenRTX",                    // Default M17 meta text
 };
 
 /**
