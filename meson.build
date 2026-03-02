@@ -329,9 +329,9 @@ linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
 #
 linux_default_src = linux_src + ui_src_default
 linux_default_def = linux_def + {'CONFIG_SCREEN_WIDTH': '160', 'CONFIG_SCREEN_HEIGHT': '128', 'CONFIG_PIX_FMT_RGB565': '',
-                                 'CONFIG_GPS': '', 'CONFIG_RTC': ''}
+                                 'CONFIG_GPS': '', 'CONFIG_RTC': '', 'ENABLE_STDIO': ''}
 linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': '',
-                                 'CONFIG_GPS': '', 'CONFIG_RTC': ''}
+                                 'CONFIG_GPS': '', 'CONFIG_RTC': '', 'ENABLE_STDIO': ''}
 
 #
 # Module17 UI
