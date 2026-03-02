@@ -51,24 +51,23 @@ display_timer_t;
 
 typedef struct
 {
-    uint8_t brightness;           ///< Display brightness
-    uint8_t contrast;             ///< Display contrast
-    uint8_t voxLevel;             ///< Vox level
-    int8_t  utc_timezone;         ///< Timezone, in units of half hours
-    bool    gps_enabled;          ///< GPS active
-    char    callsign[10];         ///< Plaintext callsign
-    uint8_t display_timer   : 4;  ///< Standby timer
-    uint8_t vpLevel         : 3,  ///< Voice prompt level
-            vpPhoneticSpell : 1,  ///< Phonetic spell enabled
-            macroMenuLatch  : 1,  ///< Automatic latch of macro menu
-            _reserved       : 3;
-    bool    m17_can_rx;           // Check M17 CAN on RX
-    bool    showBatteryIcon;      // Battery display true: icon, false: percentage
-    bool    gpsSetTime;           // Use GPS to ajust RTC time
-    char    M17_meta_text[53];    // M17 Meta Text to send
+    uint8_t  brightness;           ///< Display brightness
+    uint8_t  contrast;             ///< Display contrast
+    uint8_t  voxLevel;             ///< Vox level
+    int8_t   utc_timezone;         ///< Timezone, in units of half hours
+    char     callsign[10];         ///< Plaintext callsign
+    uint16_t display_timer   : 4,  ///< Standby timer
+             vpLevel         : 3,  ///< Voice prompt level
+             vpPhoneticSpell : 1,  ///< Phonetic spell enabled
+             macroMenuLatch  : 1,  ///< Automatic latch of macro menu
+             gps_enabled     : 1,  ///< GPS active
+             gpsSetTime      : 1,  ///< Use GPS to ajust RTC time
+             m17_can_rx      : 1,  ///< Check M17 CAN on RX
+             showBatteryIcon : 1,  ///< Battery display true: icon, false: percentage
+             _reserved       : 3;  ///< Reserved for future use, keep set to 0
+    char    M17_meta_text[53];     ///< M17 Meta Text to send
 }
 __attribute__((packed)) settings_t;
-
 
 static const settings_t default_settings =
 {
@@ -80,16 +79,16 @@ static const settings_t default_settings =
 #endif
     0,                            // Vox level
     0,                            // UTC Timezone
-    false,                        // GPS enabled
     "OPNRTX",                     // Default callsign
     TIMER_30S,                    // 30 seconds
     0,                            // Voice prompts off
-    0,                            // Phonetic spell off
-    1,                            // Automatic latch of macro menu enabled
+    false,                        // Phonetic spell off
+    true,                         // Automatic latch of macro menu enabled
+    false,                        // GPS disabled
+    false,                        // Don't update RTC with GPS
+    false,                        // Do not check M17 CAN on RX
+    false,                        // No battery icon
     0,                            // not used
-    false,                        // Check M17 CAN on RX
-    false,                        // Display battery icon
-    false,                        // Update RTC with GPS
     "OpenRTX",                    // Default M17 meta text
 };
 
