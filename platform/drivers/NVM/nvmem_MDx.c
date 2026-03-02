@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -50,7 +50,15 @@ static const struct nvmDescriptor nvmDevices[] = {
         .size = 0x100, // 256 byte
         .nbPart = 0,
         .partitions = NULL,
-    }
+    },
+    {
+        .name = "Hardware Info",
+        .dev = &secReg,
+        .baseAddr = 0x3000,
+        .size = 0x100, // 256 byte
+        .nbPart = 0,
+        .partitions = NULL,
+    },
 };
 
 const struct nvmTable nvmTab = {
@@ -84,17 +92,17 @@ void nvm_readCalibData(void *buf)
     struct CalData *calib = ((struct CalData *)buf);
 
     // Security register 1: base address 0x1000
-    nvm_devRead(&secReg, 0x1009, &(calib->freqAdjustMid), 1);
-    nvm_devRead(&secReg, 0x1010, calib->txHighPower, 9);
-    nvm_devRead(&secReg, 0x1020, calib->txLowPower, 9);
-    nvm_devRead(&secReg, 0x1030, calib->rxSensitivity, 9);
+    nvm_read(1, 0, 0x9, &(calib->freqAdjustMid), 1);
+    nvm_read(1, 0, 0x10, calib->txHighPower, 9);
+    nvm_read(1, 0, 0x20, calib->txLowPower, 9);
+    nvm_read(1, 0, 0x30, calib->rxSensitivity, 9);
 
     // Security register 2: base address 0x2000
-    nvm_devRead(&secReg, 0x2030, calib->sendIrange, 9);
-    nvm_devRead(&secReg, 0x2040, calib->sendQrange, 9);
-    nvm_devRead(&secReg, 0x2070, calib->analogSendIrange, 9);
-    nvm_devRead(&secReg, 0x2080, calib->analogSendQrange, 9);
-    nvm_devRead(&secReg, 0x20b0, ((uint8_t *)&freqs), 72);
+    nvm_read(2, 0, 0x30, calib->sendIrange, 9);
+    nvm_read(2, 0, 0x40, calib->sendQrange, 9);
+    nvm_read(2, 0, 0x70, calib->analogSendIrange, 9);
+    nvm_read(2, 0, 0x80, calib->analogSendQrange, 9);
+    nvm_read(2, 0, 0xb0, ((uint8_t *)&freqs), 72);
 
     /*
      * Frequency stored in calibration data is divided by ten: so, after
@@ -112,17 +120,17 @@ void nvm_readCalibData(void *buf)
     struct CalData *vhfCal = &(cal->vhfCal);
 
     // Security register 1: base address 0x1000
-    nvm_devRead(&secReg, 0x100c, (&vhfCal->freqAdjustMid), 1);
-    nvm_devRead(&secReg, 0x1019, vhfCal->txHighPower, 5);
-    nvm_devRead(&secReg, 0x1029, vhfCal->txLowPower, 5);
-    nvm_devRead(&secReg, 0x1039, vhfCal->rxSensitivity, 5);
+    nvm_read(1, 0, 0x0c, (&vhfCal->freqAdjustMid), 1);
+    nvm_read(1, 0, 0x19, vhfCal->txHighPower, 5);
+    nvm_read(1, 0, 0x29, vhfCal->txLowPower, 5);
+    nvm_read(1, 0, 0x39, vhfCal->rxSensitivity, 5);
 
     // Security register 2: base address 0x2000
-    nvm_devRead(&secReg, 0x2039, vhfCal->sendIrange, 5);
-    nvm_devRead(&secReg, 0x2049, vhfCal->sendQrange, 5);
-    nvm_devRead(&secReg, 0x2079, vhfCal->analogSendIrange, 5);
-    nvm_devRead(&secReg, 0x2089, vhfCal->analogSendQrange, 5);
-    nvm_devRead(&secReg, 0x2000, ((uint8_t *)&freqs), 40);
+    nvm_read(2, 0, 0x39, vhfCal->sendIrange, 5);
+    nvm_read(2, 0, 0x49, vhfCal->sendQrange, 5);
+    nvm_read(2, 0, 0x79, vhfCal->analogSendIrange, 5);
+    nvm_read(2, 0, 0x89, vhfCal->analogSendQrange, 5);
+    nvm_read(2, 0, 0x00, ((uint8_t *)&freqs), 40);
 
     for (uint8_t i = 0; i < 5; i++) {
         vhfCal->rxFreq[i] = ((freq_t)bcdToBin(freqs[2 * i]));
@@ -137,13 +145,13 @@ void nvm_readHwInfo(hwInfo_t *info)
     uint16_t freqMax = 0;
 
     // Security register 3: base address 0x3000
-    nvm_devRead(&secReg, 0x3000, info->name, 8);
-    nvm_devRead(&secReg, 0x3014, &freqMin, 2);
-    nvm_devRead(&secReg, 0x3016, &freqMax, 2);
+    nvm_read(3, 0, 0x00, info->name, 8);
+    nvm_read(3, 0, 0x14, &freqMin, 2);
+    nvm_read(3, 0, 0x16, &freqMax, 2);
 #ifdef PLATFORM_MD9600
-    nvm_devRead(&secReg, 0x3035, &info->hw_version, 1);
+    nvm_read(3, 0, 0x35, &info->hw_version, 1);
 #else
-    nvm_devRead(&secReg, 0x301D, &info->hw_version, 1);
+    nvm_read(3, 0, 0x1D, &info->hw_version, 1);
 #endif
 
     // Ensure correct null-termination of device name by removing the 0xff.
@@ -171,8 +179,8 @@ void nvm_readHwInfo(hwInfo_t *info)
     uint16_t vhf_freqMin = 0;
     uint16_t vhf_freqMax = 0;
 
-    nvm_devRead(&secReg, 0x3018, &vhf_freqMin, 2);
-    nvm_devRead(&secReg, 0x301a, &vhf_freqMax, 2);
+    nvm_read(3, 0, 0x18, &vhf_freqMin, 2);
+    nvm_read(3, 0, 0x1a, &vhf_freqMax, 2);
 
     info->vhf_minFreq = ((uint16_t)bcdToBin(vhf_freqMin)) / 10;
     info->vhf_maxFreq = ((uint16_t)bcdToBin(vhf_freqMax)) / 10;
