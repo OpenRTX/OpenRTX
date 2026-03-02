@@ -155,8 +155,8 @@ openrtx_def += {'GIT_VERSION': git_version}
 ##
 
 mdx_src = ['platform/drivers/NVM/W25Qx.c',
-           'platform/drivers/NVM/nvmem_settings_MDx.c',
            'platform/drivers/NVM/nvmem_MDx.c',
+           'platform/drivers/NVM/eeep.c',
            'platform/drivers/audio/audio_MDx.cpp',
            'platform/drivers/baseband/HR_Cx000.cpp',
            'platform/drivers/baseband/HR_C6000.cpp',
