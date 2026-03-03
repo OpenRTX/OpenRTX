@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+LABEL org.opencontainers.image.source=https://github.com/OpenRTX/OpenRTX
+
 # Install dependencies
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
   git \
