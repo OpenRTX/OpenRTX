@@ -1,21 +1,23 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "core/cps.h"
+#include "core/vfo.h"
 #include "interfaces/nvmem.h"
-#include "interfaces/delays.h"
 #include "calibration/calibInfo_CS7000.h"
 #include "core/nvmem_access.h"
-#include "drivers/SPI/spi_bitbang.h"
-#include "drivers/SPI/spi_stm32.h"
-#include <string.h>
-#include "wchar.h"
 #include "core/utils.h"
 #include "core/crc.h"
+#include "drivers/SPI/spi_bitbang.h"
+#include "drivers/SPI/spi_stm32.h"
 #include "drivers/NVM/W25Qx.h"
 #include "drivers/NVM/eeep.h"
+#include "core/settings.h"
+
+#include <string.h>
 
 static const struct W25QxCfg cfg =
 {
@@ -38,8 +40,16 @@ const struct nvmPartition memPartitions[] =
         .size   = 16384     // 16kB
     },
     {
-        .offset = 0x1000C000,// Third partition, available memory
-        .size   = 0xFF4000
+        .offset = 0x1004000,// Third partition, settings part A
+        .size   = 4096      // 4 kB
+    },
+    {
+        .offset = 0x1005000,// Fourth partition, settings part B
+        .size   = 4096      // 4 kB
+    },
+    {
+        .offset = 0x1006000,// Fifth partition, available memory
+        .size   = 0xFF2000
     }
 #else
     {
@@ -47,8 +57,16 @@ const struct nvmPartition memPartitions[] =
         .size   = 16384     // 16kB
     },
     {
-        .offset = 0xC000,   // Third partition, available memory
-        .size   = 0xFF4000
+        .offset = 0xC000,   // Third partition, settings part A
+        .size   = 4096      // 4 kB
+    },
+    {
+        .offset = 0xD000,   // Fourth partition, settings part B
+        .size   = 4096      // 4 kB
+    },
+    {
+        .offset = 0xE000,   // Fifth partition, available memory
+        .size   = 0xFF2000
     }
 #endif
 };
@@ -71,7 +89,7 @@ static const struct nvmDescriptor extMem[] =
         .name       = "Virtual EEPROM",
         .dev        = &eeep,
         .baseAddr   = 0x00000000,
-        .size       = 0xFFFFFFFF,       // Dummy value, this device has no physical size
+        .size       = 0xFFFF,       // Virtual address is 16 bits
         .nbPart     = 0,
         .partitions = NULL
     }
@@ -82,8 +100,8 @@ const struct nvmTable nvmTab = {
     .nbAreas = ARRAY_SIZE(extMem),
 };
 
-static uint16_t settingsCrc;
-static uint16_t vfoCrc;
+static struct vfo_storage vfo_storage;
+static struct settings_storage settings_storage;
 
 void nvm_init()
 {
@@ -96,7 +114,9 @@ void nvm_init()
     spiBitbang_init(&flash_spi);
 #endif
     W25Qx_init(&eflash);
-    eeep_init(&eeep, 0, 1);
+    eeep_init(&eeep, 0, 2);
+    vfo_initStorage(&vfo_storage, 1, 0, 16, CPS_VERSION_NUMBER);
+    settings_initStorage(&settings_storage, 0, 3, 4);
 }
 
 void nvm_terminate()
@@ -137,44 +157,23 @@ void nvm_readHwInfo(hwInfo_t *info)
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    memset(channel, 0x00, sizeof(channel_t));
-    int ret = nvm_read(1, 0, 0x0001, channel, sizeof(channel_t));
-    if(ret < 0)
-        return -1;
-
-    vfoCrc = crc_ccitt(channel, sizeof(channel_t));
-
-    return 0;
+    return vfo_load(&vfo_storage, channel);
 }
 
 int nvm_readSettings(settings_t *settings)
 {
-    memset(settings, 0x00, sizeof(settings_t));
-    int ret = nvm_read(1, 0, 0x0002, settings, sizeof(settings_t));
-    if(ret < 0)
-        return -1;
-
-    settingsCrc = crc_ccitt(settings, sizeof(settings_t));
-
-    return 0;
+    return settings_load(&settings_storage, settings);
 }
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    (void) settings;
-
-    return -1;
+    return settings_save(&settings_storage, settings);
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    uint16_t crc = crc_ccitt(vfo, sizeof(channel_t));
-    if(crc != vfoCrc)
-        nvm_write(1, 0, 0x0001, vfo, sizeof(channel_t));
-
-    crc = crc_ccitt(settings, sizeof(settings_t));
-    if(crc != settingsCrc)
-        nvm_write(1, 0, 0x0002, settings, sizeof(settings_t));
-
-    return 0;
+    int ret = nvm_writeSettings(settings);
+    if(ret < 0)
+        return ret;
+    return vfo_save(&vfo_storage, vfo);
 }
