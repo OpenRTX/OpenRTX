@@ -7,6 +7,7 @@ on:
 env:
   RADIO_TOOL_VERSION: 0.2.2
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+  DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
 jobs:
   unit-test:
     runs-on: ubuntu-22.04
@@ -87,6 +88,8 @@ jobs:
       - name: Compile using devcontainer
         uses: devcontainers/ci@v0.3
         with:
+          cacheFrom: ${{ env.DEVCONTAINER_NAME }}
+          push: never
           runCmd: |
             meson setup build_linux &&
             meson setup --cross-file cross_cm4.txt build_cm4 &&
