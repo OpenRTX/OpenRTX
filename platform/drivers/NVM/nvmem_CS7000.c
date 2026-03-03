@@ -1,21 +1,21 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <string.h>
 #include "interfaces/nvmem.h"
-#include "interfaces/delays.h"
 #include "calibration/calibInfo_CS7000.h"
 #include "core/nvmem_access.h"
 #include "drivers/SPI/spi_bitbang.h"
 #include "drivers/SPI/spi_stm32.h"
-#include <string.h>
-#include "wchar.h"
-#include "core/utils.h"
-#include "core/crc.h"
 #include "drivers/NVM/W25Qx.h"
 #include "drivers/NVM/eeep.h"
+#include "core/settings.h"
+#include "core/utils.h"
+#include "core/crc.h"
+#include "core/vfo.h"
 
 static const struct W25QxCfg cfg = {
     .spi = (const struct spiDevice *)&flash_spi,
@@ -24,31 +24,28 @@ static const struct W25QxCfg cfg = {
 
 W25Qx_DEVICE_DEFINE(eflash, cfg);
 EEEP_DEVICE_DEFINE(eeep)
+EEEP_DEVICE_DEFINE(eeepDev1)
+EEEP_DEVICE_DEFINE(eeepDev2)
 
 const struct nvmPartition memPartitions[] = {
-    {
-        .offset = 0x0000, // First partition, calibration and other OEM data
-        .size = 32768,    // 32kB
-    },
+    NVM_PART_DEFINE(0x0000, 32768), // Calibration and other OEM data
+
 #ifdef PLATFORM_CS7000P
-    {
-        .offset = 0x1000000, // Second partition EEEP storage
-        .size = 16384,       // 16kB
-    },
-    {
-        .offset = 0x100C000, // Third partition, available memory
-        .size = 0xFF4000,
-    }
+    NVM_PART_DEFINE(0x1000000, 16384),    // EEEP storage
+    NVM_PART_DEFINE(0x100C000, 0xFEF000), // Available memory
+    NVM_PART_DEFINE(0x1FFB000, 12288),    // Settings part A and VFO
+    NVM_PART_DEFINE(0x1FFE000, 8192),     // Settings part B
 #else
-    {
-        .offset = 0x8000, // Second partition EEEP storage
-        .size = 16384,    // 16kB
-    },
-    {
-        .offset = 0xC000, // Third partition, available memory
-        .size = 0xFF4000,
-    },
+    NVM_PART_DEFINE(0x8000, 16384),    // EEEP storage
+    NVM_PART_DEFINE(0xC000, 0xFEF000), // Available memory
+    NVM_PART_DEFINE(0xFFB000, 12288),  // Settings part A and VFO
+    NVM_PART_DEFINE(0xFFE000, 8192),   // Settings part B
 #endif
+};
+
+static const struct nvmPartition eeepDev1Partitions[] = {
+    NVM_PART_DEFINE(0x0000, 4096), // VFO
+    NVM_PART_DEFINE(0x1000, 4096), // Settings part A
 };
 
 static const struct nvmDescriptor extMem[] = {
@@ -68,7 +65,23 @@ static const struct nvmDescriptor extMem[] = {
         .name = "Virtual EEPROM",
         .dev = &eeep,
         .baseAddr = 0x00000000,
-        .size = 0xFFFFFFFF, // Dummy value, this device has no physical size
+        .size = 0xFFFF,
+        .nbPart = 0,
+        .partitions = NULL,
+    },
+    {
+        .name = "Emulated EEPROM 1",
+        .dev = &eeepDev1,
+        .baseAddr = 0x0000,
+        .size = 0xFFFF,
+        .nbPart = ARRAY_SIZE(eeepDev1Partitions),
+        .partitions = eeepDev1Partitions,
+    },
+    {
+        .name = "Emulated EEPROM 2",
+        .dev = &eeepDev2,
+        .baseAddr = 0x0000,
+        .size = 0xFFFF,
         .nbPart = 0,
         .partitions = NULL,
     },
@@ -94,6 +107,15 @@ void nvm_init()
 #endif
     W25Qx_init(&eflash);
     eeep_init(&eeep, 0, 2);
+    eeep_init(&eeepDev1, 0, 4); // Device 0, partition 4
+    eeep_init(&eeepDev2, 0, 5); // Device 0, partition 5
+
+    /*
+     * Settings: device 2, partition 2 and device 3
+     * VFO: device 2, partition 1
+     */
+    settings_init(2, 2, 3, NVM_PART_WHOLE_DEVICE);
+    vfo_init(2, 1);
 }
 
 void nvm_terminate()
