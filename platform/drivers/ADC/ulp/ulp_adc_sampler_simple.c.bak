@@ -1,0 +1,139 @@
+/***************************************************************************
+ *   Copyright (C) 2026 by OpenRTX                                         *
+ *   ULP RISC-V ADC Sampler - ESP32-S3 ADC2 CH4 Hardware Implementation    *
+ ***************************************************************************/
+
+#include <stdint.h>
+
+// Buffer size - must match definition in shared header
+#define BUFFER_SIZE 512
+#define BUFFER_MASK (BUFFER_SIZE - 1)
+
+// ESP32-S3 Register addresses
+#define RTC_CNTL_COCPU_CTRL_REG 0x60008104
+#define RTC_CNTL_COCPU_DONE (1 << 25)
+#define RTC_CNTL_COCPU_SHUT_RESET_EN (1 << 22)
+#define RTC_CNTL_COCPU_SHUT_2_CLK_DIS_SHIFT 14
+#define RTC_CNTL_COCPU_SHUT_2_CLK_DIS_MASK (0xFF << 14)
+
+// ADC2 registers (SENS peripheral)
+#define SENS_BASE 0x60008800
+#define SENS_SAR_MEAS2_CTRL2_REG (SENS_BASE + 0x30)
+#define SENS_MEAS2_START_SAR (1 << 17)
+#define SENS_MEAS2_DONE_SAR (1 << 16)
+#define SENS_MEAS2_DATA_SAR_MASK 0xFFFF
+#define SENS_SAR2_EN_PAD_SHIFT 19
+#define SENS_SAR2_EN_PAD_MASK (0xFFF << 19)
+
+// Shared variables in RTC slow memory
+volatile uint16_t adc_buffer[BUFFER_SIZE] = {0};
+volatile uint32_t write_ptr = 0;
+volatile uint32_t read_ptr = 0;
+volatile uint32_t sample_counter = 0;
+volatile uint32_t overflow_count = 0;
+volatile uint32_t enabled = 0;
+volatile uint32_t wakeup_counter = 0;
+
+// Register access helpers
+static inline void write_reg(uint32_t addr, uint32_t val) {
+    *(volatile uint32_t*)addr = val;
+}
+
+static inline uint32_t read_reg(uint32_t addr) {
+    return *(volatile uint32_t*)addr;
+}
+
+// Rescue ULP from monitor/halt state
+static void ulp_rescue_from_monitor(void) {
+    uint32_t reg_val = read_reg(RTC_CNTL_COCPU_CTRL_REG);
+    reg_val &= ~(RTC_CNTL_COCPU_DONE | RTC_CNTL_COCPU_SHUT_RESET_EN);
+    write_reg(RTC_CNTL_COCPU_CTRL_REG, reg_val);
+}
+
+// Halt the ULP properly
+static void ulp_halt(void) {
+    uint32_t reg_val;
+    
+    reg_val = read_reg(RTC_CNTL_COCPU_CTRL_REG);
+    reg_val &= ~RTC_CNTL_COCPU_SHUT_2_CLK_DIS_MASK;
+    reg_val |= (0x3F << RTC_CNTL_COCPU_SHUT_2_CLK_DIS_SHIFT);
+    write_reg(RTC_CNTL_COCPU_CTRL_REG, reg_val);
+    
+    reg_val = read_reg(RTC_CNTL_COCPU_CTRL_REG);
+    reg_val |= (RTC_CNTL_COCPU_DONE | RTC_CNTL_COCPU_SHUT_RESET_EN);
+    write_reg(RTC_CNTL_COCPU_CTRL_REG, reg_val);
+    
+    while (1) {
+        __asm__ volatile ("nop");
+    }
+}
+
+// Read ADC2 Channel 4 (GPIO15) from hardware
+static int32_t read_adc2_ch4(void) {
+    uint32_t reg_val;
+    
+    // Set channel 4 (1 << 4 = 0x10) in SAR2_EN_PAD field
+    reg_val = read_reg(SENS_SAR_MEAS2_CTRL2_REG);
+    reg_val &= ~SENS_SAR2_EN_PAD_MASK;  // Clear channel selection
+    reg_val |= ((1 << 4) << SENS_SAR2_EN_PAD_SHIFT);  // Select channel 4
+    write_reg(SENS_SAR_MEAS2_CTRL2_REG, reg_val);
+    
+    // Start conversion
+    reg_val = read_reg(SENS_SAR_MEAS2_CTRL2_REG);
+    reg_val &= ~SENS_MEAS2_START_SAR;  // Clear start bit
+    write_reg(SENS_SAR_MEAS2_CTRL2_REG, reg_val);
+    reg_val |= SENS_MEAS2_START_SAR;   // Set start bit
+    write_reg(SENS_SAR_MEAS2_CTRL2_REG, reg_val);
+    
+    // Wait for conversion done (poll MEAS2_DONE_SAR bit)
+    int timeout = 1000;
+    while (timeout-- > 0) {
+        reg_val = read_reg(SENS_SAR_MEAS2_CTRL2_REG);
+        if (reg_val & SENS_MEAS2_DONE_SAR) {
+            break;
+        }
+    }
+    
+    if (timeout <= 0) {
+        return -1;  // Timeout
+    }
+    
+    // Read result
+    reg_val = read_reg(SENS_SAR_MEAS2_CTRL2_REG);
+    return (int32_t)(reg_val & SENS_MEAS2_DATA_SAR_MASK);
+}
+
+int main(void) {
+    // Rescue from monitor state first
+    ulp_rescue_from_monitor();
+    
+    // Increment wakeup counter
+    wakeup_counter++;
+    
+    // Only sample if enabled
+    if (!enabled) {
+        ulp_halt();
+        return 0;
+    }
+
+    // Read ADC sample from hardware
+    int32_t sample = read_adc2_ch4();
+
+    if (sample >= 0) {
+        // Write to ring buffer
+        adc_buffer[write_ptr] = (uint16_t)sample;
+        uint32_t next_write = (write_ptr + 1) & BUFFER_MASK;
+
+        // Check for overflow
+        if (next_write == read_ptr) {
+            overflow_count++;
+        } else {
+            write_ptr = next_write;
+            sample_counter++;
+        }
+    }
+
+    // Halt and wait for timer
+    ulp_halt();
+    return 0;
+}

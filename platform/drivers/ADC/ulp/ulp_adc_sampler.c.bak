@@ -1,0 +1,114 @@
+/***************************************************************************
+ *   Copyright (C) 2026 by OpenRTX                                         *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <http://www.gnu.org/licenses/>  *
+ ***************************************************************************/
+
+/**
+ * ULP RISC-V ADC Sampler
+ * 
+ * This program runs on the ESP32-S3 ULP RISC-V coprocessor and performs
+ * continuous ADC2 channel 4 (GPIO15) sampling for M17 protocol microphone
+ * input. Samples are stored in a ring buffer in RTC slow memory that the
+ * main CPU can read asynchronously.
+ * 
+ * Sample rate: 8 kHz (configurable via ULP timer from main CPU)
+ * Buffer size: 512 samples (64ms buffering at 8 kHz)
+ * 
+ * The ULP wakes up periodically via timer, reads one ADC sample, writes
+ * it to the ring buffer, and goes back to sleep. This provides DMA-like
+ * functionality with minimal power consumption (~18μA @ 8MHz).
+ */
+
+#include <stdint.h>
+#include "ulp_riscv_adc.h"
+#include "ulp_riscv_utils.h"
+#include "ulp_adc_shared.h"
+
+// Buffer size - must match definition in shared header
+#define BUFFER_SIZE 512
+#define BUFFER_MASK (BUFFER_SIZE - 1)
+
+// Shared variables in RTC slow memory
+// These are automatically placed in RTC memory by the ULP linker
+// Main CPU accesses these with ulp_ prefix (e.g., ulp_adc_buffer)
+
+// Ring buffer for ADC samples
+volatile uint16_t adc_buffer[BUFFER_SIZE] = {0};
+
+// Write pointer (updated by ULP only)
+volatile uint32_t write_ptr = 0;
+
+// Read pointer (updated by main CPU only)
+volatile uint32_t read_ptr = 0;
+
+// Total samples collected (diagnostic)
+volatile uint32_t sample_counter = 0;
+
+// Overflow counter (increments when buffer is full)
+volatile uint32_t overflow_count = 0;
+
+// Enable flag (1 = sampling enabled, 0 = disabled)
+volatile uint32_t enabled = 0;
+
+/**
+ * ULP main function
+ * 
+ * Called each time the ULP wakes up from timer. The timer period is
+ * configured by the main CPU via ulp_set_wakeup_period() to achieve
+ * the desired sample rate (default 8 kHz = 125μs period).
+ * 
+ * Execution flow:
+ * 1. Check if sampling is enabled
+ * 2. Read ADC2 channel 4
+ * 3. Write sample to ring buffer
+ * 4. Update write pointer
+ * 5. Detect and count overflows
+ * 6. Return (ULP goes back to sleep until next timer event)
+ */
+int main(void)
+{
+    // Only sample if enabled by main CPU
+    if (!enabled) {
+        // Return immediately - timer will wake us again
+        return 0;
+    }
+
+    // Read ADC2 channel 4 (GPIO15)
+    // Returns raw 12-bit value (0-4095) or negative on error
+    int32_t sample = ulp_riscv_adc_read_channel(ADC_UNIT_2, ULP_ADC_CHANNEL);
+
+    // Only process valid samples
+    if (sample >= 0) {
+        // Write sample to current write position
+        adc_buffer[write_ptr] = (uint16_t)sample;
+
+        // Calculate next write position (wrap using bitmask)
+        uint32_t next_write = (write_ptr + 1) & BUFFER_MASK;
+
+        // Check for buffer overflow (write caught up to read)
+        if (next_write == read_ptr) {
+            // Buffer is full - main CPU isn't reading fast enough
+            overflow_count++;
+            // Don't advance write pointer to avoid overwriting unread data
+        } else {
+            // Advance write pointer
+            write_ptr = next_write;
+            sample_counter++;
+        }
+    }
+
+    // Return to sleep - timer will wake us for next sample
+    return 0;
+}

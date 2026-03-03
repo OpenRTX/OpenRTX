@@ -350,3 +350,160 @@ const struct gpsDevice *platform_initGps()
 
     return &gps;
 }
+
+// ULP ADC Sampler - 5 Second Mic Recording Demo (Streaming)
+// Records microphone input and outputs RAW audio for Audacity
+#include "drivers/ADC/adc_ulp_sampler.h"
+#include <zephyr/kernel.h>
+#include <zephyr/drivers/gpio.h>
+
+#define MIC_CH_SEL_GPIO 17  // GPIO17 controls mic channel select
+#define SAMPLE_RATE 8000    // 8 kHz sample rate
+#define RECORDING_SECONDS 5
+#define TOTAL_SAMPLES (SAMPLE_RATE * RECORDING_SECONDS)  // 40,000 samples
+#define CHUNK_SIZE 256  // Read 256 samples at a time
+
+static void ulp_demo_thread(void *, void *, void *);
+// CPU-based ADC test
+extern void adc_cpu_busy_loop_test(void);
+
+extern void adc_cpu_busy_loop_test(void);
+K_THREAD_DEFINE(ulp_demo_tid, 4096, ulp_demo_thread, NULL, NULL, NULL, 7, 0, 0);
+
+static void ulp_demo_thread(void *arg1, void *arg2, void *arg3)
+{
+    ARG_UNUSED(arg1);
+    ARG_UNUSED(arg2);
+    ARG_UNUSED(arg3);
+
+    // Wait for system to stabilize
+    k_sleep(K_SECONDS(2));
+
+    printk("\n=== ULP ADC Sampler - Mic Recording Demo ===\n");
+    printk("Recording %d seconds of audio at %d Hz\n", RECORDING_SECONDS, SAMPLE_RATE);
+    printk("Total samples: %d\n", TOTAL_SAMPLES);
+    printk("Streaming mode (no buffering)\n\n");
+
+    // Configure GPIO17 (MIC_CH_SEL) as output and set HIGH
+    const struct gpio_dt_spec mic_sel = {
+        .port = DEVICE_DT_GET(DT_NODELABEL(gpio0)),
+        .pin = MIC_CH_SEL_GPIO,
+        .dt_flags = GPIO_ACTIVE_HIGH
+    };
+
+    if (!device_is_ready(mic_sel.port)) {
+        printk("ERROR: GPIO device not ready\n");
+        return;
+    }
+
+    int ret = gpio_pin_configure_dt(&mic_sel, GPIO_OUTPUT_ACTIVE);
+    if (ret < 0) {
+        printk("ERROR: Failed to configure GPIO%d: %d\n", MIC_CH_SEL_GPIO, ret);
+        return;
+    }
+
+    // Set MIC_CH_SEL HIGH (active)
+    gpio_pin_set_dt(&mic_sel, 1);
+    printk("MIC_CH_SEL (GPIO17) set HIGH\n");
+
+    // Initialize ULP sampler
+    esp_err_t err = ulp_adc_sampler_init();
+    if (err != ESP_OK) {
+        printk("ERROR: ULP sampler init failed: %d\n", err);
+        return;
+    }
+
+    // Start ULP sampler at 8 kHz
+    err = ulp_adc_sampler_start(SAMPLE_RATE);
+    if (err != ESP_OK) {
+        printk("ERROR: ULP sampler start failed: %d\n", err);
+        return;
+    }
+
+    printk("ULP sampler started at %d Hz\n", SAMPLE_RATE);
+    printk("Recording will start in 1 second...\n\n");
+    
+    // Debug: Read ULP variables
+    k_sleep(K_MSEC(500));
+    printk("\n=== ULP Debug Info ===\n");
+    volatile uint32_t *last_raw = (volatile uint32_t*)(0x50000000 + 0x510);
+    volatile uint32_t *conv_fail = (volatile uint32_t*)(0x50000000 + 0x50c);
+    volatile uint32_t *wakeup_cnt = (volatile uint32_t*)(0x50000000 + 0x514);
+    volatile uint32_t *sample_cnt = (volatile uint32_t*)(0x50000000 + 0x520);
+    printk("Last raw ADC register: 0x%08X\n", *last_raw);
+    printk("Conversion failures: %u\n", *conv_fail);
+    printk("Wakeup counter: %u\n", *wakeup_cnt);
+    printk("Sample counter: %u\n", *sample_cnt);
+    printk("======================\n\n");
+    
+    k_sleep(K_SECONDS(1));
+
+    // Allocate small chunk buffer for streaming
+    int16_t *chunk = k_malloc(CHUNK_SIZE * sizeof(int16_t));
+    if (!chunk) {
+        printk("ERROR: Failed to allocate chunk buffer\n");
+        return;
+    }
+
+    printk("*** RECORDING STARTED ***\n");
+    printk("\n=== RAW AUDIO DATA (16-bit signed PCM, %d Hz, Mono) ===\n", SAMPLE_RATE);
+    printk("To import in Audacity:\n");
+    printk("1. Copy data between BEGIN/END markers to audio.hex\n");
+    printk("2. Convert: for line in file: value=int(line,16); write(value.to_bytes(2,'little'))\n");
+    printk("3. Import Raw: Signed 16-bit PCM, Little-endian, Mono, %d Hz\n\n", SAMPLE_RATE);
+
+    printk("BEGIN_RAW_AUDIO_DATA\n");
+
+    uint32_t samples_recorded = 0;
+    uint16_t min_value = 0xFFFF;
+    uint16_t max_value = 0;
+    uint32_t start_time = k_uptime_get_32();
+
+    // Record for 5 seconds - stream data directly
+    while (samples_recorded < TOTAL_SAMPLES) {
+        // Read available samples
+        size_t available = ulp_adc_get_available_count();
+        if (available > 0) {
+            size_t to_read = TOTAL_SAMPLES - samples_recorded;
+            if (to_read > CHUNK_SIZE) to_read = CHUNK_SIZE;
+            if (to_read > available) to_read = available;
+
+            size_t read = ulp_adc_read_samples(chunk, to_read);
+            
+            // Stream samples immediately
+            for (size_t i = 0; i < read; i++) {
+                printk("%04X\n", (uint16_t)chunk[i]);
+                uint16_t val = (uint16_t)chunk[i];
+                if (val < min_value) min_value = val;
+                if (val > max_value) max_value = val;
+            }
+            
+            samples_recorded += read;
+        } else {
+            k_sleep(K_USEC(100));  // Short sleep if no samples
+        }
+    }
+
+    uint32_t elapsed_ms = k_uptime_get_32() - start_time;
+
+    printk("END_RAW_AUDIO_DATA\n");
+    printk("\n*** RECORDING COMPLETE ***\n");
+    printk("Recorded %u samples in %u ms\n", samples_recorded, elapsed_ms);
+    printk("Actual sample rate: %u Hz\n", (unsigned int)((samples_recorded * 1000) / elapsed_ms));
+    printk("ADC value range: min=0x%04X (%u), max=0x%04X (%u)\n", min_value, min_value, max_value, max_value);
+
+    // Debug: Print ULP counters after recording
+    printk("\n=== ULP Debug Info (After Recording) ===\n");
+    printk("ULP wakeup counter: %u\n", ulp_adc_get_wakeup_counter());
+    printk("ULP sample counter: %u\n", ulp_adc_get_sample_counter());
+    printk("Write ptr: %u, Read ptr: %u\n", ulp_adc_get_write_ptr(), ulp_adc_get_read_ptr());
+    printk("Overflow count: %u\n", ulp_adc_get_overflow_count());
+    printk("Missed samples: %u\n", ulp_adc_get_missed_samples());
+    printk("=========================================\n\n");
+    printk("\n=== Recording demo complete ===\n");
+
+    // Stop ULP sampler
+    ulp_adc_sampler_stop();
+
+    k_free(chunk);
+}

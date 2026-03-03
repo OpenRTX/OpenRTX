@@ -80,7 +80,7 @@
         };
 
         button_mode: button_3 {
-            gpios = <&gpio0 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             zephyr,code = <INPUT_BTN_MODE>;
             label = "Mode Button";
         };
@@ -255,4 +255,3 @@
         };
     };
 };
-

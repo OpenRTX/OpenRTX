@@ -16,11 +16,29 @@ file(DOWNLOAD
 execute_process(COMMAND objcopy -I srec -O binary --gap-fill 0xff --pad-to 0x4000 ${CMAKE_CURRENT_LIST_DIR}/${SA8X8FW}.s37 ${CMAKE_CURRENT_LIST_DIR}/${SA8X8FW}.bin)
 execute_process(COMMAND awk -b -f ${OPENRTX_ROOT}/scripts/bin2c.awk ${CMAKE_CURRENT_LIST_DIR}/${SA8X8FW}.bin)
 
+# Build ULP RISC-V ADC sampler binary
+set(ULP_SOURCE_DIR ${OPENRTX_ROOT}/platform/drivers/ADC/ulp)
+set(ULP_BUILD_DIR ${ULP_SOURCE_DIR}/build)
+set(ULP_BINARY ${ULP_BUILD_DIR}/ulp_adc_sampler.bin)
+if(NOT EXISTS ${ULP_BINARY})
+    message(STATUS "Building ULP ADC sampler binary...")
+    execute_process(
+        COMMAND ${ULP_SOURCE_DIR}/build_ulp_simple.sh
+        WORKING_DIRECTORY ${ULP_SOURCE_DIR}
+        RESULT_VARIABLE ULP_BUILD_RESULT
+    )
+    if(NOT ULP_BUILD_RESULT EQUAL 0)
+        message(FATAL_ERROR "ULP build failed")
+    endif()
+endif()
+execute_process(COMMAND awk -b -f ${OPENRTX_ROOT}/scripts/bin2c.awk ${ULP_BINARY})
+
 target_sources(app
   PRIVATE
     ${OPENRTX_ROOT}/platform/mcu/ESP32S3/drivers/delays.c
 
     ${OPENRTX_ROOT}/platform/targets/ttwr21/platform.c
+    ${OPENRTX_ROOT}/platform/targets/ttwr21/adc_cpu_test.c
 
     ${OPENRTX_ROOT}/platform/drivers/GPS/gps_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/GPS/nmea_rbuf.c
@@ -35,6 +53,10 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_ttwr.c
     ${OPENRTX_ROOT}/platform/drivers/program/program_RL78.c
     ${OPENRTX_ROOT}/platform/drivers/ADC/adc_zephyr.c
+    ${OPENRTX_ROOT}/platform/drivers/ADC/adc_ulp_sampler.c
+    ${OPENRTX_ROOT}/platform/drivers/ADC/adc_timer_isr.c
+    ${ZEPHYR_HAL_ESPRESSIF_MODULE_DIR}/components/ulp/ulp_riscv/ulp_riscv.c
+    ${ZEPHYR_HAL_ESPRESSIF_MODULE_DIR}/components/ulp/ulp_common/ulp_common.c
 
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
 
@@ -44,10 +66,22 @@ target_sources(app
 target_include_directories(app
   PRIVATE
     ${OPENRTX_ROOT}/platform/targets/ttwr21
+    ${OPENRTX_ROOT}/platform/drivers/ADC
+    ${OPENRTX_ROOT}/platform/drivers/ADC/ulp
 
     ${OPENRTX_ROOT}/subprojects/XPowersLib/src
     ${OPENRTX_ROOT}/subprojects/XPowersLib/src/REG
     ${CMAKE_CURRENT_LIST_DIR}
+    ${ULP_BUILD_DIR}
+    ${ZEPHYR_HAL_ESPRESSIF_MODULE_DIR}/components/ulp/ulp_riscv/include
+    ${ZEPHYR_HAL_ESPRESSIF_MODULE_DIR}/components/ulp/ulp_common/include
 )
 
-target_compile_definitions(app PRIVATE PLATFORM_TTWR CONFIG_SCREEN_BRIGHTNESS CONFIG_UI_NO_KEYBOARD)
+target_compile_definitions(app PRIVATE PLATFORM_TTWR CONFIG_SCREEN_BRIGHTNESS CONFIG_UI_NO_KEYBOARD CONFIG_ULP_ENABLED CONFIG_ULP_COPROC_RESERVE_MEM=4096)
+
+# Add compile definitions for ULP source files
+set_source_files_properties(
+    ${ZEPHYR_HAL_ESPRESSIF_MODULE_DIR}/components/ulp/ulp_riscv/ulp_riscv.c
+    ${ZEPHYR_HAL_ESPRESSIF_MODULE_DIR}/components/ulp/ulp_common/ulp_common.c
+    PROPERTIES COMPILE_DEFINITIONS "CONFIG_ULP_COPROC_RESERVE_MEM=4096"
+)
