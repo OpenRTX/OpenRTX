@@ -121,6 +121,8 @@ endif
 # Catch2, C++ testing framework (only for native/linux builds)
 if not meson.is_cross_build()
   catch2_dep = dependency('catch2-with-main', fallback: ['catch2', 'catch2_with_main_dep'])
+else
+  catch2_dep = disabler()
 endif
 
 # XPowersLib, library for x-powers power management series
