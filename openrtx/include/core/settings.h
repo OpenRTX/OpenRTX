@@ -95,9 +95,9 @@ static const settings_t default_settings = {
 
 typedef enum
 {
-    CLEAN,      ///< Partition contains entries
-    EMPTY,      ///< Partition contains no entry
-    CORRUPTED   ///< Partition contains invalid data
+    PART_CLEAN,      ///< Partition contains entries
+    PART_EMPTY,      ///< Partition contains no entry
+    PART_CORRUPTED,  ///< Partition contains invalid data
 } part_status;
 
 /**

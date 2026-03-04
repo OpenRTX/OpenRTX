@@ -342,38 +342,38 @@ int populate_latest_store(settings_storage_t *s)
     if (ret < 0)
         return ret;
     else if (ret == 0)
-        s->part_A_status = CORRUPTED;
+        s->part_A_status = PART_CORRUPTED;
     else if (ret == 1) {
         s->part_A_offset = 0;
-        s->part_A_status = EMPTY;
+        s->part_A_status = PART_EMPTY;
     } else if (ret == 2) {// Latest store in part A is stale
         s->part_A_offset = offset_A;
-        s->part_A_status = CLEAN; // Partition is clean
+        s->part_A_status = PART_CLEAN; // Partition is clean
         store_A_stale = true;
     } else if (ret == 3) {  // Latest store in part A is valid
         s->part_A_offset = offset_A;
-        s->part_A_status = CLEAN;
+        s->part_A_status = PART_CLEAN;
     }
 
     ret = get_latest_valid_store(s->dev, s->part_B, &store_B, &offset_B);
     if (ret < 0)
         return ret;
     else if (ret == 0)
-        s->part_B_status = CORRUPTED;
+        s->part_B_status = PART_CORRUPTED;
     else if (ret == 1) {
         s->part_B_offset = 0;
-        s->part_B_status = EMPTY;
+        s->part_B_status = PART_EMPTY;
     } else if (ret == 2) {  // Latest store in part B is stale
         s->part_B_offset = offset_B;
-        s->part_B_status = CLEAN; // Partition is clean
+        s->part_B_status = PART_CLEAN; // Partition is clean
         store_B_stale = true;
     } else if (ret == 3) {  // Latest store in part B is valid
         s->part_B_offset = offset_B;
-        s->part_B_status = CLEAN;
+        s->part_B_status = PART_CLEAN;
     }
 
     // Do something with the results
-    if (s->part_A_status == CLEAN && s->part_B_status == CLEAN) {
+    if (s->part_A_status == PART_CLEAN && s->part_B_status == PART_CLEAN) {
         if (store_A.counter >= store_B.counter) {
             s->latest_store = store_A;
             s->write_needed = store_A_stale;
@@ -382,11 +382,11 @@ int populate_latest_store(settings_storage_t *s)
             s->write_needed = store_B_stale;
         }
         s->initialized = true;
-    } else if (s->part_A_status == CLEAN && s->part_B_status != CLEAN) {
+    } else if (s->part_A_status == PART_CLEAN && s->part_B_status != PART_CLEAN) {
         s->latest_store = store_A;
         s->write_needed = store_A_stale;
         s->initialized = true;
-    } else if (s->part_A_status != CLEAN && s->part_B_status == CLEAN) {
+    } else if (s->part_A_status != PART_CLEAN && s->part_B_status == PART_CLEAN) {
         s->latest_store = store_B;
         s->initialized = true;
         s->write_needed = store_B_stale;
@@ -443,18 +443,18 @@ int settings_storage_save(settings_storage_t *s, const settings_t *settings)
         {
             int ret = write_store(s->dev, s->part_B, &(s->latest_store),
                                   &(s->part_B_offset),
-                                  (s->part_B_status == CORRUPTED));
+                                  (s->part_B_status == PART_CORRUPTED));
             if (ret < 0)
                 return ret;
-            s->part_B_status = CLEAN; // Partition is now clean
+            s->part_B_status = PART_CLEAN; // Partition is now clean
         } else                        // Write to part A
         {
             int ret = write_store(s->dev, s->part_A, &(s->latest_store),
                                   &(s->part_A_offset),
-                                  (s->part_A_status == CORRUPTED));
+                                  (s->part_A_status == PART_CORRUPTED));
             if (ret < 0)
                 return ret;
-            s->part_A_status = CLEAN; // Partition is now clean
+            s->part_A_status = PART_CLEAN; // Partition is now clean
         }
     }
 
