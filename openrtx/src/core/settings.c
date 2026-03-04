@@ -16,6 +16,7 @@
 
 const uint32_t SETTINGS_MAGIC = 0x584E504F; // "OPNX"
 
+
 /**
  * Returns a valid settings_store_t filled with default settings
  *
@@ -190,7 +191,7 @@ int get_latest_valid_store(const int dev, const int part,
     if (ret < 0)
         return ret;
 
-    size_t end_lim = pInfo.size;
+    ssize_t end_lim = pInfo.size;
     *offset = 0;
 
     while (end_lim > 0) {
@@ -222,7 +223,7 @@ int get_latest_valid_store(const int dev, const int part,
         if (ret == 1) // Valid
             return 3;
         else if (ret == 0) // Invalid
-            end_lim -= store->length; // Limit the parsing to right before this store
+            end_lim = read_offset; // Limit the parsing to right before this store
         else if (ret == -1) // Stale
             return 2;
     }
