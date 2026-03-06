@@ -9,6 +9,7 @@
 #include "protocols/M17/M17Callsign.hpp"
 #include "protocols/M17/M17LinkSetupFrame.hpp"
 #include "core/utils.h"
+#include "core/crc.h"
 
 using namespace M17;
 
@@ -71,13 +72,13 @@ meta_t& M17LinkSetupFrame::metadata()
 void M17LinkSetupFrame::updateCrc()
 {
     // Compute CRC over the first 28 bytes, then store it in big endian format.
-    uint16_t crc = crc16(&data, 28);
+    uint16_t crc = crc_m17(&data, 28);
     data.crc     = __builtin_bswap16(crc);
 }
 
 bool M17LinkSetupFrame::valid() const
 {
-    uint16_t crc = crc16(&data, 28);
+    uint16_t crc = crc_m17(&data, 28);
     if(data.crc == __builtin_bswap16(crc)) return true;
 
     return false;
@@ -163,25 +164,4 @@ void M17LinkSetupFrame::setGnssData(const gps_t *position,
     // Structure numeric fields that need offset and steps
     uint16_t alt = (uint16_t)1000 + position->altitude * 2;
     data.meta.gnss_data.altitude = __builtin_bswap16(alt);
-}
-
-uint16_t M17LinkSetupFrame::crc16(const void *data, const size_t len) const
-{
-    const uint8_t *ptr = reinterpret_cast< const uint8_t *>(data);
-    uint16_t crc = 0xFFFF;
-
-    for(size_t i = 0; i < len; i++)
-    {
-        crc ^= (ptr[i] << 8);
-
-        for(uint8_t j = 0; j < 8; j++)
-        {
-            if(crc & 0x8000)
-                crc = (crc << 1) ^ 0x5935;
-            else
-                crc = (crc << 1);
-        }
-    }
-
-    return crc;
 }
