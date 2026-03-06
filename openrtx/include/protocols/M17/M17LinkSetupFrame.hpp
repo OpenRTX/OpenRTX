@@ -140,17 +140,6 @@ public:
 
 private:
 
-    /**
-     * Compute the CRC16 of a given chunk of data using the polynomial 0x5935
-     * with an initial value set to 0xFFFF, as per M17 specification.
-     *
-     * \param data: pointer to the data block.
-     * \param len: lenght of the data block, in bytes.
-     * \return computed CRC16 over the data block.
-     */
-    uint16_t crc16(const void *data, const size_t len) const;
-
-
     struct __attribute__((packed))
     {
         call_t       dst;    ///< Destination callsign
