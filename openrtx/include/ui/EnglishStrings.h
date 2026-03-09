@@ -92,7 +92,8 @@ const stringsTable_t englishStrings =
     .direction         = "Direction",
     .step              = "Step",
     .radio             = "Radio",
-    .CAN               = "CAN",
+    .RX_CAN            = "RX CAN",
+    .TX_CAN            = "TX CAN",
     .canRxCheck        = "CAN RX Check",
 };
 #endif  // ENGLISHSTRINGS_H

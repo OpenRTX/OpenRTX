@@ -169,7 +169,8 @@ const char *settings_radio_items[] =
 const char * settings_m17_items[] =
 {
     "Callsign",
-    "CAN",
+    "RX CAN",
+    "TX CAN",
     "CAN RX Check"
 };
 
@@ -777,10 +778,16 @@ static void _ui_changeMacroLatch(bool newVal)
 }
 
 #ifdef CONFIG_M17
-static inline void _ui_changeM17Can(int variation)
+static inline void _ui_changeM17RxCan(int variation)
 {
-    uint8_t can = state.settings.m17_can;
-    state.settings.m17_can = (can + variation) % 16;
+    uint8_t can = state.channel.rx_can;
+    state.channel.rx_can = (can + variation) % 16;
+}
+
+static inline void _ui_changeM17TxCan(int variation)
+{
+    uint8_t can = state.channel.tx_can;
+    state.channel.tx_can = (can + variation) % 16;
 }
 #endif
 
@@ -1031,13 +1038,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 #endif // PLATFORM_TTWRPLUS
     {
 #ifdef CONFIG_KNOB_ABSOLUTE // If the radio has an absolute position knob
-        state.settings.sqlLevel = platform_getChSelector() - 1;
+        state.channel.sqlLevel = platform_getChSelector() - 1;
 #endif // CONFIG_KNOB_ABSOLUTE
-        if(state.settings.sqlLevel > 0)
+        if(state.channel.sqlLevel > 0)
         {
-            state.settings.sqlLevel -= 1;
+            state.channel.sqlLevel -= 1;
             *sync_rtx = true;
-            vp_announceSquelch(state.settings.sqlLevel, queueFlags);
+            vp_announceSquelch(state.channel.sqlLevel, queueFlags);
         }
     }
 
@@ -1048,13 +1055,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 #endif // PLATFORM_TTWRPLUS
     {
 #ifdef CONFIG_KNOB_ABSOLUTE
-        state.settings.sqlLevel = platform_getChSelector() - 1;
+        state.channel.sqlLevel = platform_getChSelector() - 1;
 #endif
-        if(state.settings.sqlLevel < 15)
+        if(state.channel.sqlLevel < 15)
         {
-            state.settings.sqlLevel += 1;
+            state.channel.sqlLevel += 1;
             *sync_rtx = true;
-            vp_announceSquelch(state.settings.sqlLevel, queueFlags);
+            vp_announceSquelch(state.channel.sqlLevel, queueFlags);
         }
     }
 }
@@ -1479,7 +1486,7 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, ui_state.new_callsign, 10);
+                            strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                             vp_announceM17Info(NULL,  ui_state.edit_mode,
@@ -1488,7 +1495,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_HASH)
                         {
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, "", 1);
+                            strncpy(state.channel.m17_dest, "", 1);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                             vp_announceM17Info(NULL,  ui_state.edit_mode,
@@ -1668,14 +1675,14 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, ui_state.new_callsign, 10);
+                            strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                         }
                         else if(msg.keys & KEY_HASH)
                         {
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, "", 1);
+                            strncpy(state.channel.m17_dest, "", 1);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                         }
@@ -2313,11 +2320,21 @@ void ui_updateFSM(bool *sync_rtx)
                                 f1Handled=true;
                             }
                             break;
-                        case M17_CAN:
+                        case M17_RX_CAN:
                             if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
-                                _ui_changeM17Can(-1);
+                                _ui_changeM17RxCan(-1);
                             else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
-                                _ui_changeM17Can(+1);
+                                _ui_changeM17RxCan(+1);
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = !ui_state.edit_mode;
+                            else if(msg.keys & KEY_ESC)
+                                ui_state.edit_mode = false;
+                            break;
+                        case M17_TX_CAN:
+                            if(msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)
+                                _ui_changeM17TxCan(-1);
+                            else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
+                                _ui_changeM17TxCan(+1);
                             else if(msg.keys & KEY_ENTER)
                                 ui_state.edit_mode = !ui_state.edit_mode;
                             else if(msg.keys & KEY_ESC)
@@ -2357,10 +2374,14 @@ void ui_updateFSM(bool *sync_rtx)
                         _ui_menuUp(settings_m17_num);
                     else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                         _ui_menuDown(settings_m17_num);
-                    else if((msg.keys & KEY_RIGHT) && (ui_state.menu_selected == M17_CAN))
-                            _ui_changeM17Can(+1);
-                    else if((msg.keys & KEY_LEFT)  && (ui_state.menu_selected == M17_CAN))
-                            _ui_changeM17Can(-1);
+                    else if((msg.keys & KEY_RIGHT) && (ui_state.menu_selected == M17_RX_CAN))
+                            _ui_changeM17RxCan(+1);
+                    else if((msg.keys & KEY_LEFT)  && (ui_state.menu_selected == M17_RX_CAN))
+                            _ui_changeM17RxCan(-1);
+                    else if((msg.keys & KEY_RIGHT) && (ui_state.menu_selected == M17_TX_CAN))
+                            _ui_changeM17TxCan(+1);
+                    else if((msg.keys & KEY_LEFT)  && (ui_state.menu_selected == M17_TX_CAN))
+                            _ui_changeM17TxCan(-1);
                     else if(msg.keys & KEY_ESC)
                     {
                         *sync_rtx = true;

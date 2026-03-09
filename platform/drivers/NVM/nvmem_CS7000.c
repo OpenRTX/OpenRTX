@@ -138,7 +138,7 @@ void nvm_readHwInfo(hwInfo_t *info)
 int nvm_readVfoChannelData(channel_t *channel)
 {
     memset(channel, 0x00, sizeof(channel_t));
-    int ret = nvm_read(1, 0, 0x0001, channel, sizeof(channel_t));
+    int ret = nvm_read(1, 0, 0x0003, channel, sizeof(channel_t));
     if(ret < 0)
         return -1;
 
@@ -170,7 +170,7 @@ int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
     uint16_t crc = crc_ccitt(vfo, sizeof(channel_t));
     if(crc != vfoCrc)
-        nvm_write(1, 0, 0x0001, vfo, sizeof(channel_t));
+        nvm_write(1, 0, 0x0003, vfo, sizeof(channel_t));
 
     crc = crc_ccitt(settings, sizeof(settings_t));
     if(crc != settingsCrc)

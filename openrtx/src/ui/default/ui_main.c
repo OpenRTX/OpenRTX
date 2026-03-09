@@ -263,7 +263,7 @@ void _ui_drawMainBottom()
 {
     // Squelch bar
     rssi_t   rssi = last_state.rssi;
-    uint8_t  squelch = last_state.settings.sqlLevel;
+    uint8_t  squelch = last_state.channel.sqlLevel;
     uint8_t  volume = last_state.volume;
     uint16_t meter_width = CONFIG_SCREEN_WIDTH - 2 * layout.horizontal_pad;
     uint16_t meter_height = layout.bottom_h;

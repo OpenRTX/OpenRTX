@@ -92,7 +92,8 @@ const stringsTable_t spanishStrings =
     .direction         = "Dirección",
     .step              = "Paso",
     .radio             = "Radio",
-    .CAN               = "CAN",
+    .RX_CAN            = "RX CAN",
+    .TX_CAN            = "TX CAN",
     .canRxCheck        = "CAN RX Check",
 };
 #endif  // SPANISHSTRINGS_H

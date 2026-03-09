@@ -80,7 +80,8 @@ const char *display_items[] =
 const char *m17_items[] =
 {
     "Callsign",
-    "CAN",
+    "RX CAN",
+    "TX CAN",
     "CAN RX Check"
 };
 
@@ -331,9 +332,9 @@ static void _ui_changeBrightness(int variation)
     display_setBacklightLevel(state.settings.brightness);
 }
 
-static void _ui_changeCAN(int variation)
+static void _ui_changeM17RxCAN(int variation)
 {
-    int8_t can = state.settings.m17_can + variation;
+    int8_t can = state.channel.rx_can + variation;
 
     // M17 CAN ranges from 0 to 15
     if(can > 15)
@@ -342,7 +343,21 @@ static void _ui_changeCAN(int variation)
     if(can < 0)
         can = 15;
 
-    state.settings.m17_can = can;
+    state.channel.rx_can = can;
+}
+
+static void _ui_changeM17TxCAN(int variation)
+{
+    int8_t can = state.channel.tx_can + variation;
+
+    // M17 CAN ranges from 0 to 15
+    if(can > 15)
+        can = 0;
+
+    if(can < 0)
+        can = 15;
+
+    state.channel.tx_can = can;
 }
 
 static void _ui_changeWiper(uint16_t *wiper, int variation)
@@ -508,7 +523,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_callsign);
                         // Save selected callsign and disable input mode
-                        strncpy(state.settings.m17_dest, ui_state.new_callsign, 10);
+                        strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
                         *sync_rtx = true;
                         ui_state.edit_mode = false;
                     }
@@ -675,8 +690,11 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         switch(ui_state.menu_selected)
                         {
-                            case M_CAN:
-                                _ui_changeCAN(-1);
+                            case M_RX_CAN:
+                                _ui_changeM17RxCAN(-1);
+                                break;
+                            case M_TX_CAN:
+                                _ui_changeM17RxCAN(-1);
                                 break;
                             case M_CAN_RX:
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
@@ -689,8 +707,11 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         switch(ui_state.menu_selected)
                         {
-                            case M_CAN:
-                                _ui_changeCAN(+1);
+                            case M_RX_CAN:
+                                _ui_changeM17RxCAN(+1);
+                                break;
+                            case M_TX_CAN:
+                                _ui_changeM17TxCAN(+1);
                                 break;
                             case M_CAN_RX:
                                 state.settings.m17_can_rx = !state.settings.m17_can_rx;
