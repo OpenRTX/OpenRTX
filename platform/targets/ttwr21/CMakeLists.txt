@@ -34,6 +34,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/display/SH1106_ttwr.c
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_ttwr.c
     ${OPENRTX_ROOT}/platform/drivers/program/program_RL78.c
+    ${OPENRTX_ROOT}/platform/drivers/ADC/adc_esp32.c
 
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
 
@@ -43,6 +44,7 @@ target_sources(app
 target_include_directories(app
   PRIVATE
     ${OPENRTX_ROOT}/platform/targets/ttwr21
+    ${OPENRTX_ROOT}/platform/drivers/ADC
 
     ${OPENRTX_ROOT}/subprojects/XPowersLib/src
     ${OPENRTX_ROOT}/subprojects/XPowersLib/src/REG

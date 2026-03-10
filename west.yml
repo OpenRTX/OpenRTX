@@ -11,17 +11,13 @@ manifest:
 
   projects:
     - name: zephyr
-      revision: 64e98eb5278d790f3b3e5279ca8b39b45097bbc0
+      revision: 3568e1b6d5cdd51a6b964a2a1d6d29200fea2056
       path: zephyr
       west-commands: scripts/west-commands.yml
       import: submanifests
 
-    - name: mcuboot
-      revision: 2d61c318933819a0f4954fb2a5a957a62c6128ce
-      path: bootloader/mcuboot
-
     - name: hal_espressif
-      revision: f3453bdeced28642424692aae32cce4eec3f2d7f
+      revision: af6cfa2e3e7098b596062ab516b80a48a7ba7332
       path: modules/hal/espressif
       west-commands: west/west-commands.yml
       groups:

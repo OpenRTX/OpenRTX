@@ -225,6 +225,9 @@ void platform_init()
 
     // Connect SA868s to PA
     pmu_setAudioSwitch(false);
+
+    // XXX: test ADC
+    // start_adc_test();
 }
 
 void platform_terminate()
@@ -346,4 +349,129 @@ const struct gpsDevice *platform_initGps()
     gpsZephyr_init();
 
     return &gps;
+}
+
+// ADC2 Timer ISR Demo - 5 Second Recording
+#include "drivers/ADC/adc_esp32.h"
+#include <zephyr/kernel.h>
+#include <zephyr/drivers/gpio.h>
+
+#define MIC_CH_SEL_GPIO 17  // GPIO17 controls mic channel select
+#define SAMPLE_RATE 8000     // Request 8 kHz for Codec2 MODE_3200
+#define RECORDING_SECONDS 1
+#define TOTAL_SAMPLES (SAMPLE_RATE * RECORDING_SECONDS)  // 40,000 samples
+#define CHUNK_SIZE 256  // Read 256 samples at a time
+
+static void adc_demo_thread(void *, void *, void *);
+
+K_THREAD_DEFINE(adc_demo_tid, 4096, adc_demo_thread, NULL, NULL, NULL, 7, 0, 0);
+
+static void adc_demo_thread(void *arg1, void *arg2, void *arg3)
+{
+    ARG_UNUSED(arg1);
+    ARG_UNUSED(arg2);
+    ARG_UNUSED(arg3);
+
+    // Wait for system to stabilize
+    k_sleep(K_SECONDS(2));
+
+    printk("\n=== ADC2 Timer ISR - Mic Recording Demo ===\n");
+    printk("Recording %d seconds of audio at %d Hz\n", RECORDING_SECONDS, SAMPLE_RATE);
+    printk("Total samples: %d\n", TOTAL_SAMPLES);
+    printk("Streaming mode (no buffering)\n\n");
+
+    // Configure GPIO17 (MIC_CH_SEL) as output
+    const struct gpio_dt_spec mic_sel = {
+        .port = DEVICE_DT_GET(DT_NODELABEL(gpio0)),
+        .pin = MIC_CH_SEL_GPIO,
+        .dt_flags = GPIO_ACTIVE_HIGH
+    };
+
+    if (!device_is_ready(mic_sel.port)) {
+        printk("ERROR: GPIO device not ready\n");
+        return;
+    }
+
+    int ret = gpio_pin_configure_dt(&mic_sel, GPIO_OUTPUT_ACTIVE);
+    if (ret < 0) {
+        printk("ERROR: Failed to configure GPIO%d: %d\n", MIC_CH_SEL_GPIO, ret);
+        return;
+    }
+
+    // Set MIC_CH_SEL HIGH
+    gpio_pin_set_dt(&mic_sel, 1);
+    printk("MIC_CH_SEL (GPIO17) set HIGH\n");
+
+    // Initialize ADC timer sampler
+    ret = adc_timer_init(SAMPLE_RATE);
+    if (ret != 0) {
+        printk("ERROR: ADC timer init failed: %d\n", ret);
+        return;
+    }
+
+    // Allocate buffer to store ALL samples (no printing during recording)
+    int16_t *all_samples = k_malloc(TOTAL_SAMPLES * sizeof(int16_t));
+    if (!all_samples) {
+        printk("ERROR: Failed to allocate sample buffer (%d samples = %d bytes)\n",
+               TOTAL_SAMPLES, TOTAL_SAMPLES * sizeof(int16_t));
+        adc_timer_stop();
+        return;
+    }
+
+    // Start ADC timer NOW - right before recording loop
+    ret = adc_timer_start();
+    if (ret != 0) {
+        printk("ERROR: ADC timer start failed: %d\n", ret);
+        k_free(all_samples);
+        return;
+    }
+
+        printk("*** RECORDING STARTED (collecting %d samples, buffer allocated) ***\n", TOTAL_SAMPLES);
+
+    size_t samples_recorded = 0;
+
+    // Fast recording loop - just read samples into buffer, NO printing
+    while (samples_recorded < TOTAL_SAMPLES) {
+        size_t available = adc_timer_get_available_count();
+
+        if (available > 0) {
+            size_t to_read = TOTAL_SAMPLES - samples_recorded;
+            if (to_read > available) {
+                to_read = available;
+            }
+
+            size_t read = adc_timer_read_samples(&all_samples[samples_recorded], to_read);
+            samples_recorded += read;
+        } else {
+            k_yield();
+        }
+    }
+
+    printk("*** RECORDING COMPLETE (%d samples captured) ***\n", samples_recorded);
+
+    // Stop ADC timer (will print statistics)
+    adc_timer_stop();
+
+    // Now print all samples offline (no time pressure)
+    printk("\n=== RAW AUDIO DATA (16-bit PCM, %d Hz, Mono) ===\n", SAMPLE_RATE);
+    printk("To convert: python3 hex_to_wav_fixed.py output.txt audio.wav [gain]\n\n");
+    printk("BEGIN_RAW_AUDIO_DATA\n");
+
+    uint16_t min_value = 0xFFFF;
+    uint16_t max_value = 0;
+
+    for (size_t i = 0; i < samples_recorded; i++) {
+        uint16_t val = (uint16_t)all_samples[i];
+        printk("%04X\n", val);
+        if (val < min_value) min_value = val;
+        if (val > max_value) max_value = val;
+    }
+
+    printk("END_RAW_AUDIO_DATA\n");
+    printk("\nADC value range: min=0x%04X (%u), max=0x%04X (%u)\n",
+           min_value, min_value, max_value, max_value);
+
+    printk("\n=== Recording demo complete ===\n");
+
+    k_free(all_samples);
 }
