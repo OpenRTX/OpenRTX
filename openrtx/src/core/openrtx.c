@@ -25,7 +25,11 @@ void openrtx_init()
 {
     state.devStatus = STARTUP;
 
+    #ifdef TARGET_C62
+    platform_init_csk6();    // Initialize low-level platform drivers for CSK6 (platform_init() name collission)
+    #else
     platform_init();    // Initialize low-level platform drivers
+    #endif
     state_init();       // Initialize radio state
 
     gfx_init();         // Initialize display and graphics driver

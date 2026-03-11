@@ -20,21 +20,23 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-// #include <zephyr/device.h>
+#define TARGET_C62
+
+#include <zephyr/device.h>
 
 /*
  * Display properties are encoded in the devicetree
  */
-// #define DISPLAY       DT_CHOSEN(zephyr_display)
-// #define CONFIG_SCREEN_WIDTH  DT_PROP(DISPLAY, width)
-// #define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
-
-#define DISPLAY  0 //     DT_CHOSEN(zephyr_display)
+#define DISPLAY              DT_CHOSEN(zephyr_display)
 //#define CONFIG_SCREEN_WIDTH  DT_PROP(DISPLAY, width)
 //#define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
+
+#define CONFIG_SCREEN_WIDTH  320
+#define CONFIG_SCREEN_HEIGHT 240
+
 #define CONFIG_PIX_FMT_BW
 
-//#define CONFIG_BAT_LIPO_1S
+#define CONFIG_BAT_LIPO_1S
 
 #define CONFIG_M17
 

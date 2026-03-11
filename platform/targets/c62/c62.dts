@@ -1,25 +1,30 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /dts-v1/;
-#include <csk/csk6.dtsi>
+#include <csk/csk6011b.dtsi>
 #include <zephyr/dt-bindings/pwm/pwm.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 #include "c62_pinctrl.dtsi"
 
 / {
         model = "Retevis C62";
         compatible = "csk,c62";
         aliases {
-                led0 = &green_led;
-                sw0 = &user_button_0;
-                pwm-led0 = &green_pwm_led;
                 i2c-0 = &i2c0;
-                i2c-1 = &i2c1;
+                flash = &flash0;
+
+                ledwhite = &flashlight;
+                ledgreen = &ledrx;
+
+
+                display0 = &displayon;
         };
 
         chosen {
-                zephyr,console = &uart0;
-                zephyr,shell-uart = &uart0;
+                zephyr,console = &uart2;
+                zephyr,shell-uart = &uart2;
+                zephyr,log-uart = &uart2;  // For logging subsystem
                 zephyr,sram = &sram0;
                 zephyr,itcm = &itcm0;
                 zephyr,dtcm = &dtcm0;
@@ -32,47 +37,42 @@
 
         leds {
                 compatible = "gpio-leds";
-                green_led: led1 {
-                        gpios = <&gpiob 6 GPIO_ACTIVE_LOW>;
+                flashlight: led0 {
+                        gpios = <&gpiob 5 GPIO_ACTIVE_LOW>;
+                        label = "Flashlight";
+                };
+                ledrx: led1 {
+                        gpios = <&gpiob 4 GPIO_ACTIVE_LOW>;
+                        label = "Led Green";
+                };
+                displayon: display1 {
+                        gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
+                        label = "Display";
                 };
         };
 
-        pwmleds {
-                compatible = "pwm-leds";
-                green_pwm_led: green_pwm_led {
-                        /* PWM LED will conflict with User LED1 since using the same gpio pin */
-                        pwms = <&gptchannel2 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-                };
-
-        };
-
-        gpio_keys {
+        buttons: buttons  {
                 compatible = "gpio-keys";
-                user_button_0: button_0 {
-                        gpios = <&gpiob 5 0>;
+                
+                button_user: button_1 {
+                        gpios = <&gpiob 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                        label = "Encoder Button";
                 };
+                /*
+                button_ptt: button_2 {
+                        gpios = <&gpioa 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                        zephyr,code = <INPUT_BTN_SELECT>;
+                        label = "PTT Button";
+                };
+                */
         };
+
 
         /*
          * Your board-specific hardware: buttons, LEDs, sensors, etc.
          */
 };
 
-&gpt0 {
-        status = "okay";
-};
-
-&gptchannel2 {
-        compatible = "listenai,csk-pwm";
-
-        status = "okay";
-        channel_mode = <1>;  /* 0: timer; 1:pwm */
-
-        clock-prescaler = <128>;
-        pinctrl-0 = <&pinctrl_pwm2_default>;
-        pinctrl-names = "default";
-
-};
 
 &gpioa {
         status = "okay";
@@ -82,25 +82,34 @@
         status = "okay";
 };
 
-&uart0 {
-        pinctrl-0 = <&pinctrl_uart0_rx_default &pinctrl_uart0_tx_default>;
-        pinctrl-names = "default";
-        current-speed = <115200>;
-        status = "okay";
-};
-
-&uart1 {
-        status = "disabled";
-};
-
-&uart2 {
-        status = "disabled";
-};
-
 &spi0 {
         pinctrl-0 = <&pinctrl_spi0_sclk_default &pinctrl_spi0_mosi_default &pinctrl_spi0_miso_default &pinctrl_spi0_cs_default>;
         pinctrl-names = "default";
         status = "okay";
+        st7735r: st7735r@0 {
+                compatible = "sitronix,st7735r";
+                spi-max-frequency = <20000000>;
+                reg = <0>;
+                cmd-data-gpios = <&gpioa 16 GPIO_ACTIVE_LOW>;  /* GPIO6 */
+                reset-gpios = <&gpioa 17 GPIO_ACTIVE_LOW>;     /* GPIO11 */
+                width = <160>;
+                height = <128>;
+                x-offset = <0>;
+                y-offset = <0>;
+                madctl = <0x60>;
+                colmod = <0x55>;
+                vmctr1 = <0x0e>;
+                pwctr1 = [a2 02 84];
+                pwctr2 = [c5];
+                pwctr3 = [0a 00];
+                pwctr4 = [8a 2a];
+                pwctr5 = [8a ee];
+                frmctr1 = [01 2c 2d];
+                frmctr2 = [01 2c 2d];
+                frmctr3 = [01 2c 2d 01 2c 2d];
+                gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
+                gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
+        };
 };
 
 &spi1 {
@@ -116,16 +125,16 @@
 };
 
 &mailbox0 {
-        status = "okay";
+        status = "disabled";
 };
 
 &dma0 {
         dma-channels = <6>;
-        status = "okay";
+        status = "disabled";
 };
 
 &rtc1 {
-        status = "okay";
+        status = "disabled";
 };
 
 &flash0 {
@@ -211,38 +220,44 @@
 };
 
 zephyr_udc0: &usbotg {
-        status = "okay";
+        status = "disabled";
         num-bidir-endpoints = <6>;
         num-in-endpoints = <6>;
         num-out-endpoints = <6>;
 };
 
-&wdt {
-        status = "okay";
-};
 
 &adc0 {
         status = "disabled";
 };
 
 &crypto {
-        status = "okay";
+        status = "disabled";
 };
 
 &sdmmc {
-        status = "okay";
-        bit-bus = <4>;
-        pinctrl-0 = <
-        &pinctrl_sdio_cmd_default
-        &pinctrl_sdio_clk_default
-        &pinctrl_sdio_dat0_default
-        &pinctrl_sdio_dat1_default
-        &pinctrl_sdio_dat2_default
-        &pinctrl_sdio_dat3_default
-        >;
-        pinctrl-names = "default";
+        status = "disabled";
 };
 
 &ap_wdt {
+        status = "disabled";
+};
+
+&uart0 {
+    status = "disabled";
+
+};
+
+
+
+&uart1 {
+    status = "disabled";
+};
+
+
+&uart2 {
+        pinctrl-0 = <&pinctrl_uart2_rx_default &pinctrl_uart2_tx_default>;
+        pinctrl-names = "default";
+        current-speed = <115200>;
         status = "okay";
 };
