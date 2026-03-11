@@ -1,0 +1,21 @@
+description: Beken BK1080 Radio
+
+compatible: "beken,bk1080"
+
+include: [base.yaml]
+
+properties:
+  i2c-clk-gpios:
+    type: phandle-array
+    required: true
+    description: pin for I2C clock
+
+  i2c-data-gpios:
+    type: phandle-array
+    required: true
+    description: pin for I2C data
+
+  power-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO pin to switch BK1080 power on

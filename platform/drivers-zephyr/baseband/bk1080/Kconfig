@@ -1,0 +1,21 @@
+config BK1080
+    bool "BK1080 Radio"
+    default y
+    depends on GPIO
+    help
+      Enable driver for BK1080 radio transceiver.
+
+if BK1080
+
+# Automatic Log level configuration
+module = BK1080
+module-str = bk1080
+source "subsys/logging/Kconfig.template.log_config"
+
+config BK1080_INIT_PRIORITY
+    int "BK1080 initialization priority"
+    default 90
+    help
+      System initialization priority for BK1080 driver.
+
+endif # BK1080

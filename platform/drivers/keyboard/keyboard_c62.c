@@ -127,7 +127,7 @@ keyboard_t kbd_getKeys()
     int pin_val = gpio_pin_get_dt(&sidekey);
 
     // Log the pin state
-    LOG_INF("GPIO B1 state: %d", pin_val);
+    //LOG_INF("GPIO B1 state: %d", pin_val);
 
     // Check if the side key is pressed
     if (pin_val == 1) {

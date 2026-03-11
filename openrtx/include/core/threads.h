@@ -12,10 +12,18 @@
 /**
  * Threads' stack sizes
  */
+#ifndef __ZEPHYR__
 #define UI_THREAD_STKSIZE     2048
 #define RTX_THREAD_STKSIZE    512
 #define CODEC2_THREAD_STKSIZE 16384
 #define AUDIO_THREAD_STKSIZE  512
+#else
+#define UI_THREAD_STKSIZE     2048
+#define RTX_THREAD_STKSIZE    1024
+#define CODEC2_THREAD_STKSIZE 16384
+#define AUDIO_THREAD_STKSIZE  512
+#endif
+
 
 /**
  * Thread priority levels, UNIX-like: lower level, higher thread priority

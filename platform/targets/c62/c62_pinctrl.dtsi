@@ -6,52 +6,23 @@
                 "please use 'pinctrl' instead of 'c62_pinctrl")
 
 &pinctrl {
-        /* UART alternate function
-        pinctrl_uart0_rx_default: uart0_rx_default{
-		pinctrls = <UART0_RXD_GPIOA_18>;              //rx pin
+  /* UART alternate function
+
+        pinctrl_uart2_tx_default: uart2_tx_default{
+		pinctrls = <UART2_TXD_GPIOA_18>;            
 	};
 
-	pinctrl_uart0_tx_default: uart0_tx_default{
-		pinctrls = <UART0_TXD_GPIOA_15>;              //tx pin
-	};
- */
-        pinctrl_uart2_tx_default: uart2_tx_default{
-		pinctrls = <UART2_TXD_GPIOA_18>;              //rx pin
-	};
+  /*
+        //TODO -> TX DOESNT WORK IF RX UART IS ENABLED! ??
 
 	pinctrl_uart2_rx_default: uart2_rx_default{
-		pinctrls = <UART2_RXD_GPIOA_15>;              //tx pin
+		pinctrls = <UART2_RXD_GPIOA_15>;            
 	};
 
-        /* I2C alternate function
-        pinctrl_i2c0_scl_default: i2c0_scl_default{
-                pinctrls = <I2C0_SCL_GPIOB_00>;
-        };
-
-        pinctrl_i2c0_sda_default: i2c0_sda_default{
-                pinctrls = <I2C0_SDA_GPIOB_01>;
-        };
-        */
+  */     
 
         /* SPIC alternate function */
-/*
-        pinctrl_spi0_cs_default: spi0_cs_default{
-                pinctrls = <SPI0_CS_N_GPIOA_12>;
-        };
 
-        pinctrl_spi0_miso_default: spi0_miso_default{
-                pinctrls = <SPI0_MISO_GPIOA_09>;
-        };
-
-     
-        pinctrl_spi0_mosi_default: spi0_mosi_default{
-                pinctrls = <SPI0_MOSI_GPIOA_10>;
-        };
-
-        pinctrl_spi0_sclk_default: spi0_sclk_default{
-                pinctrls = <SPI0_CLK_GPIOA_11>;
-        };
-*/
         pinctrl_spi1_cs_default: spi1_cs_default{
                 pinctrls = <SPI1_CS_N_GPIOA_09>;
         };
@@ -68,22 +39,24 @@
                 pinctrls = <SPI1_CLK_GPIOA_12>;
         };
 
-        /*
-        pinctrl_pwm2_default: pwm2_default{
-                pinctrls = <GPT_PWM_2_GPIOB_06>;
+
+
+	pinctrl_adc0_ch1_default: adc0_ch1_default{
+		pinctrls = <GPADC_1_GPIOB_07>;
+	};
+
+	pinctrl_adc0_ch2_default: adc0_ch2_default{
+		pinctrls = <GPADC_2_GPIOB_08>;
+	};
+
+
+
+        pinctrl_pwm2_default: pwm2_default {
+                pinctrls = <GPT_PWM_2_GPIOA_02>;
         };
 
-        pinctrl_pwm4_default: pwm4_default{
-                pinctrls = <GPT_PWM_4_GPIOA_04>;
+        pinctrl_pwm3_default: pwm3_default {
+                pinctrls = <GPT_PWM_3_GPIOA_03>;
         };
-
-        pinctrl_pwm5_default: pwm5_default{
-                pinctrls = <GPT_PWM_5_GPIOA_05>;
-        };
-
-        pinctrl_pwm6_default: pwm6_default{
-                pinctrls = <GPT_PWM_6_GPIOB_02>;
-        };
-        */
         
 };

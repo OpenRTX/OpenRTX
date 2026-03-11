@@ -1,0 +1,33 @@
+
+config LSF
+    bool "enable lsf"
+    default y
+    help
+       lsf use or not
+choice
+
+prompt "lsf type"
+
+config LSF_CLIENT
+    bool "lsf client"
+
+config LSF_SERVER
+    bool "lsf server"
+
+endchoice
+
+config LSF_IC_MESSAGE
+    bool "lsf message"
+    default y
+    help
+        lsf message
+
+config LSF_CONNECT_TIME_SLEEP
+    int "lsf connect time sleep microseconds"
+    default 1
+    depends on LSF
+    help
+        lsf connect time sleep microseconds
+
+rsource "./targets/Kconfig"
+rsource "./ic_message/Kconfig"

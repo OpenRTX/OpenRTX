@@ -30,6 +30,35 @@ if (${BOARD} STREQUAL "c62")
     set(ARCH arm)
     set(Zephyr-sdk_DIR $ENV{ZEPHYR_16_SDK_INSTALL_DIR}/cmake/) # TODO -> set from lisa env var!
     set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/CSK6011B/zephyr.conf)
+
+
+    #Load BK4819 driver
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/platform/drivers-zephyr/baseband/bk4819)
+
+    #Load BK1080 driver
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/platform/drivers-zephyr/baseband/bk1080)
+
+    #Load CSK SDK modules required for LSF
+    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/freertos_shims)
+    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/af)
+    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/lsf)
+    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/urpc)
+
+    #find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+
+    # Check if file exists
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/platform/drivers-zephyr/baseband/bk4819/dts/bindings/beken,bk4819.yaml")
+        message(STATUS "BK4819 binding file FOUND")
+    else()
+        message(FATAL_ERROR "BK4819 binding file NOT FOUND")
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/platform/drivers-zephyr/baseband/bk1080/dts/bindings/beken,bk1080.yaml")
+        message(STATUS "BK1080 binding file FOUND")
+    else()
+        message(FATAL_ERROR "BK1080 binding file NOT FOUND")
+    endif()
+
 endif()
 
 #

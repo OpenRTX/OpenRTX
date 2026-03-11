@@ -1,0 +1,9 @@
+config FREERTOS_SHIMS
+	bool "Enable freertos shims"
+	default y
+	help
+		Enable freertos shims
+
+config VENUS_CLOG_LEVEL
+	int "CLOG Level"
+	default 2

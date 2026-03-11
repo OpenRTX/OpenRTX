@@ -1,0 +1,1 @@
+ITERABLE_SECTION_RAM(lsf_service, 4)

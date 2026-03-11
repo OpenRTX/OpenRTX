@@ -137,7 +137,5 @@ void display_setContrast(uint8_t contrast)
 
 void display_setBacklightLevel(uint8_t level)
 {
-    // Implementation depends on how backlight is connected
-    // If using PWM pin for backlight, you could control it here
-    (void) level;
+    platform_set_display_brightness(level);
 }
