@@ -33,23 +33,42 @@
         };
         */
 
-        /* SPIC alternate function 
+        /* SPIC alternate function */
+/*
         pinctrl_spi0_cs_default: spi0_cs_default{
-                pinctrls = <SPI0_CS_N_GPIOA_20>;
+                pinctrls = <SPI0_CS_N_GPIOA_12>;
         };
 
         pinctrl_spi0_miso_default: spi0_miso_default{
-                pinctrls = <SPI0_MISO_GPIOA_17>;
+                pinctrls = <SPI0_MISO_GPIOA_09>;
         };
 
      
         pinctrl_spi0_mosi_default: spi0_mosi_default{
-                pinctrls = <SPI0_MOSI_GPIOA_18>;
+                pinctrls = <SPI0_MOSI_GPIOA_10>;
         };
 
         pinctrl_spi0_sclk_default: spi0_sclk_default{
-                pinctrls = <SPI0_CLK_GPIOA_19>;
+                pinctrls = <SPI0_CLK_GPIOA_11>;
         };
+*/
+        pinctrl_spi1_cs_default: spi1_cs_default{
+                pinctrls = <SPI1_CS_N_GPIOA_09>;
+        };
+
+        pinctrl_spi1_miso_default: spi1_miso_default{
+                pinctrls = <SPI1_MISO_GPIOA_10>;
+        };
+
+        pinctrl_spi1_mosi_default: spi1_mosi_default{
+                pinctrls = <SPI1_MOSI_GPIOA_11>;
+        };
+
+        pinctrl_spi1_sclk_default: spi1_sclk_default{
+                pinctrls = <SPI1_CLK_GPIOA_12>;
+        };
+
+        /*
         pinctrl_pwm2_default: pwm2_default{
                 pinctrls = <GPT_PWM_2_GPIOB_06>;
         };
