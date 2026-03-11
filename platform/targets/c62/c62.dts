@@ -1,0 +1,248 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/dts-v1/;
+#include <csk/csk6.dtsi>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include "c62_pinctrl.dtsi"
+
+/ {
+        model = "Retevis C62";
+        compatible = "csk,c62";
+        aliases {
+                led0 = &green_led;
+                sw0 = &user_button_0;
+                pwm-led0 = &green_pwm_led;
+                i2c-0 = &i2c0;
+                i2c-1 = &i2c1;
+        };
+
+        chosen {
+                zephyr,console = &uart0;
+                zephyr,shell-uart = &uart0;
+                zephyr,sram = &sram0;
+                zephyr,itcm = &itcm0;
+                zephyr,dtcm = &dtcm0;
+                zephyr,flash = &flash0;
+                zephyr,flash_controller = &flash;
+                zephyr,entropy = &trng;
+                zephyr,code-partition = &slot0_partition;
+                /* other chosen settings  for your hardware */
+        };
+
+        leds {
+                compatible = "gpio-leds";
+                green_led: led1 {
+                        gpios = <&gpiob 6 GPIO_ACTIVE_LOW>;
+                };
+        };
+
+        pwmleds {
+                compatible = "pwm-leds";
+                green_pwm_led: green_pwm_led {
+                        /* PWM LED will conflict with User LED1 since using the same gpio pin */
+                        pwms = <&gptchannel2 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+                };
+
+        };
+
+        gpio_keys {
+                compatible = "gpio-keys";
+                user_button_0: button_0 {
+                        gpios = <&gpiob 5 0>;
+                };
+        };
+
+        /*
+         * Your board-specific hardware: buttons, LEDs, sensors, etc.
+         */
+};
+
+&gpt0 {
+        status = "okay";
+};
+
+&gptchannel2 {
+        compatible = "listenai,csk-pwm";
+
+        status = "okay";
+        channel_mode = <1>;  /* 0: timer; 1:pwm */
+
+        clock-prescaler = <128>;
+        pinctrl-0 = <&pinctrl_pwm2_default>;
+        pinctrl-names = "default";
+
+};
+
+&gpioa {
+        status = "okay";
+};
+
+&gpiob {
+        status = "okay";
+};
+
+&uart0 {
+        pinctrl-0 = <&pinctrl_uart0_rx_default &pinctrl_uart0_tx_default>;
+        pinctrl-names = "default";
+        current-speed = <115200>;
+        status = "okay";
+};
+
+&uart1 {
+        status = "disabled";
+};
+
+&uart2 {
+        status = "disabled";
+};
+
+&spi0 {
+        pinctrl-0 = <&pinctrl_spi0_sclk_default &pinctrl_spi0_mosi_default &pinctrl_spi0_miso_default &pinctrl_spi0_cs_default>;
+        pinctrl-names = "default";
+        status = "okay";
+};
+
+&spi1 {
+        status = "disabled";
+};
+
+&i2c0 {
+        status = "disabled";
+};
+
+&i2c1 {
+        status = "disabled";
+};
+
+&mailbox0 {
+        status = "okay";
+};
+
+&dma0 {
+        dma-channels = <6>;
+        status = "okay";
+};
+
+&rtc1 {
+        status = "okay";
+};
+
+&flash0 {
+        /*
+         * For more information, see:
+         * http: //docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
+         */
+        reg = <0x18000000 DT_SIZE_M(16)>;
+        write-block-size = <4>;
+        erase-block-size = <4096>;
+        partitions {
+                compatible = "fixed-partitions";
+                #address-cells = <1>;
+                #size-cells = <1>;
+
+                /* 256KB for bootloader */
+                boot_partition: partition@0 {
+                        reg = <0x0 0x40000>;
+                        read-only;
+                };
+
+                /* application image slot: 512KB */
+                slot0_partition: partition@40000 {
+                        reg = <0x40000 0x80000>;
+                };
+
+                /* backup slot: 512KB */
+                slot1_partition: partition@c0000 {
+                        reg = <0xc0000 0x80000>;
+                };
+
+                /* swap slot: 128KB */
+                scratch_partition: partition@140000 {
+                        reg = <0x140000 0x20000>;
+                };
+
+                /* wifi driver private storage: 8Kb */
+                wifi_driver_storage: partition@6ee000 {
+                        reg = <0x6ee000 0x2000>;
+                };
+
+                /* wifi_nvs_storage: 20Kb */
+                wifi_nvs_storage: partition@6F0000 {
+                        reg = <0x6F0000 0x10000>;
+                };
+
+                /* storage: 6.625MB for storage */
+                storage_partition: partition@700000 {
+                        reg = <0x700000 0x100000>;
+                };
+
+
+        };
+};
+
+&psram0 {
+        reg = <0x30000000 DT_SIZE_M(8)>;
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        /*psram for cp core slot: 6MB */
+        psram_cp: psram_cp@30000000 {
+                compatible = "listenai,csk6-psram-partition";
+                reg = <0x30000000 0x600000>;
+                status = "okay";
+        };
+
+        /*psram for ap core slot: 1MB */
+        psram_ap: psram_ap@30600000 {
+                compatible = "zephyr,memory-region",
+                             "listenai,csk6-psram-partition";
+                reg = <0x30600000 0x100000>;
+                status = "okay";
+                zephyr,memory-region = "PSRAMAP";
+        };
+
+        /*psram for ap share with cp slot: 512KB */
+        psram_share: psram_share@30700000 {
+                compatible = "listenai,csk6-psram-partition";
+                reg = <0x30700000 0x80000>;
+                status = "okay";
+        };
+};
+
+zephyr_udc0: &usbotg {
+        status = "okay";
+        num-bidir-endpoints = <6>;
+        num-in-endpoints = <6>;
+        num-out-endpoints = <6>;
+};
+
+&wdt {
+        status = "okay";
+};
+
+&adc0 {
+        status = "disabled";
+};
+
+&crypto {
+        status = "okay";
+};
+
+&sdmmc {
+        status = "okay";
+        bit-bus = <4>;
+        pinctrl-0 = <
+        &pinctrl_sdio_cmd_default
+        &pinctrl_sdio_clk_default
+        &pinctrl_sdio_dat0_default
+        &pinctrl_sdio_dat1_default
+        &pinctrl_sdio_dat2_default
+        &pinctrl_sdio_dat3_default
+        >;
+        pinctrl-names = "default";
+};
+
+&ap_wdt {
+        status = "okay";
+};

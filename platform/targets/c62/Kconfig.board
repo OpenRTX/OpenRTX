@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_C62
+   bool "Retevis C62"
+   depends on SOC_CSK6
