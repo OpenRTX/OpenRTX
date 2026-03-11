@@ -37,7 +37,8 @@
 #define CONFIG_SCREEN_BRIGHTNESS
 
 /* Battery type */
-#define CONFIG_BAT_LIPO_2S
+#define CONFIG_BAT_LIION
+#define CONFIG_BAT_NCELLS 2
 
 #define CONFIG_M17
 

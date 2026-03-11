@@ -429,13 +429,7 @@ void bk4819_set_Squelch(uint8_t RTSO,
 
 int16_t bk4819_get_rssi(void)
 {
-    // while ((ReadRegister(0x63) & 0b11111111) >= 255) {
-    //     usart0_IRQwrite("glitch\r\n");
-    //     delayMs(10);
-    // }
-    sleepFor(0, 3);  // TODO
-    return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
-    //sleepFor(0,2);
+    return ((ReadRegister(BK4819_REG_67) & 0x01FF) / 2) - 160;
 }
 
 uint16_t bk4819_get_mic_level(void)

@@ -26,12 +26,12 @@
 #include <hwconfig.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
-#include <utils.h>
+#include <core/utils.h>
 
 #include <algorithm>
 #include <string>
 
-#include "bk4819.h"
+#include "drivers-zephyr/baseband/bk4819/bk4819.h"
 #include "radioUtils.h"
 
 /* platform function to control APC */
