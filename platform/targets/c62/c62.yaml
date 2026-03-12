@@ -1,0 +1,22 @@
+identifier: c62
+name: Retevis C62
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - adc
+  - gpio
+  - uart
+  - ipm
+  - usb_device
+  - kscan
+  - pwm
+  - counter
+  - dma
+  - nvs
+
+ram: 320
+flash: 16000

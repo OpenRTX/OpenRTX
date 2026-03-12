@@ -1,0 +1,62 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+#include <csk/csk6_pinctrl.dtsi>
+
+#define c62_pinctrl pinctrl \
+        __PINCTRL_DEPRECATED__("This node has been deprecated," \
+                "please use 'pinctrl' instead of 'c62_pinctrl")
+
+&pinctrl {
+  /* UART alternate function
+
+        pinctrl_uart2_tx_default: uart2_tx_default{
+		pinctrls = <UART2_TXD_GPIOA_18>;            
+	};
+
+  /*
+        //TODO -> TX DOESNT WORK IF RX UART IS ENABLED! ??
+
+	pinctrl_uart2_rx_default: uart2_rx_default{
+		pinctrls = <UART2_RXD_GPIOA_15>;            
+	};
+
+  */     
+
+        /* SPIC alternate function */
+
+        pinctrl_spi1_cs_default: spi1_cs_default{
+                pinctrls = <SPI1_CS_N_GPIOA_09>;
+        };
+
+        pinctrl_spi1_miso_default: spi1_miso_default{
+                pinctrls = <SPI1_MISO_GPIOA_10>;
+        };
+
+        pinctrl_spi1_mosi_default: spi1_mosi_default{
+                pinctrls = <SPI1_MOSI_GPIOA_11>;
+        };
+
+        pinctrl_spi1_sclk_default: spi1_sclk_default{
+                pinctrls = <SPI1_CLK_GPIOA_12>;
+        };
+
+
+
+	pinctrl_adc0_ch1_default: adc0_ch1_default{
+		pinctrls = <GPADC_1_GPIOB_07>;
+	};
+
+	pinctrl_adc0_ch2_default: adc0_ch2_default{
+		pinctrls = <GPADC_2_GPIOB_08>;
+	};
+
+
+
+        pinctrl_pwm2_default: pwm2_default {
+                pinctrls = <GPT_PWM_2_GPIOA_02>;
+        };
+
+        pinctrl_pwm3_default: pwm3_default {
+                pinctrls = <GPT_PWM_3_GPIOA_03>;
+        };
+        
+};

@@ -1,0 +1,23 @@
+config LSF_OS
+    bool "os supported"
+    default y
+    help
+      os supported
+
+if LSF_OS
+
+choice
+prompt "os type"
+
+config LSF_OS_ZEPHYR
+    bool "os supported for zephyr"
+
+config LSF_OS_FRERRTOS
+    bool "os supported for freertos"
+
+config LSF_OS_XOS
+    bool "os supported for xos"
+
+endchoice
+
+endif

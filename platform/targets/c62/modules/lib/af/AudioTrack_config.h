@@ -1,0 +1,7 @@
+#ifndef _AUDIOTRACK_CONFIG_H
+#define _AUDIOTRACK_CONFIG_H
+
+// #define PLATFORM_PC
+#define PLATFORM_RTOS
+
+#endif // _AUDIOTRACK_CONFIG_H

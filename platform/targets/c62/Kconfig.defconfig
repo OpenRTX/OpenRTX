@@ -1,0 +1,12 @@
+if BOARD_C62
+
+config BOARD
+   default "c62"
+
+DT_CHOSEN_Z_PSRAM := zephyr,psram
+
+config PSRAM_SIZE
+	hex
+	default "$(dt_chosen_reg_size_hex,$(DT_CHOSEN_Z_PSRAM))"
+
+endif # BOARD_C62

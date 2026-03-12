@@ -1,0 +1,12 @@
+config LSF_IC_MESSAGE_DEPRECATED
+    bool "lsf ic message api deprecated"
+    default n
+    help
+      lsf ic message api deprecated
+
+config LSF_IC_MESSAGE_EP_ID
+    int "lsf ic message endpoint id"
+    default 0
+    range 0 15
+    help
+       lsf ic message endpoint id

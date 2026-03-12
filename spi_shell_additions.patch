@@ -1,0 +1,198 @@
+diff -ruN /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt
+--- /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt	2025-01-18 15:48:46.831505179 -0500
++++ /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt	2025-03-22 20:30:52.369159480 -0400
+@@ -37,6 +37,7 @@
+ zephyr_library_sources_ifdef(CONFIG_SPI_PW		spi_pw.c)
+ zephyr_library_sources_ifdef(CONFIG_SPI_SMARTBOND   spi_smartbond.c)
+ zephyr_library_sources_ifdef(CONFIG_SPI_OPENTITAN	spi_opentitan.c)
++zephyr_library_sources_ifdef(CONFIG_SPI_SHELL       spi_shell.c)
+ 
+ zephyr_library_sources_ifdef(CONFIG_SPI_RTIO spi_rtio.c)
+ zephyr_library_sources_ifdef(CONFIG_SPI_ASYNC spi_signal.c)
+diff -ruN /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/Kconfig /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/Kconfig
+--- /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/Kconfig	2025-01-18 15:48:46.831838131 -0500
++++ /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/Kconfig	2025-03-22 20:55:03.091401463 -0400
+@@ -13,6 +13,12 @@
+ 
+ if SPI
+ 
++config SPI_SHELL
++	bool "SPI Shell"
++	depends on SHELL
++	help
++	  Enable SPI Shell for testing.
++
+ config SPI_ASYNC
+ 	bool "Asynchronous call support"
+ 	select POLL
+diff -ruN /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/spi_shell.c /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/spi_shell.c
+--- /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/spi_shell.c	1969-12-31 19:00:00.000000000 -0500
++++ /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/spi_shell.c	2025-03-22 21:42:23.616846952 -0400
+@@ -0,0 +1,166 @@
++#include <zephyr/shell/shell.h>
++#include <zephyr/drivers/spi.h>
++#include <zephyr/device.h>
++#include <stdlib.h>
++#include <string.h>
++
++#define MAX_BUF 32
++
++static const struct device *spi_dev = NULL;
++static struct spi_config spi_cfg = {
++    .frequency = 1000000,
++    .operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB,
++    .slave = 0,
++};
++
++// spi_conf <device_name>
++static int cmd_spi_conf(const struct shell *shell, size_t argc, char **argv)
++{
++    if (argc < 5) {
++        shell_error(shell, "Usage: spi_conf <device> <freq_hz> <mode 0-3> <cs>");
++        return -EINVAL;
++    }
++
++    const char *dev_name = argv[1];
++    const struct device *dev = device_get_binding(dev_name);
++    if (!dev || !device_is_ready(dev)) {
++        shell_error(shell, "Device '%s' not found or not ready", dev_name);
++        return -ENODEV;
++    }
++
++    uint32_t freq = strtoul(argv[2], NULL, 10);
++    uint8_t mode = strtoul(argv[3], NULL, 10);
++    uint8_t slave = strtoul(argv[4], NULL, 10);
++
++    if (mode > 3) {
++        shell_error(shell, "Mode must be 0–3 (SPI mode)");
++        return -EINVAL;
++    }
++
++    spi_dev = dev;
++    spi_cfg.frequency = freq;
++    spi_cfg.slave = slave;
++
++    // Reset operation
++    spi_cfg.operation = SPI_WORD_SET(8) | SPI_TRANSFER_MSB;
++
++    // Add mode flags
++    if (mode & 0x02) spi_cfg.operation |= SPI_MODE_CPOL; // CPOL
++    if (mode & 0x01) spi_cfg.operation |= SPI_MODE_CPHA; // CPHA
++
++    shell_print(shell, "SPI device set: %s, %u Hz, mode %u (flags 0x%x), CS %u",
++                dev_name, freq, mode, spi_cfg.operation, slave);
++
++    return 0;
++}
++static int cmd_spi_write(const struct shell *shell, size_t argc, char **argv)
++{
++    if (!spi_dev || !device_is_ready(spi_dev)) {
++        shell_error(shell, "SPI device not configured. Use: spi_conf <device> <freq_hz> <mode 0-3> <cs>");
++        return -ENODEV;
++    }
++
++    uint8_t tx_buf[MAX_BUF];
++    size_t len = argc - 1;
++    if (len > MAX_BUF) len = MAX_BUF;
++
++    for (size_t i = 0; i < len; i++) {
++        tx_buf[i] = strtoul(argv[i + 1], NULL, 16);
++    }
++
++    struct spi_buf buf = { .buf = tx_buf, .len = len };
++    struct spi_buf_set tx = { .buffers = &buf, .count = 1 };
++
++    int ret = spi_write(spi_dev, &spi_cfg, &tx);
++    shell_print(shell, ret ? "SPI write failed: %d" : "Write OK", ret);
++    return ret;
++}
++
++static int cmd_spi_read(const struct shell *shell, size_t argc, char **argv)
++{
++    if (!spi_dev || !device_is_ready(spi_dev)) {
++        shell_error(shell, "SPI device not configured. Use: spi_conf <device> <freq_hz> <mode 0-3> <cs>");
++        return -ENODEV;
++    }
++
++    size_t len = strtoul(argv[1], NULL, 10);
++    if (len > MAX_BUF) len = MAX_BUF;
++
++    uint8_t rx_buf[MAX_BUF] = {0};
++    uint8_t dummy[MAX_BUF] = {0xFF};
++
++    struct spi_buf tx_buf = { .buf = dummy, .len = len };
++    struct spi_buf rx_buf_ = { .buf = rx_buf, .len = len };
++
++    struct spi_buf_set tx = { .buffers = &tx_buf, .count = 1 };
++    struct spi_buf_set rx = { .buffers = &rx_buf_, .count = 1 };
++
++    int ret = spi_transceive(spi_dev, &spi_cfg, &tx, &rx);
++    if (ret) {
++        shell_error(shell, "SPI read failed: %d", ret);
++        return ret;
++    }
++
++    shell_fprintf(shell, SHELL_NORMAL, "Read: ");
++    for (size_t i = 0; i < len; i++) {
++        shell_fprintf(shell, SHELL_NORMAL, "%02X ", rx_buf[i]);
++    }
++    shell_print(shell, "");
++    return 0;
++}
++
++static int cmd_spi_xfer(const struct shell *shell, size_t argc, char **argv)
++{
++    if (!spi_dev || !device_is_ready(spi_dev)) {
++        shell_error(shell, "SPI device not configured. Use: spi_conf <device> <freq_hz> <mode 0-3> <cs>");
++        return -ENODEV;
++    }
++
++    size_t len = argc - 1;
++    if (len > MAX_BUF) len = MAX_BUF;
++
++    uint8_t tx_buf[MAX_BUF];
++    uint8_t rx_buf[MAX_BUF];
++
++    for (size_t i = 0; i < len; i++) {
++        tx_buf[i] = strtoul(argv[i + 1], NULL, 16);
++        rx_buf[i] = 0;
++    }
++
++    struct spi_buf tx = { .buf = tx_buf, .len = len };
++    struct spi_buf rx = { .buf = rx_buf, .len = len };
++
++    struct spi_buf_set tx_set = { .buffers = &tx, .count = 1 };
++    struct spi_buf_set rx_set = { .buffers = &rx, .count = 1 };
++
++    int ret = spi_transceive(spi_dev, &spi_cfg, &tx_set, &rx_set);
++    if (ret) {
++        shell_error(shell, "SPI transfer failed: %d", ret);
++        return ret;
++    }
++
++    shell_fprintf(shell, SHELL_NORMAL, "RX: ");
++    for (size_t i = 0; i < len; i++) {
++        shell_fprintf(shell, SHELL_NORMAL, "%02X ", rx_buf[i]);
++    }
++    shell_print(shell, "");
++    return 0;
++}
++
++// Shell command registration
++
++SHELL_CMD_ARG_REGISTER(spi_conf, NULL,
++    "Usage: spi_conf <device> <freq_hz> <mode 0-3> <cs>",
++    cmd_spi_conf, 2, 0);
++
++SHELL_CMD_ARG_REGISTER(spi_write, NULL,
++    "Write to SPI: spi_write <byte...>",
++    cmd_spi_write, 2, MAX_BUF - 1);
++
++SHELL_CMD_ARG_REGISTER(spi_read, NULL,
++    "Read from SPI: spi_read <count>",
++    cmd_spi_read, 2, 0);
++
++SHELL_CMD_ARG_REGISTER(spi_xfer, NULL,
++    "Write+read SPI: spi_xfer <byte...>",
++    cmd_spi_xfer, 2, MAX_BUF - 1);
+\ No newline at end of file

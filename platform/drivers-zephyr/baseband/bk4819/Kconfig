@@ -1,0 +1,21 @@
+config BK4819
+    bool "BK4819 Radio Transceiver"
+    default y
+    depends on GPIO
+    help
+      Enable driver for BK4819 radio transceiver.
+
+if BK4819
+
+# Automatic Log level configuration
+module = BK4819
+module-str = bk4819
+source "subsys/logging/Kconfig.template.log_config"
+
+config BK4819_INIT_PRIORITY
+    int "BK4819 initialization priority"
+    default 90
+    help
+      System initialization priority for BK4819 driver.
+
+endif # BK4819

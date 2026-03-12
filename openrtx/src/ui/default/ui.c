@@ -1615,6 +1615,21 @@ void ui_updateFSM(bool *sync_rtx)
                             f1Handled = true;
                         }
                     }
+                    else if(msg.keys & KEY_F2)
+                    {
+                        // white led toggle
+                        static bool white_led_on = false;
+                        if (white_led_on)
+                        {
+                            white_led_on = false;
+                            platform_ledOff(WHITE);
+                        }
+                        else
+                        {
+                            white_led_on = true;
+                            platform_ledOn(WHITE);
+                        }
+                    }
                     else if(input_isNumberPressed(msg))
                     {
                         // Open Frequency input screen

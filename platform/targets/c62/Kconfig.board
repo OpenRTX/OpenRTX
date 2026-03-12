@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_C62
+   bool "Retevis C62"
+   depends on SOC_CSK6
+
+menu "DSP Manipulation"
+
+config LSF_DSP
+	bool "DSP Manipulation"
+	default y
+	select FLASH
+	select FLASH_MAP
+
+if LSF_DSP
+
+config LSF_DSP_INIT_PRIORITY
+	int "Init priority"
+	default 80
+
+DT_CHOSEN_LSF_DSP_FIRMWARE := lsf,dsp-firmware
+
+config LSF_DSP_LOAD_ON_BOOT
+	bool "Load DSP firmware on boot"
+	default y
+	depends on $(dt_chosen_enabled,$(DT_CHOSEN_LSF_DSP_FIRMWARE))
+
+endif # LSF_DSP
+
+endmenu
+
+DT_COMPAT_LSF_SERVICE_CONTROLLER := lsf,service-controller
+
+config LSF_SERVICE_CONTROLLER
+	bool "LSF Service Controller"
+	select REQUIRES_FULL_LIBC
+
+if LSF_SERVICE_CONTROLLER
+rsource "services/Kconfig"
+endif # LSF_SERVICE_CONTROLLER

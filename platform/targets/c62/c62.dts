@@ -1,0 +1,391 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/dts-v1/;
+#include <csk/csk6011b.dtsi>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include "c62_pinctrl.dtsi"
+
+/ {
+	model = "Retevis C62";
+	compatible = "csk,c62";
+	aliases {
+		i2c-0 = &i2c0;
+		flash = &flash0;
+		
+		ledwhite = &flashlight;
+		ledgreen = &ledrx;
+	};
+	
+	chosen {
+		zephyr,display = &st7735r;
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+		zephyr,log-uart = &uart2;// For logging subsystem
+		zephyr,sram = &sram0;
+		zephyr,itcm = &itcm0;
+		zephyr,dtcm = &dtcm0;
+		zephyr,flash = &flash0;
+		zephyr,flash_controller = &flash;
+		zephyr,entropy = &trng;
+		zephyr,code-partition = &slot0_partition;
+		/* other chosen settings  for your hardware */
+
+		lsf,dsp-firmware = &dsp_firmware;
+	};
+
+	lsf: service-controller {
+		compatible = "lsf,service-controller";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		label = "LSF";
+
+		lsf_audio: audio-service@0 {
+			compatible = "lsf,audio-service";
+			reg = <0>;
+			status = "okay";
+		};
+
+		lsf_thinker: thinker-service@1 {
+			compatible = "lsf,thinker-service";
+			reg = <1>;
+			status = "disabled";
+		};
+
+		lsf_wasm: wasm-service@2 {
+			compatible = "lsf,wasm-service";
+			reg = <2>;
+			status = "disabled";
+		};
+
+		lsf_vad: wasm-service@3 {
+			compatible = "lsf,vad-service";
+			reg = <3>;
+			status = "disabled";
+		};
+	};
+	
+	leds {
+		compatible = "gpio-leds";
+		flashlight: led0 {
+			gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
+			label = "Flashlight";
+		};
+		ledrx: led1 {
+			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
+			label = "Led Green";
+		};
+		ledkeyboard: led2 {
+			gpios = <&gpiob 3 GPIO_ACTIVE_HIGH>;
+			label = "Led Keyboard";
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_lcd_backlight: pwm_lcd_backlight {
+            pwms = <&gptchannel2 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			label = "LCD BAcklight PWM";
+		};
+		pwm_rf_apc: pwm_rf_apc {
+            pwms = <&gptchannel3 3 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			label = "RF Power APC PWM";
+		};
+
+	};
+
+	gpio_controls {
+        compatible = "gpio-leds";
+        speaker_enable: speaker-enable {
+            gpios = <&gpioa 1 GPIO_ACTIVE_HIGH>;
+        };
+        dtmf_enable: dtmf_enable {
+            gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+        };
+    };
+	
+	buttons: buttons  {
+		compatible = "gpio-keys";
+		
+		sidekey: button_1 {
+			gpios = <&gpiob 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Side Key Button";
+		};
+		button_ptt: button_2 {
+			gpios = <&gpioa 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "PTT Button";
+		};
+		col1: col_1 {
+			gpios = <&gpioa 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Col 1";
+		};
+		col2: col_2 {
+			gpios = <&gpioa 17 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Col 2";
+		};
+		col3: col_3 {
+			gpios = <&gpioa 19 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Col 3";
+		};
+		col4: col_4 {
+			gpios = <&gpiob 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Col 4";
+		};
+		col5: col_5 {
+			gpios = <&gpiob 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Col 5";
+		};
+		row1: row_1 {
+			gpios = <&gpiob 9 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Row 1";
+		};
+		row2: row_2 {
+			gpios = <&gpioa 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Row 2";
+		};
+		row3: row_3 {
+			gpios = <&gpiob 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Row 3";
+		};
+		row4: row_4 {
+			gpios = <&gpioa 20 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			label = "Row 4";
+		};
+	};
+	
+    bk4819_radio: bk4819 {
+        compatible = "beken,bk4819";
+        status = "okay";
+        sclk-gpios = <&gpioa 13 GPIO_ACTIVE_HIGH>;
+        sdata-gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
+        scn-gpios = <&gpioa 8 GPIO_ACTIVE_LOW>;
+    };
+
+	bk1080_radio: bk1080 {
+        compatible = "beken,bk1080";
+        status = "okay";
+        i2c-clk-gpios = <&gpioa 5 GPIO_ACTIVE_HIGH>;
+        i2c-data-gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
+        power-gpios = <&gpiob 2 GPIO_ACTIVE_LOW>;
+    };
+};
+
+&gpioa {
+	status = "okay";
+	reg = <0x45900000 0x1000>;
+};
+
+&gpiob {
+	status = "okay";
+	reg = <0x45a00000 0x1000>;
+};
+
+&spi0 {
+	status = "okay";
+};
+
+&spi1 {
+	pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default
+	&pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	
+	st7735r: st7735r@0 {
+		compatible = "sitronix,st7735r";
+		spi-max-frequency = <20000000>;
+		reg = <0>;
+		cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>;  /* or dc-gpios */
+		reset-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>; /* TODO: default driver requires this element, but it will kill SWD! */
+		width = <160>;
+		height = <128>;
+		x-offset = <0>;
+		y-offset = <0>;
+		madctl = <0xA0>;
+		colmod = <0x05>;
+		caset = [00 00 00 4F];
+		raset = [00 00 00 9F];
+		vmctr1 = <0x0e>;
+		invctr = <0x07>;
+		pwctr1 = [a2 02 84];
+		pwctr2 = [c5];
+		pwctr3 = [0a 00];
+		pwctr4 = [8a 2a];
+		pwctr5 = [8a ee];
+		frmctr1 = [01 2c 2d];
+		frmctr2 = [01 2c 2d];
+		frmctr3 = [01 2c 2d 01 2c 2d];
+		gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
+		gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
+	};	
+};
+
+
+&i2c0 {
+	status = "disabled";
+};
+
+&i2c1 {
+	status = "disabled";
+};
+
+&mailbox0 {
+	status = "disabled";
+};
+
+&dma0 {
+	dma-channels = <6>;
+	status = "disabled";
+};
+
+&rtc1 {
+	status = "disabled";
+};
+
+&flash0 {
+	/*
+	* For more information, see:
+	* http://docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
+	*/
+	reg = <0x18000000 DT_SIZE_M(4)>;
+	write-block-size = <4>;
+	erase-block-size = <4096>;
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		
+		/* 256KB for bootloader */
+		boot_partition: partition@0 {
+			reg = <0x0 0x40000>;
+			read-only;
+		};
+		
+		/* application image slot: 512KB */
+		slot0_partition: partition@40000 {
+			reg = <0x40000 0x80000>;
+		};
+		
+		/* backup slot: 512KB */
+		slot1_partition: partition@c0000 {
+			reg = <0xc0000 0x80000>;
+		};
+
+		dsp_firmware: partition@100000 {
+            label = "dsp_firmware";
+            reg = <0x100000 DT_SIZE_M(1)>;
+    	};
+		
+		/* swap slot: 128KB */
+		scratch_partition: partition@140000 {
+			reg = <0x140000 0x20000>;
+		};
+		
+		/* wifi driver private storage: 8Kb */
+		wifi_driver_storage: partition@6ee000 {
+			reg = <0x6ee000 0x2000>;
+		};
+		
+		/* wifi_nvs_storage: 20Kb */
+		wifi_nvs_storage: partition@6F0000 {
+			reg = <0x6F0000 0x10000>;
+		};
+		
+		/* storage: 6.625MB for storage */
+		storage_partition: partition@700000 {
+			reg = <0x700000 0x100000>;
+		};
+	};
+};
+
+&psram0 {
+	reg = <0x30000000 DT_SIZE_M(4)>;
+	#address-cells = <1>;
+	#size-cells = <1>;
+	
+	/*psram for cp core (DSP) slot: 2MB */
+	psram_cp: psram_cp@30000000 {
+		compatible = "listenai,csk6-psram-partition";
+		reg = <0x30000000 0x200000>;
+		status = "okay";
+	};
+	
+	/*psram for ap core slot: 2MB */
+	psram_ap: psram_ap@30200000 {
+		compatible = "zephyr,memory-region",
+		"listenai,csk6-psram-partition";
+		reg = <0x30200000 0x200000>;
+		status = "okay";
+		zephyr,memory-region = "PSRAMAP";
+	};
+
+};
+
+zephyr_udc0: &usbotg {
+	status = "disabled";
+	num-bidir-endpoints = <6>;
+	num-in-endpoints = <6>;
+	num-out-endpoints = <6>;
+};
+
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&pinctrl_adc0_ch1_default &pinctrl_adc0_ch2_default>; 
+	pinctrl-names = "default";
+};
+
+&gpt0 {
+        status = "okay";
+};
+
+&gptchannel2 {
+        compatible = "listenai,csk-pwm";
+
+        status = "okay";
+        channel_mode = <1>;  /* 0: timer; 1:pwm */
+
+        clock-prescaler = <128>;
+        pinctrl-0 = <&pinctrl_pwm2_default>;
+        pinctrl-names = "default";
+};
+
+&gptchannel3 {
+        compatible = "listenai,csk-pwm";
+
+        status = "okay";
+        channel_mode = <1>;  /* 0: timer; 1:pwm */
+
+        clock-prescaler = <128>;
+        pinctrl-0 = <&pinctrl_pwm3_default>;
+        pinctrl-names = "default";
+};
+
+&crypto {
+	status = "disabled";
+};
+
+&sdmmc {
+	status = "disabled";
+};
+
+&ap_wdt {
+	status = "disabled";
+};
+
+&uart0 {
+	status = "disabled";
+	
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+&uart2 {
+	pinctrl-0 = <&pinctrl_uart2_rx_default &pinctrl_uart2_tx_default>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	status = "okay";
+};
+

@@ -1,0 +1,7 @@
+if(CONFIG_LSF_OS_ZEPHYR)
+    add_subdirectory(ap_zephyr)
+elseif(CONFIG_LSF_OS_XOS)
+    add_subdirectory(cp_xos)
+elseif(CONFIG_LSF_OS_FREERTOS)
+    add_subdirectory(ap_freertos)
+endif()
