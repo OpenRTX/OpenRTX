@@ -42,7 +42,7 @@ extern struct nvmInfo internalFlash_infos;
  * @param sector_size sector size to use
  */
 #define INTERNAL_FLASH_DEVICE_DEFINE(name)                      \
-    static const struct nvmInfo name##_nvmInfo;                 \
+    static struct nvmInfo name##_nvmInfo;                       \
     static struct nvmDevice name = { .priv = NULL,              \
                                      .ops = &internalFlash_ops, \
                                      .info = &name##_nvmInfo };

@@ -223,6 +223,9 @@ static int nvm_api_write(const struct nvmDevice *dev, uint32_t address,
 static int nvm_api_erase(const struct nvmDevice *dev, uint32_t address,
                          size_t len)
 {
+    int ret = internalFlash_check(dev, address, len);
+    if (ret < 0)
+        return ret;
     struct internalFlashArea *config = (struct internalFlashArea *)(dev->priv);
     size_t first_sector = config->first_sector;
     first_sector += (address - config->address_low) / dev->info->erase_size;
