@@ -8,7 +8,6 @@
 #include "interfaces/delays.h"
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
-#include "protocols/M17/M17Callsign.hpp"
 #include "protocols/M17/M17Datatypes.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
