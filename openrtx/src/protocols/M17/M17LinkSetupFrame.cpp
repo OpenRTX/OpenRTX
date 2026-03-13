@@ -6,7 +6,6 @@
 
 #include <cstring>
 #include "protocols/M17/M17Golay.hpp"
-#include "protocols/M17/M17Callsign.hpp"
 #include "protocols/M17/M17LinkSetupFrame.hpp"
 #include "core/utils.h"
 #include "core/crc.h"
