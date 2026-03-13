@@ -13,6 +13,7 @@
 #include "wchar.h"
 #include "core/utils.h"
 #include "drivers/NVM/W25Qx.h"
+#include "core/settings.h"
 
 static const struct W25QxCfg eflashCfg =
 {
@@ -27,6 +28,28 @@ static const struct W25QxCfg eflashCfg =
 W25Qx_DEVICE_DEFINE(eflash, eflashCfg)
 W25Qx_SECREG_DEFINE(secReg, eflashCfg)
 
+settings_storage_t settings_storage;
+
+static const struct nvmPartition eFlashPartitions[] =
+{
+    {   // Codeplug
+        .offset = 0,
+        .size = 0xFFC000,
+    },
+    {   // VFO
+        .offset = 0xFFC000,
+        .size = 8192
+    },
+    {   // Settings part A
+        .offset = 0xFFE000,
+        .size = 4096,
+    },
+    {   // Settings part B
+        .offset = 0xFFF000,
+        .size = 4096,
+    }
+};
+
 static const struct nvmDescriptor nvmDevices[] =
 {
     {
@@ -34,8 +57,8 @@ static const struct nvmDescriptor nvmDevices[] =
         .dev        = &eflash,
         .baseAddr   = 0x00000000,
         .size       = 0x1000000,    // 16 MB, 128 Mbit
-        .nbPart     = 0,
-        .partitions = NULL
+        .nbPart     = ARRAY_SIZE(eFlashPartitions),
+        .partitions = eFlashPartitions,
     },
     {
         .name       = "Cal. data 1",
@@ -71,6 +94,8 @@ void nvm_init()
     #endif
 
     W25Qx_init(&eflash);
+
+    settings_storage_init(&settings_storage, 0, 3, 4);
 }
 
 void nvm_terminate()
@@ -190,11 +215,23 @@ void nvm_readHwInfo(hwInfo_t *info)
     #endif
 }
 
+int nvm_readSettings(settings_t *settings)
+{
+    if(settings_storage_load(&settings_storage, settings) < 0)
+        return -1;
+    return 0;
+}
+
+int nvm_writeSettings(const settings_t *settings)
+{
+    if(settings_storage_save(&settings_storage, settings) < 0)
+        return -1;
+    return 0;
+}
 /**
  * TODO: functions temporarily implemented in "nvmem_settings_MDx.c"
 
 int nvm_readVFOChannelData(channel_t *channel)
-int nvm_readSettings(settings_t *settings)
-int nvm_writeSettings(const settings_t *settings)
+
 
 */
