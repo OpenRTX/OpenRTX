@@ -162,9 +162,6 @@ int main(void)
         }
     }
     current_test++;
-    gfx_print(pos_line, FONT_SIZE_6PT, TEXT_ALIGN_LEFT, color_white,
-              "Post read SR2: 0x%08X", FLASH->SR2);
-    pos_line.y += 12;
 
     // Erase second sector of the area
     results[current_test++] =
