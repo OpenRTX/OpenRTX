@@ -29,6 +29,7 @@ void M17FrameDecoder::reset()
     lsf.clear();
     lsfFromLich.clear();
     streamFrame.clear();
+    packetFrame.clear();
 }
 
 M17FrameType M17FrameDecoder::decodeFrame(const frame_t &frame)
@@ -53,6 +54,13 @@ M17FrameType M17FrameDecoder::decodeFrame(const frame_t &frame)
         case M17FrameType::STREAM:
             decodeStream(data);
             break;
+
+        case M17FrameType::PACKET:
+            decodePacket(data);
+            break;
+
+        case M17FrameType::EOT:
+            break; // EOT conveys termination only; no payload to decode.
 
         default:
             break;
@@ -87,6 +95,24 @@ M17FrameDecoder::getFrameType(const std::array<uint8_t, 2> &syncWord)
         minDistance = hammDistance;
     }
 
+    // Packet frame
+    hammDistance = hammingDistance(syncWord[0], PACKET_SYNC_WORD[0])
+                 + hammingDistance(syncWord[1], PACKET_SYNC_WORD[1]);
+
+    if (hammDistance < minDistance) {
+        type = M17FrameType::PACKET;
+        minDistance = hammDistance;
+    }
+
+    // EOT frame
+    hammDistance = hammingDistance(syncWord[0], EOT_SYNC_WORD[0])
+                 + hammingDistance(syncWord[1], EOT_SYNC_WORD[1]);
+
+    if (hammDistance < minDistance) {
+        type = M17FrameType::EOT;
+        minDistance = hammDistance;
+    }
+
     // Check value of minimum hamming distance found, if exceeds the allowed
     // limit consider the frame as of unknown type.
     if (minDistance > MAX_SYNC_HAMM_DISTANCE) {
@@ -102,6 +128,31 @@ void M17FrameDecoder::decodeLSF(const std::array<uint8_t, 46> &data)
 
     viterbi.decodePunctured(data, tmp, LSF_PUNCTURE);
     memcpy(&lsf.data, tmp.data(), tmp.size());
+}
+
+void M17FrameDecoder::decodePacket(const std::array<uint8_t, 46> &data)
+{
+    packetFrame.clear();
+
+    // Extract and decode packet data
+    std::array<uint8_t, sizeof(pktFrame_t)> tmp;
+
+    uint16_t bitErrs = viterbi.decodePunctured(data, tmp, PACKET_PUNCTURE);
+
+    // Viterbi decoding of P3-punctured packets produces a 2-bit right shift:
+    // encoding 26 bytes (208 bits) with flush gives 210 Viterbi steps → 420
+    // coded bits, punctured by P3 to 368 bits (46 bytes). The 210-step decode
+    // outputs 208 bits, leaving a 2-bit offset. Realign left 2 bits; the last
+    // byte's low 2 bits become zero (spec reserved bits).
+    for (size_t i = 0; i < tmp.size(); ++i) {
+        uint8_t currentByte = tmp[i];
+        uint8_t nextByte = (i < tmp.size() - 1) ? tmp[i + 1] : 0;
+
+        tmp[i] = (currentByte << 2) | (nextByte >> 6);
+    }
+
+    if (bitErrs < MAX_VITERBI_ERRORS)
+        memcpy(&packetFrame.data, tmp.data(), tmp.size());
 }
 
 void M17FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)

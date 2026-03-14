@@ -136,6 +136,30 @@ private:
     static constexpr size_t  SYNCWORD_SAMPLES   = SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
 
     /**
+     * Try to match a sync word during sync update. If the sync word is
+     * found, re-initialises the deviation estimator and resets the missed
+     * sync counter.
+     *
+     * @param sync: synchronizer to query.
+     * @param syncWord: expected sync word.
+     * @param updateSamplingPoint: whether to update the sampling point.
+     * @return true if the sync word was matched.
+     */
+    bool trySyncUpdate(Synchronizer< M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL >& sync,
+                        const syncw_t& syncWord);
+
+    /**
+     * Quantize the correlator syncword region using the given synchronizer
+     * and check the hamming distance against the expected sync word.
+     *
+     * @param sync: synchronizer that detected the candidate.
+     * @param syncWord: expected sync word to compare against.
+     * @return hamming distance between quantized syncword and expected one.
+     */
+    uint8_t trySync(Synchronizer< M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL >& sync,
+                    const syncw_t& syncWord);
+
+    /**
      * Internal state of the demodulator.
      */
     enum class DemodState
@@ -172,7 +196,9 @@ private:
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
 
     Correlator   < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
+    Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +3, +3, +3, +3, -3, -3, +3, -3 }};
     Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
+    Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > packetSync{{ +3, -3, +3, +3, -3, -3, -3, -3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
     ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;
