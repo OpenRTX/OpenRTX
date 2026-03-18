@@ -61,6 +61,7 @@ subprojects/radio_tool
 subprojects/codec2
 subprojects/tinyusb
 subprojects/XPowersLib
+subprojects/catch2
 
 # ignore log files
 *.log
