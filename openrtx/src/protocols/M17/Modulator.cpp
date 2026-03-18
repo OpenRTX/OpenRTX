@@ -7,9 +7,9 @@
 #include <new>
 #include <cstddef>
 #include <cstring>
-#include "protocols/M17/M17Modulator.hpp"
-#include "protocols/M17/M17Utils.hpp"
-#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/Modulator.hpp"
+#include "protocols/M17/Utils.hpp"
+#include "protocols/M17/DSP.hpp"
 
 #if defined(PLATFORM_LINUX)
 #include <stdio.h>
@@ -18,17 +18,17 @@
 using namespace M17;
 
 
-M17Modulator::M17Modulator()
+Modulator::Modulator()
 {
 
 }
 
-M17Modulator::~M17Modulator()
+Modulator::~Modulator()
 {
     terminate();
 }
 
-void M17Modulator::init()
+void Modulator::init()
 {
     /*
      * Allocate a chunk of memory to contain two complete buffers for baseband
@@ -43,7 +43,7 @@ void M17Modulator::init()
     #endif
 }
 
-void M17Modulator::terminate()
+void Modulator::terminate()
 {
     // Terminate an ongoing stream, if present
     if(txRunning)
@@ -59,7 +59,7 @@ void M17Modulator::terminate()
     baseband_buffer.reset();
 }
 
-bool M17Modulator::start()
+bool Modulator::start()
 {
     if(txRunning)
         return true;
@@ -84,7 +84,7 @@ bool M17Modulator::start()
     return true;
 }
 
-void M17Modulator::sendPreamble()
+void Modulator::sendPreamble()
 {
     // Fill symbol buffer with preamble, made of alternated +3 and -3 symbols
     for(size_t i = 0; i < symbols.size(); i += 2)
@@ -103,7 +103,7 @@ void M17Modulator::sendPreamble()
     sendBaseband();
 }
 
-void M17Modulator::sendFrame(const frame_t& frame)
+void Modulator::sendFrame(const frame_t& frame)
 {
     auto it = symbols.begin();
     for(size_t i = 0; i < frame.size(); i++)
@@ -116,7 +116,7 @@ void M17Modulator::sendFrame(const frame_t& frame)
     sendBaseband();
 }
 
-void M17Modulator::stop()
+void Modulator::stop()
 {
     if(txRunning == false)
         return;
@@ -131,13 +131,13 @@ void M17Modulator::stop()
     #endif
 }
 
-void M17Modulator::invertPhase(const bool status)
+void Modulator::invertPhase(const bool status)
 {
     invPhase = status;
 }
 
 
-void M17Modulator::symbolsToBaseband()
+void Modulator::symbolsToBaseband()
 {
     memset(idleBuffer, 0x00, M17_FRAME_SAMPLES * sizeof(stream_sample_t));
 
@@ -159,7 +159,7 @@ void M17Modulator::symbolsToBaseband()
 }
 
 #ifndef PLATFORM_LINUX
-void M17Modulator::sendBaseband()
+void Modulator::sendBaseband()
 {
     if(txRunning == false) return;
     if(audioPath_getStatus(outPath) != PATH_OPEN) return;
@@ -169,7 +169,7 @@ void M17Modulator::sendBaseband()
     idleBuffer = outputStream_getIdleBuffer(outStream);
 }
 #else
-void M17Modulator::sendBaseband()
+void Modulator::sendBaseband()
 {
     FILE *outfile = fopen("/tmp/m17_output.raw", "ab");
 

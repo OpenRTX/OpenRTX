@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_STREAM_FRAME_H
-#define M17_STREAM_FRAME_H
+#ifndef STREAM_FRAME_H
+#define STREAM_FRAME_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -13,24 +13,24 @@
 
 #include <cstring>
 #include <string>
-#include "M17Datatypes.hpp"
+#include "Datatypes.hpp"
 
 namespace M17
 {
 
-class M17FrameDecoder;
+class FrameDecoder;
 
 /**
  * This class describes and handles a generic M17 data frame.
  */
-class M17StreamFrame
+class StreamFrame
 {
 public:
 
     /**
      * Constructor.
      */
-    M17StreamFrame()
+    StreamFrame()
     {
         clear();
     }
@@ -38,7 +38,7 @@ public:
     /**
      * Destructor.
      */
-    ~M17StreamFrame(){ }
+    ~StreamFrame(){ }
 
     /**
      * Clear the frame content, filling it with zeroes.
@@ -124,9 +124,9 @@ private:
     static constexpr uint16_t FN_MASK = 0x7FFF;    ///< Bitmask for frame number.
 
     // Frame decoder class needs to access raw frame data
-    friend class M17FrameDecoder;
+    friend class FrameDecoder;
 };
 
 }      // namespace M17
 
-#endif // M17_STREAM_FRAME_H
+#endif // STREAM_FRAME_H

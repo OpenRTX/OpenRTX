@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_LINKSETUPFRAME_H
-#define M17_LINKSETUPFRAME_H
+#ifndef LINKSETUPFRAME_H
+#define LINKSETUPFRAME_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -13,33 +13,33 @@
 
 #include <string>
 #include <array>
-#include "protocols/M17/M17Datatypes.hpp"
+#include "protocols/M17/Datatypes.hpp"
 #include "protocols/M17/Callsign.hpp"
 #include "core/gps.h"
 
 namespace M17
 {
 
-class M17FrameDecoder;
+class FrameDecoder;
 
 /**
  * This class describes and handles an M17 Link Setup Frame.
  * By default the frame contains a broadcast destination address, unless a
  * specific address is set by calling the corresponding function.
  */
-class M17LinkSetupFrame
+class LinkSetupFrame
 {
 public:
 
     /**
      * Constructor.
      */
-    M17LinkSetupFrame();
+    LinkSetupFrame();
 
     /**
      * Destructor.
      */
-    ~M17LinkSetupFrame();
+    ~LinkSetupFrame();
 
     /**
      * Clear the frame content, filling it with zeroes and resetting the
@@ -151,9 +151,9 @@ private:
     data;                    ///< Frame data.
 
     // Frame decoder class needs to access raw frame data
-    friend class M17FrameDecoder;
+    friend class FrameDecoder;
 };
 
 }      // namespace M17
 
-#endif // M17_LINKSETUPFRAME_H
+#endif // LINKSETUPFRAME_H

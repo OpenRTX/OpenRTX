@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_DECORRELATOR_H
-#define M17_DECORRELATOR_H
+#ifndef DECORRELATOR_H
+#define DECORRELATOR_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -47,4 +47,4 @@ inline void decorrelate(std::array< uint8_t, N >& data)
 
 }      // namespace M17
 
-#endif // M17_DECORRELATOR_H
+#endif // DECORRELATOR_H

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17PRBS_H
-#define M17PRBS_H
+#ifndef PRBS_H
+#define PRBS_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -113,4 +113,4 @@ private:
 
 }      // namespace M17
 
-#endif // M17PRBS_H
+#endif // PRBS_H

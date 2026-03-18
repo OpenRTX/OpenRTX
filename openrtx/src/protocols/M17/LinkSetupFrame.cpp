@@ -5,50 +5,50 @@
  */
 
 #include <cstring>
-#include "protocols/M17/M17Golay.hpp"
-#include "protocols/M17/M17LinkSetupFrame.hpp"
+#include "protocols/M17/Golay.hpp"
+#include "protocols/M17/LinkSetupFrame.hpp"
 #include "core/utils.h"
 #include "core/crc.h"
 
 using namespace M17;
 
-M17LinkSetupFrame::M17LinkSetupFrame()
+LinkSetupFrame::LinkSetupFrame()
 {
     clear();
 }
 
-M17LinkSetupFrame::~M17LinkSetupFrame()
+LinkSetupFrame::~LinkSetupFrame()
 {
 
 }
 
-void M17LinkSetupFrame::clear()
+void LinkSetupFrame::clear()
 {
     memset(&data, 0x00, sizeof(data));
     data.dst.fill(0xFF);
 }
 
-void M17LinkSetupFrame::setSource(const Callsign& callsign)
+void LinkSetupFrame::setSource(const Callsign& callsign)
 {
     data.src = callsign;
 }
 
-Callsign M17LinkSetupFrame::getSource()
+Callsign LinkSetupFrame::getSource()
 {
     return Callsign(data.src);
 }
 
-void M17LinkSetupFrame::setDestination(const Callsign& callsign)
+void LinkSetupFrame::setDestination(const Callsign& callsign)
 {
     data.dst = callsign;
 }
 
-Callsign M17LinkSetupFrame::getDestination()
+Callsign LinkSetupFrame::getDestination()
 {
     return Callsign(data.dst);
 }
 
-streamType_t M17LinkSetupFrame::getType()
+streamType_t LinkSetupFrame::getType()
 {
     // NOTE: M17 fields are big-endian, we need to swap bytes
     streamType_t type = data.type;
@@ -56,26 +56,26 @@ streamType_t M17LinkSetupFrame::getType()
     return type;
 }
 
-void M17LinkSetupFrame::setType(streamType_t type)
+void LinkSetupFrame::setType(streamType_t type)
 {
     // NOTE: M17 fields are big-endian, we need to swap bytes
     type.value = __builtin_bswap16(type.value);
     data.type  = type;
 }
 
-meta_t& M17LinkSetupFrame::metadata()
+meta_t& LinkSetupFrame::metadata()
 {
     return data.meta;
 }
 
-void M17LinkSetupFrame::updateCrc()
+void LinkSetupFrame::updateCrc()
 {
     // Compute CRC over the first 28 bytes, then store it in big endian format.
     uint16_t crc = crc_m17(&data, 28);
     data.crc     = __builtin_bswap16(crc);
 }
 
-bool M17LinkSetupFrame::valid() const
+bool LinkSetupFrame::valid() const
 {
     uint16_t crc = crc_m17(&data, 28);
     if(data.crc == __builtin_bswap16(crc)) return true;
@@ -83,12 +83,12 @@ bool M17LinkSetupFrame::valid() const
     return false;
 }
 
-const uint8_t * M17LinkSetupFrame::getData()
+const uint8_t * LinkSetupFrame::getData()
 {
     return reinterpret_cast < const uint8_t * >(&data);
 }
 
-void M17LinkSetupFrame::generateLichSegment(lich_t &segment,
+void LinkSetupFrame::generateLichSegment(lich_t &segment,
                                             const uint8_t segmentNum)
 {
     /*
@@ -123,7 +123,7 @@ void M17LinkSetupFrame::generateLichSegment(lich_t &segment,
     }
 }
 
-void M17LinkSetupFrame::setGnssData(const gps_t *position,
+void LinkSetupFrame::setGnssData(const gps_t *position,
                                     const M17GNSSStationType stationType)
 {
     if(position->fix_type < FIX_TYPE_2D)

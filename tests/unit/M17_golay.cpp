@@ -7,7 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <random>
-#include "protocols/M17/M17Golay.hpp"
+#include "protocols/M17/Golay.hpp"
 
 using namespace std;
 

@@ -13,7 +13,7 @@
 
 #include <cstdint>
 #include <cstring>
-#include "M17Datatypes.hpp"
+#include "Datatypes.hpp"
 
 namespace M17
 {

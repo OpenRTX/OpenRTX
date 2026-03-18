@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstring>
 #include "protocols/M17/MetaText.hpp"
-#include "protocols/M17/M17Datatypes.hpp"
+#include "protocols/M17/Datatypes.hpp"
 
 using namespace M17;
 

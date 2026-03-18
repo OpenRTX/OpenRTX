@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "protocols/M17/M17Golay.hpp"
+#include "protocols/M17/Golay.hpp"
 
 using namespace M17;
 

@@ -61,7 +61,7 @@ openrtx/include/peripherals/gps.h
 openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
 openrtx/include/protocols/M17/Callsign.hpp
-openrtx/include/protocols/M17/M17FrameDecoder.hpp
+openrtx/include/protocols/M17/FrameDecoder.hpp
 openrtx/include/protocols/M17/MetaText.hpp
 openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
@@ -69,7 +69,7 @@ openrtx/src/core/dsp.cpp
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/protocols/M17/Callsign.cpp
-openrtx/src/protocols/M17/M17FrameDecoder.cpp
+openrtx/src/protocols/M17/FrameDecoder.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/file_source.h
 platform/drivers/audio/file_source.c

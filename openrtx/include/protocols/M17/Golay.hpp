@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_GOLAY_H
-#define M17_GOLAY_H
+#ifndef GOLAY_H
+#define GOLAY_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -76,4 +76,4 @@ static inline uint16_t golay24_decode(const uint32_t& codeword)
 
 }      // namespace M17
 
-#endif // M17_GOLAY_H
+#endif // GOLAY_H

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/DSP.hpp"
 #include "hwconfig.h"
 
 #ifdef CONFIG_M17

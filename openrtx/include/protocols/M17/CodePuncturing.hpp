@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_CODE_PUNCTURING_H
-#define M17_CODE_PUNCTURING_H
+#ifndef CODE_PUNCTURING_H
+#define CODE_PUNCTURING_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
 #endif
 
 #include <array>
-#include "M17Utils.hpp"
+#include "Utils.hpp"
 
 namespace M17
 {
@@ -105,4 +105,4 @@ size_t depuncture(const std::array< uint8_t, IN  >& input,
 
 }      // namespace M17
 
-#endif // M17_CODE_PUNCTURING_H
+#endif // CODE_PUNCTURING_H
