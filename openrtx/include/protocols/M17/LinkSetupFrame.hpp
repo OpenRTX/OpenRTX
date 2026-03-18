@@ -136,7 +136,7 @@ public:
      * @param position
      * @param stationType
      */
-    void setGnssData(const gps_t *position, const M17GNSSStationType stationType);
+    void setGnssData(const gps_t *position, const GNSSStationType stationType);
 
 private:
 

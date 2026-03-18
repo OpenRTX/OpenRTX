@@ -23,50 +23,50 @@ using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) enc
 using frame_t   = std::array< uint8_t, 48 >;   // Data type for a full M17 data frame, including sync word
 using syncw_t   = std::array< uint8_t, 2  >;   // Data type for a sync word
 
-enum M17DataMode
+enum DataMode
 {
-    M17_DATAMODE_PACKET = 0,
-    M17_DATAMODE_STREAM = 1
+    DATAMODE_PACKET = 0,
+    DATAMODE_STREAM = 1
 };
 
-enum M17DataType
+enum DataType
 {
-    M17_DATATYPE_DATA       = 1,
-    M17_DATATYPE_VOICE      = 2,
-    M17_DATATYPE_VOICE_DATA = 3
+    DATATYPE_DATA       = 1,
+    DATATYPE_VOICE      = 2,
+    DATATYPE_VOICE_DATA = 3
 };
 
-enum M17EncyptionType
+enum EncryptionType
 {
-    M17_ENCRYPTION_NONE      = 0,
-    M17_ENCRYPTION_AES       = 1,
-    M17_ENCRYPTION_SCRAMBLER = 2,
-    M17_ENCRYPTION_OTHER     = 3,
+    ENCRYPTION_NONE      = 0,
+    ENCRYPTION_AES       = 1,
+    ENCRYPTION_SCRAMBLER = 2,
+    ENCRYPTION_OTHER     = 3,
 };
 
-enum M17MetaType
+enum MetaType
 {
-    M17_META_TEXT          = 0,
-    M17_META_GNSS          = 1,
-    M17_META_EXTD_CALLSIGN = 2,
+    META_TEXT          = 0,
+    META_GNSS          = 1,
+    META_EXTD_CALLSIGN = 2,
 };
 
-enum M17ScramblingType
+enum ScramblingType
 {
-    M17_SCRAMBLING_8BIT     = 0,
-    M17_SCRAMBLING_16BIT    = 1,
-    M17_SCRAMBLING_24BIT    = 2,
+    SCRAMBLING_8BIT     = 0,
+    SCRAMBLING_16BIT    = 1,
+    SCRAMBLING_24BIT    = 2,
 };
 
-enum M17GNSSSource {
-    M17_GNSS_SOURCE_M17CLIENT = 0,
-    M17_GNSS_SOURCE_OPENRTX = 1
+enum GNSSSource {
+    GNSS_SOURCE_M17CLIENT = 0,
+    GNSS_SOURCE_OPENRTX = 1
 };
 
-enum M17GNSSStationType {
-    M17_GNSS_STATION_FIXED = 0,
-    M17_GNSS_STATION_MOBILE = 1,
-    M17_GNSS_STATION_HANDHELD = 2
+enum GNSSStationType {
+    GNSS_STATION_FIXED = 0,
+    GNSS_STATION_MOBILE = 1,
+    GNSS_STATION_HANDHELD = 2
 };
 
 /**

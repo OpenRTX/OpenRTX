@@ -205,13 +205,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 // Retrieve extended callsign data
                 streamType_t streamType = lsf.getType();
 
-                if(streamType.fields.encType == M17_ENCRYPTION_NONE)
+                if(streamType.fields.encType == ENCRYPTION_NONE)
                 {
                     meta_t& meta = lsf.metadata();
 
                     switch(streamType.fields.encSubType)
                     {
-                        case M17_META_EXTD_CALLSIGN:
+                        case META_EXTD_CALLSIGN:
                         {
                             extendedCall = true;
                             Callsign exCall1(meta.extended_call_sign.call1);
@@ -225,7 +225,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                             strncpy(status->M17_link, src, 10);
                             break;
                         }
-                        case M17_META_TEXT:
+                        case META_TEXT:
                         {
                             metaText.addBlock(meta);
                             const char* txt = metaText.getText();
@@ -316,8 +316,8 @@ void OpMode_M17::txState(rtxStatus_t *const status)
             lsf.setDestination(dst);
 
         streamType_t type;
-        type.fields.dataMode = M17_DATAMODE_STREAM;     // Stream
-        type.fields.dataType = M17_DATATYPE_VOICE;      // Voice data
+        type.fields.dataMode = DATAMODE_STREAM;     // Stream
+        type.fields.dataType = DATATYPE_VOICE;      // Voice data
         type.fields.CAN      = status->can;             // Channel access number
 
         lsf.setType(type);
@@ -328,7 +328,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         }
 
         if(state.settings.gps_enabled) {
-            lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+            lsf.setGnssData(&state.gps_data, GNSS_STATION_HANDHELD);
             gpsTimer = 0;
         }
 
@@ -379,7 +379,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
 
             if(gpsTimer >= GPS_UPDATE_TICKS) {
                 auto lsf = encoder.getCurrentLsf();
-                lsf.setGnssData(&state.gps_data, M17_GNSS_STATION_HANDHELD);
+                lsf.setGnssData(&state.gps_data, GNSS_STATION_HANDHELD);
                 encoder.updateLsfData(lsf);
                 gpsTimer = 0;
             }
