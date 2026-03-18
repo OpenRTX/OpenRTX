@@ -35,7 +35,7 @@ void Modulator::init()
      * audio.
      */
 
-    baseband_buffer = std::make_unique< int16_t[] >(2 * M17_FRAME_SAMPLES);
+    baseband_buffer = std::make_unique< int16_t[] >(2 * FRAME_SAMPLES);
     idleBuffer      = baseband_buffer.get();
     txRunning       = false;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
@@ -70,7 +70,7 @@ bool Modulator::start()
         return false;
 
     outStream = audioStream_start(outPath, baseband_buffer.get(),
-                                  2*M17_FRAME_SAMPLES, M17_TX_SAMPLE_RATE,
+                                  2*FRAME_SAMPLES, TX_SAMPLE_RATE,
                                   STREAM_OUTPUT | BUF_CIRC_DOUBLE);
 
     if(outStream < 0)
@@ -139,17 +139,17 @@ void Modulator::invertPhase(const bool status)
 
 void Modulator::symbolsToBaseband()
 {
-    memset(idleBuffer, 0x00, M17_FRAME_SAMPLES * sizeof(stream_sample_t));
+    memset(idleBuffer, 0x00, FRAME_SAMPLES * sizeof(stream_sample_t));
 
     for(size_t i = 0; i < symbols.size(); i++)
     {
         idleBuffer[i * 10] = symbols[i];
     }
 
-    for(size_t i = 0; i < M17_FRAME_SAMPLES; i++)
+    for(size_t i = 0; i < FRAME_SAMPLES; i++)
     {
         float elem    = static_cast< float >(idleBuffer[i]);
-        elem          = M17::rrc_48k(elem * M17_RRC_GAIN) - M17_RRC_OFFSET;
+        elem          = M17::rrc_48k(elem * RRC_GAIN) - RRC_OFFSET;
         #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         elem          = pwmComp(elem);
         #endif
@@ -173,7 +173,7 @@ void Modulator::sendBaseband()
 {
     FILE *outfile = fopen("/tmp/m17_output.raw", "ab");
 
-    for(size_t i = 0; i < M17_FRAME_SAMPLES; i++)
+    for(size_t i = 0; i < FRAME_SAMPLES; i++)
     {
         auto s = idleBuffer[i];
         fwrite(&s, sizeof(s), 1, outfile);

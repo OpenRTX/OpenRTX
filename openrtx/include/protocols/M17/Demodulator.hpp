@@ -130,10 +130,10 @@ private:
      * at each update of the demodulator.
      */
     static constexpr size_t  RX_SAMPLE_RATE     = 24000;
-    static constexpr size_t  SAMPLES_PER_SYMBOL = RX_SAMPLE_RATE / M17_SYMBOL_RATE;
-    static constexpr size_t  FRAME_SAMPLES      = M17_FRAME_SYMBOLS * SAMPLES_PER_SYMBOL;
+    static constexpr size_t  SAMPLES_PER_SYMBOL = RX_SAMPLE_RATE / SYMBOL_RATE;
+    static constexpr size_t  FRAME_SAMPLES      = FRAME_SYMBOLS * SAMPLES_PER_SYMBOL;
     static constexpr size_t  SAMPLE_BUF_SIZE    = FRAME_SAMPLES / 2;
-    static constexpr size_t  SYNCWORD_SAMPLES   = SAMPLES_PER_SYMBOL * M17_SYNCWORD_SYMBOLS;
+    static constexpr size_t  SYNCWORD_SAMPLES   = SAMPLES_PER_SYMBOL * SYNCWORD_SYMBOLS;
 
     /**
      * Internal state of the demodulator.
@@ -171,8 +171,8 @@ private:
     float                          corrThreshold;   ///< Correlation threshold
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
 
-    Correlator   < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
-    Synchronizer < M17_SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
+    Correlator   < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
+    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
     ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;

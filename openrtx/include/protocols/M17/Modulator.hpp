@@ -95,14 +95,14 @@ private:
      */
     void sendBaseband();
 
-    static constexpr size_t M17_TX_SAMPLE_RATE     = 48000;
-    static constexpr size_t M17_SAMPLES_PER_SYMBOL = M17_TX_SAMPLE_RATE / M17_SYMBOL_RATE;
-    static constexpr size_t M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
+    static constexpr size_t TX_SAMPLE_RATE     = 48000;
+    static constexpr size_t SAMPLES_PER_SYMBOL = TX_SAMPLE_RATE / SYMBOL_RATE;
+    static constexpr size_t FRAME_SAMPLES      = FRAME_SYMBOLS * SAMPLES_PER_SYMBOL;
 
-    static constexpr float  M17_RRC_GAIN          = 23000.0f;
-    static constexpr float  M17_RRC_OFFSET        = 0.0f;
+    static constexpr float  RRC_GAIN          = 23000.0f;
+    static constexpr float  RRC_OFFSET        = 0.0f;
 
-    std::array< int8_t, M17_FRAME_SYMBOLS > symbols;
+    std::array< int8_t, FRAME_SYMBOLS > symbols;
     std::unique_ptr< int16_t[] > baseband_buffer;  ///< Buffer for baseband audio handling.
     stream_sample_t              *idleBuffer;      ///< Half baseband buffer, free for processing.
     streamId                     outStream;        ///< Baseband output stream ID.
