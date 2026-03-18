@@ -124,17 +124,17 @@ void LinkSetupFrame::generateLichSegment(lich_t &segment,
 }
 
 void LinkSetupFrame::setGnssData(const gps_t *position,
-                                    const M17GNSSStationType stationType)
+                                    const GNSSStationType stationType)
 {
     if(position->fix_type < FIX_TYPE_2D)
         return;
 
     streamType_t streamType = getType();
-    streamType.fields.encType = M17_ENCRYPTION_NONE;
-    streamType.fields.encSubType = M17_META_GNSS;
+    streamType.fields.encType = ENCRYPTION_NONE;
+    streamType.fields.encSubType = META_GNSS;
     setType(streamType);
 
-    data.meta.gnss_data.data_src = M17_GNSS_SOURCE_OPENRTX;
+    data.meta.gnss_data.data_src = GNSS_SOURCE_OPENRTX;
     data.meta.gnss_data.station_type = stationType;
 
     data.meta.gnss_data.coords_valid = 1;
