@@ -10,7 +10,7 @@
 #include <array>
 #include <algorithm>
 #include "protocols/M17/Callsign.hpp"
-#include "protocols/M17/M17Datatypes.hpp"
+#include "protocols/M17/Datatypes.hpp"
 
 using namespace std;
 

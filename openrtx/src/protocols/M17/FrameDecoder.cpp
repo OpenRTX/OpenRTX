@@ -4,26 +4,26 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "protocols/M17/M17Golay.hpp"
-#include "protocols/M17/M17FrameDecoder.hpp"
-#include "protocols/M17/M17Interleaver.hpp"
-#include "protocols/M17/M17Decorrelator.hpp"
-#include "protocols/M17/M17CodePuncturing.hpp"
-#include "protocols/M17/M17Constants.hpp"
-#include "protocols/M17/M17Utils.hpp"
+#include "protocols/M17/Golay.hpp"
+#include "protocols/M17/FrameDecoder.hpp"
+#include "protocols/M17/Interleaver.hpp"
+#include "protocols/M17/Decorrelator.hpp"
+#include "protocols/M17/CodePuncturing.hpp"
+#include "protocols/M17/Constants.hpp"
+#include "protocols/M17/Utils.hpp"
 #include <algorithm>
 
 using namespace M17;
 
-M17FrameDecoder::M17FrameDecoder()
+FrameDecoder::FrameDecoder()
 {
 }
 
-M17FrameDecoder::~M17FrameDecoder()
+FrameDecoder::~FrameDecoder()
 {
 }
 
-void M17FrameDecoder::reset()
+void FrameDecoder::reset()
 {
     lsfSegmentMap = 0;
     lsf.clear();
@@ -31,7 +31,7 @@ void M17FrameDecoder::reset()
     streamFrame.clear();
 }
 
-M17FrameType M17FrameDecoder::decodeFrame(const frame_t &frame)
+FrameType FrameDecoder::decodeFrame(const frame_t &frame)
 {
     std::array<uint8_t, 2> syncWord;
     std::array<uint8_t, 46> data;
@@ -46,11 +46,11 @@ M17FrameType M17FrameDecoder::decodeFrame(const frame_t &frame)
     auto type = getFrameType(syncWord);
 
     switch (type) {
-        case M17FrameType::LINK_SETUP:
+        case FrameType::LINK_SETUP:
             decodeLSF(data);
             break;
 
-        case M17FrameType::STREAM:
+        case FrameType::STREAM:
             decodeStream(data);
             break;
 
@@ -61,11 +61,10 @@ M17FrameType M17FrameDecoder::decodeFrame(const frame_t &frame)
     return type;
 }
 
-M17FrameType
-M17FrameDecoder::getFrameType(const std::array<uint8_t, 2> &syncWord)
+FrameType FrameDecoder::getFrameType(const std::array<uint8_t, 2> &syncWord)
 {
     // Preamble
-    M17FrameType type = M17FrameType::PREAMBLE;
+    FrameType type = FrameType::PREAMBLE;
     uint8_t minDistance = hammingDistance(syncWord[0], 0x77)
                         + hammingDistance(syncWord[1], 0x77);
 
@@ -74,7 +73,7 @@ M17FrameDecoder::getFrameType(const std::array<uint8_t, 2> &syncWord)
                          + hammingDistance(syncWord[1], LSF_SYNC_WORD[1]);
 
     if (hammDistance < minDistance) {
-        type = M17FrameType::LINK_SETUP;
+        type = FrameType::LINK_SETUP;
         minDistance = hammDistance;
     }
 
@@ -83,28 +82,28 @@ M17FrameDecoder::getFrameType(const std::array<uint8_t, 2> &syncWord)
                  + hammingDistance(syncWord[1], STREAM_SYNC_WORD[1]);
 
     if (hammDistance < minDistance) {
-        type = M17FrameType::STREAM;
+        type = FrameType::STREAM;
         minDistance = hammDistance;
     }
 
     // Check value of minimum hamming distance found, if exceeds the allowed
     // limit consider the frame as of unknown type.
     if (minDistance > MAX_SYNC_HAMM_DISTANCE) {
-        type = M17FrameType::UNKNOWN;
+        type = FrameType::UNKNOWN;
     }
 
     return type;
 }
 
-void M17FrameDecoder::decodeLSF(const std::array<uint8_t, 46> &data)
+void FrameDecoder::decodeLSF(const std::array<uint8_t, 46> &data)
 {
-    std::array<uint8_t, sizeof(M17LinkSetupFrame)> tmp;
+    std::array<uint8_t, sizeof(LinkSetupFrame)> tmp;
 
     viterbi.decodePunctured(data, tmp, LSF_PUNCTURE);
     memcpy(&lsf.data, tmp.data(), tmp.size());
 }
 
-void M17FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
+void FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
 {
     // Extract and unpack the LICH segment contained at beginning of frame
     lich_t lich;
@@ -135,7 +134,7 @@ void M17FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
 
     // Extract and decode stream data
     std::array<uint8_t, 34> punctured;
-    std::array<uint8_t, sizeof(M17StreamFrame)> tmp;
+    std::array<uint8_t, sizeof(StreamFrame)> tmp;
 
     auto begin = data.begin();
     begin += lich.size();
@@ -147,8 +146,8 @@ void M17FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
         memcpy(&streamFrame.data, tmp.data(), tmp.size());
 }
 
-bool M17FrameDecoder::decodeLich(std::array<uint8_t, 6> &segment,
-                                 const lich_t &lich)
+bool FrameDecoder::decodeLich(std::array<uint8_t, 6> &segment,
+                              const lich_t &lich)
 {
     /*
      * Extract and unpack the LICH segment contained in the frame header.

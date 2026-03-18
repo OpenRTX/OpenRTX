@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_INTERLEAVER_H
-#define M17_INTERLEAVER_H
+#ifndef INTERLEAVER_H
+#define INTERLEAVER_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
 #endif
 
-#include "M17Utils.hpp"
+#include "Utils.hpp"
 
 namespace M17
 {
@@ -67,4 +67,4 @@ void deinterleave(std::array< uint8_t, N >& data)
 
 }      // namespace M17
 
-#endif // M17_INTERLEAVER_H
+#endif // INTERLEAVER_H

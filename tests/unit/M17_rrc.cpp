@@ -7,7 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <limits.h>
 #include <inttypes.h>
-#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/DSP.hpp"
 
 #define IMPULSE_SIZE 4096
 

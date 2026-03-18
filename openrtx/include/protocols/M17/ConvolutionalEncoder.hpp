@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_CONVOLUTIONAL_ENCODER_H
-#define M17_CONVOLUTIONAL_ENCODER_H
+#ifndef CONVOLUTIONAL_ENCODER_H
+#define CONVOLUTIONAL_ENCODER_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -22,14 +22,14 @@ namespace M17
  * coder rate R = 1/2, a constraint length K = 5 and polynomials G1 = 0x19 and
  * G2 = 0x17.
  */
-class M17ConvolutionalEncoder
+class ConvolutionalEncoder
 {
 public:
 
     /**
      * Constructor.
      */
-    M17ConvolutionalEncoder(){ }
+    ConvolutionalEncoder(){ }
 
     /**
      * Encode a given block of data using the M17 convolutional encoding scheme.
@@ -100,4 +100,4 @@ private:
 
 }      // namespace M17
 
-#endif // M17_CONVOLUTIONAL_ENCODER_H
+#endif // CONVOLUTIONAL_ENCODER_H

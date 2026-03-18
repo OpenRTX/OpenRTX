@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_VITERBI_H
-#define M17_VITERBI_H
+#ifndef VITERBI_H
+#define VITERBI_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -15,7 +15,7 @@
 #include <cstddef>
 #include <array>
 #include <bitset>
-#include "M17Utils.hpp"
+#include "Utils.hpp"
 
 namespace M17
 {
@@ -27,20 +27,20 @@ namespace M17
  * G2 = 0x17.
  */
 
-class M17HardViterbi
+class HardViterbi
 {
 public:
 
     /**
      * Constructor.
      */
-    M17HardViterbi() : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
+    HardViterbi() : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
     { }
 
     /**
      * Destructor.
      */
-    ~M17HardViterbi() { }
+    ~HardViterbi() { }
 
     /**
      * Decode unpunctured convolutionally encoded data.
@@ -228,20 +228,20 @@ private:
  * G2 = 0x17.
  */
 
-class M17SoftViterbi
+class SoftViterbi
 {
 public:
 
     /**
      * Constructor.
      */
-    M17SoftViterbi() : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
+    SoftViterbi() : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
     { }
 
     /**
      * Destructor.
      */
-    ~M17SoftViterbi() { }
+    ~SoftViterbi() { }
 
     /**
      * Decode unpunctured convolutionally encoded data.
@@ -442,4 +442,4 @@ private:
 
 }      // namespace M17
 
-#endif // M17_VITERBI_H
+#endif // VITERBI_H

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17FRAMEENCODER_H
-#define M17FRAMEENCODER_H
+#ifndef FRAMEENCODER_H
+#define FRAMEENCODER_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -13,9 +13,9 @@
 
 #include <string>
 #include <array>
-#include "M17ConvolutionalEncoder.hpp"
-#include "M17LinkSetupFrame.hpp"
-#include "M17StreamFrame.hpp"
+#include "ConvolutionalEncoder.hpp"
+#include "LinkSetupFrame.hpp"
+#include "StreamFrame.hpp"
 
 namespace M17
 {
@@ -23,19 +23,19 @@ namespace M17
 /**
  * M17 frame encoder.
  */
-class M17FrameEncoder
+class FrameEncoder
 {
 public:
 
     /**
      * Constructor.
      */
-    M17FrameEncoder();
+    FrameEncoder();
 
     /**
      * Destructor.
      */
-    ~M17FrameEncoder();
+    ~FrameEncoder();
 
     /**
      * Clear the internal data structures, reset the counter for frame sequence
@@ -53,7 +53,7 @@ public:
      * @param lsf: Link Setup Frame to be encoded.
      * @param output: destination buffer for the encoded data.
      */
-    void encodeLsf(M17LinkSetupFrame& lsf, frame_t& output);
+    void encodeLsf(LinkSetupFrame& lsf, frame_t& output);
 
     /**
      * Prepare and encode a stream data frame into a frame ready for
@@ -83,7 +83,7 @@ public:
      *
      * @return LSF data.
      */
-    M17LinkSetupFrame getCurrentLsf()
+    LinkSetupFrame getCurrentLsf()
     {
         return currLsf;
     }
@@ -95,7 +95,7 @@ public:
      *
      * @param lsf: new Link Setup Frame to be sent.
      */
-    void updateLsfData(M17LinkSetupFrame& lsf)
+    void updateLsfData(LinkSetupFrame& lsf)
     {
         newLsf = lsf;
         newLsf.updateCrc();
@@ -118,9 +118,9 @@ public:
 
 private:
 
-    M17ConvolutionalEncoder  encoder;           ///< Convolutional encoder.
-    M17LinkSetupFrame        currLsf;           ///< LSF of current transmission.
-    M17LinkSetupFrame        newLsf;            ///< Next LSF to be sent.
+    ConvolutionalEncoder  encoder;           ///< Convolutional encoder.
+    LinkSetupFrame        currLsf;           ///< LSF of current transmission.
+    LinkSetupFrame        newLsf;            ///< Next LSF to be sent.
     uint8_t                  currentLich;       ///< Index of current LSF chunk.
     uint16_t                 streamFrameNumber; ///< Current frame number.
     bool                     updateLsf;         ///< LSF data needs update.
@@ -128,4 +128,4 @@ private:
 
 }      // namespace M17
 
-#endif // M17FRAMEENCODER_H
+#endif // FRAMEENCODER_H

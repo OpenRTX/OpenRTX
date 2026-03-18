@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_MODULATOR_H
-#define M17_MODULATOR_H
+#ifndef MODULATOR_H
+#define MODULATOR_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -13,7 +13,7 @@
 
 #include "core/audio_stream.h"
 #include "protocols/M17/PwmCompensator.hpp"
-#include "protocols/M17/M17Constants.hpp"
+#include "protocols/M17/Constants.hpp"
 #include "core/audio_path.h"
 #include <cstdint>
 #include <memory>
@@ -25,19 +25,19 @@ namespace M17
 /**
  * Modulator device for M17 protocol.
  */
-class M17Modulator
+class Modulator
 {
 public:
 
     /**
      * Constructor.
      */
-    M17Modulator();
+    Modulator();
 
     /**
      * Destructor.
      */
-    ~M17Modulator();
+    ~Modulator();
 
     /**
      * Allocate buffers for baseband audio generation and initialise modulator.
@@ -117,4 +117,4 @@ private:
 
 } /* M17 */
 
-#endif /* M17_MODULATOR_H */
+#endif /* MODULATOR_H */

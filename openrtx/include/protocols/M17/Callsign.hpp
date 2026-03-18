@@ -12,7 +12,7 @@
 #endif
 
 #include <string>
-#include "M17Datatypes.hpp"
+#include "Datatypes.hpp"
 
 namespace M17
 {

@@ -12,8 +12,8 @@
 #include <vector>
 
 #include "protocols/M17/Correlator.hpp"
-#include "protocols/M17/M17Constants.hpp"
-#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/Constants.hpp"
+#include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "core/fir.hpp"
 
@@ -22,7 +22,7 @@ static constexpr size_t SAMPLES_PER_SYM = 5; // 24000 Hz / 4800 baud
 static constexpr size_t N = M17::M17_SYNCWORD_SYMBOLS;
 static constexpr int32_t SCALE = 1000;
 
-// M17 stream syncword symbols as used in M17Demodulator
+// M17 stream syncword symbols as used in Demodulator
 static constexpr std::array<int8_t, N> STREAM_SYNC = { -3, -3, -3, -3,
                                                        +3, +3, -3, +3 };
 

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_CONSTANTS_H
-#define M17_CONSTANTS_H
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
-#include "protocols/M17/M17Datatypes.hpp"
+#include "protocols/M17/Datatypes.hpp"
 #include <cstdint>
 #include <array>
 
@@ -32,4 +32,4 @@ static constexpr syncw_t EOT_SYNC_WORD    = {0x55, 0x5D};  // End of transmissio
 
 }      // namespace M17
 
-#endif // M17_CONSTANTS_H
+#endif // CONSTANTS_H

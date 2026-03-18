@@ -8,7 +8,7 @@
 #include "interfaces/delays.h"
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
-#include "protocols/M17/M17Datatypes.hpp"
+#include "protocols/M17/Datatypes.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
 #include <errno.h>
@@ -259,13 +259,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 }
 
                 // Extract audio data and sent it to codec
-                if((type == M17FrameType::STREAM) && (pthSts == PATH_OPEN))
+                if((type == FrameType::STREAM) && (pthSts == PATH_OPEN))
                 {
                     // (re)start codec2 module if not already up
                     if(codec_running() == false)
                         codec_startDecode(rxAudioPath);
 
-                    M17StreamFrame sf = decoder.getStreamFrame();
+                    StreamFrame sf = decoder.getStreamFrame();
                     codec_pushFrame(sf.payload().data(),     false);
                     codec_pushFrame(sf.payload().data() + 8, false);
                 }
@@ -306,7 +306,7 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     {
         startTx = false;
 
-        M17LinkSetupFrame lsf;
+        LinkSetupFrame lsf;
 
         lsf.clear();
         lsf.setSource(status->source_address);

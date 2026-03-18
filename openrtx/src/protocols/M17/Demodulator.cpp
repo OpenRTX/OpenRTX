@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "protocols/M17/M17Demodulator.hpp"
-#include "protocols/M17/M17DSP.hpp"
-#include "protocols/M17/M17Utils.hpp"
+#include "protocols/M17/Demodulator.hpp"
+#include "protocols/M17/DSP.hpp"
+#include "protocols/M17/Utils.hpp"
 #include "core/audio_stream.h"
 #include <math.h>
 #include <cstring>
@@ -132,17 +132,17 @@ static inline void pushLog(const log_entry_t& e)
 #endif
 
 
-M17Demodulator::M17Demodulator()
+Demodulator::Demodulator()
 {
 
 }
 
-M17Demodulator::~M17Demodulator()
+Demodulator::~Demodulator()
 {
     terminate();
 }
 
-void M17Demodulator::init()
+void Demodulator::init()
 {
     /*
      * Allocate a chunk of memory to contain two complete buffers for baseband
@@ -166,7 +166,7 @@ void M17Demodulator::init()
     #endif
 }
 
-void M17Demodulator::terminate()
+void Demodulator::terminate()
 {
     // Ensure proper termination of baseband sampling
     audioPath_release(basebandPath);
@@ -182,7 +182,7 @@ void M17Demodulator::terminate()
     #endif
 }
 
-void M17Demodulator::startBasebandSampling()
+void Demodulator::startBasebandSampling()
 {
     basebandPath = audioPath_request(SOURCE_RTX, SINK_MCU, PRIO_RX);
     basebandId = audioStream_start(basebandPath, baseband_buffer.get(),
@@ -192,26 +192,26 @@ void M17Demodulator::startBasebandSampling()
     reset();
 }
 
-void M17Demodulator::stopBasebandSampling()
+void Demodulator::stopBasebandSampling()
 {
     audioStream_terminate(basebandId);
     audioPath_release(basebandPath);
 }
 
-const frame_t& M17Demodulator::getFrame()
+const frame_t& Demodulator::getFrame()
 {
     // When a frame is read is not new anymore
     newFrame = false;
     return *readyFrame;
 }
 
-bool M17Demodulator::isLocked()
+bool Demodulator::isLocked()
 {
     return (demodState == DemodState::LOCKED)
         || (demodState == DemodState::SYNC_UPDATE);
 }
 
-bool M17Demodulator::update(const bool invertPhase)
+bool Demodulator::update(const bool invertPhase)
 {
     // Audio path closed, nothing to do
     if(audioPath_getStatus(basebandPath) != PATH_OPEN)
@@ -288,7 +288,7 @@ bool M17Demodulator::update(const bool invertPhase)
     return newFrame;
 }
 
-void M17Demodulator::quantize(stream_sample_t sample)
+void Demodulator::quantize(stream_sample_t sample)
 {
     auto outerDeviation = devEstimator.outerDeviation();
     int8_t symbol;
@@ -314,7 +314,7 @@ void M17Demodulator::quantize(stream_sample_t sample)
     frameIndex += 1;
 }
 
-void M17Demodulator::reset()
+void Demodulator::reset()
 {
     sampleIndex = 0;
     frameIndex  = 0;
@@ -326,7 +326,7 @@ void M17Demodulator::reset()
     dsp_resetState(dcBlock);
 }
 
-void M17Demodulator::unlockedState()
+void Demodulator::unlockedState()
 {
     int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
     int8_t  syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
@@ -335,7 +335,7 @@ void M17Demodulator::unlockedState()
         demodState = DemodState::SYNCED;
 }
 
-void M17Demodulator::syncedState()
+void Demodulator::syncedState()
 {
     // Set sampling point and deviation, zero frame symbol count
     samplingPoint  = streamSync.samplingIndex();
@@ -363,7 +363,7 @@ void M17Demodulator::syncedState()
         demodState = DemodState::UNLOCKED;
 }
 
-void M17Demodulator::lockedState(int16_t sample)
+void Demodulator::lockedState(int16_t sample)
 {
     if(sampleIndex != samplingPoint)
         return;
@@ -382,7 +382,7 @@ void M17Demodulator::lockedState(int16_t sample)
     }
 }
 
-void M17Demodulator::syncUpdateState()
+void Demodulator::syncUpdateState()
 {
     uint8_t streamHd = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0])
                      + hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
@@ -402,5 +402,5 @@ void M17Demodulator::syncUpdateState()
         demodState = DemodState::LOCKED;
 }
 
-constexpr std::array < float, 3 > M17Demodulator::sfNum;
-constexpr std::array < float, 3 > M17Demodulator::sfDen;
+constexpr std::array < float, 3 > Demodulator::sfNum;
+constexpr std::array < float, 3 > Demodulator::sfDen;

@@ -8,10 +8,10 @@
 #include <cstdint>
 #include <random>
 #include <array>
-#include "protocols/M17/M17ConvolutionalEncoder.hpp"
-#include "protocols/M17/M17CodePuncturing.hpp"
-#include "protocols/M17/M17Viterbi.hpp"
-#include "protocols/M17/M17Utils.hpp"
+#include "protocols/M17/ConvolutionalEncoder.hpp"
+#include "protocols/M17/CodePuncturing.hpp"
+#include "protocols/M17/Viterbi.hpp"
+#include "protocols/M17/Utils.hpp"
 
 using namespace std;
 
@@ -44,7 +44,7 @@ TEST_CASE("Viterbi decode recovers punctured convolutional encoding",
     }
 
     array<uint8_t, 37> encoded;
-    M17::M17ConvolutionalEncoder encoder;
+    M17::ConvolutionalEncoder encoder;
     encoder.reset();
     encoder.encode(source.data(), encoded.data(), source.size());
     encoded[36] = encoder.flush();
@@ -55,7 +55,7 @@ TEST_CASE("Viterbi decode recovers punctured convolutional encoding",
     generateErrors(punctured);
 
     array<uint8_t, 18> result;
-    M17::M17HardViterbi decoder;
+    M17::HardViterbi decoder;
     decoder.decodePunctured(punctured, result, M17::DATA_PUNCTURE);
 
     for (size_t i = 0; i < result.size(); i++) {

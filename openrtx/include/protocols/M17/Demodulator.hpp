@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef M17_DEMODULATOR_H
-#define M17_DEMODULATOR_H
+#ifndef DEMODULATOR_H
+#define DEMODULATOR_H
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -20,8 +20,8 @@
 #include <cmath>
 #include "core/audio_path.h"
 #include "core/audio_stream.h"
-#include "protocols/M17/M17Datatypes.hpp"
-#include "protocols/M17/M17Constants.hpp"
+#include "protocols/M17/Datatypes.hpp"
+#include "protocols/M17/Constants.hpp"
 #include "protocols/M17/Correlator.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "protocols/M17/DevEstimator.hpp"
@@ -30,19 +30,19 @@
 namespace M17
 {
 
-class M17Demodulator
+class Demodulator
 {
 public:
 
     /**
      * Constructor.
      */
-    M17Demodulator();
+    Demodulator();
 
     /**
      * Destructor.
      */
-    ~M17Demodulator();
+    ~Demodulator();
 
     /**
      * Allocate buffers for baseband signal sampling and initialise demodulator.
@@ -180,4 +180,4 @@ private:
 
 } /* M17 */
 
-#endif /* M17_DEMODULATOR_H */
+#endif /* DEMODULATOR_H */

@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "protocols/M17/M17CodePuncturing.hpp"
-#include "protocols/M17/M17Decorrelator.hpp"
-#include "protocols/M17/M17Interleaver.hpp"
-#include "protocols/M17/M17FrameEncoder.hpp"
-#include "protocols/M17/M17Constants.hpp"
+#include "protocols/M17/CodePuncturing.hpp"
+#include "protocols/M17/Decorrelator.hpp"
+#include "protocols/M17/Interleaver.hpp"
+#include "protocols/M17/FrameEncoder.hpp"
+#include "protocols/M17/Constants.hpp"
 
 using namespace M17;
 
-M17FrameEncoder::M17FrameEncoder() : currentLich(0), streamFrameNumber(0)
+FrameEncoder::FrameEncoder() : currentLich(0), streamFrameNumber(0)
 {
     reset();
 }
 
-M17FrameEncoder::~M17FrameEncoder()
+FrameEncoder::~FrameEncoder()
 {
 
 }
 
-void M17FrameEncoder::reset()
+void FrameEncoder::reset()
 {
     // Clear counters
     currentLich       = 0;
@@ -33,7 +33,7 @@ void M17FrameEncoder::reset()
     currLsf.clear();
 }
 
-void M17FrameEncoder::encodeLsf(M17LinkSetupFrame& lsf, frame_t& output)
+void FrameEncoder::encodeLsf(LinkSetupFrame& lsf, frame_t& output)
 {
     lsf.updateCrc();
     currLsf = lsf;
@@ -41,7 +41,7 @@ void M17FrameEncoder::encodeLsf(M17LinkSetupFrame& lsf, frame_t& output)
     // Encode the LSF, then puncture and decorrelate its data
     std::array<uint8_t, 61> encoded;
     encoder.reset();
-    encoder.encode(lsf.getData(), encoded.data(), sizeof(M17LinkSetupFrame));
+    encoder.encode(lsf.getData(), encoded.data(), sizeof(LinkSetupFrame));
     encoded[60] = encoder.flush();
 
     std::array<uint8_t, 46> punctured;
@@ -55,10 +55,10 @@ void M17FrameEncoder::encodeLsf(M17LinkSetupFrame& lsf, frame_t& output)
     std::copy(punctured.begin(), punctured.end(), it);
 }
 
-uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
+uint16_t FrameEncoder::encodeStreamFrame(const payload_t& payload,
                                             frame_t& output, const bool isLast)
 {
-    M17StreamFrame streamFrame;
+    StreamFrame streamFrame;
 
     streamFrame.setFrameNumber(streamFrameNumber);
     streamFrameNumber = (streamFrameNumber + 1) & 0x7FFF;
@@ -68,7 +68,7 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     // Encode frame
     std::array<uint8_t, 37> encoded;
     encoder.reset();
-    encoder.encode(streamFrame.getData(), encoded.data(), sizeof(M17StreamFrame));
+    encoder.encode(streamFrame.getData(), encoded.data(), sizeof(StreamFrame));
     encoded[36] = encoder.flush();
 
     std::array<uint8_t, 34> punctured;
@@ -99,7 +99,7 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     return streamFrame.getFrameNumber();
 }
 
-void M17::M17FrameEncoder::encodeEotFrame(M17::frame_t& output)
+void M17::FrameEncoder::encodeEotFrame(M17::frame_t& output)
 {
     for(size_t i = 0; i < output.size(); i += 2)
     {
