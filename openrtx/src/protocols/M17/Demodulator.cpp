@@ -371,7 +371,7 @@ void Demodulator::lockedState(int16_t sample)
     quantize(sample);
     devEstimator.sample(sample);
 
-    if(frameIndex == M17_FRAME_SYMBOLS) {
+    if(frameIndex == FRAME_SYMBOLS) {
         devEstimator.update();
         std::swap(readyFrame, demodFrame);
 

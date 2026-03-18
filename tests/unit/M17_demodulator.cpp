@@ -19,7 +19,7 @@
 
 // M17 demodulation constants
 static constexpr size_t SAMPLES_PER_SYM = 5; // 24000 Hz / 4800 baud
-static constexpr size_t N = M17::M17_SYNCWORD_SYMBOLS;
+static constexpr size_t N = M17::SYNCWORD_SYMBOLS;
 static constexpr int32_t SCALE = 1000;
 
 // M17 stream syncword symbols as used in Demodulator
