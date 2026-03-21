@@ -211,6 +211,68 @@ bool Demodulator::isLocked()
         || (demodState == DemodState::SYNC_UPDATE);
 }
 
+void Demodulator::sample(int16_t rawSample, bool invertPhase)
+{
+    // Apply DC removal filter
+    int16_t sample = dsp_dcBlockFilter(&dcBlock, rawSample);
+
+    // Apply RRC on the baseband sample
+    float           elem   = static_cast< float >(sample);
+    if(invertPhase) elem   = 0.0f - elem;
+    sample = static_cast< int16_t >(rrc_24k(elem));
+
+    // Clock recovery reset MUST come before sampling
+    if((sampleIndex == 0) && resetClockRec) {
+        clockRec.reset();
+        resetClockRec = false;
+        updateSampPoint = false;
+    }
+
+    // Update sample point only when "far enough" from the last sampling,
+    // to avoid sampling issues when SP rolls over.
+    int diff = samplingPoint - sampleIndex;
+    if(updateSampPoint && (std::abs(diff) == SAMPLES_PER_SYMBOL/2)) {
+        clockRec.update();
+        samplingPoint = clockRec.samplingPoint();
+        updateSampPoint = false;
+    }
+
+    clockRec.sample(sample);
+    correlator.sample(sample);
+    corrThreshold = sampleFilter(std::abs(sample));
+
+    switch(demodState)
+    {
+        case DemodState::INIT:
+        {
+            if(initCount == 0)
+                demodState = DemodState::UNLOCKED;
+            else
+                initCount -= 1;
+        }
+            break;
+
+        case DemodState::UNLOCKED:
+            unlockedState();
+            break;
+
+        case DemodState::SYNCED:
+            syncedState();
+            break;
+
+        case DemodState::LOCKED:
+            lockedState(sample);
+            break;
+
+        case DemodState::SYNC_UPDATE:
+            syncUpdateState();
+            break;
+    }
+
+    sampleCount += 1;
+    sampleIndex  = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
+}
+
 bool Demodulator::update(const bool invertPhase)
 {
     // Audio path closed, nothing to do
@@ -224,66 +286,7 @@ bool Demodulator::update(const bool invertPhase)
 
     // Process samples
     for(size_t i = 0; i < baseband.len; i++)
-    {
-        // Apply DC removal filter
-        int16_t sample = dsp_dcBlockFilter(&dcBlock, baseband.data[i]);
-
-        // Apply RRC on the baseband sample
-        float           elem   = static_cast< float >(sample);
-        if(invertPhase) elem   = 0.0f - elem;
-        sample = static_cast< int16_t >(M17::rrc_24k(elem));
-
-        // Clock recovery reset MUST come before sampling
-        if((sampleIndex == 0) && resetClockRec) {
-            clockRec.reset();
-            resetClockRec = false;
-            updateSampPoint = false;
-        }
-
-        // Update sample point only when "far enough" from the last sampling,
-        // to avoid sampling issues when SP rolls over.
-        int diff = samplingPoint - sampleIndex;
-        if(updateSampPoint && (std::abs(diff) == SAMPLES_PER_SYMBOL/2)) {
-            clockRec.update();
-            samplingPoint = clockRec.samplingPoint();
-            updateSampPoint = false;
-        }
-
-        clockRec.sample(sample);
-        correlator.sample(sample);
-        corrThreshold = sampleFilter(std::abs(sample));
-
-        switch(demodState)
-        {
-            case DemodState::INIT:
-            {
-                if(initCount == 0)
-                    demodState = DemodState::UNLOCKED;
-                else
-                    initCount -= 1;
-            }
-                break;
-
-            case DemodState::UNLOCKED:
-                unlockedState();
-                break;
-
-            case DemodState::SYNCED:
-                syncedState();
-                break;
-
-            case DemodState::LOCKED:
-                lockedState(sample);
-                break;
-
-            case DemodState::SYNC_UPDATE:
-                syncUpdateState();
-                break;
-        }
-
-        sampleCount += 1;
-        sampleIndex  = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
-    }
+        sample(baseband.data[i], invertPhase);
 
     return newFrame;
 }

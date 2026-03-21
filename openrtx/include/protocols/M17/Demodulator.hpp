@@ -82,6 +82,17 @@ public:
     bool update(const bool invertPhase = false);
 
     /**
+     * Process a single raw baseband sample through the full demodulation
+     * chain (DC removal, RRC filtering, clock recovery, correlation and
+     * state machine).  This is the inner loop of update(), exposed so that
+     * unit tests can feed synthetic baseband without the audio subsystem.
+     *
+     * @param rawSample: signed 16-bit baseband sample.
+     * @param invertPhase: invert the phase of the sample before decoding.
+     */
+    void sample(int16_t rawSample, bool invertPhase = false);
+
+    /**
      * @return true if a demodulator is locked on an M17 stream.
      */
     bool isLocked();
