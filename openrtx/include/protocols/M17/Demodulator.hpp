@@ -82,6 +82,14 @@ public:
     bool update(const bool invertPhase = false);
 
     /**
+     * Process a single baseband sample through the demodulation chain.
+     *
+     * @param rawSample: signed 16-bit baseband sample.
+     * @param invertPhase: invert the phase of the sample before decoding.
+     */
+    void sample(int16_t rawSample, bool invertPhase = false);
+
+    /**
      * @return true if a demodulator is locked on an M17 stream.
      */
     bool isLocked();
