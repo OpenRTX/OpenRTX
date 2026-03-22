@@ -138,7 +138,7 @@ TEST_CASE("RRC 24kHz filter impulse response matches tap coefficients",
           "[m17][demodulator]")
 {
     constexpr size_t NTAPS = M17::rrc_taps_24k.size();
-    Fir<NTAPS> rrc(M17::rrc_taps_24k);
+    Fir<float, NTAPS> rrc(M17::rrc_taps_24k);
     std::array<float, NTAPS> output{};
 
     output[0] = rrc(1.0f);

@@ -44,6 +44,7 @@ openrtx/include/core/crc.h
 openrtx/include/core/dsp.h
 openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
+openrtx/include/core/fir.hpp
 openrtx/include/core/memory_profiling.h
 openrtx/include/core/nvmem_access.h
 openrtx/include/core/nvmem_device.h
@@ -65,11 +66,26 @@ openrtx/include/protocols/M17/FrameDecoder.hpp
 openrtx/include/protocols/M17/MetaText.hpp
 openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
+openrtx/include/protocols/APRS/constants.h
+openrtx/include/protocols/APRS/frame.h
+openrtx/include/protocols/APRS/Slicer.hpp
+openrtx/include/protocols/APRS/Decoder.hpp
+openrtx/include/protocols/APRS/Demodulator.hpp
+openrtx/include/protocols/APRS/packet.h
+openrtx/include/protocols/APRS/packet_list.h
+openrtx/include/rtx/OpMode_APRS.hpp
 openrtx/src/core/dsp.cpp
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/protocols/M17/Callsign.cpp
 openrtx/src/protocols/M17/FrameDecoder.cpp
+openrtx/src/protocols/APRS/Slicer.cpp
+openrtx/src/protocols/APRS/Decoder.cpp
+openrtx/src/protocols/APRS/Demodulator.cpp
+openrtx/src/protocols/APRS/packet.c
+openrtx/src/protocols/APRS/packet_list.c
+openrtx/src/rtx/OpMode_APRS.cpp
+openrtx/src/ui/default/ui_aprs.c
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/file_source.h
 platform/drivers/audio/file_source.c
@@ -99,6 +115,7 @@ tests/unit/M17_rrc.cpp
 tests/unit/M17_viterbi.cpp
 tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
+tests/unit/APRS.cpp
 EOF
 )
 
