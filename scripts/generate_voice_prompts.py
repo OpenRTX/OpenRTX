@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import argparse
 import json
 import re
+import shutil
 import struct
 import subprocess
 import sys
@@ -24,6 +25,9 @@ import tempfile
 import wave
 from pathlib import Path
 from typing import Dict, List, Tuple
+
+from piper import PiperVoice
+from piper.download_voices import download_voice
 
 
 class VoicePromptGenerator:
@@ -221,16 +225,49 @@ class VoicePromptGenerator:
         # First word lowercase, rest capitalized
         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
     
-    def generate_tts(self, text: str, output_wav: Path, voice_model: str = "en_US-lessac-medium",
-                     data_dir: Path = None):
+    @staticmethod
+    def _resolve_model_path(voice_model: str, data_dir: Path = None) -> Path:
         """
-        Generate TTS audio using Piper.
+        Resolve a voice model name or path to an ONNX file path,
+        downloading the model if necessary.
+        
+        Args:
+            voice_model: Model name (e.g. 'en_GB-alan-medium') or path to .onnx file
+            data_dir: Directory for downloading/finding voice models
+        
+        Returns:
+            Resolved Path to the .onnx model file
+        """
+        model_path = Path(voice_model)
+        if model_path.exists():
+            return model_path
+        
+        # Look in data directory
+        if data_dir:
+            candidate = data_dir / f"{voice_model}.onnx"
+            if candidate.exists():
+                return candidate
+        
+            # Download the model
+            print(f"Downloading voice model '{voice_model}' to {data_dir}...")
+            data_dir.mkdir(parents=True, exist_ok=True)
+            download_voice(voice_model, data_dir)
+        
+            if candidate.exists():
+                return candidate
+        
+        raise FileNotFoundError(
+            f"Voice model not found: {voice_model}"
+        )
+
+    def generate_tts(self, text: str, output_wav: Path, voice: PiperVoice):
+        """
+        Generate TTS audio using the Piper Python API.
         
         Args:
             text: Text to speak
             output_wav: Output WAV file path
-            voice_model: Piper voice model name
-            data_dir: Directory containing downloaded voice models
+            voice: Loaded PiperVoice instance
         """
         if not text:  # Silence
             # Create 0.1 second silent WAV
@@ -241,24 +278,15 @@ class VoicePromptGenerator:
                 wav.writeframes(b'\x00\x00' * 2205)  # 0.1 seconds
             return
         
-        # Use Piper command-line tool
-        try:
-            cmd = [
-                'piper',
-                '--model', voice_model,
-                '--output_file', str(output_wav)
-            ]
-            if data_dir:
-                cmd.extend(['--data-dir', str(data_dir)])
-            subprocess.run(cmd, input=text.encode('utf-8'), check=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError as e:
-            print(f"Error generating TTS for '{text}': {e.stderr.decode()}")
-            raise
-        except FileNotFoundError:
-            print("Error: 'piper' command not found. Please install piper-tts:")
-            print("  pip install piper-tts")
-            sys.exit(1)
+        with wave.open(str(output_wav), 'wb') as wav_file:
+            params_set = False
+            for chunk in voice.synthesize(text):
+                if not params_set:
+                    wav_file.setframerate(chunk.sample_rate)
+                    wav_file.setsampwidth(chunk.sample_width)
+                    wav_file.setnchannels(chunk.sample_channels)
+                    params_set = True
+                wav_file.writeframes(chunk.audio_int16_bytes)
     
     def convert_to_8khz_raw(self, wav_file: Path, raw_file: Path, 
                            gain_db: float = 0.0, tempo: float = 1.25):
@@ -361,7 +389,7 @@ class VoicePromptGenerator:
         print(f"Built VPC file: {output_vpc} ({len(audio_data)} bytes of audio data)")
     
     def generate_all(self, output_vpc: Path, temp_dir: Path = None,
-                    voice_model: str = "en_US-lessac-medium",
+                    voice_model: str = "en_GB-alan-medium",
                     data_dir: Path = None,
                     gain_db: float = 0.0, tempo: float = 1.25,
                     keep_temp: bool = False):
@@ -385,6 +413,11 @@ class VoicePromptGenerator:
         
         print(f"Found {len(prompt_enum)} voice prompts")
         print(f"Found {len(string_fields_list)} string table entries")
+        
+        # Load voice model once
+        model_path = self._resolve_model_path(voice_model, data_dir)
+        print(f"Loading voice model: {model_path}")
+        voice = PiperVoice.load(model_path)
         
         # Create temporary directory
         if temp_dir is None:
@@ -410,7 +443,7 @@ class VoicePromptGenerator:
                 print(f"  [{i+1}/{len(prompt_enum)}] {enum_name}: '{text}'")
                 
                 # Generate and process
-                self.generate_tts(text, wav_file, voice_model, data_dir)
+                self.generate_tts(text, wav_file, voice)
                 self.convert_to_8khz_raw(wav_file, raw_file, gain_db, tempo)
                 self.encode_codec2(raw_file, c2_file)
                 
@@ -441,7 +474,7 @@ class VoicePromptGenerator:
                 print(f"  [{i+1}/{len(string_fields_list)}] {field_name}: '{text}'")
                 
                 # Generate and process
-                self.generate_tts(text, wav_file, voice_model, data_dir)
+                self.generate_tts(text, wav_file, voice)
                 self.convert_to_8khz_raw(wav_file, raw_file, gain_db, tempo)
                 self.encode_codec2(raw_file, c2_file)
                 
@@ -463,7 +496,7 @@ class VoicePromptGenerator:
             c2_file = temp_dir / f"{prompt_idx:03d}_VOICE_NAME.c2"
             
             print(f"\nGenerating voice name: '{voice_name}'")
-            self.generate_tts(voice_name, wav_file, voice_model, data_dir)
+            self.generate_tts(voice_name, wav_file, voice)
             self.convert_to_8khz_raw(wav_file, raw_file, gain_db, tempo)
             self.encode_codec2(raw_file, c2_file)
             c2_files.append(c2_file)
@@ -483,14 +516,32 @@ class VoicePromptGenerator:
         finally:
             # Clean up temporary directory
             if not keep_temp:
-                import shutil
                 shutil.rmtree(temp_dir, ignore_errors=True)
                 print(f"\nCleaned up temporary directory")
             else:
                 print(f"\nTemporary files kept in: {temp_dir}")
 
 
+def _check_dependencies():
+    """Check that required external tools are available."""
+    missing = []
+    for cmd, install_hint in [
+        ('ffmpeg', 'apt install ffmpeg'),
+        ('c2enc', 'apt install codec2'),
+    ]:
+        if shutil.which(cmd) is None:
+            missing.append(f"  {cmd} (install with: {install_hint})")
+    if missing:
+        print("Missing required dependencies:", file=sys.stderr)
+        print("\n".join(missing), file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
+    script_dir = Path(__file__).parent
+    default_overrides = script_dir / 'voice_overrides.json'
+    default_data_dir = Path.home() / '.local' / 'share' / 'piper-tts'
+
     parser = argparse.ArgumentParser(
         description='Generate OpenRTX voice prompts from C source headers',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -502,11 +553,14 @@ Examples:
   # Generate with custom voice model
   %(prog)s --voice en_GB-alan-medium
 
+  # Use a local .onnx file directly
+  %(prog)s --voice ~/.local/share/piper-tts/en_US-glados-high.onnx
+
   # Keep temporary files for debugging
   %(prog)s --keep-temp
 
-  # Use pronunciation overrides
-  %(prog)s --overrides scripts/voice_overrides.json
+  # Disable pronunciation overrides
+  %(prog)s --no-overrides
         """
     )
     
@@ -520,13 +574,20 @@ Examples:
     parser.add_argument(
         '--overrides',
         type=Path,
-        help='JSON file with pronunciation overrides'
+        default=default_overrides,
+        help=f'JSON file with pronunciation overrides (default: {default_overrides})'
+    )
+
+    parser.add_argument(
+        '--no-overrides',
+        action='store_true',
+        help='Disable pronunciation overrides'
     )
     
     parser.add_argument(
         '--voice',
-        default='en_US-lessac-medium',
-        help='Piper voice model (default: en_US-lessac-medium)'
+        default='en_GB-alan-medium',
+        help='Piper voice model name or path to .onnx file (default: en_GB-alan-medium)'
     )
     
     parser.add_argument(
@@ -546,7 +607,8 @@ Examples:
     parser.add_argument(
         '--data-dir',
         type=Path,
-        help='Directory containing downloaded Piper voice models'
+        default=default_data_dir,
+        help=f'Directory for Piper voice models (default: {default_data_dir})'
     )
 
     parser.add_argument(
@@ -564,16 +626,20 @@ Examples:
     parser.add_argument(
         '--project-root',
         type=Path,
-        default=Path(__file__).parent.parent,
+        default=script_dir.parent,
         help='OpenRTX project root directory'
     )
     
     args = parser.parse_args()
+
+    _check_dependencies()
+
+    overrides_file = None if args.no_overrides else args.overrides
     
     # Create generator
     generator = VoicePromptGenerator(
         project_root=args.project_root,
-        overrides_file=args.overrides
+        overrides_file=overrides_file
     )
     
     # Generate VPC file
