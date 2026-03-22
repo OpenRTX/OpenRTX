@@ -1,0 +1,64 @@
+name: "Check generated files"
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  check-symbol-generation:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install ffmpeg clang-format
+      - name: Setup symbols script dependencies
+        run: |
+          cd ${{github.workspace}}
+          pip3 install --upgrade pip
+          pip3 install -r requirements.txt
+      - name: Run symbols script and then format the output
+        run: |
+          ./scripts/generate_symbols.py
+          ./scripts/clang_format.sh
+      - name: Fail the build if there are changes generated
+        run: |
+          git --no-pager diff
+          git diff-index --quiet HEAD
+
+  check-voice-prompts:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ffmpeg libcodec2-dev codec2
+          pip3 install --upgrade pip
+          pip3 install -r requirements.txt
+      - name: Cache Piper voice model
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/piper-tts
+          key: piper-voice-en_GB-alan-medium
+      - name: Generate voice prompts
+        run: python3 ./scripts/generate_voice_prompts.py --voice en_GB-alan-medium --tempo 1.5
+      - name: Fail the build if the VPC file changed
+        run: |
+          git --no-pager diff
+          git diff-index --quiet HEAD
