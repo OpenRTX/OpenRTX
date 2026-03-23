@@ -45,7 +45,7 @@ public:
      */
     void clear()
     {
-        memset(&data, 0x00, sizeof(data));
+        memset(&frameData, 0x00, sizeof(frameData));
     }
 
     /**
@@ -56,7 +56,7 @@ public:
     void setFrameNumber(const uint16_t seqNum)
     {
         // NOTE: M17 fields are big-endian, we need to swap bytes
-        data.frameNum = __builtin_bswap16(seqNum & FN_MASK);
+        frameData.frameNum = __builtin_bswap16(seqNum & FN_MASK);
     }
 
     /**
@@ -67,7 +67,7 @@ public:
     uint16_t getFrameNumber()
     {
         // NOTE: M17 fields are big-endian, we need to swap bytes
-        return __builtin_bswap16(data.frameNum);
+        return __builtin_bswap16(frameData.frameNum);
     }
 
     /**
@@ -76,7 +76,7 @@ public:
      */
     void lastFrame()
     {
-        data.frameNum |= EOS_BIT;
+        frameData.frameNum |= EOS_BIT;
     }
 
     /**
@@ -87,43 +87,63 @@ public:
      */
     bool isLastFrame()
     {
-        return ((data.frameNum & EOS_BIT) != 0) ? true : false;
+        return ((frameData.frameNum & EOS_BIT) != 0) ? true : false;
     }
 
     /**
-     * Access frame payload.
+     * Get underlying payload storage.
      *
-     * @return a reference to frame's paylod field, allowing for both read and
-     * write access.
+     * @return a pointer to uint8_t allowing direct access to payload.
      */
-    payload_t& payload()
+    uint8_t *data()
     {
-        return data.payload;
+        return frameData.payload.data();
     }
 
     /**
-     * Get underlying data.
+     * Get underlying payload storage (const overload)
      *
-     * @return a pointer to const uint8_t allowing direct access to frame data.
+     * @return a pointer to uint8_t allowing direct access to payload.
      */
-    const uint8_t *getData()
+    const uint8_t *data() const
     {
-        return reinterpret_cast < const uint8_t * > (&data);
+        return frameData.payload.data();
+    }
+
+    /**
+     * Access payload data by index.
+     *
+     * @param index: byte position.
+     * @return a reference to the byte at the given index.
+     */
+    uint8_t &operator[](size_t index)
+    {
+        return frameData.payload[index];
+    }
+
+    /**
+     * Access payload data by index. (const overload).
+     *
+     * @param index: byte position.
+     * @return the byte value at the given index.
+     */
+    uint8_t operator[](size_t index) const
+    {
+        return frameData.payload[index];
     }
 
 private:
 
-    struct __attribute__((packed))
-    {
+    struct __attribute__((packed)) {
         uint16_t   frameNum;  // Frame number
         payload_t  payload;   // Payload data
-    }
-    data;
+    } frameData;
                                                    ///< Frame data.
     static constexpr uint16_t EOS_BIT = 0x0080;    ///< End Of Stream bit.
     static constexpr uint16_t FN_MASK = 0x7FFF;    ///< Bitmask for frame number.
 
-    // Frame decoder class needs to access raw frame data
+    // Frame encoder and decoder classes needs to access raw frame data
+    friend class FrameEncoder;
     friend class FrameDecoder;
 };
 

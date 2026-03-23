@@ -143,7 +143,7 @@ void FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
     // Skip payload copy if BER is too high to avoid audio artifacts
     uint16_t bitErrs = viterbi.decodePunctured(punctured, tmp, DATA_PUNCTURE);
     if (bitErrs < MAX_VITERBI_ERRORS)
-        memcpy(&streamFrame.data, tmp.data(), tmp.size());
+        memcpy(&streamFrame.frameData, tmp.data(), tmp.size());
 }
 
 bool FrameDecoder::decodeLich(std::array<uint8_t, 6> &segment,

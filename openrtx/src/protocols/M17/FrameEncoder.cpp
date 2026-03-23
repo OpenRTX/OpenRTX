@@ -56,19 +56,19 @@ void FrameEncoder::encodeLsf(LinkSetupFrame& lsf, frame_t& output)
 }
 
 uint16_t FrameEncoder::encodeStreamFrame(const payload_t& payload,
-                                            frame_t& output, const bool isLast)
+                                         frame_t& output, const bool isLast)
 {
     StreamFrame streamFrame;
 
     streamFrame.setFrameNumber(streamFrameNumber);
     streamFrameNumber = (streamFrameNumber + 1) & 0x7FFF;
     if(isLast) streamFrame.lastFrame();
-    std::copy(payload.begin(), payload.end(), streamFrame.payload().begin());
+    memcpy(streamFrame.data(), payload.data(), payload.size());
 
     // Encode frame
     std::array<uint8_t, 37> encoded;
     encoder.reset();
-    encoder.encode(streamFrame.getData(), encoded.data(), sizeof(StreamFrame));
+    encoder.encode(&streamFrame.frameData, encoded.data(), sizeof(StreamFrame));
     encoded[36] = encoder.flush();
 
     std::array<uint8_t, 34> punctured;

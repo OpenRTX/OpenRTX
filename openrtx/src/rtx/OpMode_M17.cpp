@@ -266,8 +266,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                         codec_startDecode(rxAudioPath);
 
                     StreamFrame sf = decoder.getStreamFrame();
-                    codec_pushFrame(sf.payload().data(),     false);
-                    codec_pushFrame(sf.payload().data() + 8, false);
+                    codec_pushFrame(sf.data(),     false);
+                    codec_pushFrame(sf.data() + 8, false);
                 }
             }
         }
