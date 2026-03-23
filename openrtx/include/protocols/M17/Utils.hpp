@@ -72,6 +72,26 @@ static inline uint8_t hammingDistance(const uint8_t x, const uint8_t y)
 
 
 /**
+ * Compare syncwords based on hamming distance.
+ *
+ * @param syncword: first syncword.
+ * @param target: second syncword.
+ * @param maxDist: maximum allowed hamming distance.
+ * @return true if hammingDistance(syncWord, target) <= maxDist
+ */
+template < size_t N >
+static bool compareSyncwords(const uint8_t *syncword,
+                             const std::array< uint8_t, N >&target,
+                             const uint8_t maxDist)
+{
+    uint8_t hd = hammingDistance(syncword[0], target[0])
+               + hammingDistance(syncword[1], target[1]);
+
+    return (hd <= maxDist);
+}
+
+
+/**
  * Utility function allowing to set the value of a symbol on an array
  * of bytes. Symbols are packed putting the most significant bit first,
  * symbols are filled from the least significant bit pair to the most

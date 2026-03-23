@@ -354,10 +354,8 @@ void Demodulator::syncedState()
         }
     }
 
-    uint8_t hd = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0])
-               + hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
-
-    if(hd == 0)
+    bool valid = compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0);
+    if(valid)
         demodState = DemodState::LOCKED;
     else
         demodState = DemodState::UNLOCKED;
@@ -384,19 +382,16 @@ void Demodulator::lockedState(int16_t sample)
 
 void Demodulator::syncUpdateState()
 {
-    uint8_t streamHd = hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0])
-                     + hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
+    bool valid = compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 1);
+    bool eot = compareSyncwords(demodFrame->data(), EOT_SYNC_WORD, 1);
 
-    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0])
-                  + hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
-
-    if(streamHd <= 1)
+    if(valid)
         missedSyncs = 0;
     else
         missedSyncs += 1;
 
     // The lock is lost after four consecutive sync misses or an EOT frame.
-    if((missedSyncs > 4) || (eotHd <= 1))
+    if((missedSyncs > 4) || eot)
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;
