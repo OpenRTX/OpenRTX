@@ -1411,24 +1411,24 @@ void ui_updateFSM(bool *sync_rtx)
         bool f1Handled = false;
         vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
         // If we get out of standby, we ignore the kdb event
-        // unless is the MONI key for the MACRO functions
-        if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
+        // unless is the F1 key for the MACRO functions
+        if (_ui_exitStandby(now) && !(msg.keys & KEY_F1))
             return;
-        // If MONI is pressed, activate MACRO functions
-        bool moniPressed = msg.keys & KEY_MONI;
-        if(moniPressed || macro_latched)
+        // If the F1 key is pressed, activate MACRO functions
+        bool f1Pressed = msg.keys & KEY_F1;
+        if(f1Pressed || macro_latched)
         {
             macro_menu = true;
 
             if(state.settings.macroMenuLatch == 1)
             {
-                // long press moni on its own latches function.
-                if (moniPressed && msg.long_press && !macro_latched)
+                // long press KEY_F1 on its own latches function.
+                if (f1Pressed && msg.long_press && !macro_latched)
                 {
                     macro_latched = true;
                     vp_beep(BEEP_FUNCTION_LATCH_ON, LONG_BEEP);
                 }
-                else if (moniPressed && macro_latched)
+                else if (f1Pressed && macro_latched)
                 {
                     macro_latched = false;
                     vp_beep(BEEP_FUNCTION_LATCH_OFF, LONG_BEEP);
@@ -1443,7 +1443,7 @@ void ui_updateFSM(bool *sync_rtx)
             macro_menu = false;
         }
 #if defined(PLATFORM_TTWRPLUS)
-        // T-TWR Plus has no KEY_MONI, using KEY_VOLDOWN long press instead
+        // T-TWR Plus has no KEY_F1, using KEY_VOLDOWN long press instead
         if ((msg.keys & KEY_VOLDOWN) && msg.long_press)
         {
             macro_menu = true;
