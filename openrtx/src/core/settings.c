@@ -16,6 +16,21 @@
 
 static const uint32_t SETTINGS_MAGIC = 0x584E504F; // "OPNX"
 
+/**
+ * \internal
+ * Compute the 16 bits CRC value (CCITT) of a settings store
+ *
+ * @param store
+ * @return uint16_t
+ */
+static inline uint16_t settings_crc16(const settings_store_t *store)
+{
+    settings_store_t tmp;
+    memcpy(&tmp, store, sizeof(settings_store_t));
+
+    tmp.header.crc = 0;
+    return crc_ccitt((void *)&tmp, tmp.header.length);
+}
 
 /**
  * \internal
@@ -29,11 +44,11 @@ static int default_settings_store(settings_store_t *store)
     if (!store)
         return -EINVAL;
 
-    store->MAGIC = SETTINGS_MAGIC;
-    store->counter = 0;
-    store->length = sizeof(settings_store_t);
+    store->header.MAGIC = SETTINGS_MAGIC;
+    store->header.counter = 0;
+    store->header.length = sizeof(settings_store_t);
     store->settings = default_settings;
-    store->crc = crc_ccitt((void *)store, sizeof(settings_store_t) - 2);
+    store->header.crc = settings_crc16(store);
     return 0;
 }
 
@@ -51,10 +66,10 @@ static int update_settings_store(const settings_t *settings, settings_store_t *s
     if (!settings || !store)
         return -EINVAL;
 
-    store->counter++;
-    store->length = sizeof(settings_store_t);
+    store->header.counter++;
+    store->header.length = sizeof(settings_store_t);
     store->settings = *settings;
-    store->crc = crc_ccitt(store, sizeof(settings_store_t) - 2);
+    store->header.crc = settings_crc16(store);
     return 0;
 }
 
@@ -67,15 +82,15 @@ static int update_settings_store(const settings_t *settings, settings_store_t *s
  */
 static int check_store_integrity(const settings_store_t *store)
 {
-    if (store->MAGIC != SETTINGS_MAGIC)
+    if (store->header.MAGIC != SETTINGS_MAGIC)
         return 0;
 
-    if (store->length > sizeof(settings_store_t))
+    if (store->header.length > sizeof(settings_store_t))
         return 0;
 
-    bool stale = (store->length != sizeof(settings_store_t));
+    bool stale = (store->header.length != sizeof(settings_store_t));
 
-    if (store->crc == crc_ccitt(store, store->length - 2))
+    if (store->header.crc == settings_crc16(store))
         return stale ? -1 : 1;
     else
         return 0;
@@ -97,23 +112,21 @@ static int check_store_integrity(const settings_store_t *store)
 static int find_last_store(const int dev, const int part_nb, size_t *offset,
                     size_t limit)
 {
-    uint8_t buffer[6];
-    uint32_t *magic = (uint32_t *)buffer;
+    settings_header_t header_buffer;
     *offset = 0;
     size_t prev_offset = 0;
 
     // Go through the partition to find settings struct
     while (*offset < (limit - 6)) {
-        int ret = nvm_read(dev, part_nb, *offset, buffer, 6);
+        int ret = nvm_read(dev, part_nb, *offset, &header_buffer, 6);
         if (ret < 0)
             return ret;
 
-        if (*magic != SETTINGS_MAGIC)
+        if (header_buffer.MAGIC != SETTINGS_MAGIC)
             break; // Check struct starts with magic word
 
-        uint16_t len = *(uint16_t *)(buffer + 4);
         prev_offset = *offset;
-        *offset += len;
+        *offset += header_buffer.length;
     }
 
     /*
@@ -121,7 +134,7 @@ static int find_last_store(const int dev, const int part_nb, size_t *offset,
      * If offset > prev_offset and magic == 0xFFFFFFFF there is free space
      * If magic != 0xFFFFFFFF then the partition contains invalid data and needs to be cleaned
      */
-    if ((*magic != 0xFFFFFFFF) && (*magic != SETTINGS_MAGIC))
+    if ((header_buffer.MAGIC != 0xFFFFFFFF) && (header_buffer.MAGIC != SETTINGS_MAGIC))
         return -EILSEQ; // Partition contains invalid data
     else if (*offset == prev_offset)
         return -ENOENT; // Empty partition
@@ -146,31 +159,23 @@ static int find_last_store(const int dev, const int part_nb, size_t *offset,
 int read_store(const int dev, const int part, size_t offset,
                settings_store_t *store)
 {
-    // Read store header (magic, length, counter)
-    int ret = nvm_read(dev, part, offset, store, 8);
+    // Read store header
+    int ret = nvm_read(dev, part, offset, store, sizeof(settings_header_t));
     if (ret < 0)
         return ret;
 
-    if (store->length == sizeof(settings_store_t)) {
-        // read settings and CRC
-        ret = nvm_read(dev, part, offset + 8, &(store->settings),
-                       sizeof(settings_store_t) - 8);
-        if (ret < 0)
-            return ret;
-    } else if (store->length < sizeof(settings_store_t)) {
-        // Pre-init with default settings
-        store->settings = default_settings;
+    if (store->header.length <= sizeof(settings_store_t)) {
+        if(store->header.length < sizeof(settings_store_t)) {
+            // Pre-init with default settings
+            store->settings = default_settings;
+        }
 
-        // Read settings
-        ret = nvm_read(dev, part, offset + 8, &(store->settings),
-                       store->length - 10);
+        // read settings
+        ret = nvm_read(dev, part, offset + sizeof(settings_header_t), &(store->settings),
+                       store->header.length - sizeof(settings_header_t));
         if (ret < 0)
             return ret;
 
-        // Read CRC
-        ret = nvm_read(dev, part, offset + store->length - 2, &(store->crc), 2);
-        if (ret < 0)
-            return ret;
     } else
         return -E2BIG; // Settings in NVM too large
 
@@ -215,7 +220,7 @@ int get_latest_valid_store(const int dev, const int part,
         ret = read_store(dev, part, read_offset, store);
         if(ret == -E2BIG)
         {
-            end_lim -= store->length; // Skip this store
+            end_lim -= store->header.length; // Skip this store
             continue;
         }
         else if (ret < 0)
@@ -223,7 +228,7 @@ int get_latest_valid_store(const int dev, const int part,
 
         // Free space will be right after the first store found (last in partition)
         if (*offset == 0)
-            *offset = read_offset + store->length;
+            *offset = read_offset + store->header.length;
 
         ret = check_store_integrity(store);
         if (ret == 1) // Valid
@@ -304,15 +309,18 @@ int write_store(const int dev, const int part, const settings_store_t *store,
 void print_store(settings_store_t *store)
 {
     printf("Store at address 0x%08zX\r\n", (size_t)(store));
-    printf("\tMAGIC=0x%08X\r\n", (unsigned int)store->MAGIC);
-    printf("\tlength=%d\r\n", store->length);
-    printf("\tcounter=%d\r\n", store->counter);
+    printf("\tHeader:");
+    printf("\t\tMAGIC=0x%08X\r\n", (unsigned int)store->header.MAGIC);
+    printf("\t\tlength=%d\r\n", store->header.length);
+    printf("\t\tcounter=%d\r\n", store->header.counter);
+    printf("\t\tcrc=0x%04X\r\n", store->header.crc);
     printf("\tsettings=0x");
     uint8_t *tmp = (uint8_t *)&(store->settings);
-    for (size_t i = 0; i < sizeof(settings_t); i++) {
+    for (size_t i = 0; i < store->header.length-sizeof(settings_header_t); i++) {
         printf("%02X", tmp[i]);
     }
-    printf("\r\n\tcrc=0x%04X\r\n", store->crc);
+    printf("\r\n");
+
 }
 
 /**
@@ -382,7 +390,7 @@ int populate_latest_store(settings_storage_t *s)
 
     // Do something with the results
     if (s->part_A_status == PART_CLEAN && s->part_B_status == PART_CLEAN) {
-        if (store_A.counter >= store_B.counter) {
+        if (store_A.header.counter >= store_B.header.counter) {
             s->latest_store = store_A;
             s->write_needed = store_A_stale;
         } else {
@@ -447,7 +455,7 @@ int settings_storage_save(settings_storage_t *s, const settings_t *settings)
     }
 
     if (s->write_needed) {
-        if (s->latest_store.counter % 2) // Write to part B
+        if (s->latest_store.header.counter % 2) // Write to part B
         {
             int ret = write_store(s->dev, s->part_B, &(s->latest_store),
                                   &(s->part_B_offset),
