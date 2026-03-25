@@ -14,16 +14,17 @@
 #include "core/settings.h"
 #include <stdio.h>
 
-const uint32_t SETTINGS_MAGIC = 0x584E504F; // "OPNX"
+static const uint32_t SETTINGS_MAGIC = 0x584E504F; // "OPNX"
 
 
 /**
+ * \internal
  * Returns a valid settings_store_t filled with default settings
  *
  * @param store a pointer to an allocated settings_store_t
  * @return 0 in case of success, negative error code otherwise
  */
-int default_settings_store(settings_store_t *store)
+static int default_settings_store(settings_store_t *store)
 {
     if (!store)
         return -EINVAL;
@@ -37,6 +38,7 @@ int default_settings_store(settings_store_t *store)
 }
 
 /**
+ * \internal
  * Update the device settings in a settings store, updating counter, length and
  * CRC accordingly.
  *
@@ -44,7 +46,7 @@ int default_settings_store(settings_store_t *store)
  * @param store pointer to the store to update
  * @return 0 if successful, negative error code otherwise
  */
-int update_settings_store(const settings_t *settings, settings_store_t *store)
+static int update_settings_store(const settings_t *settings, settings_store_t *store)
 {
     if (!settings || !store)
         return -EINVAL;
@@ -57,12 +59,13 @@ int update_settings_store(const settings_t *settings, settings_store_t *store)
 }
 
 /**
+ * \internal
  * Checks the integrity of a settings store
  *
  * @param store pointer to the settings_store to check
  * @return -1 if the store is valid but stale, 0 if the store is corrupted, 1 if the store is valid and current
  */
-int check_store_integrity(const settings_store_t *store)
+static int check_store_integrity(const settings_store_t *store)
 {
     if (store->MAGIC != SETTINGS_MAGIC)
         return 0;
@@ -79,6 +82,7 @@ int check_store_integrity(const settings_store_t *store)
 }
 
 /**
+ * \internal
  * Parse an NVM partition and look for a settings structure. This function
  * makes no guarantee that the store structure found is sound.
  *
@@ -90,7 +94,7 @@ int check_store_integrity(const settings_store_t *store)
  * @param limit contains the maximum offset to explore within the partition
  * @return 0 if successful, negative error code otherwise
  */
-int find_last_store(const int dev, const int part_nb, size_t *offset,
+static int find_last_store(const int dev, const int part_nb, size_t *offset,
                     size_t limit)
 {
     uint8_t buffer[6];
@@ -128,6 +132,7 @@ int find_last_store(const int dev, const int part_nb, size_t *offset,
 }
 
 /**
+ * \internal
  * Read a store at a given offset from given NVM part. This function takes care of
  * possible shorter length from settings stored from a previous version. This
  * function does not check the integrity of the read store.
@@ -173,6 +178,7 @@ int read_store(const int dev, const int part, size_t offset,
 }
 
 /**
+ * \internal
  * Gets the latest valid store from a partition along with the offset where to find it
  *
  * @param dev NVM device to read from
@@ -232,6 +238,7 @@ int get_latest_valid_store(const int dev, const int part,
 }
 
 /**
+ * \internal
  * Write a settings store to an NVM partition, erasing the partition if requested
  * or if there is not enough space left in the partition
  *
@@ -325,6 +332,7 @@ void print_settings(settings_t *settings)
 }
 
 /**
+ * \internal
  * Populates the latest store of a settings_storage_t struct with the latest
  * non-corrupted version available across both partitions.
  *
