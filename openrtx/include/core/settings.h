@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -107,17 +107,25 @@ typedef enum
 } part_status;
 
 /**
+ * Structure defining the header of the settings store
+ */
+ typedef struct {
+    uint32_t MAGIC; ///< Must be 0x584E504F ("OPNX")
+    uint16_t
+        length; ///< Total length of the structure (incl. header)
+    uint16_t
+        counter; ///< Free-running counter, incremented each time settings are savec
+    uint16_t
+        crc; ///< CRC-16 (CCITT) checksum of the structure (crc field set to 0)
+ } __attribute__((packed)) settings_header_t;
+
+/**
  * Structure defining the binary layout of the settings in NVM memory
  */
 typedef struct {
-    uint32_t MAGIC; ///< Must be 0x584E504F ("OPNX")
-    uint16_t
-        length; ///< Total length of the structure (incl. MAGIC, counter, length and CRC)
-    uint16_t
-        counter; ///< Free-running counter, incremented each time settings are savec
+    settings_header_t header; ///< Settings store header
     settings_t settings; ///< Device settings
-    uint16_t
-        crc; ///< CRC-16 (CCITT) checksum of the structure (excl. crc field itself)
+
 } __attribute__((packed)) settings_store_t;
 
 typedef struct settings_storage_s {
