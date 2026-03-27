@@ -51,6 +51,9 @@ subprojects/.wraplock
 # Python byte-compiled
 */__pycache__
 
+# Python virtual environments
+.venv/
+
 # Kdevelop files
 *.kdev4
 .kdev4/
