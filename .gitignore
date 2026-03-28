@@ -6,6 +6,9 @@
 #Build dirs
 /build*
 
+# Meson wrap lock file
+subprojects/.wraplock
+
 # Prerequisites
 *.d
 
