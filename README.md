@@ -4,24 +4,10 @@
 OpenRTX is a free and open source firmware for digital amateur radio devices, top-down designed
 with modularity, flexibility and performance in mind.
 
-Currently OpenRTX supports the following devices:
-
-- TYT MD-380/390
-- TYT MD-UV380/390
-- TYT MD-9600
-- Radioddity GD77
-- Baofeng DM-1801
-- Baofeng DM-1701
-- Connect Systems CS7000-M17
-- Connect Systems CS7000-M17 Plus
-- Module17
-
 This firmware is *highly experimental* and currently under development, this means
 that it may not have all the expected functionalities. Anyway, contributions and testing will be warmly welcomed and accepted!
 
-For information on the radios that are currently supported and their features, see the [Development Status](https://openrtx.org/#/dev_status?id=current-support) page on our website.
-
-For hardware and software documentation visit [openrtx.org](https://openrtx.org/)
+For hardware and software documentation visit [openrtx.org](https://openrtx.org). For currently supported devices and their features, see the [Development Status](https://openrtx.org/#/dev_status?id=current-support) page.
 
 ## Obtaining the firmware
 
@@ -42,11 +28,7 @@ Have a look at the the [dedicated page](https://openrtx.org/#/user_guide) for de
 
 From the release version 0.3.3 onwards the OpenRTX firmware provides experimental support for the M17 digital voice mode.
 
-The following radios are currently supported for use with this digital mode:
-- MD-380, MD-390 and RT3 **UHF version** are supported for both modulation and demodulation.
-- MD-380, MD-390 and RT3 **VHF version** are supported for demodulation **only**, modulation is a work in progress.
-- MD-UV380 and MD-UV390 are supported for both modulation and demodulation.
-- GD77 and DM-1801 currently **are not supported** for the new digital voice mode.
+For information on the radios that currently support M17, see the [Development Status](https://openrtx.org/#/dev_status?id=modes) page on our website.
 
 To make the digital mode work, some modding is required: Refer to the [dedicated page](https://openrtx.org/#/M17/m17?id=hardware-modifications) on our website for the details on that.
 
