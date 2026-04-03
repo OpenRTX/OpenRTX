@@ -1284,8 +1284,19 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     // Remember that power is expressed in mW!
     unsigned int power_int = (last_state.channel.power / 1000);
     unsigned int power_dec = (last_state.channel.power % 1000) / 100;
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white, "%d.%dW", power_int, power_dec);
+
+    if (power_dec == 0)
+    {
+        // Print power output as an integer without a decimal (i.e "5W")
+        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white, "%dW", power_int);
+    }
+    else
+    {
+        // Smaller font to fit larger strings on screen (i.e "2.5W")
+        gfx_print(pos_2, layout.top_font - 1, TEXT_ALIGN_RIGHT,
+                  color_white, "%d.%dW", power_int, power_dec);
+    }
 
     // Third row
 #if defined(CONFIG_UI_NO_KEYBOARD)
