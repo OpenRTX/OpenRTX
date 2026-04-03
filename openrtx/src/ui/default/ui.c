@@ -1005,10 +1005,21 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             vp_announceRadioMode(state.channel.mode, queueFlags);
             break;
         case 6:
-            if (state.channel.power == 1000)
-                state.channel.power = 5000;
-            else
-                state.channel.power = 1000;
+
+            switch(state.channel.power)
+            {
+                case 1000:
+                    state.channel.power = 2500;
+                    break;
+
+                case 2500:
+                    state.channel.power = 5000;
+                    break;
+
+                default:
+                    state.channel.power = 1000;
+            }
+
             *sync_rtx = true;
             vp_announcePower(state.channel.power, queueFlags);
             break;
