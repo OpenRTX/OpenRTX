@@ -8,7 +8,6 @@
 #define RTX_H
 
 #include "core/datatypes.h"
-#include "hwconfig.h"
 #include "protocols/APRS/packet_list.h"
 #include <stdint.h>
 #include "core/cps.h"
