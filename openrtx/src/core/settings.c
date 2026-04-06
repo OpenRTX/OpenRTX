@@ -117,8 +117,9 @@ static int find_last_store(const int dev, const int part_nb, size_t *offset,
     size_t prev_offset = 0;
 
     // Go through the partition to find settings struct
-    while (*offset < (limit - 6)) {
-        int ret = nvm_read(dev, part_nb, *offset, &header_buffer, 6);
+    while (*offset < (limit - sizeof(settings_header_t))) {
+        int ret = nvm_read(dev, part_nb, *offset, &header_buffer,
+                           sizeof(settings_header_t));
         if (ret < 0)
             return ret;
 
