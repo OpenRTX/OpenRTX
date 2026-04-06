@@ -159,4 +159,7 @@
 #define ALPU_SDA      GPIOB,9
 #define ALPU_SCL      GPIOB,8
 
+/* Vibration motor */
+#define VIBR_MOTOR    &extGpio,2
+
 #endif /* PINMAP_H */

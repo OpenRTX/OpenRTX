@@ -206,3 +206,13 @@ const struct gpsDevice *platform_initGps()
 
     return &gps;
 }
+
+void platform_vibrateOn()
+{
+    gpioDev_set(VIBR_MOTOR);
+}
+
+void platform_vibrateOff()
+{
+    gpioDev_clear(VIBR_MOTOR);
+}
