@@ -61,7 +61,8 @@ static int default_settings_store(settings_store_t *store)
  * @param store pointer to the store to update
  * @return 0 if successful, negative error code otherwise
  */
-static int update_settings_store(const settings_t *settings, settings_store_t *store)
+static int update_settings_store(const settings_t *settings,
+                                 settings_store_t *store)
 {
     if (!settings || !store)
         return -EINVAL;
@@ -110,7 +111,7 @@ static int check_store_integrity(const settings_store_t *store)
  * @return 0 if successful, negative error code otherwise
  */
 static int find_last_store(const int dev, const int part_nb, size_t *offset,
-                    size_t limit)
+                           size_t limit)
 {
     settings_header_t header_buffer;
     *offset = 0;
@@ -135,7 +136,8 @@ static int find_last_store(const int dev, const int part_nb, size_t *offset,
      * If offset > prev_offset and magic == 0xFFFFFFFF there is free space
      * If magic != 0xFFFFFFFF then the partition contains invalid data and needs to be cleaned
      */
-    if ((header_buffer.MAGIC != 0xFFFFFFFF) && (header_buffer.MAGIC != SETTINGS_MAGIC))
+    if ((header_buffer.MAGIC != 0xFFFFFFFF)
+        && (header_buffer.MAGIC != SETTINGS_MAGIC))
         return -EILSEQ; // Partition contains invalid data
     else if (*offset == prev_offset)
         return -ENOENT; // Empty partition
@@ -166,13 +168,14 @@ int read_store(const int dev, const int part, size_t offset,
         return ret;
 
     if (store->header.length <= sizeof(settings_store_t)) {
-        if(store->header.length < sizeof(settings_store_t)) {
+        if (store->header.length < sizeof(settings_store_t)) {
             // Pre-init with default settings
             store->settings = default_settings;
         }
 
         // read settings
-        ret = nvm_read(dev, part, offset + sizeof(settings_header_t), &(store->settings),
+        ret = nvm_read(dev, part, offset + sizeof(settings_header_t),
+                       &(store->settings),
                        store->header.length - sizeof(settings_header_t));
         if (ret < 0)
             return ret;
@@ -219,12 +222,10 @@ int get_latest_valid_store(const int dev, const int part,
             return ret;
 
         ret = read_store(dev, part, read_offset, store);
-        if(ret == -E2BIG)
-        {
+        if (ret == -E2BIG) {
             end_lim -= store->header.length; // Skip this store
             continue;
-        }
-        else if (ret < 0)
+        } else if (ret < 0)
             return ret;
 
         // Free space will be right after the first store found (last in partition)
@@ -232,11 +233,12 @@ int get_latest_valid_store(const int dev, const int part,
             *offset = read_offset + store->header.length;
 
         ret = check_store_integrity(store);
-        if (ret == 1) // Valid
+        if (ret == 1)        // Valid
             return 3;
-        else if (ret == 0) // Invalid
-            end_lim = read_offset; // Limit the parsing to right before this store
-        else if (ret == -1) // Stale
+        else if (ret == 0)   // Invalid
+            end_lim =
+                read_offset; // Limit the parsing to right before this store
+        else if (ret == -1)  // Stale
             return 2;
     }
 
@@ -317,11 +319,11 @@ void print_store(settings_store_t *store)
     printf("\t\tcrc=0x%04X\r\n", store->header.crc);
     printf("\tsettings=0x");
     uint8_t *tmp = (uint8_t *)&(store->settings);
-    for (size_t i = 0; i < store->header.length-sizeof(settings_header_t); i++) {
+    for (size_t i = 0; i < store->header.length - sizeof(settings_header_t);
+         i++) {
         printf("%02X", tmp[i]);
     }
     printf("\r\n");
-
 }
 
 /**
@@ -363,11 +365,11 @@ int populate_latest_store(settings_storage_t *s)
     else if (ret == 1) {
         s->part_A_offset = 0;
         s->part_A_status = PART_EMPTY;
-    } else if (ret == 2) {// Latest store in part A is stale
+    } else if (ret == 2) {             // Latest store in part A is stale
         s->part_A_offset = offset_A;
         s->part_A_status = PART_CLEAN; // Partition is clean
         store_A_stale = true;
-    } else if (ret == 3) {  // Latest store in part A is valid
+    } else if (ret == 3) {             // Latest store in part A is valid
         s->part_A_offset = offset_A;
         s->part_A_status = PART_CLEAN;
     }
@@ -380,11 +382,11 @@ int populate_latest_store(settings_storage_t *s)
     else if (ret == 1) {
         s->part_B_offset = 0;
         s->part_B_status = PART_EMPTY;
-    } else if (ret == 2) {  // Latest store in part B is stale
+    } else if (ret == 2) {             // Latest store in part B is stale
         s->part_B_offset = offset_B;
         s->part_B_status = PART_CLEAN; // Partition is clean
         store_B_stale = true;
-    } else if (ret == 3) {  // Latest store in part B is valid
+    } else if (ret == 3) {             // Latest store in part B is valid
         s->part_B_offset = offset_B;
         s->part_B_status = PART_CLEAN;
     }
@@ -399,11 +401,13 @@ int populate_latest_store(settings_storage_t *s)
             s->write_needed = store_B_stale;
         }
         s->initialized = true;
-    } else if (s->part_A_status == PART_CLEAN && s->part_B_status != PART_CLEAN) {
+    } else if (s->part_A_status == PART_CLEAN
+               && s->part_B_status != PART_CLEAN) {
         s->latest_store = store_A;
         s->write_needed = store_A_stale;
         s->initialized = true;
-    } else if (s->part_A_status != PART_CLEAN && s->part_B_status == PART_CLEAN) {
+    } else if (s->part_A_status != PART_CLEAN
+               && s->part_B_status == PART_CLEAN) {
         s->latest_store = store_B;
         s->initialized = true;
         s->write_needed = store_B_stale;
@@ -464,7 +468,7 @@ int settings_storage_save(settings_storage_t *s, const settings_t *settings)
             if (ret < 0)
                 return ret;
             s->part_B_status = PART_CLEAN; // Partition is now clean
-        } else                        // Write to part A
+        } else                             // Write to part A
         {
             int ret = write_store(s->dev, s->part_A, &(s->latest_store),
                                   &(s->part_A_offset),
