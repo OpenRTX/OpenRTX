@@ -66,6 +66,9 @@ extern const struct gpsDevice gps;
 /* Use extended addressing for external flash memory */
 #define CONFIG_W25Qx_EXT_ADDR
 
+/* Device has a vibration motor */
+#define CONFIG_VIBRATION
+
 #ifdef __cplusplus
 }
 #endif
