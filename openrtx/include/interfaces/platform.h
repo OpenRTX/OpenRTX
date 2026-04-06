@@ -164,6 +164,18 @@ const hwInfo_t *platform_getHwInfo();
 const struct gpsDevice *platform_initGps();
 #endif
 
+#ifdef CONFIG_VIBRATION
+/**
+ * This function turns on the vibration motor.
+ */
+void platform_vibrateOn();
+
+/**
+ * This function turns off the vibration motor.
+ */
+void platform_vibrateOff();
+#endif
+
 #ifdef __cplusplus
 }
 #endif
