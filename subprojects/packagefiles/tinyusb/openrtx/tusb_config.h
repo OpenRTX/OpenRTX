@@ -8,11 +8,12 @@
 //--------------------------------------------------------------------
 // COMMON CONFIGURATION
 //--------------------------------------------------------------------
-
    
-// Select CFG_TUSB_MCU starting from CPU type
+// Select CFG_TUSB_MCU starting from CPU type passed by the build system
 #ifdef STM32F405xx
   #define CFG_TUSB_MCU OPT_MCU_STM32F4
+#elif defined(STM32H743xx)
+  #define CFG_TUSB_MCU OPT_MCU_STM32H7
 #else
   #error CFG_TUSB_MCU must be defined
 #endif
@@ -56,12 +57,20 @@
  * - CFG_TUSB_MEM SECTION : __attribute__ (( section(".usb_ram") ))
  * - CFG_TUSB_MEM_ALIGN   : __attribute__ ((aligned(4)))
  */
-#ifndef CFG_TUSB_MEM_SECTION
-#define CFG_TUSB_MEM_SECTION
-#endif
 
-#ifndef CFG_TUSB_MEM_ALIGN
-#define CFG_TUSB_MEM_ALIGN          __attribute__ ((aligned(4)))
+ // On STM32H7 (OTG FS), USB DMA cannot reach AXI SRAM; buffers must live in D2
+ // SRAM (e.g. .usb_ram in the linker script), not the main 0x2400... region.
+#ifdef STM32H743xx
+  #define CFG_TUSB_MEM_SECTION  __attribute__((section(".usb_ram")))
+  #define CFG_TUSB_MEM_ALIGN    __attribute__((aligned(32)))
+#else
+  #ifndef CFG_TUSB_MEM_SECTION
+    #define CFG_TUSB_MEM_SECTION
+  #endif
+
+  #ifndef CFG_TUSB_MEM_ALIGN
+    #define CFG_TUSB_MEM_ALIGN  __attribute__((aligned(4)))
+  #endif
 #endif
 
 //--------------------------------------------------------------------

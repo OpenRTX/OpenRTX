@@ -128,6 +128,10 @@ endif
 # XPowersLib, library for x-powers power management series
 xpowerslib_proj = subproject('XPowersLib')
 
+# tinyUSB, embedded USB device stack
+tinyusb_proj = subproject('tinyusb')
+tinyusb_dep  = tinyusb_proj.get_variable('tinyusb_dep')
+
 ##
 ## RTOS
 ##
@@ -795,7 +799,7 @@ cs7000_opts = {
 cs7000p_opts = {
   'sources'            : cs7000p_src,
   'include_directories': cs7000p_inc,
-  'dependencies'       : [codec2_dep],
+  'dependencies'       : [codec2_dep, tinyusb_dep],
   'c_args'             : cs7000p_args,
   'cpp_args'           : cs7000p_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32H7xx/linker_script_cs7000p.ld',

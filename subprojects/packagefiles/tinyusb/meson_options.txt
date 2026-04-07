@@ -1,0 +1,7 @@
+option('usb_driver',
+       type        : 'combo',
+       choices     : ['auto', 'dwc2', 'stm32_fsdev'],
+       value       : 'auto',
+       description : 'TinyUSB portable driver. "auto" infers from host_machine.cpu(); '
+                   + 'set explicitly (e.g. -Dtinyusb:usb_driver=dwc2) to avoid '
+                   + 'relying on non-standardised CPU identifier strings.')
