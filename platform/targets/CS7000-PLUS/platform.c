@@ -8,6 +8,7 @@
 #include "peripherals/gpio.h"
 #include "interfaces/nvmem.h"
 #include "interfaces/audio.h"
+#include "interfaces/usb_serial.h"
 #include "drivers/GPIO/gpio_shiftReg.h"
 #include "drivers/SPI/spi_bitbang.h"
 #include "drivers/ADC/adc_stm32.h"
@@ -56,6 +57,8 @@ void platform_init()
 
 void platform_terminate()
 {
+    usb_serial_terminate();
+
     adcStm32_terminate(&adc1);
     gpsStm32_terminate();
 
