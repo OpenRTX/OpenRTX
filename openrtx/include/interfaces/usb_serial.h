@@ -27,7 +27,8 @@ void usb_serial_init(void);
 void usb_serial_terminate(void);
 
 /**
- * Service the USB stack. Must be called regularly from the main thread.
+ * Service the USB stack and flush any pending transmit data.
+ * Must be called regularly from exactly one thread (the main thread).
  */
 void usb_serial_task(void);
 
@@ -44,11 +45,16 @@ uint32_t usb_serial_available(void);
 /**
  * Write data to the USB CDC port.
  *
- * Blocks until all bytes are accepted or a 500 ms timeout elapses.
+ * Non-blocking and thread-safe: data is accepted into an internal transmit
+ * buffer and returned immediately.  usb_serial_task() flushes the buffer
+ * to the CDC FIFO on its next call.
+ *
+ * A short write (return value < len) indicates the transmit buffer is full;
+ * the caller is responsible for retrying the unsent remainder if needed.
  *
  * \param buf  data to send.
  * \param len  number of bytes to send.
- * \return number of bytes written, or -1 on error/timeout.
+ * \return number of bytes accepted, or -1 if not mounted.
  */
 ssize_t usb_serial_write(const void *buf, size_t len);
 

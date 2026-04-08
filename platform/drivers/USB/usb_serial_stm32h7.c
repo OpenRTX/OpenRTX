@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdatomic.h>
+#include <pthread.h>
 
 /*
  * USB device mount state, maintained by tud_mount_cb / tud_umount_cb.
@@ -38,6 +39,28 @@ static _Atomic bool usb_mounted = false;
  * usb_mounted (false until tud_mount_cb fires after init).
  */
 static _Atomic bool usb_ready = false;
+
+/*
+ * Software TX ring buffer.
+ *
+ * Multiple threads may call usb_serial_write() concurrently (MPSC).
+ * tx_mutex serialises the write (producer) side.  usb_serial_task()
+ * is the sole consumer and runs in the main thread; it snapshots
+ * tx_head with an atomic acquire load so it never needs to hold the
+ * mutex while writing to the CDC FIFO.
+ *
+ * Both tx_head and tx_tail are _Atomic: tx_tail is read by producers
+ * (to detect a full ring) without holding tx_mutex, so it must be
+ * accessed atomically to avoid data races.  Producers read tx_tail
+ * with a relaxed load - a slightly stale value produces a conservative
+ * "ring fuller than it really is" result, which can only cause short
+ * writes, already the documented behaviour.
+ */
+
+static uint8_t          tx_buf[USB_SERIAL_TX_BUF_SIZE];
+static _Atomic uint32_t tx_head = 0;   /* next write position, producer-owned */
+static _Atomic uint32_t tx_tail = 0;   /* next read position,  consumer-owned  */
+static pthread_mutex_t  tx_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void usb_serial_init(void)
 {
@@ -149,7 +172,42 @@ void usb_serial_terminate(void)
 
 void usb_serial_task(void)
 {
+    /* Service tinyUSB first so that mount/unmount state changes are
+     * processed before we inspect usb_mounted or write to the CDC FIFO.
+     * Without this, the first bytes after a terminal connects can be
+     * discarded because usb_mounted is still false on this tick.
+     */
     tud_task();
+
+    if (atomic_load(&usb_mounted))
+    {
+        /* Drain the TX ring buffer into the CDC FIFO.
+         *
+         * Snapshot tx_head with an acquire load so we see all bytes written
+         * by producers before their release store.  Load tx_tail with a
+         * relaxed load - it is consumer-private and only ever modified here.
+         */
+        uint32_t head = atomic_load_explicit(&tx_head, memory_order_acquire);
+        uint32_t tail = atomic_load_explicit(&tx_tail, memory_order_relaxed);
+
+        while (tail != head)
+        {
+            /* Number of contiguous bytes available before wrap */
+            uint32_t chunk = (head >= tail) ? (head - tail)
+                                            : (USB_SERIAL_TX_BUF_SIZE - tail);
+
+            uint32_t sent = tud_cdc_write(&tx_buf[tail], chunk);
+            tail = (tail + sent) % USB_SERIAL_TX_BUF_SIZE;
+
+            if (sent < chunk)
+            {
+                break;  /* CDC FIFO full; flush and retry next tick */
+            }
+        }
+
+        atomic_store_explicit(&tx_tail, tail, memory_order_relaxed);
+        tud_cdc_write_flush();
+    }
 }
 
 bool usb_serial_connected(void)
@@ -174,40 +232,34 @@ ssize_t usb_serial_write(const void *buf, size_t len)
         return -1;
     }
 
-    const uint8_t *p = (const uint8_t *) buf;
-    size_t rem = len;
-    uint32_t timeout = 500;   /* ms */
+    const uint8_t *p       = (const uint8_t *) buf;
+    size_t         written = 0;
 
-    while (rem > 0)
+    pthread_mutex_lock(&tx_mutex);
+
+    /* Use a local head so all bytes of this write are committed atomically.
+     * The mutex guarantees exclusive producer access; the release store at
+     * the end makes the bytes visible to the consumer in one step, preventing
+     * usb_serial_task() from observing a partial write mid-buffer.
+     */
+    uint32_t head = atomic_load_explicit(&tx_head, memory_order_relaxed);
+
+    while (written < len)
     {
-        uint32_t written = tud_cdc_write(p, rem);
-        tud_cdc_write_flush();
-        p += written;
-        rem -= written;
-
-        if (rem == 0)
+        uint32_t next = (head + 1) % USB_SERIAL_TX_BUF_SIZE;
+        if (next == atomic_load_explicit(&tx_tail, memory_order_relaxed))
         {
-            break;
+            break;  /* ring buffer full */
         }
-
-        if (timeout == 0)
-        {
-            tud_cdc_write_clear();
-            return -1;
-        }
-
-        /*
-         * Call tud_task() here rather than delayMs().
-         * CDC's xfer_isr is NULL, so transfer-complete events are queued
-         * and only processed by tud_task(). Without this call the endpoint
-         * busy flag never clears, tud_cdc_write_flush() keeps failing, and
-         * every write larger than one 64-byte packet times out.
-         */
-        tud_task();
-        timeout--;
+        tx_buf[head] = p[written++];
+        head = next;
     }
 
-    return (ssize_t) len;
+    atomic_store_explicit(&tx_head, head, memory_order_release);
+
+    pthread_mutex_unlock(&tx_mutex);
+
+    return (ssize_t) written;
 }
 
 ssize_t usb_serial_read(void *buf, size_t len)
