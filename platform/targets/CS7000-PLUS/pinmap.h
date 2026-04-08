@@ -159,4 +159,8 @@
 #define ALPU_SDA      GPIOB,9
 #define ALPU_SCL      GPIOB,8
 
+/* USB OTG FS */
+#define USB_DN        GPIOA,11
+#define USB_DP        GPIOA,12
+
 #endif /* PINMAP_H */
