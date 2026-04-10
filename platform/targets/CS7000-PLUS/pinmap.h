@@ -65,7 +65,7 @@
 
 /* Analog inputs */
 #define AIN_VOLUME    GPIOC,5
-#define AIN_VBAT      GPIOC,4   // BATT
+#define AIN_VOX       GPIOC,4   // Hardware VOX circuit
 #define AIN_MIC       GPIOA,7
 #define AIN_RSSI      GPIOB,0
 #define AIN_NOISE     GPIOB,1
