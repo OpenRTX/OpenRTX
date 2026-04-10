@@ -37,6 +37,7 @@ void platform_init()
 
     gpio_setMode(MAIN_PWR_DET, ANALOG);
     gpio_setMode(AIN_MIC,      ANALOG);
+    gpio_setMode(AIN_VOX,      ANALOG);
     gpio_setMode(AIN_VOLUME,   ANALOG);
 
     gpio_setMode(GPIOEXT_CLK, OUTPUT);
@@ -77,8 +78,30 @@ uint16_t platform_getVbat()
 
 uint8_t platform_getMicLevel()
 {
-    // ADC1 returns a 16-bit value: shift right by eight to get 0 - 255
-    return adc_getRawSample(&adc1, ADC_MIC_CH) >> 8;
+    /*
+     * One of the only usable sources for reading mic input level on the
+     * CS7000P is the hardware VOX circuit. It is not a super accurate
+     * source because it's a peak detection circuit which rectifies and
+     * envelope-follows the mic preamp output. But it does give us a DC signal
+     * proportional to audio amplitude. MIC_ADC_CH is not used because it's an
+     * AC waveform with a permanent +1.65V bias.
+     *
+     * The STM32s 16-bit ADC value must be normalized to 0-255.
+     *
+     * By doing some testing, some empirical raw values from the ADC under
+     * different scenarios are:
+     *
+     * PTT held no speech:    ~0-1
+     * Speech:                ~500-13000 (vary by mic proximity & speech volume)
+     * Apparent hardware max: ~44000     (whistling loudly touching mic grille)
+     *
+     * The normalization consists of a right shift by 6 to put 'normal speech'
+     * in the range of 7-203. Values above 16000 are considered to be extreme or
+     * probable clipping and are clamped to 255.
+     */
+
+    uint16_t raw = adc_getRawSample(&adc1, ADC_VOX_CH);
+    return (uint8_t)(raw > 16000 ? 255 : raw >> 6);
 }
 
 uint8_t platform_getVolumeLevel()
