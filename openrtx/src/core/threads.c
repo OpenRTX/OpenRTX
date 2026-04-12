@@ -59,6 +59,26 @@ void *ui_threadFunc(void *arg)
         }
 
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
+
+#ifdef CONFIG_APRS
+        // copy APRS packets from RTX to radio state
+        if (state.channel.mode == OPMODE_APRS) {
+            rtxStatus_t rtx_status = rtx_getCurrentStatus();
+            if (rtx_status.aprsPkts.len > 0) {
+                // add the RTX packets to aprsStoredPkts
+                state.aprsStoredPkts = aprsPktList_concat(rtx_status.aprsPkts, state.aprsStoredPkts);
+
+                // clear the RTX packet list
+                rtx_cfg = rtx_status; // must use rtx_cfg as rtx_status may be
+                                      // freed before rtx_configure uses it
+                pthread_mutex_lock(&rtx_mutex); // Lock for w access to RTX configuration
+                aprsPktList_init(&rtx_cfg.aprsPkts);
+                pthread_mutex_unlock(&rtx_mutex); // Unlock w access to RTX configuration
+                rtx_configure(&rtx_cfg);
+            }
+        }
+#endif
+
         ui_updateFSM(&sync_rtx);            // Update UI FSM
         ui_saveState();                     // Save local state copy
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state

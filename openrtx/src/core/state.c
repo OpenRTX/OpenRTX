@@ -15,6 +15,7 @@
 #include "interfaces/platform.h"
 #include "interfaces/nvmem.h"
 #include "interfaces/delays.h"
+#include "protocols/APRS/packet.h"
 
 state_t state;
 pthread_mutex_t state_mutex;
@@ -73,10 +74,18 @@ void state_init()
     {
         state.settings.brightness = 100;
     }
+
+#ifdef CONFIG_APRS
+    aprsPktList_init(&state.aprsStoredPkts);
+#endif
 }
 
 void state_terminate()
 {
+#ifdef CONFIG_APRS
+    aprsPktList_release(state.aprsStoredPkts);
+#endif
+
     // Never store a brightness of 0 to avoid booting with a black screen
     if(state.settings.brightness == 0)
     {

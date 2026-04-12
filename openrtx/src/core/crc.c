@@ -38,3 +38,18 @@ uint16_t crc_ccitt(const void *data, const size_t len)
 
     return crc;
 }
+
+uint16_t crc_hdlc(const void *data, size_t len)
+{
+    uint16_t crc = 0xffff;
+    uint16_t x = 0;
+    const uint8_t *buf = ((const uint8_t *)data);
+
+    for (size_t i = 0; i < len; i++) {
+        x = (crc ^ buf[i]) & 0xff;
+        x ^= (x << 4) & 0xff;
+        crc = (crc >> 8) ^ (x << 8) ^ (x << 3) ^ (x >> 4);
+    }
+
+    return ~crc;
+}
