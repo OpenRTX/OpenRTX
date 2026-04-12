@@ -36,7 +36,8 @@ bool dsp_oversamplingDecimate(struct oversamplingBlock *oversamplingBlock,
     oversamplingBlock->accumulator += *sample;
     oversamplingBlock->count++;
     if (oversamplingBlock->count >= oversamplingBlock->oversampling) {
-        *sample = oversamplingBlock->accumulator;
+        *sample = oversamplingBlock->accumulator
+                / oversamplingBlock->oversampling;
         oversamplingBlock->accumulator = 0;
         oversamplingBlock->count = 0;
         return true;

@@ -40,8 +40,8 @@ TEST_CASE("Oversampling decimation with factor 4 accumulates and averages",
 
     sample = 400;
     REQUIRE(dsp_oversamplingDecimate(&blk, &sample) == true);
-    // Sum = 1000, output is the sum (averaging deferred to gain stage)
-    REQUIRE(sample == 1000);
+    // Average of 100, 200, 300, 400 = 250
+    REQUIRE(sample == 250);
 }
 
 TEST_CASE("Oversampling decimation with factor 8 does not overflow",
@@ -62,7 +62,7 @@ TEST_CASE("Oversampling decimation with factor 8 does not overflow",
 
     sample = 65535;
     REQUIRE(dsp_oversamplingDecimate(&blk, &sample) == true);
-    REQUIRE(sample == static_cast<uint16_t>(8u * 65535u));
+    REQUIRE(sample == 65535);
 }
 
 TEST_CASE("Oversampling decimation resets between frames",
@@ -79,12 +79,12 @@ TEST_CASE("Oversampling decimation resets between frames",
     REQUIRE(dsp_oversamplingDecimate(&blk, &sample) == false);
     sample = 200;
     REQUIRE(dsp_oversamplingDecimate(&blk, &sample) == true);
-    REQUIRE(sample == 300);
+    REQUIRE(sample == 150);
 
     // Second pair should start fresh
     sample = 500;
     REQUIRE(dsp_oversamplingDecimate(&blk, &sample) == false);
     sample = 700;
     REQUIRE(dsp_oversamplingDecimate(&blk, &sample) == true);
-    REQUIRE(sample == 1200);
+    REQUIRE(sample == 600);
 }

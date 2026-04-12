@@ -235,7 +235,7 @@ static void *encodeFunc(void *arg)
             if(!dsp_oversamplingDecimate(&oversamplingBlock, ((uint16_t*) &sample)))
                 continue;
             sample = dsp_dcBlockFilter(&dcBlock, sample);
-            sample = sample * (micGain / oversampling);
+            sample = sample * micGain;
             #endif
 
             audioBuf[i++] = sample;
