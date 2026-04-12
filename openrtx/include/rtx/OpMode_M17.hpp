@@ -82,6 +82,14 @@ public:
         return dataValid;
     }
 
+    /**
+     * Provide RX and TX packet queues to the operating mode.
+     *
+     * @param rx: pointer to the receive packet queue.
+     * @param tx: pointer to the transmit packet queue.
+     */
+    virtual void setPktQueues(PktBuf *rx, PktBuf *tx) override;
+
 private:
 
     /**
@@ -107,6 +115,15 @@ private:
      * current RTX status.
      */
     void txState(rtxStatus_t *const status);
+
+    /**
+     * Transmit all queued packets as M17 packet bursts.
+     * Called from offState() when txQueue has pending packets.
+     *
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
+     */
+    void txPacketBurst(rtxStatus_t *const status);
 
     /**
      * Compare two callsigns in plain text form.
@@ -140,6 +157,10 @@ private:
     M17::FrameEncoder encoder;      ///< M17 frame encoder
     uint16_t gpsTimer;                 ///< GPS data transmission interval timer
     M17::MetaText metaText;            ///< M17 metatext accumulator
+    PktBuf *rxQueue;                    ///< Receive packet queue
+    PktBuf *txQueue;                    ///< Transmit packet queue
+    rtxPacket_t rxPacket;               ///< Packet assembly buffer
+    size_t rxPacketLen;                 ///< Bytes accumulated so far
 };
 
 #endif /* OPMODE_M17_H */

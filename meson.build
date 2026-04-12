@@ -67,7 +67,8 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/Demodulator.cpp',
                'openrtx/src/protocols/M17/FrameEncoder.cpp',
                'openrtx/src/protocols/M17/FrameDecoder.cpp',
-               'openrtx/src/protocols/M17/LinkSetupFrame.cpp']
+               'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
+               'openrtx/src/rtx/PktBuf.cpp']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -1146,3 +1147,27 @@ test('Codeplug Test',         cps_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
+
+pktbuf_test = executable('pktbuf_test',
+                          sources : unit_test_src + ['tests/unit/pktbuf_test.cpp'],
+                          kwargs  : unit_test_opts)
+
+test('PktBuf Unit Test', pktbuf_test)
+
+rtx_pktbuf_test = executable('rtx_pktbuf_test',
+                              sources : unit_test_src + ['tests/unit/rtx_pktbuf_test.cpp'],
+                              kwargs  : unit_test_opts)
+
+test('RTX PktBuf API Test', rtx_pktbuf_test)
+
+m17_pkt_rx_test = executable('m17_pkt_rx_test',
+                              sources : unit_test_src + ['tests/unit/m17_pkt_rx_test.cpp'],
+                              kwargs  : unit_test_opts)
+
+test('M17 Packet RX Test', m17_pkt_rx_test)
+
+m17_pkt_tx_test = executable('m17_pkt_tx_test',
+                              sources : unit_test_src + ['tests/unit/m17_pkt_tx_test.cpp'],
+                              kwargs  : unit_test_opts)
+
+test('M17 Packet TX Test', m17_pkt_tx_test)

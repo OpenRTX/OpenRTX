@@ -29,9 +29,11 @@ using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
-                           invertTxPhase(false), invertRxPhase(false)
+                           invertTxPhase(false), invertRxPhase(false),
+                           rxQueue(nullptr), txQueue(nullptr),
+                           rxPacketLen(0)
 {
-
+    memset(&rxPacket, 0, sizeof(rxPacket));
 }
 
 OpMode_M17::~OpMode_M17()
@@ -49,6 +51,13 @@ void OpMode_M17::enable()
     extendedCall = false;
     startRx      = true;
     startTx      = false;
+    rxPacketLen  = 0;
+}
+
+void OpMode_M17::setPktQueues(PktBuf *rx, PktBuf *tx)
+{
+    rxQueue = rx;
+    txQueue = tx;
 }
 
 void OpMode_M17::disable()
@@ -151,6 +160,15 @@ void OpMode_M17::offState(rtxStatus_t *const status)
     {
         startTx = true;
         status->opStatus = TX;
+        return;
+    }
+
+    // Transmit queued packets when not voice-transmitting
+    if(txQueue != nullptr && txQueue->pending() > 0
+       && (status->txDisable == 0))
+    {
+        txPacketBurst(status);
+        startRx = true;
         return;
     }
 
@@ -269,6 +287,48 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     codec_pushFrame(sf.data(),     false);
                     codec_pushFrame(sf.data() + 8, false);
                 }
+
+                // Accumulate packet frames and push to RX queue on EOF
+                if(type == FrameType::PACKET)
+                {
+                    const PacketFrame &pf = decoder.getPacketFrame();
+
+                    if(pf.isEof())
+                    {
+                        // Last frame: counter holds valid byte count
+                        uint8_t validBytes = pf.getCounter();
+                        if(validBytes > 0
+                           && (rxPacketLen + validBytes) <= RTX_MAX_PKT_LEN)
+                        {
+                            memcpy(rxPacket.data + rxPacketLen,
+                                   pf.data(), validBytes);
+                            rxPacketLen += validBytes;
+                        }
+
+                        rxPacket.len       = static_cast<uint16_t>(rxPacketLen);
+                        rxPacket.protocol  = PKT_PROTO_M17;
+                        rxPacket.rssi      = static_cast<int16_t>(rtx_getRssi());
+                        rxPacket.timestamp = getTick();
+
+                        if(rxQueue != nullptr && rxPacketLen > 0)
+                            rxQueue->push(&rxPacket);
+
+                        // Reset for next packet
+                        rxPacketLen = 0;
+                        memset(&rxPacket, 0, sizeof(rxPacket));
+                    }
+                    else
+                    {
+                        // Intermediate frame: append full 25 bytes
+                        if((rxPacketLen + PacketFrame::DATA_SIZE)
+                           <= RTX_MAX_PKT_LEN)
+                        {
+                            memcpy(rxPacket.data + rxPacketLen,
+                                   pf.data(), PacketFrame::DATA_SIZE);
+                            rxPacketLen += PacketFrame::DATA_SIZE;
+                        }
+                    }
+                }
             }
         }
     }
@@ -295,6 +355,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         metaText.reset();
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
+
+        // Discard any partially assembled packet
+        rxPacketLen = 0;
+        memset(&rxPacket, 0, sizeof(rxPacket));
     }
 }
 
@@ -415,4 +479,74 @@ bool OpMode_M17::compareCallsigns(const std::string& localCs,
         return true;
 
     return false;
+}
+
+void OpMode_M17::txPacketBurst(rtxStatus_t *const status)
+{
+    rtxPacket_t pkt;
+
+    while(txQueue->pop(&pkt))
+    {
+        frame_t m17Frame;
+
+        LinkSetupFrame lsf;
+        lsf.clear();
+        lsf.setSource(status->source_address);
+
+        Callsign dst(status->destination_address);
+        if(!dst.isEmpty())
+            lsf.setDestination(dst);
+
+        streamType_t type;
+        type.value = 0;
+        type.fields.dataMode = DATAMODE_PACKET;
+        type.fields.dataType = DATATYPE_DATA;
+        type.fields.CAN      = status->can;
+        lsf.setType(type);
+
+        encoder.reset();
+        encoder.encodeLsf(lsf, m17Frame);
+
+        radio_enableTx();
+        modulator.invertPhase(invertTxPhase);
+        modulator.start();
+        modulator.sendPreamble();
+        modulator.sendFrame(m17Frame);
+
+        /* Split payload into 25-byte packet frames */
+        size_t offset = 0;
+        while(offset < pkt.len)
+        {
+            PacketFrame pf;
+            pf.clear();
+
+            size_t remaining = pkt.len - offset;
+
+            if(remaining > PacketFrame::DATA_SIZE)
+            {
+                /* Intermediate frame: full 25 bytes */
+                memcpy(pf.data(), pkt.data + offset, PacketFrame::DATA_SIZE);
+                pf.setEof(false);
+                pf.setCounter(static_cast<uint8_t>(
+                    (offset / PacketFrame::DATA_SIZE) & 0x1F));
+                offset += PacketFrame::DATA_SIZE;
+            }
+            else
+            {
+                /* Final frame: remaining bytes, mark EOF */
+                memcpy(pf.data(), pkt.data + offset, remaining);
+                pf.setEof(true);
+                pf.setCounter(static_cast<uint8_t>(remaining));
+                offset += remaining;
+            }
+
+            encoder.encodePacketFrame(pf, m17Frame);
+            modulator.sendFrame(m17Frame);
+        }
+
+        encoder.encodeEotFrame(m17Frame);
+        modulator.sendFrame(m17Frame);
+        modulator.stop();
+        radio_disableRtx();
+    }
 }

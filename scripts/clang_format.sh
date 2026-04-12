@@ -104,6 +104,16 @@ tests/unit/M17_viterbi.cpp
 tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
+tests/unit/pktbuf_test.cpp
+tests/unit/rtx_pktbuf_test.cpp
+tests/unit/m17_pkt_rx_test.cpp
+tests/unit/m17_pkt_tx_test.cpp
+openrtx/include/rtx/PktBuf.hpp
+openrtx/include/rtx/OpMode.hpp
+openrtx/include/rtx/OpMode_M17.hpp
+openrtx/src/rtx/PktBuf.cpp
+openrtx/src/rtx/rtx.cpp
+openrtx/src/rtx/OpMode_M17.cpp
 EOF
 )
 

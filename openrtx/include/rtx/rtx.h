@@ -86,6 +86,33 @@ enum opstatus
     TX  = 2         /**< Transmitting */
 };
 
+/**
+ * Maximum packet payload length, in bytes.
+ */
+#define RTX_MAX_PKT_LEN 824
+
+/**
+ * \enum pktProto Enumeration of packet protocol types.
+ */
+enum pktProto
+{
+    PKT_PROTO_M17  = 0,
+    PKT_PROTO_APRS = 1
+};
+
+/**
+ * Packet descriptor exchanged through the RTX packet queue.
+ */
+typedef struct
+{
+    uint8_t  data[RTX_MAX_PKT_LEN]; /**< Packet payload              */
+    uint16_t len;                    /**< Actual payload length       */
+    int16_t  rssi;                   /**< RSSI at time of reception   */
+    uint32_t timestamp;              /**< System tick at RX/TX time   */
+    uint8_t  protocol;               /**< Protocol, from enum pktProto*/
+}
+rtxPacket_t;
+
 
 /**
  * Initialise rtx stage.
@@ -132,6 +159,27 @@ rssi_t rtx_getRssi();
  * @return true if RX squelch is open.
  */
 bool rtx_rxSquelchOpen();
+
+/**
+ * Pop the oldest received packet from the RX queue.
+ *
+ * @param pkt: pointer to a descriptor that will receive the packet.
+ * @return true if a packet was available, false if the queue was empty.
+ */
+bool rtx_recvPacket(rtxPacket_t *pkt);
+
+/**
+ * Enqueue a packet for transmission.
+ *
+ * @param pkt: pointer to the packet descriptor to copy in.
+ * @return true if the packet was enqueued, false if the queue was full.
+ */
+bool rtx_sendPacket(const rtxPacket_t *pkt);
+
+/**
+ * Return the number of received packets waiting in the RX queue.
+ */
+unsigned int rtx_rxPending();
 
 #ifdef __cplusplus
 }

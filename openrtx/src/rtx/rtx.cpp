@@ -10,6 +10,7 @@
 #include "rtx/rtx.h"
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
+#include "rtx/PktBuf.hpp"
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -23,6 +24,9 @@ static OpMode_FM  fmMode;               // FM mode handler
 #ifdef CONFIG_M17
 static OpMode_M17 m17Mode;              // M17 mode handler
 #endif
+
+static PktBuf rxPktBuf;                  // Received-packet queue
+static PktBuf txPktBuf;                  // Transmit-packet queue
 
 
 void rtx_init(pthread_mutex_t *m)
@@ -54,6 +58,12 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_refl[0]   = '\0';
     rtxStatus.M17_meta_text[0] = '\0';
     currMode = &noMode;
+
+    /*
+     * Clear any stale packets from the queues
+     */
+    rxPktBuf.clear();
+    txPktBuf.clear();
 
     /*
      * Initialise low-level platform-specific driver
@@ -149,6 +159,7 @@ void rtx_task()
             }
 
             currMode->enable();
+            currMode->setPktQueues(&rxPktBuf, &txPktBuf);
         }
 
         // Tell radio driver that there was a change in its configuration.
@@ -214,4 +225,19 @@ rssi_t rtx_getRssi()
 bool rtx_rxSquelchOpen()
 {
     return currMode->rxSquelchOpen();
+}
+
+bool rtx_recvPacket(rtxPacket_t *pkt)
+{
+    return rxPktBuf.pop(pkt);
+}
+
+bool rtx_sendPacket(const rtxPacket_t *pkt)
+{
+    return txPktBuf.push(pkt);
+}
+
+unsigned int rtx_rxPending()
+{
+    return static_cast< unsigned int >(rxPktBuf.pending());
 }
