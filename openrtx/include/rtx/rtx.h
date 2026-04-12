@@ -86,6 +86,33 @@ enum opstatus
     TX  = 2         /**< Transmitting */
 };
 
+/**
+ * Maximum packet payload length, in bytes.
+ */
+#define RTX_MAX_PKT_LEN 824
+
+/**
+ * \enum pktProto Enumeration of packet protocol types.
+ */
+enum pktProto
+{
+    PKT_PROTO_M17  = 0,
+    PKT_PROTO_APRS = 1
+};
+
+/**
+ * Packet descriptor exchanged through the RTX packet queue.
+ */
+typedef struct
+{
+    uint8_t  data[RTX_MAX_PKT_LEN]; /**< Packet payload              */
+    uint16_t len;                    /**< Actual payload length       */
+    int16_t  rssi;                   /**< RSSI at time of reception   */
+    uint32_t timestamp;              /**< System tick at RX/TX time   */
+    uint8_t  protocol;               /**< Protocol, from enum pktProto*/
+}
+rtxPacket_t;
+
 
 /**
  * Initialise rtx stage.

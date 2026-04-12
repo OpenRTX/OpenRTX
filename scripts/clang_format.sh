@@ -104,6 +104,9 @@ tests/unit/M17_viterbi.cpp
 tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
+tests/unit/pktbuf_test.cpp
+openrtx/include/rtx/PktBuf.hpp
+openrtx/src/rtx/PktBuf.cpp
 EOF
 )
 
