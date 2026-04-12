@@ -163,6 +163,15 @@ void OpMode_M17::offState(rtxStatus_t *const status)
         return;
     }
 
+    // Transmit queued packets when not voice-transmitting
+    if(txQueue != nullptr && txQueue->pending() > 0
+       && (status->txDisable == 0))
+    {
+        txPacketBurst(status);
+        startRx = true;
+        return;
+    }
+
     // Sleep for 30ms if there is nothing else to do in order to prevent the
     // rtx thread looping endlessly and locking up all the other tasks
     sleepFor(0, 30);
@@ -470,4 +479,74 @@ bool OpMode_M17::compareCallsigns(const std::string& localCs,
         return true;
 
     return false;
+}
+
+void OpMode_M17::txPacketBurst(rtxStatus_t *const status)
+{
+    rtxPacket_t pkt;
+
+    while(txQueue->pop(&pkt))
+    {
+        frame_t m17Frame;
+
+        LinkSetupFrame lsf;
+        lsf.clear();
+        lsf.setSource(status->source_address);
+
+        Callsign dst(status->destination_address);
+        if(!dst.isEmpty())
+            lsf.setDestination(dst);
+
+        streamType_t type;
+        type.value = 0;
+        type.fields.dataMode = DATAMODE_PACKET;
+        type.fields.dataType = DATATYPE_DATA;
+        type.fields.CAN      = status->can;
+        lsf.setType(type);
+
+        encoder.reset();
+        encoder.encodeLsf(lsf, m17Frame);
+
+        radio_enableTx();
+        modulator.invertPhase(invertTxPhase);
+        modulator.start();
+        modulator.sendPreamble();
+        modulator.sendFrame(m17Frame);
+
+        /* Split payload into 25-byte packet frames */
+        size_t offset = 0;
+        while(offset < pkt.len)
+        {
+            PacketFrame pf;
+            pf.clear();
+
+            size_t remaining = pkt.len - offset;
+
+            if(remaining > PacketFrame::DATA_SIZE)
+            {
+                /* Intermediate frame: full 25 bytes */
+                memcpy(pf.data(), pkt.data + offset, PacketFrame::DATA_SIZE);
+                pf.setEof(false);
+                pf.setCounter(static_cast<uint8_t>(
+                    (offset / PacketFrame::DATA_SIZE) & 0x1F));
+                offset += PacketFrame::DATA_SIZE;
+            }
+            else
+            {
+                /* Final frame: remaining bytes, mark EOF */
+                memcpy(pf.data(), pkt.data + offset, remaining);
+                pf.setEof(true);
+                pf.setCounter(static_cast<uint8_t>(remaining));
+                offset += remaining;
+            }
+
+            encoder.encodePacketFrame(pf, m17Frame);
+            modulator.sendFrame(m17Frame);
+        }
+
+        encoder.encodeEotFrame(m17Frame);
+        modulator.sendFrame(m17Frame);
+        modulator.stop();
+        radio_disableRtx();
+    }
 }

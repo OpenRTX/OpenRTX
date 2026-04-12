@@ -1165,3 +1165,9 @@ m17_pkt_rx_test = executable('m17_pkt_rx_test',
                               kwargs  : unit_test_opts)
 
 test('M17 Packet RX Test', m17_pkt_rx_test)
+
+m17_pkt_tx_test = executable('m17_pkt_tx_test',
+                              sources : unit_test_src + ['tests/unit/m17_pkt_tx_test.cpp'],
+                              kwargs  : unit_test_opts)
+
+test('M17 Packet TX Test', m17_pkt_tx_test)
