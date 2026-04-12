@@ -41,10 +41,13 @@ static uint64_t         dataBuffer[BUF_SIZE];
 
 #ifdef PLATFORM_MOD17
 static const uint8_t micGain = 12;
+static const uint8_t oversampling = 1;
+#elif defined(PLATFORM_LINUX)
+static const uint8_t micGain = 1;
+static const uint8_t oversampling = 1;
 #else
-#ifndef PLATFORM_LINUX
 static const uint8_t micGain = 32;
-#endif
+static const uint8_t oversampling = 8;
 #endif
 
 static void *encodeFunc(void *arg);
@@ -176,47 +179,74 @@ static void *encodeFunc(void *arg)
 
     streamId        iStream;
     pathId          iPath = *((pathId*) arg);
-    stream_sample_t audioBuf[320];
+    // Unfortunately, codec2_encode takes a non-negligable amount of time to compute,
+    // and this thread is locked until that is finished. The buffers need to be sufficiently
+    // large to span this timespan without overflowing.
+    // Starting a new thread is an option, but the new stack is already 2kB, and it also
+    // adds a big amount of extra complexity and shared buffers, so not actually beneficial.
+    // The best solution would be to implement the decimation at a DMA interrupt/callback,
+    // but that's too complex for now, and there's enough heap available still.
+    // Allocate on the heap, as the stack isn't big enough for oversampling above 2 or so.
+    stream_sample_t *dacBuf = malloc(320 * oversampling * sizeof(stream_sample_t));
     struct CODEC2   *codec2;
     struct dcBlock  dcBlock;
+    struct oversamplingBlock  oversamplingBlock;
 
-    iStream = audioStream_start(iPath, audioBuf, 320, 8000,
+    iStream = audioStream_start(iPath, dacBuf, 320 * oversampling, 8000 * oversampling,
                                 STREAM_INPUT | BUF_CIRC_DOUBLE);
     if(iStream < 0)
     {
+        free(dacBuf);
         pthread_detach(pthread_self());
         running = false;
         return NULL;
     }
 
     dsp_resetState(dcBlock);
+    dsp_resetState(oversamplingBlock);
+    dsp_oversamplingSetOversampling(&oversamplingBlock, oversampling);
     codec2 = codec2_create(CODEC2_MODE_3200);
 
+    size_t audioDataCount = 0;
+    size_t audioDataIndex = 0;
+    dataBlock_t audio;
     while(reqStop == false)
     {
-        // Invalid path, quit
-        if(audioPath_getStatus(iPath) != PATH_OPEN)
-            break;
+        stream_sample_t audioBuf[160];
+        for(size_t i = 0; i < 160;)
+        {
+            if(audioDataCount == 0)
+            {
+                // Invalid audio path, quit
+                if(audioPath_getStatus(iPath) != PATH_OPEN)
+                    goto encodeFunc_cleanup;
 
-        dataBlock_t audio = inputStream_getData(iStream);
-        if(audio.data == NULL)
-            break;
+                audio = inputStream_getData(iStream);
+                if(audio.data == NULL || audio.len == 0)
+                    goto encodeFunc_cleanup;
 
-        #ifndef PLATFORM_LINUX
-        for(size_t i = 0; i < audio.len; i++) {
-            int16_t sample;
+                audioDataCount = audio.len;
+                audioDataIndex = 0;
+            }
+            audioDataCount--;
+            stream_sample_t sample = audio.data[audioDataIndex++];
 
-            sample = dsp_dcBlockFilter(&dcBlock, audio.data[i]);
-            audio.data[i] = sample * micGain;
+            #ifndef PLATFORM_LINUX
+            if(!dsp_oversamplingDecimate(&oversamplingBlock, ((uint16_t*) &sample)))
+                continue;
+            sample = dsp_dcBlockFilter(&dcBlock, sample);
+            sample = sample * micGain;
+            #endif
+
+            audioBuf[i++] = sample;
         }
-        #endif
 
-        // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
+        // CODEC2 encodes 20ms of audio, 160 samples, into 8 bytes: here we write the
         // new encoded data into a buffer of 16 bytes writing the first
         // half and then the second one, sequentially.
         // Data ready flag is rised once all the 16 bytes contain new data.
         uint64_t frame = 0;
-        codec2_encode(codec2, ((uint8_t*) &frame), audio.data);
+        codec2_encode(codec2, ((uint8_t*) &frame), audioBuf);
 
         pthread_mutex_lock(&data_mutex);
 
@@ -237,9 +267,11 @@ static void *encodeFunc(void *arg)
 
         pthread_mutex_unlock(&data_mutex);
     }
+encodeFunc_cleanup:
 
     audioStream_terminate(iStream);
     codec2_destroy(codec2);
+    free(dacBuf);
 
     // In case thread terminates due to invalid path or stream error, detach it
     // to ensure that its memory gets freed by the OS.

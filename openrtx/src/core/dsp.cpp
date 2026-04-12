@@ -23,3 +23,25 @@ int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 
     return static_cast<int16_t>(dcb->prevOut);
 }
+
+void dsp_oversamplingSetOversampling(
+    struct oversamplingBlock *oversamplingBlock, uint8_t oversampling)
+{
+    oversamplingBlock->oversampling = oversampling;
+}
+
+bool dsp_oversamplingDecimate(struct oversamplingBlock *oversamplingBlock,
+                              uint16_t *sample)
+{
+    oversamplingBlock->accumulator += *sample;
+    oversamplingBlock->count++;
+    if (oversamplingBlock->count >= oversamplingBlock->oversampling) {
+        *sample = oversamplingBlock->accumulator
+                / oversamplingBlock->oversampling;
+        oversamplingBlock->accumulator = 0;
+        oversamplingBlock->count = 0;
+        return true;
+    } else {
+        return false;
+    }
+}

@@ -60,6 +60,21 @@ static inline void dsp_removeDcOffset(struct dcBlock *dcb, int16_t *buffer,
         buffer[i] = dsp_dcBlockFilter(dcb, buffer[i]);
 }
 
+/**
+ * Data structure holding the internal state of an oversampling filter.
+ */
+struct oversamplingBlock {
+    uint8_t oversampling;
+    uint8_t count;
+    uint32_t accumulator;
+};
+
+void dsp_oversamplingSetOversampling(
+    struct oversamplingBlock *oversamplingBlock, uint8_t oversampling);
+
+bool dsp_oversamplingDecimate(struct oversamplingBlock *oversamplingBlock,
+                              uint16_t *sample);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
