@@ -6,6 +6,9 @@
 #Build dirs
 /build*
 
+# Meson wrap lock file
+subprojects/.wraplock
+
 # Prerequisites
 *.d
 
@@ -47,6 +50,9 @@
 
 # Python byte-compiled
 */__pycache__
+
+# Python virtual environments
+.venv/
 
 # Kdevelop files
 *.kdev4

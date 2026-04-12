@@ -84,6 +84,29 @@ public:
     {
         return false;
     }
+
+    /**
+     * Return selected SMS message from queue if any.
+     * This is only valid for M17 mode.
+     */
+    virtual bool getSMSMessage(uint8_t index, char *sender, size_t sender_len,
+                               char *message, size_t message_len)
+    {
+        (void) index;
+        (void) sender;
+        (void) sender_len;
+        (void) message;
+        (void) message_len;
+        return false;
+    }
+
+    /**
+     * Delete an SMS message from the queue.
+     */
+    virtual void delSMSMessage(uint8_t index)
+    {
+        (void) index;
+    }
 };
 
 #endif /* OPMODE_H */
