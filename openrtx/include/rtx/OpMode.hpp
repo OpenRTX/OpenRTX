@@ -9,6 +9,7 @@
 
 #include "interfaces/delays.h"
 #include "rtx/rtx.h"
+#include "rtx/PktBuf.hpp"
 
 /**
  * This class provides a standard interface for all the operating modes.
@@ -83,6 +84,19 @@ public:
     virtual bool rxSquelchOpen()
     {
         return false;
+    }
+
+    /**
+     * Provide RX and TX packet queues to the operating mode.
+     * Called by the RTX driver after enable().
+     *
+     * @param rx: pointer to the receive packet queue (may be NULL).
+     * @param tx: pointer to the transmit packet queue (may be NULL).
+     */
+    virtual void setPktQueues(PktBuf *rx, PktBuf *tx)
+    {
+        (void) rx;
+        (void) tx;
     }
 };
 

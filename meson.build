@@ -1153,3 +1153,9 @@ pktbuf_test = executable('pktbuf_test',
                           kwargs  : unit_test_opts)
 
 test('PktBuf Unit Test', pktbuf_test)
+
+rtx_pktbuf_test = executable('rtx_pktbuf_test',
+                              sources : unit_test_src + ['tests/unit/rtx_pktbuf_test.cpp'],
+                              kwargs  : unit_test_opts)
+
+test('RTX PktBuf API Test', rtx_pktbuf_test)

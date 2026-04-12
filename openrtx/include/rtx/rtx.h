@@ -160,6 +160,27 @@ rssi_t rtx_getRssi();
  */
 bool rtx_rxSquelchOpen();
 
+/**
+ * Pop the oldest received packet from the RX queue.
+ *
+ * @param pkt: pointer to a descriptor that will receive the packet.
+ * @return true if a packet was available, false if the queue was empty.
+ */
+bool rtx_recvPacket(rtxPacket_t *pkt);
+
+/**
+ * Enqueue a packet for transmission.
+ *
+ * @param pkt: pointer to the packet descriptor to copy in.
+ * @return true if the packet was enqueued, false if the queue was full.
+ */
+bool rtx_sendPacket(const rtxPacket_t *pkt);
+
+/**
+ * Return the number of received packets waiting in the RX queue.
+ */
+unsigned int rtx_rxPending();
+
 #ifdef __cplusplus
 }
 #endif
