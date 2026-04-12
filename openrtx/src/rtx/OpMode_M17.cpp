@@ -29,9 +29,11 @@ using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
                            dataValid(false), extendedCall(false),
-                           invertTxPhase(false), invertRxPhase(false)
+                           invertTxPhase(false), invertRxPhase(false),
+                           rxQueue(nullptr), txQueue(nullptr),
+                           rxPacketLen(0)
 {
-
+    memset(&rxPacket, 0, sizeof(rxPacket));
 }
 
 OpMode_M17::~OpMode_M17()
@@ -49,6 +51,13 @@ void OpMode_M17::enable()
     extendedCall = false;
     startRx      = true;
     startTx      = false;
+    rxPacketLen  = 0;
+}
+
+void OpMode_M17::setPktQueues(PktBuf *rx, PktBuf *tx)
+{
+    rxQueue = rx;
+    txQueue = tx;
 }
 
 void OpMode_M17::disable()
@@ -269,6 +278,48 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     codec_pushFrame(sf.data(),     false);
                     codec_pushFrame(sf.data() + 8, false);
                 }
+
+                // Accumulate packet frames and push to RX queue on EOF
+                if(type == FrameType::PACKET)
+                {
+                    const PacketFrame &pf = decoder.getPacketFrame();
+
+                    if(pf.isEof())
+                    {
+                        // Last frame: counter holds valid byte count
+                        uint8_t validBytes = pf.getCounter();
+                        if(validBytes > 0
+                           && (rxPacketLen + validBytes) <= RTX_MAX_PKT_LEN)
+                        {
+                            memcpy(rxPacket.data + rxPacketLen,
+                                   pf.data(), validBytes);
+                            rxPacketLen += validBytes;
+                        }
+
+                        rxPacket.len       = static_cast<uint16_t>(rxPacketLen);
+                        rxPacket.protocol  = PKT_PROTO_M17;
+                        rxPacket.rssi      = static_cast<int16_t>(rtx_getRssi());
+                        rxPacket.timestamp = getTick();
+
+                        if(rxQueue != nullptr && rxPacketLen > 0)
+                            rxQueue->push(&rxPacket);
+
+                        // Reset for next packet
+                        rxPacketLen = 0;
+                        memset(&rxPacket, 0, sizeof(rxPacket));
+                    }
+                    else
+                    {
+                        // Intermediate frame: append full 25 bytes
+                        if((rxPacketLen + PacketFrame::DATA_SIZE)
+                           <= RTX_MAX_PKT_LEN)
+                        {
+                            memcpy(rxPacket.data + rxPacketLen,
+                                   pf.data(), PacketFrame::DATA_SIZE);
+                            rxPacketLen += PacketFrame::DATA_SIZE;
+                        }
+                    }
+                }
             }
         }
     }
@@ -295,6 +346,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         metaText.reset();
         codec_stop(rxAudioPath);
         audioPath_release(rxAudioPath);
+
+        // Discard any partially assembled packet
+        rxPacketLen = 0;
+        memset(&rxPacket, 0, sizeof(rxPacket));
     }
 }
 

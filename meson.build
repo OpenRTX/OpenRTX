@@ -1159,3 +1159,9 @@ rtx_pktbuf_test = executable('rtx_pktbuf_test',
                               kwargs  : unit_test_opts)
 
 test('RTX PktBuf API Test', rtx_pktbuf_test)
+
+m17_pkt_rx_test = executable('m17_pkt_rx_test',
+                              sources : unit_test_src + ['tests/unit/m17_pkt_rx_test.cpp'],
+                              kwargs  : unit_test_opts)
+
+test('M17 Packet RX Test', m17_pkt_rx_test)
