@@ -70,7 +70,7 @@ static void *logFunc(void *arg)
             // the dump.
             log_entry_t entry;
             memset(&entry, 0x00, sizeof(log_entry_t));
-            if(logBuf.pop(entry, false) == false) emptyCtr++;
+            if(logBuf.tryPop(entry) == false) emptyCtr++;
 
             if(emptyCtr >= 100)
             {
@@ -126,7 +126,7 @@ static inline void pushLog(const log_entry_t& e)
         trigCnt   = 0;
     }
     if(logBuf.full()) logBuf.eraseElement();
-    logBuf.push(e, false);
+    logBuf.tryPush(e);
 }
 
 #endif
