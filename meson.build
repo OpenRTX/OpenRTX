@@ -1275,6 +1275,10 @@ m17_replay_test = executable('m17_replay_test',
                              sources : unit_test_src + m17_replay_src + m17_signal_src + ['tests/unit/M17_replay.cpp'],
                              kwargs  : m17_replay_test_opts)
 
+ringbuf_test = executable('ringbuf_test',
+                          sources : ['tests/unit/ringbuf.cpp'],
+                          kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1293,3 +1297,4 @@ test('GFX Text Test',        gfx_text_test)
 test('S-Level Test', slevel_test)
 test('Audio Codec Test',     audio_codec_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
+test('Ring Buffer Test', ringbuf_test)

@@ -53,7 +53,6 @@ openrtx/include/core/goertzel.hpp
 openrtx/include/core/gps.h
 openrtx/include/core/iir.hpp
 openrtx/include/core/queue.h
-openrtx/include/core/ringbuf.hpp
 openrtx/include/core/settings.h
 openrtx/include/core/threads.h
 openrtx/include/interfaces/keyboard.h
