@@ -20,7 +20,8 @@ static default_random_engine rng;
 /**
  * Insert random bit flips in input data.
  */
-template <size_t N> static void generateErrors(array<uint8_t, N> &data)
+template <size_t N>
+static void generateErrors(array<uint8_t, N> &data)
 {
     uniform_int_distribution<uint8_t> numErrs(0, 4);
     uniform_int_distribution<uint8_t> errPos(0, N);
