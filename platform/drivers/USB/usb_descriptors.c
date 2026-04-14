@@ -96,7 +96,14 @@ uint8_t const desc_fs_configuration[] =
 {
     // Config number, interface count, string index, total length, attribute,
     // power in mA
-    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0x00, 100),
+    /*
+     * Advertise remote wakeup so the host may enable it (SET_FEATURE) and we
+     * can pulse K-state via tud_remote_wakeup() while suspended.  Without this
+     * bit, Linux may leave the link in USB suspend while the host is idle; bulk
+     * IN may not run until the bus leaves suspend.
+     */
+    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN,
+                          TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
 
     // 1st CDC: Interface number, string index, EP notification address and
     // size, EP data address (out, in) and size.

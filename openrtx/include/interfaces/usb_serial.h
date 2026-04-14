@@ -45,16 +45,21 @@ uint32_t usb_serial_available(void);
 /**
  * Write data to the USB CDC port.
  *
- * Non-blocking and thread-safe: data is accepted into an internal transmit
- * buffer and returned immediately.  usb_serial_task() flushes the buffer
- * to the CDC FIFO on its next call.
+ * Blocking: execution does not return until all bytes have been written
+ * through the CDC TX FIFO and flushed to the USB endpoint.
  *
- * A short write (return value < len) indicates the transmit buffer is full;
- * the caller is responsible for retrying the unsent remainder if needed.
+ * Returns -1 immediately (without writing any data) if the USB device is
+ * not mounted, avoiding an indefinite block when the cable is unplugged.
+ * Also returns -1 if no forward progress is made within ~50 ms (transfer
+ * stalled while mounted), clearing the TX FIFO before returning.
+ *
+ * Thread-safe: concurrent callers are serialised by an internal mutex.
+ * Do not call this function from within a tinyUSB callback, as it may
+ * call tud_task() internally when the CDC TX FIFO is full.
  *
  * \param buf  data to send.
  * \param len  number of bytes to send.
- * \return number of bytes accepted, or -1 if not mounted.
+ * \return len on success, or -1 on error.
  */
 ssize_t usb_serial_write(const void *buf, size_t len);
 

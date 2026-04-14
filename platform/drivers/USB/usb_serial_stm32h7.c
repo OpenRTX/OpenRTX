@@ -5,6 +5,7 @@
  */
 
 #include "interfaces/usb_serial.h"
+#include "interfaces/delays.h"
 #include "peripherals/gpio.h"
 #include "pinmap.h"
 #include "hwconfig.h"
@@ -26,9 +27,7 @@
  * Gated on tud_mounted() (device enumerated) rather than tud_cdc_connected()
  * (DTR asserted by host).  DTR-gating is too strict: many host tools - loggers,
  * scripted readers, cat - never assert DTR, which would make output appear
- * silently dropped.  If the host has not opened a terminal the ring buffer just
- * fills up and writes return short; no data is sent to the CDC FIFO until a
- * consumer connects.
+ * silently dropped.
  */
 static _Atomic bool usb_mounted = false;
 
@@ -41,26 +40,81 @@ static _Atomic bool usb_mounted = false;
 static _Atomic bool usb_ready = false;
 
 /*
- * Software TX ring buffer.
- *
- * Multiple threads may call usb_serial_write() concurrently (MPSC).
- * tx_mutex serialises the write (producer) side.  usb_serial_task()
- * is the sole consumer and runs in the main thread; it snapshots
- * tx_head with an atomic acquire load so it never needs to hold the
- * mutex while writing to the CDC FIFO.
- *
- * Both tx_head and tx_tail are _Atomic: tx_tail is read by producers
- * (to detect a full ring) without holding tx_mutex, so it must be
- * accessed atomically to avoid data races.  Producers read tx_tail
- * with a relaxed load - a slightly stale value produces a conservative
- * "ring fuller than it really is" result, which can only cause short
- * writes, already the documented behaviour.
+ * If tud_cdc_notify_uart_state() fails in tud_mount_cb() (INT EP busy), retry
+ * from usb_serial_task() until it succeeds or we unmount.
  */
+static _Atomic bool cdc_uart_notify_pending = false;
 
-static uint8_t          tx_buf[USB_SERIAL_TX_BUF_SIZE];
-static _Atomic uint32_t tx_head = 0;   /* next write position, producer-owned */
-static _Atomic uint32_t tx_tail = 0;   /* next read position,  consumer-owned  */
-static pthread_mutex_t  tx_mutex = PTHREAD_MUTEX_INITIALIZER;
+#if CFG_TUD_CDC_NOTIFY
+/*
+ * After reconnect, fire several SERIAL_STATE notifications in quick succession
+ * so Linux cdc-acm sees carrier before open() blocks for ~10 s waiting on DCD.
+ */
+static uint8_t carrier_boot_notify_remaining;
+#endif
+
+/*
+ * Mutex that serialises all tinyUSB CDC calls (tud_cdc_write,
+ * tud_cdc_write_flush, tud_cdc_write_clear) and tud_task() itself.
+ * tud_task() is not re-entrant; holding this mutex before every call
+ * ensures only one thread pumps the USB stack at a time, whether that
+ * is usb_serial_task() on its regular tick or usb_serial_write()
+ * waiting for the CDC TX FIFO to drain.
+ */
+static pthread_mutex_t cdc_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#if CFG_TUD_CDC_NOTIFY
+/*
+ * Assert DCD/DSR via SERIAL_STATE so Linux cdc-acm treats the port as having
+ * carrier (open() / stty do not block waiting for modem lines).  If the notify
+ * endpoint is busy, usb_serial_task() retries via cdc_uart_notify_pending.
+ */
+static void usb_serial_send_carrier_notify(void)
+{
+    cdc_notify_uart_state_t state = { 0 };
+
+    state.dcd = 1;
+    state.dsr = 1;
+    if (tud_cdc_notify_uart_state(&state)) {
+        atomic_store(&cdc_uart_notify_pending, false);
+    } else {
+        atomic_store(&cdc_uart_notify_pending, true);
+    }
+}
+
+/*
+ * Host sends SET_CONTROL_LINE_STATE when a terminal opens the port; send
+ * carrier again so the driver refreshes (helps after failed notify at mount).
+ */
+void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
+{
+    (void)itf;
+    (void)dtr;
+    (void)rts;
+
+    if (!atomic_load(&usb_mounted)) {
+        return;
+    }
+
+    usb_serial_send_carrier_notify();
+}
+
+/*
+ * Host often sends SET_LINE_CODING during open(); piggyback carrier notify so
+ * cdc-acm updates before or alongside SET_CONTROL_LINE_STATE.
+ */
+void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *p_line_coding)
+{
+    (void)itf;
+    (void)p_line_coding;
+
+    if (!atomic_load(&usb_mounted)) {
+        return;
+    }
+
+    usb_serial_send_carrier_notify();
+}
+#endif
 
 void usb_serial_init(void)
 {
@@ -85,7 +139,8 @@ void usb_serial_init(void)
      * is sufficient; only the detector is needed.
      */
     PWR->CR3 |= PWR_CR3_USB33DEN;
-    while (!(PWR->CR3 & PWR_CR3_USB33RDY)) {}
+    while (!(PWR->CR3 & PWR_CR3_USB33RDY)) {
+    }
 
     /* Enable GPIOA clock (AHB4 on STM32H7) and configure USB_DN/USB_DP */
     RCC->AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
@@ -98,7 +153,8 @@ void usb_serial_init(void)
 
     /* Enable HSI48 and wait for it to be ready */
     RCC->CR |= RCC_CR_HSI48ON;
-    while ((RCC->CR & RCC_CR_HSI48RDY) == 0) {}
+    while ((RCC->CR & RCC_CR_HSI48RDY) == 0) {
+    }
 
     /*
      * Select HSI48 as USB clock source.
@@ -123,7 +179,7 @@ void usb_serial_init(void)
     /* Reset the USB peripheral after enabling its clock to clear any stale
      * state left over from a previous soft reset.
      */
-    RCC->AHB1RSTR |=  RCC_AHB1RSTR_USB2OTGFSRST;
+    RCC->AHB1RSTR |= RCC_AHB1RSTR_USB2OTGFSRST;
     __DSB();
     RCC->AHB1RSTR &= ~RCC_AHB1RSTR_USB2OTGFSRST;
     __DSB();
@@ -146,17 +202,15 @@ void usb_serial_init(void)
      */
     NVIC_SetPriority(OTG_FS_IRQn, USB_OTG_FS_IRQ_PRIORITY);
 
-    if (!tusb_init())
-    {
+    if (!tusb_init()) {
         return;
     }
 
     /*
-     * Disable buffering on stdout.  usb_serial_write() is non-blocking and
-     * manages its own internal buffer; a libc-level buffer would only add
-     * latency and complicate partial-write handling.
+     * Disable buffering on stdout.  usb_serial_write() manages its own
+     * blocking loop; a libc-level buffer would only add latency.
      */
-    (void) setvbuf(stdout, NULL, _IONBF, 0);
+    (void)setvbuf(stdout, NULL, _IONBF, 0);
 
     atomic_store(&usb_ready, true);
 }
@@ -168,46 +222,39 @@ void usb_serial_terminate(void)
     __DSB();
     atomic_store(&usb_mounted, false);
     atomic_store(&usb_ready, false);
+    atomic_store(&cdc_uart_notify_pending, false);
 }
 
 void usb_serial_task(void)
 {
-    /* Service tinyUSB first so that mount/unmount state changes are
-     * processed before we inspect usb_mounted or write to the CDC FIFO.
-     * Without this, the first bytes after a terminal connects can be
-     * discarded because usb_mounted is still false on this tick.
-     */
+    pthread_mutex_lock(&cdc_mutex);
+
+    /* Process USB events (mount/unmount, receive data, transfer completions). */
     tud_task();
 
-    if (atomic_load(&usb_mounted))
-    {
-        /* Drain the TX ring buffer into the CDC FIFO.
-         *
-         * Snapshot tx_head with an acquire load so we see all bytes written
-         * by producers before their release store.  Load tx_tail with a
-         * relaxed load - it is consumer-private and only ever modified here.
-         */
-        uint32_t head = atomic_load_explicit(&tx_head, memory_order_acquire);
-        uint32_t tail = atomic_load_explicit(&tx_tail, memory_order_relaxed);
-
-        while (tail != head)
-        {
-            /* Number of contiguous bytes available before wrap */
-            uint32_t chunk = (head >= tail) ? (head - tail)
-                                            : (USB_SERIAL_TX_BUF_SIZE - tail);
-
-            uint32_t sent = tud_cdc_write(&tx_buf[tail], chunk);
-            tail = (tail + sent) % USB_SERIAL_TX_BUF_SIZE;
-
-            if (sent < chunk)
-            {
-                break;  /* CDC FIFO full; flush and retry next tick */
-            }
+#if CFG_TUD_CDC_NOTIFY
+    if (atomic_load(&usb_mounted)) {
+        if (carrier_boot_notify_remaining > 0) {
+            carrier_boot_notify_remaining--;
+            usb_serial_send_carrier_notify();
+        } else if (atomic_load(&cdc_uart_notify_pending)) {
+            usb_serial_send_carrier_notify();
         }
+    }
+#endif
 
-        atomic_store_explicit(&tx_tail, tail, memory_order_relaxed);
+    /*
+     * Flush any bytes still in the CDC TX FIFO that were not yet committed to
+     * an IN transfer.  This happens when usb_serial_write() called
+     * tud_cdc_write_flush() while the endpoint was already busy; that flush was
+     * a no-op.  After tud_task() processes the transfer-complete event, a
+     * second flush here picks up the residual bytes (often the trailing "\r\n"
+     * from _write_r after the main text chunk).
+     */
+    if (atomic_load(&usb_mounted)) {
         tud_cdc_write_flush();
     }
+    pthread_mutex_unlock(&cdc_mutex);
 }
 
 bool usb_serial_connected(void)
@@ -217,8 +264,7 @@ bool usb_serial_connected(void)
 
 uint32_t usb_serial_available(void)
 {
-    if (!atomic_load(&usb_ready))
-    {
+    if (!atomic_load(&usb_ready)) {
         return 0;
     }
 
@@ -227,54 +273,91 @@ uint32_t usb_serial_available(void)
 
 ssize_t usb_serial_write(const void *buf, size_t len)
 {
-    if (!atomic_load(&usb_mounted))
-    {
+    /*
+     * Return immediately if the USB device is not mounted.
+     * This avoids blocking the caller when the cable is unplugged.
+     */
+    if (!atomic_load(&usb_mounted)) {
         return -1;
     }
 
-    const uint8_t *p       = (const uint8_t *) buf;
-    size_t         written = 0;
+    const uint8_t *p = (const uint8_t *)buf;
+    size_t rem = len;
+    uint32_t timeout = 50; /* ~50 ms: 50 retries * 1 ms sleep */
 
-    pthread_mutex_lock(&tx_mutex);
+    pthread_mutex_lock(&cdc_mutex);
 
-    /* Use a local head so all bytes of this write are committed atomically.
-     * The mutex guarantees exclusive producer access; the release store at
-     * the end makes the bytes visible to the consumer in one step, preventing
-     * usb_serial_task() from observing a partial write mid-buffer.
+    /*
+     * If the link is in USB suspend (host idle / selective suspend), IN
+     * traffic may not run until the bus resumes.  Advertise remote wakeup in
+     * the configuration descriptor and pulse here when we have data to send.
      */
-    uint32_t head = atomic_load_explicit(&tx_head, memory_order_relaxed);
-
-    while (written < len)
-    {
-        uint32_t next = (head + 1) % USB_SERIAL_TX_BUF_SIZE;
-        if (next == atomic_load_explicit(&tx_tail, memory_order_relaxed))
-        {
-            break;  /* ring buffer full */
-        }
-        tx_buf[head] = p[written++];
-        head = next;
+    if (len > 0 && tud_suspended()) {
+        (void)tud_remote_wakeup();
     }
 
-    atomic_store_explicit(&tx_head, head, memory_order_release);
+    while (rem > 0) {
+        /* Bail out if the host disconnects mid-transfer */
+        if (!atomic_load(&usb_mounted)) {
+            tud_cdc_write_clear();
+            pthread_mutex_unlock(&cdc_mutex);
+            return -1;
+        }
 
-    pthread_mutex_unlock(&tx_mutex);
+        uint32_t accepted = tud_cdc_write(p, rem);
+        p += accepted;
+        rem -= accepted;
 
-    return (ssize_t) written;
+        if (rem == 0) {
+            break;
+        }
+
+        /*
+         * The CDC TX FIFO is full (64 bytes at FS speed).  Flush what has
+         * been accepted, release the mutex so usb_serial_task() can run
+         * during the sleep, then re-acquire and pump the stack ourselves.
+         * tud_task() is called *inside* the mutex so it cannot execute
+         * concurrently with usb_serial_task()'s tud_task() call; concurrent
+         * calls corrupt tinyUSB state and cause hangs on USB disconnect.
+         */
+        tud_cdc_write_flush();
+
+        if (timeout == 0) {
+            tud_cdc_write_clear();
+            pthread_mutex_unlock(&cdc_mutex);
+            return -1;
+        }
+        timeout--;
+
+        pthread_mutex_unlock(&cdc_mutex);
+        delayMs(1); /* yield; allow the ISR to queue the xfer-complete event */
+        pthread_mutex_lock(&cdc_mutex);
+
+        if (tud_suspended()) {
+            (void)tud_remote_wakeup();
+        }
+
+        tud_task(); /* process events under the mutex — cannot race with
+                         * usb_serial_task(), preventing concurrent tud_task()
+                         * calls that corrupt tinyUSB state on USB disconnect */
+    }
+
+    tud_cdc_write_flush();
+    pthread_mutex_unlock(&cdc_mutex);
+    return (ssize_t)len;
 }
 
 ssize_t usb_serial_read(void *buf, size_t len)
 {
-    if (!atomic_load(&usb_ready))
-    {
+    if (!atomic_load(&usb_ready)) {
         return -1;
     }
 
-    if (!atomic_load(&usb_mounted))
-    {
+    if (!atomic_load(&usb_mounted)) {
         return -1;
     }
 
-    return (ssize_t) tud_cdc_read(buf, len);
+    return (ssize_t)tud_cdc_read(buf, len);
 }
 
 /* Funky function name required because of C/C++ mangling from Miosix
@@ -287,9 +370,48 @@ void _Z17OTG_FS_IRQHandlerv(void)
 void tud_mount_cb(void)
 {
     atomic_store(&usb_mounted, true);
+    atomic_store(&cdc_uart_notify_pending, false);
+#if CFG_TUD_CDC_NOTIFY
+    carrier_boot_notify_remaining = 8;
+
+    /*
+     * Signal carrier present (DCD=1, DSR=1) to the host via a CDC
+     * SERIAL_STATE notification on the interrupt endpoint.
+     *
+     * The Linux cdc-acm driver updates its carrier state when it receives
+     * this notification.  Without it, the driver never asserts DCD and any
+     * open() call on /dev/ttyACMx that does not pass O_NONBLOCK blocks
+     * indefinitely (or for a long kernel timeout) waiting for carrier.
+     * This is why stty and picocom hang for ~11 s after the device enumerates.
+     *
+     * tud_mount_cb() is called from within tud_task(), so the cdc_mutex is
+     * already held; tud_cdc_notify_uart_state() uses only internal tinyUSB
+     * state (no mutex acquisition) and is safe to call here.
+     */
+    usb_serial_send_carrier_notify();
+#endif
 }
 
 void tud_umount_cb(void)
 {
     atomic_store(&usb_mounted, false);
+    atomic_store(&cdc_uart_notify_pending, false);
+#if CFG_TUD_CDC_NOTIFY
+    carrier_boot_notify_remaining = 0;
+#endif
 }
+
+/*
+ * Do not override tud_suspend_cb() / tud_resume_cb().
+ *
+ * tinyUSB's stack documents that during enumeration the D+/D- lines can
+ * momentarily meet the USB "suspend" condition (bus idle for 3 ms).  Clearing
+ * application state on suspend therefore races normal control transfers
+ * (SET_LINE_CODING, SET_CONTROL_LINE_STATE) and was flipping usb_mounted off
+ * and back on, breaking host tools and motivating fragile resume workarounds.
+ *
+ * Physical disconnect is reported as DCD_EVENT_UNPLUGGED -> tud_umount_cb().
+ * While the device remains configured but the host is not polling IN (e.g.
+ * real bus suspend), usb_serial_write() may wait for FIFO space; the bounded
+ * retry loop (~50 ms) prevents indefinite blocking.
+ */

@@ -75,10 +75,6 @@ extern const struct gpsDevice gps;
 /* tinyUSB root-hub port index. USB OTG FS is port 0 on all STM32H7 targets. */
 #define USB_SERIAL_RHPORT        0
 
-/* Bytes in the software TX ring buffer. Must be a power of two so that the
- * modulo arithmetic reduces to a bitmask at -O2. */
-#define USB_SERIAL_TX_BUF_SIZE   512
-
 /* Use extended addressing for external flash memory */
 #define CONFIG_W25Qx_EXT_ADDR
 

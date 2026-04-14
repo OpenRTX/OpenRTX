@@ -61,8 +61,18 @@
  // On STM32H7 (OTG FS), USB DMA cannot reach AXI SRAM; buffers must live in D2
  // SRAM (e.g. .usb_ram in the linker script), not the main 0x2400... region.
 #ifdef STM32H743xx
+  /* MEM_SECTION applies to file-scope driver buffers; MEM_ALIGN must be
+   * alignment-only because TinyUSB 0.20+ places EP buffers inside unions
+   * (section on members is invalid).
+   */
   #define CFG_TUSB_MEM_SECTION  __attribute__((section(".usb_ram")))
-  #define CFG_TUSB_MEM_ALIGN    __attribute__((aligned(32)))
+  #define CFG_TUSB_MEM_ALIGN    __attribute__((aligned(4)))
+  /*
+   * Miosix enables D-cache; D2 SRAM (0x3000...) is cacheable.  DWC2 DMA bypasses the
+   * CPU cache — enable tinyUSB clean/invalidate on transfers or bulk IN/OUT can fail.
+   */
+  #define CFG_TUD_MEM_DCACHE_ENABLE       1
+  #define CFG_TUSB_MEM_DCACHE_LINE_SIZE   32
 #else
   #ifndef CFG_TUSB_MEM_SECTION
     #define CFG_TUSB_MEM_SECTION
@@ -87,6 +97,13 @@
 #define CFG_TUD_HID               0
 #define CFG_TUD_MIDI              0
 #define CFG_TUD_VENDOR            0
+
+/*
+ * Enable CDC SERIAL_STATE notifications (interrupt EP 0x81).
+ * Lets the device report DCD/DSR to the host; Linux cdc-acm uses this for
+ * carrier so open() on /dev/ttyACMx does not wait indefinitely for modem status.
+ */
+#define CFG_TUD_CDC_NOTIFY        1
 
 // CDC FIFO size of TX and RX
 #define CFG_TUD_CDC_RX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
