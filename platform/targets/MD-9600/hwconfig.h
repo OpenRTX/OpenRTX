@@ -54,6 +54,9 @@ extern const struct Adc adc1;
 /* Battery type */
 #define CONFIG_BAT_NONE
 
+/* Microphone audio input */
+#define CONFIG_MIC_GAIN 32
+
 #ifdef __cplusplus
 }
 #endif

@@ -40,6 +40,9 @@ extern const struct spiDevice c6000_spi;
 #define CONFIG_BAT_LIION
 #define CONFIG_BAT_NCELLS 2
 
+/* Microphone audio input */
+#define CONFIG_MIC_GAIN 32
+
 #ifdef __cplusplus
 }
 #endif

@@ -58,4 +58,7 @@ enum Mod17Flags {
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Microphone audio input */
+#define CONFIG_MIC_GAIN 12
+
 #endif

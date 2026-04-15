@@ -53,6 +53,9 @@ extern const struct Adc adc1;
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Microphone audio input */
+#define CONFIG_MIC_GAIN 32
+
 /*
  * To enable pwm for display backlight dimming uncomment this directive.
  *
