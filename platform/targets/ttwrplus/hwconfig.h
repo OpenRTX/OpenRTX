@@ -25,4 +25,7 @@
 
 #define CONFIG_M17
 
+/* Microphone audio input */
+#define CONFIG_MIC_GAIN 1
+
 #endif /* HWCONFIG_H */

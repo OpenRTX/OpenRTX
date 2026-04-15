@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "core/dsp.h"
+#include "hwconfig.h"
 
 #define BUF_SIZE 4
 
@@ -38,14 +39,6 @@ static uint8_t readPos;
 static uint8_t writePos;
 static uint8_t numElements;
 static uint64_t dataBuffer[BUF_SIZE];
-
-#ifdef PLATFORM_MOD17
-static const uint8_t micGain = 12;
-#else
-#ifndef PLATFORM_LINUX
-static const uint8_t micGain = 32;
-#endif
-#endif
 
 static void *encodeFunc(void *arg);
 static void *decodeFunc(void *arg);
@@ -197,7 +190,7 @@ static void *encodeFunc(void *arg)
             int16_t sample;
 
             sample = dsp_dcBlockFilter(&dcBlock, audio.data[i]);
-            audio.data[i] = sample * micGain;
+            audio.data[i] = sample * CONFIG_MIC_GAIN;
         }
 #endif
 

@@ -24,6 +24,9 @@ enum Mod17Flags { MOD17_FLAGS_HMI_PRESENT = 1, MOD17_FLAGS_SOFTPOT = 2 };
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Microphone audio input */
+#define CONFIG_MIC_GAIN 1
+
 #ifdef __cplusplus
 }
 #endif

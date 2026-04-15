@@ -69,6 +69,9 @@ extern const struct gpsDevice gps;
 /* Device has a vibration motor */
 #define CONFIG_VIBRATION
 
+/* Microphone audio input */
+#define CONFIG_MIC_GAIN 32
+
 #ifdef __cplusplus
 }
 #endif
