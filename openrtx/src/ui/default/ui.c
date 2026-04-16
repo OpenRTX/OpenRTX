@@ -1230,7 +1230,11 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
 
     // If enter is pressed, advance to the next digit
     if (msg.keys & KEY_ENTER)
-        *num *= 10;
+    {
+        uint32_t tmp = 0;
+        if (!__builtin_mul_overflow(*num, 10, &tmp))
+            *num = tmp;
+    }
 
     // Announce the character
     vp_announceInputChar('0' + *num % 10);
