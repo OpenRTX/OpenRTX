@@ -1230,7 +1230,11 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
 
     // If enter is pressed, advance to the next digit
     if (msg.keys & KEY_ENTER)
-        *num *= 10;
+    {
+        uint32_t tmp = 0;
+        if (!__builtin_mul_overflow(*num, 10, &tmp))
+            *num = tmp;
+    }
 
     // Announce the character
     vp_announceInputChar('0' + *num % 10);
@@ -1238,14 +1242,18 @@ static void _ui_numberInputKeypad(uint32_t *num, kbd_msg_t msg)
     // Update reference values
     ui_state.input_number = *num % 10;
 #else
-    // Maximum frequency len is uint32_t max value number of decimal digits
-    if(ui_state.input_position >= 10)
-        return;
-
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
-    *num *= 10;
-    *num += num_key;
+
+    uint32_t tmp = 0;
+
+    // Add a another digit onto the offset only if
+    // it won't cause an overflow
+    if (__builtin_mul_overflow(*num, 10, &tmp) ||
+        __builtin_add_overflow(tmp, num_key, &tmp))
+        return;
+
+    *num = tmp;
 
     // Announce the character
     vp_announceInputChar('0' + num_key);
