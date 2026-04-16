@@ -67,6 +67,7 @@ openrtx/include/protocols/M17/MetaText.hpp
 openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
 openrtx/src/core/dsp.cpp
+openrtx/src/core/audio_codec.c
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/protocols/M17/Callsign.cpp
