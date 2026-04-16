@@ -104,6 +104,9 @@ tests/unit/M17_viterbi.cpp
 tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
+tests/unit/M17_opmode_sms.cpp
+openrtx/include/rtx/SMSQueue.hpp
+openrtx/src/rtx/SMSQueue.cpp
 openrtx/include/core/settings.h
 openrtx/include/core/state.h
 openrtx/src/core/state.c

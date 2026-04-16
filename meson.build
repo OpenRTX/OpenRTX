@@ -59,6 +59,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
+               'openrtx/src/rtx/SMSQueue.cpp',
                'openrtx/src/protocols/M17/DSP.cpp',
                'openrtx/src/protocols/M17/Golay.cpp',
                'openrtx/src/protocols/M17/MetaText.cpp',
@@ -1135,6 +1136,10 @@ m17_packet_test = executable('m17_packet_test',
                               sources : unit_test_src + ['tests/unit/M17_packet.cpp'],
                               kwargs  : unit_test_opts)
 
+m17_opmode_sms_test = executable('m17_opmode_sms_test',
+                                  sources : unit_test_src + ['tests/unit/M17_opmode_sms.cpp'],
+                                  kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1146,3 +1151,4 @@ test('Codeplug Test',         cps_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
+test('M17 OpMode SMS Unit Test', m17_opmode_sms_test)

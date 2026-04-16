@@ -105,6 +105,7 @@ target_sources(app
     openrtx/src/rtx/rtx.cpp
     openrtx/src/rtx/OpMode_FM.cpp
     openrtx/src/rtx/OpMode_M17.cpp
+    openrtx/src/rtx/SMSQueue.cpp
     openrtx/src/protocols/M17/DSP.cpp
     openrtx/src/protocols/M17/Golay.cpp
     openrtx/src/protocols/M17/Callsign.cpp
