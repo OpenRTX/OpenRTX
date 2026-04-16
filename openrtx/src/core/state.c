@@ -21,10 +21,9 @@ pthread_mutex_t state_mutex;
 static long long int lastUpdate = 0;
 
 // Commonly used frequency steps, expressed in Hz
-const uint32_t freq_steps[] = { 1000, 5000, 6250, 10000, 12500, 15000,
-                                20000, 25000, 50000, 100000 };
-const size_t n_freq_steps   = sizeof(freq_steps) / sizeof(freq_steps[0]);
-
+const uint32_t freq_steps[] = { 1000,  5000,  6250,  10000, 12500,
+                                15000, 20000, 25000, 50000, 100000 };
+const size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
 
 void state_init()
 {
@@ -34,8 +33,7 @@ void state_init()
      * Try loading settings from nonvolatile memory and default to sane values
      * in case of failure.
      */
-    if(nvm_readSettings(&state.settings) < 0)
-    {
+    if (nvm_readSettings(&state.settings) < 0) {
         state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
         strncpy(state.settings.M17_meta_text, "OPENRTX", 53);
@@ -45,32 +43,30 @@ void state_init()
      * Try loading VFO configuration from nonvolatile memory and default to sane
      * values in case of failure.
      */
-    if(nvm_readVfoChannelData(&state.channel) < 0)
-    {
+    if (nvm_readVfoChannelData(&state.channel) < 0) {
         state.channel = cps_getDefaultChannel();
     }
 
-    /*
+/*
      * Initialise remaining fields
      */
-    #ifdef CONFIG_RTC
+#ifdef CONFIG_RTC
     state.time = platform_getCurrentTime();
-    #endif
-    state.v_bat  = platform_getVbat();
+#endif
+    state.v_bat = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
-    state.rssi   = -127.0f;
+    state.rssi = -127.0f;
     state.volume = platform_getVolumeLevel();
 
-    state.channel_index = 0;    // Set default channel index (it is 0-based)
-    state.bank_enabled  = false;
-    state.rtxStatus     = RTX_OFF;
-    state.emergency     = false;
-    state.txDisable     = false;
-    state.step_index    = 4; // Default frequency step 12.5kHz
+    state.channel_index = 0; // Set default channel index (it is 0-based)
+    state.bank_enabled = false;
+    state.rtxStatus = RTX_OFF;
+    state.emergency = false;
+    state.txDisable = false;
+    state.step_index = 4; // Default frequency step 12.5kHz
 
     // Force brightness field to be in range 0 - 100
-    if(state.settings.brightness > 100)
-    {
+    if (state.settings.brightness > 100) {
         state.settings.brightness = 100;
     }
 }
@@ -78,8 +74,7 @@ void state_init()
 void state_terminate()
 {
     // Never store a brightness of 0 to avoid booting with a black screen
-    if(state.settings.brightness == 0)
-    {
+    if (state.settings.brightness == 0) {
         state.settings.brightness = 5;
     }
 
@@ -90,7 +85,7 @@ void state_terminate()
 void state_task()
 {
     // Update radio state once every 100ms
-    if((getTick() - lastUpdate) < 100)
+    if ((getTick() - lastUpdate) < 100)
         return;
 
     lastUpdate = getTick();
@@ -107,12 +102,12 @@ void state_task()
      * benefits.
      */
     uint16_t vbat = platform_getVbat();
-    #if defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-    state.v_bat   = vbat;
-    #else
-    state.v_bat  -= (state.v_bat * 2) / 100;
-    state.v_bat  += (vbat * 2) / 100;
-    #endif
+#if defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
+    state.v_bat = vbat;
+#else
+    state.v_bat -= (state.v_bat * 2) / 100;
+    state.v_bat += (vbat * 2) / 100;
+#endif
 
     /*
      * Update volume level, as a 50% average between previous value and a new
@@ -125,9 +120,9 @@ void state_task()
     state.charge = battery_getCharge(state.v_bat);
     state.rssi = rtx_getRssi();
 
-    #ifdef CONFIG_RTC
+#ifdef CONFIG_RTC
     state.time = platform_getCurrentTime();
-    #endif
+#endif
 
     pthread_mutex_unlock(&state_mutex);
 
@@ -137,5 +132,5 @@ void state_task()
 void state_resetSettingsAndVfo()
 {
     state.settings = default_settings;
-    state.channel  = cps_getDefaultChannel();
+    state.channel = cps_getDefaultChannel();
 }

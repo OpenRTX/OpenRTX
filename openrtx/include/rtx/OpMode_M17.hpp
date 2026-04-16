@@ -21,7 +21,6 @@
 class OpMode_M17 : public OpMode
 {
 public:
-
     /**
      * Constructor.
      */
@@ -83,7 +82,6 @@ public:
     }
 
 private:
-
     /**
      * Function handling the OFF operating state.
      *
@@ -119,27 +117,28 @@ private:
      * \param incomingCs plain text destination callsign
      * \return true if local an incoming callsigns match.
      */
-    bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
+    bool compareCallsigns(const std::string &localCs,
+                          const std::string &incomingCs);
 
     // GPS update interval in superframes. Each superframe is 6 LICH frames
     // (~240 ms), so 25 superframes ≈ 6 seconds.
     static constexpr uint16_t GPS_UPDATE_TICKS = 25;
 
-    bool startRx;                      ///< Flag for RX management.
-    bool startTx;                      ///< Flag for TX management.
-    bool locked;                       ///< Demodulator locked on data stream.
-    bool dataValid;                    ///< Demodulated data is valid
-    bool extendedCall;                 ///< Extended callsign data received
-    bool invertTxPhase;                ///< TX signal phase inversion setting.
-    bool invertRxPhase;                ///< RX signal phase inversion setting.
-    pathId rxAudioPath;                ///< Audio path ID for RX
-    pathId txAudioPath;                ///< Audio path ID for TX
-    M17::Modulator    modulator;    ///< M17 modulator.
-    M17::Demodulator  demodulator;  ///< M17 demodulator.
-    M17::FrameDecoder decoder;      ///< M17 frame decoder
-    M17::FrameEncoder encoder;      ///< M17 frame encoder
-    uint16_t gpsTimer;                 ///< GPS data transmission interval timer
-    M17::MetaText metaText;            ///< M17 metatext accumulator
+    bool startRx;                 ///< Flag for RX management.
+    bool startTx;                 ///< Flag for TX management.
+    bool locked;                  ///< Demodulator locked on data stream.
+    bool dataValid;               ///< Demodulated data is valid
+    bool extendedCall;            ///< Extended callsign data received
+    bool invertTxPhase;           ///< TX signal phase inversion setting.
+    bool invertRxPhase;           ///< RX signal phase inversion setting.
+    pathId rxAudioPath;           ///< Audio path ID for RX
+    pathId txAudioPath;           ///< Audio path ID for TX
+    M17::Modulator modulator;     ///< M17 modulator.
+    M17::Demodulator demodulator; ///< M17 demodulator.
+    M17::FrameDecoder decoder;    ///< M17 frame decoder
+    M17::FrameEncoder encoder;    ///< M17 frame encoder
+    uint16_t gpsTimer;            ///< GPS data transmission interval timer
+    M17::MetaText metaText;       ///< M17 metatext accumulator
 };
 
 #endif /* OPMODE_M17_H */
