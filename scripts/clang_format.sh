@@ -105,8 +105,14 @@ tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
 tests/unit/M17_opmode_sms.cpp
+tests/unit/M17_packet_disassembly.cpp
+tests/unit/M17_packet_framing.cpp
 openrtx/include/rtx/SMSQueue.hpp
 openrtx/src/rtx/SMSQueue.cpp
+openrtx/include/protocols/M17/PacketDeframer.hpp
+openrtx/src/protocols/M17/PacketDeframer.cpp
+openrtx/include/protocols/M17/PacketFramer.hpp
+openrtx/src/protocols/M17/PacketFramer.cpp
 openrtx/include/core/settings.h
 openrtx/include/core/state.h
 openrtx/src/core/state.c

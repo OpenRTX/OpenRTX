@@ -64,6 +64,11 @@ void state_init()
     state.emergency = false;
     state.txDisable = false;
     state.step_index = 4; // Default frequency step 12.5kHz
+    state.havePacketData = false;
+    state.delSMSMessage = false;
+    state.currentSMSMessage = 0;
+    state.currentSMSLine = 0;
+    state.totalSMSMessages = 0;
 
     // Force brightness field to be in range 0 - 100
     if (state.settings.brightness > 100) {

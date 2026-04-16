@@ -48,6 +48,7 @@ typedef struct {
     bool showBatteryIcon;      // Battery display true: icon, false: percentage
     bool gpsSetTime;           // Use GPS to ajust RTC time
     char M17_meta_text[53];    // M17 Meta Text to send
+    bool m17_sms_match_call;   // SMS match callsign to receive
 } __attribute__((packed)) settings_t;
 
 static const settings_t default_settings = {
@@ -73,6 +74,7 @@ static const settings_t default_settings = {
     false,     // Display battery icon
     false,     // Update RTC with GPS
     "OpenRTX", // Default M17 meta text
+    true,      // SMS match callsign
 };
 
 #endif /* SETTINGS_H */

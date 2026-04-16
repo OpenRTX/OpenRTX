@@ -9,13 +9,17 @@
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
 #include "protocols/M17/Datatypes.hpp"
+#include "protocols/M17/PacketFrame.hpp"
+#include "protocols/M17/PacketDeframer.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
 #include <errno.h>
 #include "core/gps.h"
+#include "core/crc.h"
 #include "core/state.h"
 #include "core/utils.h"
 #include "rtx/rtx.h"
+#include <cstring>
 
 #ifdef PLATFORM_MOD17
 #include "calibration/calibInfo_Mod17.h"
@@ -48,11 +52,18 @@ void OpMode_M17::enable()
     codec_init();
     modulator.init();
     demodulator.init();
+    smsQueue.clear();
     locked = false;
     dataValid = false;
     extendedCall = false;
     startRx = true;
     startTx = false;
+    pktStarted = false;
+    pktDeframer.reset();
+    lastCRC = 0;
+    pendingSender[0] = '\0';
+    state.totalSMSMessages = 0;
+    state.havePacketData = false;
 }
 
 void OpMode_M17::disable()
@@ -67,6 +78,18 @@ void OpMode_M17::disable()
     radio_disableRtx();
     modulator.terminate();
     demodulator.terminate();
+    smsQueue.clear();
+}
+
+bool OpMode_M17::getSMSMessage(uint8_t index, char *sender, size_t sender_len,
+                               char *message, size_t message_len)
+{
+    return smsQueue.get(index, sender, sender_len, message, message_len);
+}
+
+void OpMode_M17::delSMSMessage(uint8_t index)
+{
+    smsQueue.erase(index);
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -149,6 +172,12 @@ void OpMode_M17::offState(rtxStatus_t *const status)
     }
 
     if (platform_getPttStatus() && (status->txDisable == 0)) {
+        startTx = true;
+        status->opStatus = TX;
+        return;
+    }
+
+    if (state.havePacketData) {
         startTx = true;
         status->opStatus = TX;
         return;
@@ -261,13 +290,62 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     codec_pushFrame(sf.data(), false);
                     codec_pushFrame(sf.data() + 8, false);
                 }
+                // Check if packet frame and SMS receive enabled
+                else if (type == FrameType::PACKET && (canMatch == true)
+                         && ((callMatch == true)
+                             || !state.settings.m17_sms_match_call)) {
+                    PacketFrame pf = decoder.getPacketFrame();
+
+                    // Start reassembly on first packet frame
+                    if (!pktStarted) {
+                        if (smsQueue.count() == 0)
+                            lastCRC = 0;
+
+                        pktStarted = true;
+                        pktDeframer.reset();
+                        strncpy(pendingSender, status->M17_src,
+                                SMSQueue::CALLSIGN_LEN - 1);
+                        pendingSender[SMSQueue::CALLSIGN_LEN - 1] = '\0';
+                    }
+
+                    if (pktStarted) {
+                        auto result = pktDeframer.pushFrame(pf);
+
+                        if (result == DeframerResult::COMPLETE) {
+                            const uint8_t *pktData = pktDeframer.data();
+                            size_t pktLen = pktDeframer.length();
+
+                            // Application layer: check protocol ID and
+                            // extract SMS text (skip 0x05 prefix byte).
+                            if (pktLen > 1 && pktData[0] == 0x05) {
+                                // Compute CRC for dedup using the stored
+                                // big-endian value from the wire.
+                                uint16_t crc = crc_m17(pktData, pktLen);
+                                if (crc != lastCRC) {
+                                    smsQueue.push(
+                                        pendingSender,
+                                        reinterpret_cast<const char *>(
+                                            &pktData[1]));
+                                    lastCRC = crc;
+                                    state.totalSMSMessages = smsQueue.count();
+                                }
+                            }
+                            pktStarted = false;
+                        } else if (result != DeframerResult::IN_PROGRESS) {
+                            // Any error: abort reassembly
+                            pktStarted = false;
+                        }
+                    }
+                }
             }
         }
     }
 
     locked = lock;
 
-    if (platform_getPttStatus()) {
+    bool shouldExit = platform_getPttStatus();
+    shouldExit = shouldExit || state.havePacketData;
+    if (shouldExit) {
         demodulator.stopBasebandSampling();
         locked = false;
         status->opStatus = OFF;
@@ -278,6 +356,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         status->lsfOk = false;
         dataValid = false;
         extendedCall = false;
+        pktStarted = false;
         status->M17_meta_text[0] = '\0';
         status->M17_link[0] = '\0';
         status->M17_refl[0] = '\0';
