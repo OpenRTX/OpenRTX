@@ -560,20 +560,20 @@ TEST_CASE(
 
     // Frame 0: intermediate, counter = 0
     for (size_t i = 0; i < PacketFrame::DATA_SIZE; i++)
-        txFrames[0][i] = static_cast<uint8_t>(i);
+        txFrames[0][i] = i;
     txFrames[0].setEof(false);
     txFrames[0].setCounter(0);
 
     // Frame 1: intermediate, counter = 1
     for (size_t i = 0; i < PacketFrame::DATA_SIZE; i++)
-        txFrames[1][i] = static_cast<uint8_t>(i + PacketFrame::DATA_SIZE);
+        txFrames[1][i] = i + PacketFrame::DATA_SIZE;
     txFrames[1].setEof(false);
     txFrames[1].setCounter(1);
 
     // Frame 2: EOF, counter = number of valid bytes in last chunk (12)
     constexpr uint8_t LAST_BYTES = 12;
     for (size_t i = 0; i < LAST_BYTES; i++)
-        txFrames[2][i] = static_cast<uint8_t>(i + 2 * PacketFrame::DATA_SIZE);
+        txFrames[2][i] = i + 2 * PacketFrame::DATA_SIZE;
     txFrames[2].setEof(true);
     txFrames[2].setCounter(LAST_BYTES);
 

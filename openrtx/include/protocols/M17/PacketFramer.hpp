@@ -40,15 +40,16 @@ public:
     /**
      * Prepare the framer for a new packet.
      *
-     * Computes the M17 CRC over the first dataLen bytes and writes it
-     * big-endian at buffer[dataLen].  The buffer must be at least
-     * dataLen + 2 bytes long.
+     * Computes the M17 CRC over the first dataLen bytes and stores it
+     * internally.  The CRC is appended to the frame stream during
+     * nextFrame() so the caller's buffer does not need extra room.
      *
-     * @param buffer:  Mutable buffer containing application data.
+     * @param buffer:  Buffer containing application data (at least dataLen
+     *                 bytes).
      * @param dataLen: Number of application-data bytes (max 823).
      * @return true if init succeeded, false on invalid input.
      */
-    bool init(uint8_t *buffer, size_t dataLen);
+    bool init(uint8_t *buffer, size_t len);
 
     /**
      * Emit the next PacketFrame.
@@ -61,10 +62,12 @@ public:
 
 private:
     uint8_t *src;
+    size_t dataLen;
     size_t totalLen;
     size_t offset;
     uint8_t counter;
     size_t numFrames;
+    uint16_t crc;
 };
 
 } // namespace M17

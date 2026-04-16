@@ -11,6 +11,8 @@
 #include "protocols/M17/Datatypes.hpp"
 #include "protocols/M17/PacketFrame.hpp"
 #include "protocols/M17/PacketDeframer.hpp"
+#include "protocols/M17/PacketFramer.hpp"
+#include "rtx/SmsTxPacket.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
 #include <errno.h>
@@ -130,7 +132,10 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             break;
 
         case TX:
-            txState(status);
+            if (state.havePacketData)
+                txPacketState(status);
+            else
+                txState(status);
             break;
 
         default:
@@ -459,26 +464,75 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     }
 }
 
-bool OpMode_M17::compareCallsigns(const std::string &localCs,
-                                  const std::string &incomingCs)
+void OpMode_M17::txPacketState(rtxStatus_t *const status)
 {
-    if ((incomingCs == "ALL") || (incomingCs == "INFO")
-        || (incomingCs == "ECHO"))
-        return true;
+    frame_t m17Frame;
 
-    std::string truncatedLocal(localCs);
-    std::string truncatedIncoming(incomingCs);
+    if (locked)
+        demodulator.stopBasebandSampling();
 
-    int slashPos = localCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedLocal = localCs.substr(slashPos + 1);
+    // Check message length
+    size_t msgLen = strlen(state.sms_message);
+    if (msgLen == 0) {
+        state.havePacketData = false;
+        startRx = true;
+        status->opStatus = OFF;
+        return;
+    }
 
-    slashPos = incomingCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedIncoming = incomingCs.substr(slashPos + 1);
+    // Format SMS packet data
+    size_t appDataLen = prepareSmsPacketData(state.sms_message, msgLen,
+                                             pktBuffer, sizeof(pktBuffer));
+    if (appDataLen == 0) {
+        state.havePacketData = false;
+        startRx = true;
+        status->opStatus = OFF;
+        return;
+    }
 
-    if (truncatedLocal == truncatedIncoming)
-        return true;
+    // Initialise framer
+    pktFramer.init(pktBuffer, appDataLen);
 
-    return false;
+    // Build and send Link Setup Frame
+    LinkSetupFrame lsf;
+    lsf.clear();
+    lsf.setSource(status->source_address);
+
+    Callsign dst(status->destination_address);
+    if (!dst.isEmpty())
+        lsf.setDestination(dst);
+
+    streamType_t type;
+    type.fields.dataMode = DATAMODE_PACKET;
+    type.fields.dataType = DATATYPE_DATA;
+    type.fields.CAN = status->can;
+    lsf.setType(type);
+
+    encoder.reset();
+    encoder.encodeLsf(lsf, m17Frame);
+
+    radio_enableTx();
+
+    modulator.invertPhase(invertTxPhase);
+    modulator.start();
+    modulator.sendPreamble();
+    modulator.sendFrame(m17Frame);
+
+    // Send packet frames
+    PacketFrame pf;
+    while (pktFramer.nextFrame(pf)) {
+        encoder.encodePacketFrame(pf, m17Frame);
+        modulator.sendFrame(m17Frame);
+    }
+
+    // Send EOT
+    encoder.encodeEotFrame(m17Frame);
+    modulator.sendFrame(m17Frame);
+    modulator.stop();
+
+    state.havePacketData = false;
+    memset(state.sms_message, 0, sizeof(state.sms_message));
+    lastCRC = 0;
+    startRx = true;
+    status->opStatus = OFF;
 }

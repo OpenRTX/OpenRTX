@@ -13,6 +13,7 @@
 #include "protocols/M17/Modulator.hpp"
 #include "protocols/M17/LinkSetupFrame.hpp"
 #include "protocols/M17/PacketDeframer.hpp"
+#include "protocols/M17/PacketFramer.hpp"
 #include "protocols/M17/MetaText.hpp"
 #include "core/audio_path.h"
 #include "rtx/SMSQueue.hpp"
@@ -130,18 +131,12 @@ private:
     void txState(rtxStatus_t *const status);
 
     /**
-     * Compare two callsigns in plain text form.
-     * The comparison does not take into account the country prefixes (strips
-     * the '/' and whatever is in front from all callsigns). It does take into
-     * account the dash and whatever is after it. In case the incoming callsign
-     * is "ALL" the function returns true.
+     * Function handling packet TX (SMS send).
      *
-     * \param localCs plain text callsign from the user
-     * \param incomingCs plain text destination callsign
-     * \return true if local an incoming callsigns match.
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
      */
-    bool compareCallsigns(const std::string &localCs,
-                          const std::string &incomingCs);
+    void txPacketState(rtxStatus_t *const status);
 
     // GPS update interval in superframes. Each superframe is 6 LICH frames
     // (~240 ms), so 25 superframes ≈ 6 seconds.
@@ -163,9 +158,11 @@ private:
     uint16_t gpsTimer;               ///< GPS data transmission interval timer
     M17::MetaText metaText;          ///< M17 metatext accumulator
     M17::PacketDeframer pktDeframer; ///< Data Link Layer packet deframer
-    bool pktStarted;                 ///< Packet reassembly in progress
-    SMSQueue smsQueue;               ///< Received SMS message queue
-    uint16_t lastCRC;                ///< CRC of last accepted packet (dedup)
+    M17::PacketFramer pktFramer;     ///< Data Link Layer packet framer
+    uint8_t pktBuffer[M17::MAX_PACKET_DATA]; ///< Shared packet data buffer
+    bool pktStarted;                         ///< Packet reassembly in progress
+    SMSQueue smsQueue;                       ///< Received SMS message queue
+    uint16_t lastCRC; ///< CRC of last accepted packet (dedup)
     char pendingSender[SMSQueue::CALLSIGN_LEN]; ///< Sender for in-progress RX
 };
 

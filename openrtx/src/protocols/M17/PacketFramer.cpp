@@ -16,21 +16,20 @@ PacketFramer::PacketFramer()
 {
 }
 
-bool PacketFramer::init(uint8_t *buffer, size_t dataLen)
+bool PacketFramer::init(uint8_t *buffer, size_t len)
 {
-    if (buffer == nullptr || dataLen == 0)
+    if (buffer == nullptr || len == 0)
         return false;
 
-    totalLen = dataLen + 2;
+    dataLen = len;
+    totalLen = len + 2;
     if (totalLen > MAX_PACKET_DATA)
         return false;
 
     src = buffer;
 
-    // Compute CRC over application data, append big-endian.
-    uint16_t crc = crc_m17(buffer, dataLen);
-    buffer[dataLen] = static_cast<uint8_t>(crc >> 8);
-    buffer[dataLen + 1] = static_cast<uint8_t>(crc & 0xFF);
+    // Compute CRC over application data and store internally.
+    crc = crc_m17(buffer, len);
 
     numFrames = (totalLen + PacketFrame::DATA_SIZE - 1)
               / PacketFrame::DATA_SIZE;
@@ -48,16 +47,43 @@ bool PacketFramer::nextFrame(PacketFrame &frame)
     size_t remaining = totalLen - offset;
     frame.clear();
 
+    size_t chunkLen;
+    bool isLast;
+
     if (remaining > PacketFrame::DATA_SIZE) {
-        memcpy(frame.data(), &src[offset], PacketFrame::DATA_SIZE);
+        chunkLen = PacketFrame::DATA_SIZE;
+        isLast = false;
+    } else {
+        chunkLen = remaining;
+        isLast = true;
+    }
+
+    // Copy application-data bytes that fall within this frame
+    size_t dataBytes = 0;
+    if (offset < dataLen) {
+        dataBytes = dataLen - offset;
+        if (dataBytes > chunkLen)
+            dataBytes = chunkLen;
+        memcpy(frame.data(), &src[offset], dataBytes);
+    }
+
+    // Append CRC bytes that fall within this frame
+    for (size_t i = dataBytes; i < chunkLen; i++) {
+        size_t pos = offset + i;
+        if (pos == dataLen)
+            frame.data()[i] = static_cast<uint8_t>(crc >> 8);
+        else
+            frame.data()[i] = static_cast<uint8_t>(crc & 0xFF);
+    }
+
+    if (isLast) {
+        frame.setEof(true);
+        frame.setCounter(static_cast<uint8_t>(chunkLen));
+        offset = totalLen;
+    } else {
         frame.setCounter(counter);
         offset += PacketFrame::DATA_SIZE;
         counter++;
-    } else {
-        memcpy(frame.data(), &src[offset], remaining);
-        frame.setEof(true);
-        frame.setCounter(static_cast<uint8_t>(remaining));
-        offset = totalLen;
     }
 
     return true;

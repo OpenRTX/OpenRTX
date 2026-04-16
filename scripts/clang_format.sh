@@ -121,6 +121,9 @@ openrtx/include/rtx/OpMode_M17.hpp
 openrtx/include/rtx/rtx.h
 openrtx/src/rtx/OpMode_M17.cpp
 openrtx/src/rtx/rtx.cpp
+openrtx/include/rtx/SmsTxPacket.hpp
+openrtx/src/rtx/SmsTxPacket.cpp
+tests/unit/M17_sms_tx.cpp
 EOF
 )
 
