@@ -11,8 +11,12 @@
 #include "protocols/M17/FrameEncoder.hpp"
 #include "protocols/M17/Demodulator.hpp"
 #include "protocols/M17/Modulator.hpp"
+#include "protocols/M17/LinkSetupFrame.hpp"
+#include "protocols/M17/PacketDeframer.hpp"
+#include "protocols/M17/PacketFramer.hpp"
 #include "protocols/M17/MetaText.hpp"
 #include "core/audio_path.h"
+#include "rtx/SMSQueue.hpp"
 #include "OpMode.hpp"
 
 /**
@@ -21,7 +25,6 @@
 class OpMode_M17 : public OpMode
 {
 public:
-
     /**
      * Constructor.
      */
@@ -82,8 +85,27 @@ public:
         return dataValid;
     }
 
-private:
+    /**
+     * Return selected SMS message from queue if any.
+     *
+     * @param index: message index to retrieve.
+     * @param sender: buffer to receive the sender callsign.
+     * @param sender_len: size of the sender buffer in bytes.
+     * @param message: buffer to receive the message text.
+     * @param message_len: size of the message buffer in bytes.
+     * @return true if a message was returned.
+     */
+    bool getSMSMessage(uint8_t index, char *sender, size_t sender_len,
+                       char *message, size_t message_len) override;
 
+    /**
+     * Delete an SMS message from the queue.
+     *
+     * @param index: message index to delete.
+     */
+    void delSMSMessage(uint8_t index) override;
+
+private:
     /**
      * Function handling the OFF operating state.
      *
@@ -109,37 +131,39 @@ private:
     void txState(rtxStatus_t *const status);
 
     /**
-     * Compare two callsigns in plain text form.
-     * The comparison does not take into account the country prefixes (strips
-     * the '/' and whatever is in front from all callsigns). It does take into
-     * account the dash and whatever is after it. In case the incoming callsign
-     * is "ALL" the function returns true.
+     * Function handling packet TX (SMS send).
      *
-     * \param localCs plain text callsign from the user
-     * \param incomingCs plain text destination callsign
-     * \return true if local an incoming callsigns match.
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
      */
-    bool compareCallsigns(const std::string& localCs, const std::string& incomingCs);
+    void txPacketState(rtxStatus_t *const status);
 
     // GPS update interval in superframes. Each superframe is 6 LICH frames
     // (~240 ms), so 25 superframes ≈ 6 seconds.
     static constexpr uint16_t GPS_UPDATE_TICKS = 25;
 
-    bool startRx;                      ///< Flag for RX management.
-    bool startTx;                      ///< Flag for TX management.
-    bool locked;                       ///< Demodulator locked on data stream.
-    bool dataValid;                    ///< Demodulated data is valid
-    bool extendedCall;                 ///< Extended callsign data received
-    bool invertTxPhase;                ///< TX signal phase inversion setting.
-    bool invertRxPhase;                ///< RX signal phase inversion setting.
-    pathId rxAudioPath;                ///< Audio path ID for RX
-    pathId txAudioPath;                ///< Audio path ID for TX
-    M17::Modulator    modulator;    ///< M17 modulator.
-    M17::Demodulator  demodulator;  ///< M17 demodulator.
-    M17::FrameDecoder decoder;      ///< M17 frame decoder
-    M17::FrameEncoder encoder;      ///< M17 frame encoder
-    uint16_t gpsTimer;                 ///< GPS data transmission interval timer
-    M17::MetaText metaText;            ///< M17 metatext accumulator
+    bool startRx;                    ///< Flag for RX management.
+    bool startTx;                    ///< Flag for TX management.
+    bool locked;                     ///< Demodulator locked on data stream.
+    bool dataValid;                  ///< Demodulated data is valid
+    bool extendedCall;               ///< Extended callsign data received
+    bool invertTxPhase;              ///< TX signal phase inversion setting.
+    bool invertRxPhase;              ///< RX signal phase inversion setting.
+    pathId rxAudioPath;              ///< Audio path ID for RX
+    pathId txAudioPath;              ///< Audio path ID for TX
+    M17::Modulator modulator;        ///< M17 modulator.
+    M17::Demodulator demodulator;    ///< M17 demodulator.
+    M17::FrameDecoder decoder;       ///< M17 frame decoder
+    M17::FrameEncoder encoder;       ///< M17 frame encoder
+    uint16_t gpsTimer;               ///< GPS data transmission interval timer
+    M17::MetaText metaText;          ///< M17 metatext accumulator
+    M17::PacketDeframer pktDeframer; ///< Data Link Layer packet deframer
+    M17::PacketFramer pktFramer;     ///< Data Link Layer packet framer
+    uint8_t pktBuffer[M17::MAX_PACKET_DATA]; ///< Shared packet data buffer
+    bool pktStarted;                         ///< Packet reassembly in progress
+    SMSQueue smsQueue;                       ///< Received SMS message queue
+    uint16_t lastCRC; ///< CRC of last accepted packet (dedup)
+    char pendingSender[SMSQueue::CALLSIGN_LEN]; ///< Sender for in-progress RX
 };
 
 #endif /* OPMODE_M17_H */

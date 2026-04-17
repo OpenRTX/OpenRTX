@@ -20,16 +20,19 @@
 class OpMode
 {
 public:
-
     /**
      * Constructor.
      */
-    OpMode() { }
+    OpMode()
+    {
+    }
 
     /**
      * Destructor.
      */
-    virtual ~OpMode() { }
+    virtual ~OpMode()
+    {
+    }
 
     /**
      * Enable the operating mode.
@@ -37,7 +40,9 @@ public:
      * Application must ensure this function is being called when entering the
      * new operating mode and always before the first call of "update".
      */
-    virtual void enable() { }
+    virtual void enable()
+    {
+    }
 
     /**
      * Disable the operating mode. This function ensures that, after being
@@ -46,7 +51,9 @@ public:
      * Application must ensure this function is being called when exiting the
      * current operating mode.
      */
-    virtual void disable() { }
+    virtual void disable()
+    {
+    }
 
     /**
      * Update the internal FSM.
@@ -60,8 +67,8 @@ public:
      */
     virtual void update(rtxStatus_t *const status, const bool newCfg)
     {
-        (void) status;
-        (void) newCfg;
+        (void)status;
+        (void)newCfg;
         sleepFor(0u, 30u);
     }
 
@@ -83,6 +90,29 @@ public:
     virtual bool rxSquelchOpen()
     {
         return false;
+    }
+
+    /**
+     * Return selected SMS message from queue if any.
+     * This is only valid for M17 mode.
+     */
+    virtual bool getSMSMessage(uint8_t index, char *sender, size_t sender_len,
+                               char *message, size_t message_len)
+    {
+        (void)index;
+        (void)sender;
+        (void)sender_len;
+        (void)message;
+        (void)message_len;
+        return false;
+    }
+
+    /**
+     * Delete an SMS message from the queue.
+     */
+    virtual void delSMSMessage(uint8_t index)
+    {
+        (void)index;
     }
 };
 
