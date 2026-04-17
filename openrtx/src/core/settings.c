@@ -104,9 +104,12 @@ static int check_store_integrity(const settings_store_t *store)
  *
  * @param dev NVM device to read from
  * @param part NVM partition to read from
- * @param offset pointer that will contain the partition offset to the beginning
- *               of the settings structure found. offset is invalid if the
- *               function does not return 0.
+ * @param offset pointer that will contain the partition offset to :
+ *               - the beginning of the settings structure found if the
+ *               function returned 0.
+ *               - the points where corruption was detected if the function
+ *               returned -EILSEQ
+ *               offset is invalid otherwise.
  * @param limit contains the maximum offset to explore within the partition
  * @return 0 if successful, negative error code otherwise
  */
@@ -134,12 +137,13 @@ static int find_last_store(const int dev, const int part_nb, size_t *offset,
     /*
      * If offset == prev_offset == 0 and magic == 0xFFFFFFFF, the partition is empty
      * If offset > prev_offset and magic == 0xFFFFFFFF there is free space
-     * If magic != 0xFFFFFFFF then the partition contains invalid data and needs to be cleaned
+     * If magic != 0xFFFFFFFF then the partition contains invalid data
      */
     if ((header_buffer.MAGIC != 0xFFFFFFFF)
         && (header_buffer.MAGIC != SETTINGS_MAGIC))
         return -EILSEQ; // Partition contains invalid data
-    else if (*offset == prev_offset)
+
+    if (*offset == prev_offset)
         return -ENOENT; // Empty partition
 
     *offset = prev_offset;
@@ -208,17 +212,30 @@ int get_latest_valid_store(const int dev, const int part,
 
     ssize_t end_lim = pInfo.size;
     *offset = 0;
+    const struct nvmDescriptor *dDesc = nvm_getDesc(dev);
+    const bool erase_before_write = dDesc->dev->info->device_info & NVM_ERASE;
 
     while (end_lim > 0) {
         size_t read_offset = 0;
 
         // Find beginning of latest store
         int ret = find_last_store(dev, part, &read_offset, end_lim);
-        if (ret == -EILSEQ)
+
+        // In NVM devices that do not need erase before write, partitions can
+        // not be corrupted.
+        if ((ret == -EILSEQ) && erase_before_write)
             return 0; // Corrupt partition
-        else if (ret == -ENOENT)
+        else if (ret == -EILSEQ) {
+            // We wound an invalid header, but because we do not need to erase
+            // before write, this is not considered a corrupt partitin
+            if (read_offset == 0)
+                return 1; // Starts with invalid header -> empty partition
+
+            end_lim = read_offset - 1;
+            continue; // We want to find the store before the corruption
+        } else if (ret == -ENOENT)
             return 1; // Empty partition
-        else if (ret < 0)
+        else if ((ret < 0) && (ret != -EILSEQ))
             return ret;
 
         ret = read_store(dev, part, read_offset, store);
@@ -267,30 +284,21 @@ int write_store(const int dev, const int part, const settings_store_t *store,
     if (ret < 0)
         return ret;
 
+    const struct nvmDescriptor *dDesc = nvm_getDesc(dev);
+    const bool erase_before_write = dDesc->dev->info->device_info & NVM_ERASE;
+
     // Check if we have enough space to write the store
     if ((*offset + sizeof(settings_store_t)) > pInfo.size)
         erase = true;
 
-    if (erase) {
+    if (erase && erase_before_write) {
         ret = nvm_erase(dev, part, 0, pInfo.size);
-        if (ret == -ENOTSUP) {
-            // If device does not implement erase function (such as posix files)
-            // then we manually write 0xFFFFFFFF everywhere
-            const uint32_t ff = 0xFFFFFFFF;
-            size_t i = 0;
-            for (; i < pInfo.size - 4; i += 4) {
-                ret = nvm_write(dev, part, i, &ff, 4);
-                if (ret < 0)
-                    return ret;
-            }
-            for (; i < pInfo.size; i++) {
-                ret = nvm_write(dev, part, i, &ff, 1);
-                if (ret < 0)
-                    return ret;
-            }
-        } else if (ret < 0)
+        if (ret < 0)
             return ret;
 
+        *offset = 0;
+    } else if (erase) {
+        // We do not need to erase anything, simply set the offset to 0.
         *offset = 0;
     }
 
@@ -300,6 +308,17 @@ int write_store(const int dev, const int part, const settings_store_t *store,
         return ret;
 
     *offset += sizeof(settings_store_t);
+
+    // In NVM devices that do not require erase before write, we need to
+    // mark where the last entry was written to avoid having successive
+    // aligned writes by "corrupting" the eventual old entry that could be
+    // located after this one
+    if (!erase_before_write && (*offset < pInfo.size)) {
+        uint8_t ff = 0xff;
+        ret = nvm_write(dev, part, *offset, (void *)(&ff), 1);
+        if (ret < 0)
+            return ret;
+    }
 
     return 0;
 }
