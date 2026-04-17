@@ -119,6 +119,7 @@ target_sources(app
     openrtx/src/ui/default/ui_main.c
     openrtx/src/ui/default/ui_menu.c
     openrtx/src/ui/default/ui_strings.c
+    openrtx/src/ui/default/ui_layout.c
 
     subprojects/codec2/src/dump.c
     subprojects/codec2/src/lpc.c
