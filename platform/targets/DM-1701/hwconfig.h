@@ -49,6 +49,7 @@ extern const struct Adc adc1;
 
 /* Microphone audio input */
 #define CONFIG_MIC_GAIN 32
+#define CONFIG_MIC_OVERSAMPLE 8
 
 /*
  * To enable pwm for display backlight dimming uncomment this directive.
