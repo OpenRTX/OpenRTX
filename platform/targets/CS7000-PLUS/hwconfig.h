@@ -71,6 +71,7 @@ extern const struct gpsDevice gps;
 
 /* Microphone audio input */
 #define CONFIG_MIC_GAIN 32
+#define CONFIG_MIC_OVERSAMPLE 6
 
 #ifdef __cplusplus
 }
