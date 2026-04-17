@@ -157,8 +157,7 @@ enum settingsFMItems
  * Using these parameters make the UI automatically adapt
  * To displays of different sizes
  */
-typedef struct layout_t
-{
+typedef struct layout_t {
     uint16_t hline_h;
     uint16_t top_h;
     uint16_t line1_h;
@@ -172,6 +171,9 @@ typedef struct layout_t
     uint16_t status_v_pad;
     uint16_t horizontal_pad;
     uint16_t text_v_offset;
+    uint16_t top_pad;
+    uint16_t small_line_v_pad;
+    uint16_t big_line_v_pad;
     point_t top_pos;
     point_t line1_pos;
     point_t line2_pos;

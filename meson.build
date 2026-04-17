@@ -78,7 +78,12 @@ openrtx_inc = ['openrtx/include', 'platform']
 ui_src_default = ['openrtx/src/ui/default/ui.c',
                   'openrtx/src/ui/default/ui_main.c',
                   'openrtx/src/ui/default/ui_menu.c',
-                  'openrtx/src/ui/default/ui_strings.c']
+                  'openrtx/src/ui/default/ui_strings.c',
+                  'openrtx/src/ui/default/ui_layout.c']
+
+ui_layout_large  = ['openrtx/src/ui/default/ui_layout_large.c']
+ui_layout_medium = ['openrtx/src/ui/default/ui_layout_medium.c']
+ui_layout_small  = ['openrtx/src/ui/default/ui_layout_small.c']
 
 ui_src_module17 = ['openrtx/src/ui/module17/ui.c',
                    'openrtx/src/ui/module17/ui_main.c',
@@ -336,9 +341,10 @@ linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
 #
 # Standard UI
 #
-linux_default_src = linux_src + ui_src_default
+linux_default_src = linux_src + ui_src_default + ui_layout_large
 linux_default_def = linux_def + {'CONFIG_SCREEN_WIDTH': '160', 'CONFIG_SCREEN_HEIGHT': '128', 'CONFIG_PIX_FMT_RGB565': '',
                                  'CONFIG_GPS': '', 'CONFIG_RTC': ''}
+linux_small_src   = linux_src + ui_src_default + ui_layout_medium
 linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': '',
                                  'CONFIG_GPS': '', 'CONFIG_RTC': ''}
 
@@ -392,7 +398,7 @@ md3x0_src = ['platform/drivers/CPS/cps_io_native_MD3x0.c',
 md3x0_inc = ['platform/targets/MD-3x0']
 md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
 
-md3x0_src += openrtx_src + stm32f405_src + ui_src_default + mdx_src
+md3x0_src += openrtx_src + stm32f405_src + ui_src_default + ui_layout_large + mdx_src
 md3x0_inc += openrtx_inc + stm32f405_inc
 md3x0_def += openrtx_def + stm32f405_def
 
@@ -416,7 +422,7 @@ mduv3x0_src = ['platform/drivers/CPS/cps_io_native_MDUV3x0.c',
 mduv3x0_inc = ['platform/targets/MD-UV3x0']
 mduv3x0_def =  {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
 
-mduv3x0_src += openrtx_src + stm32f405_src + ui_src_default + mdx_src
+mduv3x0_src += openrtx_src + stm32f405_src + ui_src_default + ui_layout_large + mdx_src
 mduv3x0_inc += openrtx_inc + stm32f405_inc
 mduv3x0_def += openrtx_def + stm32f405_def
 
@@ -437,7 +443,7 @@ md9600_src = ['platform/targets/MD-9600/platform.c',
 md9600_inc = ['platform/targets/MD-9600']
 md9600_def = {'PLATFORM_MD9600': ''}
 
-md9600_src += openrtx_src + stm32f405_src + ui_src_default + mdx_src
+md9600_src += openrtx_src + stm32f405_src + ui_src_default + ui_layout_medium + mdx_src
 md9600_inc += openrtx_inc + stm32f405_inc
 md9600_def += openrtx_def + stm32f405_def
 
@@ -448,7 +454,7 @@ gd77_src = []
 gd77_inc = []
 gd77_def = {'PLATFORM_GD77': ''}
 
-gd77_src += openrtx_src + mk22fn512_src + ui_src_default + gdx_src
+gd77_src += openrtx_src + mk22fn512_src + ui_src_default + ui_layout_medium + gdx_src
 gd77_inc += openrtx_inc + mk22fn512_inc + gdx_inc
 gd77_def += openrtx_def + mk22fn512_def
 
@@ -459,7 +465,7 @@ dm1801_src = []
 dm1801_inc = []
 dm1801_def = {'PLATFORM_DM1801': ''}
 
-dm1801_src += openrtx_src + mk22fn512_src + ui_src_default + gdx_src
+dm1801_src += openrtx_src + mk22fn512_src + ui_src_default + ui_layout_medium + gdx_src
 dm1801_inc += openrtx_inc + mk22fn512_inc + gdx_inc
 dm1801_def += openrtx_def + mk22fn512_def
 
@@ -514,7 +520,7 @@ cs7000_src = ['platform/drivers/NVM/nvmem_CS7000.c',
 cs7000_inc = ['platform/targets/CS7000']
 cs7000_def = {'PLATFORM_CS7000': '', 'timegm': 'mktime'}
 
-cs7000_src += openrtx_src + stm32f405_src + ui_src_default
+cs7000_src += openrtx_src + stm32f405_src + ui_src_default + ui_layout_large
 cs7000_inc += openrtx_inc + stm32f405_inc
 cs7000_def += openrtx_def + stm32f405_def
 
@@ -545,7 +551,7 @@ cs7000p_src = ['platform/drivers/NVM/nvmem_CS7000.c',
 cs7000p_inc = ['platform/targets/CS7000-PLUS']
 cs7000p_def = {'PLATFORM_CS7000P': '', 'timegm': 'mktime'}
 
-cs7000p_src += openrtx_src + stm32h743_src + miosix_cm7_src + ui_src_default
+cs7000p_src += openrtx_src + stm32h743_src + miosix_cm7_src + ui_src_default + ui_layout_large
 cs7000p_inc += openrtx_inc + stm32h743_inc + miosix_cm7_inc
 cs7000p_def += openrtx_def + stm32h743_def + miosix_cm7_def
 
@@ -567,7 +573,7 @@ dm1701_src = ['platform/targets/DM-1701/platform.c',
 dm1701_inc = ['platform/targets/DM-1701']
 dm1701_def = {'PLATFORM_DM1701': '', 'timegm': 'mktime'}
 
-dm1701_src += openrtx_src + stm32f405_src + ui_src_default + mdx_src
+dm1701_src += openrtx_src + stm32f405_src + ui_src_default + ui_layout_large + mdx_src
 dm1701_inc += openrtx_inc + stm32f405_inc
 dm1701_def += openrtx_def + stm32f405_def
 
@@ -703,7 +709,7 @@ linux_opts = {
 }
 
 linux_small_opts = {
-    'sources'            : linux_default_src,
+    'sources'            : linux_small_src,
     'include_directories': linux_inc,
     'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
     'c_args'             : linux_small_c_args,
@@ -1089,7 +1095,7 @@ unit_test_opts = {'c_args'             : linux_c_args,
                   'dependencies'       : [sdl_dep, threads_dep, codec2_dep, catch2_dep],
                   'link_args'          : linux_l_args}
 
-unit_test_src = linux_src + ui_src_default
+unit_test_src = linux_src + ui_src_default + ui_layout_large
 
 m17_golay_test = executable('m17_golay_test',
                             sources : unit_test_src + ['tests/unit/M17_golay.cpp'],
