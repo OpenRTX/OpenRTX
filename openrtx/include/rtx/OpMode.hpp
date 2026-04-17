@@ -1,12 +1,13 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifndef OPMODE_H
 #define OPMODE_H
 
+#include <errno.h>
 #include "interfaces/delays.h"
 #include "rtx/rtx.h"
 
@@ -90,6 +91,30 @@ public:
     virtual bool rxSquelchOpen()
     {
         return false;
+    }
+
+    /**
+     * Submit a packet reception request.
+     *
+     * @param packet: pointer to packet descriptor.
+     * @return zero on success a negative error code otherwise.
+     */
+    virtual int addPacketRx(struct pktDesc *packet)
+    {
+        (void)packet;
+        return -ENOTSUP;
+    }
+
+    /**
+     * Submit a packet transmission request.
+     *
+     * @param packet: pointer to packet descriptor.
+     * @return zero on success a negative error code otherwise.
+     */
+    virtual int addPacketTx(struct pktDesc *packet)
+    {
+        (void)packet;
+        return -ENOTSUP;
     }
 };
 
