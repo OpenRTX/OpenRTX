@@ -69,6 +69,7 @@ openrtx/include/protocols/M17/FrameDecoder.hpp
 openrtx/include/protocols/M17/PacketFrame.hpp
 openrtx/include/protocols/M17/MetaText.hpp
 openrtx/include/rtx/rtx.h
+openrtx/include/rtx/OpMode.hpp
 openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
 openrtx/src/core/dsp.cpp
