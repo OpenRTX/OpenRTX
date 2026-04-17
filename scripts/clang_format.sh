@@ -85,7 +85,6 @@ openrtx/include/protocols/M17/StreamFrame.hpp
 openrtx/include/protocols/M17/Synchronizer.hpp
 openrtx/include/protocols/M17/Utils.hpp
 openrtx/include/protocols/M17/Viterbi.hpp
-openrtx/include/rtx/OpMode.hpp
 openrtx/include/rtx/OpMode_FM.hpp
 openrtx/include/rtx/OpMode_M17.hpp
 openrtx/include/ui/EnglishStrings.h
