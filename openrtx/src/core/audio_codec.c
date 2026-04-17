@@ -22,9 +22,15 @@
 #include "hwconfig.h"
 
 #define BUF_SIZE 4
+#define CODEC2_FRAME_SAMPLES 160 /* Samples per codec2 3200-mode frame */
+#define DMA_BUF_SAMPLES (CODEC2_FRAME_SAMPLES * 2) /* Double-buffered DMA */
 
 #ifndef CONFIG_MIC_GAIN
 #define CONFIG_MIC_GAIN 1
+#endif
+
+#ifndef CONFIG_MIC_OVERSAMPLE
+#define CONFIG_MIC_OVERSAMPLE 1
 #endif
 
 static pathId audioPath;
@@ -165,40 +171,57 @@ static void *encodeFunc(void *arg)
 {
     streamId iStream;
     pathId iPath = *((pathId *)arg);
-    stream_sample_t audioBuf[320];
     struct CODEC2 *codec2;
     struct dcBlock dcBlock;
+    struct decimatorState decimator;
 
-    iStream = audioStream_start(iPath, audioBuf, 320, 8000,
+    // Allocate on the heap, as the stack isn't big enough for oversampling
+    // above 2 or so.
+    stream_sample_t *adcBuf = malloc(DMA_BUF_SAMPLES * CONFIG_MIC_OVERSAMPLE
+                                     * sizeof(stream_sample_t));
+    if (adcBuf == NULL)
+        goto exit;
+
+    iStream = audioStream_start(iPath, adcBuf,
+                                DMA_BUF_SAMPLES * CONFIG_MIC_OVERSAMPLE,
+                                8000 * CONFIG_MIC_OVERSAMPLE,
                                 STREAM_INPUT | BUF_CIRC_DOUBLE);
-    if (iStream < 0) {
-        pthread_detach(pthread_self());
-        running = false;
-        return NULL;
-    }
+    if (iStream < 0)
+        goto exit;
 
     dsp_resetState(dcBlock);
+    dsp_resetState(decimator);
     codec2 = codec2_create(CODEC2_MODE_3200);
 
     while (reqStop == false) {
-        // Invalid path, quit
+        // Invalid audio path, quit
         if (audioPath_getStatus(iPath) != PATH_OPEN)
             break;
 
         dataBlock_t audio = inputStream_getData(iStream);
-        if (audio.data == NULL)
+        if (audio.data == NULL || audio.len == 0)
             break;
 
+        // Each inputStream_getData call returns exactly
+        // CODEC2_FRAME_SAMPLES * CONFIG_MIC_OVERSAMPLE raw samples
+        // (one half of the double-buffered DMA transfer).  Decimate
+        // by averaging each group of CONFIG_MIC_OVERSAMPLE samples.
+        size_t outIdx = 0;
         for (size_t i = 0; i < audio.len; i++) {
-            int16_t sample;
+            int16_t sample = audio.data[i];
 
-            sample = dsp_dcBlockFilter(&dcBlock, audio.data[i]);
-            audio.data[i] = sample * CONFIG_MIC_GAIN;
+#if CONFIG_MIC_OVERSAMPLE > 1
+            if (!dsp_decimator(&decimator, &sample, CONFIG_MIC_OVERSAMPLE))
+                continue;
+#endif
+
+            sample = dsp_dcBlockFilter(&dcBlock, sample);
+            audio.data[outIdx++] = sample * CONFIG_MIC_GAIN;
         }
 
-        // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
-        // new encoded data into a buffer of 16 bytes writing the first
-        // half and then the second one, sequentially.
+        // CODEC2 encodes 160 speech samples (20 ms), into 8 bytes: here we
+        // write the new encoded data into a buffer of 16 bytes, writing the
+        // first half and then the second one, sequentially.
         // Data ready flag is rised once all the 16 bytes contain new data.
         uint64_t frame = 0;
         codec2_encode(codec2, ((uint8_t *)&frame), audio.data);
@@ -225,6 +248,9 @@ static void *encodeFunc(void *arg)
     audioStream_terminate(iStream);
     codec2_destroy(codec2);
 
+exit:
+    free(adcBuf);
+
     // In case thread terminates due to invalid path or stream error, detach it
     // to ensure that its memory gets freed by the OS.
     if (reqStop == false)
@@ -238,12 +264,12 @@ static void *decodeFunc(void *arg)
 {
     streamId oStream;
     pathId oPath = *((pathId *)arg);
-    stream_sample_t audioBuf[320];
+    int16_t audioBuf[DMA_BUF_SAMPLES];
     struct CODEC2 *codec2;
 
     // Open output stream
-    memset(audioBuf, 0x00, 320 * sizeof(stream_sample_t));
-    oStream = audioStream_start(oPath, audioBuf, 320, 8000,
+    memset(audioBuf, 0x00, DMA_BUF_SAMPLES * sizeof(stream_sample_t));
+    oStream = audioStream_start(oPath, audioBuf, DMA_BUF_SAMPLES, 8000,
                                 STREAM_OUTPUT | BUF_CIRC_DOUBLE);
     if (oStream < 0) {
         pthread_detach(pthread_self());
@@ -291,12 +317,12 @@ static void *decodeFunc(void *arg)
 
 #ifdef PLATFORM_MD3x0
             // Bump up volume a little bit, as on MD3x0 is quite low
-            for (size_t i = 0; i < 160; i++)
+            for (size_t i = 0; i < CODEC2_FRAME_SAMPLES; i++)
                 audioBuf[i] *= 2;
 #endif
 
         } else {
-            memset(audioBuf, 0x00, 160 * sizeof(stream_sample_t));
+            memset(audioBuf, 0x00, CODEC2_FRAME_SAMPLES * sizeof(int16_t));
         }
 
         outputStream_sync(oStream, true);
