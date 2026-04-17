@@ -207,3 +207,41 @@ bool rtx_rxSquelchOpen()
 {
     return currMode->rxSquelchOpen();
 }
+
+int rtx_addPacketRx(struct pktDesc *packet)
+{
+    int ret;
+
+    if (packet->status != PKT_STATUS_IDLE)
+        return -EPERM;
+
+    if ((packet->buffer == NULL) || (packet->size == 0))
+        return -EINVAL;
+
+    packet->status = PKT_STATUS_SUBMITTED;
+    packet->res = 0;
+    ret = currMode->addPacketRx(packet);
+    if (ret)
+        packet->status = PKT_STATUS_IDLE;
+
+    return ret;
+}
+
+int rtx_addPacketTx(struct pktDesc *packet)
+{
+    int ret;
+
+    if (packet->status != PKT_STATUS_IDLE)
+        return -EPERM;
+
+    if ((packet->buffer == NULL) || (packet->size == 0))
+        return -EINVAL;
+
+    packet->status = PKT_STATUS_SUBMITTED;
+    packet->res = 0;
+    ret = currMode->addPacketTx(packet);
+    if (ret)
+        packet->status = PKT_STATUS_IDLE;
+
+    return ret;
+}
