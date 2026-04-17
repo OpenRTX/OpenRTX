@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include "core/cps.h"
 #include <pthread.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,6 +83,26 @@ enum opstatus {
 };
 
 /**
+ * \enum pktStatus Enumeration type describing the status of a data packet.
+ */
+enum pktStatus {
+    PKT_STATUS_IDLE,      /**< No operation in progress */
+    PKT_STATUS_SUBMITTED, /**< Submitted to RX/TX queue */
+    PKT_STATUS_DONE,      /**< RX/TX done */
+    PKT_STATUS_ERROR,     /**< RX/TX error */
+};
+
+/**
+ * Data packet descriptor
+ */
+struct pktDesc {
+    enum pktStatus status;
+    void *buffer;
+    size_t size;
+    ssize_t res;
+};
+
+/**
  * Initialise rtx stage.
  * @param m: pointer to the mutex protecting the shared configuration data
  * structure.
@@ -126,6 +147,22 @@ rssi_t rtx_getRssi();
  * @return true if RX squelch is open.
  */
 bool rtx_rxSquelchOpen();
+
+/**
+ * Submit a packet reception request.
+ *
+ * @param packet: pointer to packet descriptor.
+ * @return zero on success a negative error code otherwise.
+ */
+int rtx_addPacketRx(struct pktDesc *packet);
+
+/**
+ * Submit a packet transmission request.
+ *
+ * @param packet: pointer to packet descriptor.
+ * @return zero on success a negative error code otherwise.
+ */
+int rtx_addPacketTx(struct pktDesc *packet);
 
 #ifdef __cplusplus
 }
