@@ -2,6 +2,8 @@ name: "Build devcontainer"
 on:
   workflow_dispatch:
   push:
+    branches:
+      - master
     paths:
       - 'requirements.txt'
       - '.github/workflows/build-devcontainer.yml'
@@ -30,6 +32,7 @@ jobs:
         with:
           submodules: recursive
       - name: Login to GitHub Container Registry
+        if: github.repository == 'OpenRTX/OpenRTX' && github.event_name != 'pull_request'
         uses: docker/login-action@v2 
         with:
           registry: ghcr.io
@@ -40,4 +43,4 @@ jobs:
         with:
             imageName: ${{ env.DEVCONTAINER_NAME }}
             cacheFrom: ${{ env.DEVCONTAINER_NAME }}
-            push: always
+            push: ${{ github.repository == 'OpenRTX/OpenRTX' && github.event_name != 'pull_request' && 'always' || 'never' }}
