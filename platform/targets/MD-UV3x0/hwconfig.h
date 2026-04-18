@@ -20,11 +20,10 @@ extern HR_C6000 C6000;
 extern "C" {
 #endif
 
-enum AdcChannel
-{
-    ADC_VOL_CH   = 0,
-    ADC_VBAT_CH  = 1,
-    ADC_MIC_CH   = 3,
+enum AdcChannel {
+    ADC_VOL_CH = 0,
+    ADC_VBAT_CH = 1,
+    ADC_MIC_CH = 3,
 };
 
 extern const struct gpsDevice gps;

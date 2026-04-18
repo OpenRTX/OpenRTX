@@ -89,7 +89,16 @@ platform/drivers/GPIO/gpio-native.h
 platform/drivers/GPS/gps_stm32.h
 platform/drivers/GPS/gps_zephyr.h
 platform/drivers/USB/usb.h
+platform/targets/CS7000/hwconfig.h
+platform/targets/CS7000-PLUS/hwconfig.h
+platform/targets/DM-1701/hwconfig.h
 platform/targets/GDx/hwconfig.h
+platform/targets/linux/hwconfig.h
+platform/targets/MD-3x0/hwconfig.h
+platform/targets/MD-9600/hwconfig.h
+platform/targets/MD-UV3x0/hwconfig.h
+platform/targets/Module17/hwconfig.h
+platform/targets/ttwrplus/hwconfig.h
 platform/targets/linux/emulator/sdl_engine.h
 platform/targets/ttwrplus/pmu.h
 tests/platform/mic_test.c
