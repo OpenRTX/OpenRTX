@@ -148,8 +148,7 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
     }
 }
 
-
-void _ui_drawMainVFO(ui_state_t* ui_state)
+void _ui_drawMainVFO(ui_state_t *ui_state)
 {
     gfx_clearScreen();
     _ui_drawMainTop();
