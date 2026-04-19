@@ -44,6 +44,7 @@ openrtx/include/core/crc.h
 openrtx/include/core/dsp.h
 openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
+openrtx/include/core/input.h
 openrtx/include/core/memory_profiling.h
 openrtx/include/core/nvmem_access.h
 openrtx/include/core/nvmem_device.h
@@ -68,6 +69,7 @@ openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
 openrtx/src/core/dsp.cpp
 openrtx/src/core/audio_codec.c
+openrtx/src/core/input.c
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/protocols/M17/Callsign.cpp

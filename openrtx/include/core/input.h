@@ -26,19 +26,15 @@ static const uint16_t input_longPressTimeout = 700;
  * For a keyboard event we use 1 bit to signal a short or long press
  * And the remaining 29 bits to communicate currently pressed keys.
  */
-typedef union
-{
-    struct
-    {
-        uint32_t long_press : 1,
-                 keys       : 29,
-                 _padding   : 2;
+typedef union {
+    struct {
+        uint32_t long_press : 1;
+        uint32_t keys       : 29;
+        uint32_t _padding   : 2;
     };
 
     uint32_t value;
-}
-kbd_msg_t;
-
+} kbd_msg_t;
 
 /**
  * Scan all the keyboard buttons to detect possible keypresses filling a
