@@ -44,12 +44,16 @@ openrtx/include/core/crc.h
 openrtx/include/core/dsp.h
 openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
+openrtx/include/core/input.h
 openrtx/include/core/memory_profiling.h
 openrtx/include/core/nvmem_access.h
 openrtx/include/core/nvmem_device.h
 openrtx/include/core/openrtx.h
+openrtx/include/core/state.h
 openrtx/include/core/ui.h
 openrtx/include/core/utils.h
+openrtx/include/core/voicePrompts.h
+openrtx/include/core/voicePromptUtils.h
 openrtx/include/core/xmodem.h
 openrtx/include/fonts/symbols/symbols.h
 openrtx/include/interfaces/cps_io.h
