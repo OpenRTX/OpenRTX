@@ -11,6 +11,10 @@
 #include "ui/ui_strings.h"
 #include "core/voicePrompts.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 Please Note!
 
@@ -224,5 +228,9 @@ void vp_announceSplashScreen();
  * @param flags: control flags.
  */
 void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif  // VOICE_PROMPT_UTILS_H

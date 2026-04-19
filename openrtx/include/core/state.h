@@ -14,6 +14,10 @@
 #include "core/cps.h"
 #include "core/gps.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Part of this structure has been commented because the corresponding
  * functionality is not yet implemented.
@@ -102,5 +106,9 @@ void state_task();
  * Reset the fields of radio state containing user settings and VFO channel.
  */
 void state_resetSettingsAndVfo();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* STATE_H */

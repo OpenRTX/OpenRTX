@@ -10,6 +10,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * This function initialises the User Interface, starting the
  * Finite State Machine describing the user interaction.
@@ -57,5 +61,9 @@ bool ui_pushEvent(const uint8_t type, const uint32_t data);
  * This function terminates the User Interface.
  */
 void ui_terminate();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UI_H */
