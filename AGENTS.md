@@ -83,13 +83,7 @@ The T-TWR Plus (ESP32S3/Xtensa) target uses Zephyr RTOS and CMake instead of Mes
 
 ### Python Scripts
 
-Python scripts in `scripts/` should be run inside a virtual environment with dependencies from `requirements.txt`:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+Python scripts utilize `uv`.
 
 ## Conventions
 
