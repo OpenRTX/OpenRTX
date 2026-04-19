@@ -3,13 +3,15 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.github/workflows/build-devcontainer.yml'
       - '.devcontainer/Dockerfile'
       - '.devcontainer/devcontainer.json'
   pull_request:
     paths:
-      - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.github/workflows/build-devcontainer.yml'
       - '.devcontainer/Dockerfile'
       - '.devcontainer/devcontainer.json'
@@ -20,7 +22,7 @@ env:
   DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write

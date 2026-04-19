@@ -1,5 +1,9 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 [project]
 name = "openrtx"
+version = "0.0.0"
 description = "Scripts that accompany OpenRTX sources"
 readme = "README.md"
 requires-python = ">=3.12"
