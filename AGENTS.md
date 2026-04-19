@@ -76,7 +76,7 @@ bash scripts/coverage.sh
 # Zephyr/ESP32S3 build (T-TWR Plus)
 # Requires Zephyr SDK and west; see west.yml for manifest
 west build -b ttwrplus
-python3 scripts/uf2conv.py <binary> -o openrtx_ttwrplus.uf2
+uv run scripts/uf2conv.py <binary> -o openrtx_ttwrplus.uf2
 ```
 
 The T-TWR Plus (ESP32S3/Xtensa) target uses Zephyr RTOS and CMake instead of Meson cross-compilation. Board definitions live in `platform/targets/ttwrplus/`, and Zephyr configuration is in `platform/mcu/ESP32S3/zephyr.conf`. The `west.yml` manifest pins the Zephyr, MCUboot, and HAL Espressif versions.
