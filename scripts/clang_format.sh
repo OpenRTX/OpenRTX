@@ -52,6 +52,8 @@ openrtx/include/core/openrtx.h
 openrtx/include/core/state.h
 openrtx/include/core/ui.h
 openrtx/include/core/utils.h
+openrtx/include/core/voicePrompts.h
+openrtx/include/core/voicePromptUtils.h
 openrtx/include/core/xmodem.h
 openrtx/include/fonts/symbols/symbols.h
 openrtx/include/interfaces/cps_io.h
@@ -74,6 +76,8 @@ openrtx/src/core/input.c
 openrtx/src/core/nvmem_access.c
 openrtx/src/core/memory_profiling.cpp
 openrtx/src/core/state.c
+openrtx/src/core/voicePrompts.c
+openrtx/src/core/voicePromptUtils.c
 openrtx/src/protocols/M17/Callsign.cpp
 openrtx/src/protocols/M17/FrameDecoder.cpp
 platform/drivers/ADC/ADC0_GDx.h
