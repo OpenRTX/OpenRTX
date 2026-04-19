@@ -6,7 +6,7 @@
 
 // Radioddity RD-5R
 
-#include "ui_layout.h"
+#include "ui_layout_config.h"
 
 const layout_t _layout_config = {
     .hline_h = 1,

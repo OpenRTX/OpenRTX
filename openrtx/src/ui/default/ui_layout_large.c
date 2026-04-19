@@ -6,7 +6,7 @@
 
 // Tytera MD380, MD-UV380
 
-#include "ui_layout.h"
+#include "ui_layout_config.h"
 
 const layout_t _layout_config = {
     .hline_h = 1,
