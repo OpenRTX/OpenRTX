@@ -11,6 +11,10 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Time interval in milliseconds after which a keypress is considered a long-press
  */
@@ -81,5 +85,9 @@ uint8_t input_getPressedNumber(kbd_msg_t msg);
  * @return the smallest number associated to a char.
  */
 uint8_t input_getPressedChar(kbd_msg_t msg);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* INPUT_H */

@@ -1,8 +1,12 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef BATTERY_H
 #define BATTERY_H
@@ -15,5 +19,9 @@
  * @return state of charge percentage, from 0% to 100%.
  */
 uint8_t battery_getCharge(uint16_t vbat);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* BATTERY_H */
