@@ -74,3 +74,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -U pip && \
     pip install --no-cache-dir -r requirements.txt
+
+# Install faketime for e2e tests (separate layer to preserve cache)
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    faketime \
+    && rm -rf /var/lib/apt/lists/*
