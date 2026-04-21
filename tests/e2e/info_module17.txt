@@ -1,0 +1,15 @@
+sleep 3000
+nop Navigate to Info: Enter menu, Down x1 to Info, Enter
+key enter
+sleep 500
+key DOWN enter
+sleep 500
+nop Info screen: version, Used heap, Hw Version, HMI, BB Tuning Pot
+screenshot info_top.bmp
+nop Scroll down
+key DOWN DOWN DOWN DOWN
+sleep 500
+screenshot info_scrolled.bmp
+key ESC
+sleep 500
+quit

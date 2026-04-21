@@ -1,0 +1,18 @@
+sleep 3000
+nop Switch to M17 mode: MONI+5 toggles FM to M17
+keycombo MONI 5
+sleep 500
+screenshot vfo_m17_mode.bmp
+nop Press # to enter M17 destination callsign edit
+key HASH
+sleep 500
+screenshot vfo_callsign_edit_empty.bmp
+nop Type "A" by pressing 2
+key 2
+sleep 500
+screenshot vfo_callsign_edit_typing.bmp
+nop Press Enter to confirm
+key enter
+sleep 500
+screenshot vfo_callsign_confirmed.bmp
+quit

@@ -1,0 +1,26 @@
+sleep 3000
+nop Navigate to Settings: Enter menu, Settings is first item, Enter
+key enter
+sleep 500
+key enter
+sleep 500
+nop Navigate to M17: Down x1 to M17, Enter
+key DOWN enter
+sleep 500
+screenshot m17_settings.bmp
+nop Enter callsign edit mode (Callsign is already selected)
+key enter
+sleep 500
+screenshot callsign_edit_empty.bmp
+nop Type a character using UP arrow (cycles through symbols)
+key UP
+sleep 500
+screenshot callsign_edit_typing.bmp
+nop Press Enter to confirm
+key enter
+sleep 500
+screenshot callsign_confirmed.bmp
+nop Press ESC to go back
+key ESC
+sleep 500
+quit

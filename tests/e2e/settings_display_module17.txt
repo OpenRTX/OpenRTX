@@ -1,0 +1,14 @@
+sleep 3000
+nop Navigate to Settings > Display
+key enter
+sleep 500
+key enter
+sleep 500
+nop Enter Display submenu (first item in Settings)
+key enter
+sleep 500
+nop Display settings: Brightness
+screenshot display_settings.bmp
+key ESC
+sleep 500
+quit

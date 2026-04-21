@@ -1,0 +1,19 @@
+sleep 3000
+nop Navigate to Settings > Module 17
+key enter
+sleep 500
+key enter
+sleep 500
+nop Module 17 is at position 2 in Settings
+key DOWN DOWN enter
+sleep 500
+nop Module 17 settings top: Mic Gain, PTT In, PTT Out, TX Phase
+screenshot module17_hw_top.bmp
+nop Scroll down to see more items
+key DOWN DOWN DOWN DOWN
+sleep 500
+nop Module 17 settings scrolled: RX Phase, TX Softpot, RX Softpot
+screenshot module17_hw_scrolled.bmp
+key ESC
+sleep 500
+quit

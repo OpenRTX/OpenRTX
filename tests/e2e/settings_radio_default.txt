@@ -1,0 +1,22 @@
+sleep 3000
+nop Navigate to Settings > Radio
+key enter
+sleep 500
+key DOWN DOWN DOWN DOWN enter
+sleep 500
+nop Radio is at position 3 in Settings
+key DOWN DOWN DOWN enter
+sleep 500
+nop Radio settings: Offset, Direction, Step
+screenshot radio_settings.bmp
+nop Select Direction
+key DOWN
+sleep 500
+screenshot radio_direction.bmp
+nop Select Step
+key DOWN
+sleep 500
+screenshot radio_step.bmp
+key ESC
+sleep 500
+quit

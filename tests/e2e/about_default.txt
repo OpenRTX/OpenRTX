@@ -1,0 +1,12 @@
+sleep 3000
+nop Navigate to About: Enter menu, Down x6, Enter
+key enter
+sleep 500
+key DOWN DOWN DOWN DOWN DOWN DOWN enter
+sleep 500
+screenshot about_top.bmp
+nop Scroll to the bottom
+key DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN DOWN
+sleep 500
+screenshot about_bottom.bmp
+quit

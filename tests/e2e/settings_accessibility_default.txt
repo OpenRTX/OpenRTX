@@ -1,0 +1,22 @@
+sleep 3000
+nop Navigate to Settings > Accessibility
+key enter
+sleep 500
+key DOWN DOWN DOWN DOWN enter
+sleep 500
+nop Accessibility is at position 6 in Settings
+key DOWN DOWN DOWN DOWN DOWN DOWN enter
+sleep 500
+nop Accessibility settings: Macro Latch, Voice, Phonetic
+screenshot accessibility_settings.bmp
+nop Select Voice
+key DOWN
+sleep 500
+screenshot accessibility_voice.bmp
+nop Select Phonetic
+key DOWN
+sleep 500
+screenshot accessibility_phonetic.bmp
+key ESC
+sleep 500
+quit

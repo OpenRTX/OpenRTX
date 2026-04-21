@@ -1,0 +1,16 @@
+sleep 3000
+nop Module17 starts in M17 mode on VFO screen
+screenshot vfo_m17_mode.bmp
+nop Press RIGHT to enter M17 destination callsign edit
+key RIGHT
+sleep 500
+screenshot vfo_callsign_edit_empty.bmp
+nop Type a character using UP arrow (cycles through symbols)
+key UP
+sleep 500
+screenshot vfo_callsign_edit_typing.bmp
+nop Press Enter to confirm
+key enter
+sleep 500
+screenshot vfo_callsign_confirmed.bmp
+quit

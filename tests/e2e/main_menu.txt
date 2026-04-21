@@ -1,0 +1,13 @@
+sleep 3000
+key enter
+sleep 500
+screenshot main_menu.bmp
+key DOWN
+sleep 500
+screenshot main_menu_down1.bmp
+key DOWN
+sleep 500
+screenshot main_menu_down2.bmp
+key ESC
+sleep 500
+quit

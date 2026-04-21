@@ -1,0 +1,15 @@
+sleep 3000
+nop Navigate to Settings: Enter menu, Settings is first item, Enter
+key enter
+sleep 500
+key enter
+sleep 500
+nop Settings menu: Display, M17, Module 17, Default Settings
+screenshot settings_top.bmp
+nop Scroll down through all items
+key DOWN DOWN DOWN
+sleep 500
+screenshot settings_scrolled.bmp
+key ESC
+sleep 500
+quit

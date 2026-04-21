@@ -1,0 +1,22 @@
+sleep 3000
+nop Navigate to Settings > GPS
+key enter
+sleep 500
+key DOWN DOWN DOWN DOWN enter
+sleep 500
+nop GPS is at position 2 in Settings
+key DOWN DOWN enter
+sleep 500
+nop GPS settings: GPS Enabled, GPS Set Time, UTC Timezone
+screenshot gps_settings.bmp
+nop Select GPS Set Time
+key DOWN
+sleep 500
+screenshot gps_set_time.bmp
+nop Select UTC Timezone
+key DOWN
+sleep 500
+screenshot gps_timezone.bmp
+key ESC
+sleep 500
+quit

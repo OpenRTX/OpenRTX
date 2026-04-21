@@ -1,0 +1,16 @@
+sleep 3000
+nop Navigate to Info: Enter menu, Down x5 to Info, Enter
+key enter
+sleep 500
+key DOWN DOWN DOWN DOWN DOWN enter
+sleep 500
+nop Info screen top: version, Bat. Voltage, Bat. Charge, RSSI
+screenshot info_top.bmp
+nop Scroll down to see more items
+key DOWN DOWN DOWN DOWN
+sleep 500
+nop Info screen scrolled: Used heap, Band, VHF, UHF, Hw Version
+screenshot info_scrolled.bmp
+key ESC
+sleep 500
+quit
