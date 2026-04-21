@@ -91,7 +91,7 @@ jobs:
           cacheFrom: ${{ env.DEVCONTAINER_NAME }}
           push: never
           runCmd: |
-            meson setup build_linux &&
+            meson setup build_linux -Dtest_version=e2e-test &&
             meson setup --cross-file cross_cm4.txt build_cm4 &&
             meson setup --cross-file cross_cm7.txt build_cm7 &&
             meson compile -C build_linux openrtx_linux &&

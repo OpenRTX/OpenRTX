@@ -51,6 +51,12 @@ meson setup build_linux
 meson compile -C build_linux openrtx_linux
 meson test -C build_linux
 
+# For running e2e tests (scripts/run_e2e.py), the linux binaries must be built
+# with a fixed version string so the Info screen renders deterministically:
+meson setup build_linux -Dtest_version=e2e-test
+# (or `meson setup --reconfigure build_linux -Dtest_version=e2e-test` on an
+#  existing build directory)
+
 # Cross-compile for ARM Cortex-M4 targets
 meson setup --cross-file cross_cm4.txt build_cm4
 meson compile -C build_cm4 openrtx_md3x0      # TYT MD-380/390

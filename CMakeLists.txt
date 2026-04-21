@@ -45,10 +45,14 @@ set(OPENRTX_ROOT ${CMAKE_CURRENT_LIST_DIR})
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(openrtx)
 
-execute_process(COMMAND git describe --tags --dirty --always
-                OUTPUT_VARIABLE GIT_VER_ID
-                ERROR_QUIET
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(DEFINED OPENRTX_TEST_VERSION AND NOT "${OPENRTX_TEST_VERSION}" STREQUAL "")
+    set(GIT_VER_ID "${OPENRTX_TEST_VERSION}")
+else()
+    execute_process(COMMAND git describe --tags --dirty --always
+                    OUTPUT_VARIABLE GIT_VER_ID
+                    ERROR_QUIET
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
 
 target_compile_definitions(app
   PRIVATE
