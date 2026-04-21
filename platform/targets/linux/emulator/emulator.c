@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "SDL2/SDL.h"
 
@@ -341,6 +342,71 @@ static int shell_sleep(void *_self, int _argc, char **_argv)
     return SH_CONTINUE;
 }
 
+/* wait_stable defaults: poll the framebuffer hash every 50ms and
+ * return as soon as N consecutive polls produce the same hash, or the
+ * overall timeout elapses.  Callers can override both bounds. */
+#define WAIT_STABLE_DEFAULT_MAX_MS  2000
+#define WAIT_STABLE_DEFAULT_POLLS   3
+#define WAIT_STABLE_INTERVAL_MS     50
+
+static int shell_wait_stable(void *_self, int _argc, char **_argv)
+{
+    (void) _self;
+
+    int max_ms       = WAIT_STABLE_DEFAULT_MAX_MS;
+    int stable_polls = WAIT_STABLE_DEFAULT_POLLS;
+
+    if(_argc >= 1 && _argv[0] != NULL)
+    {
+        max_ms = atoi(_argv[0]);
+        if (max_ms <= 0) max_ms = WAIT_STABLE_DEFAULT_MAX_MS;
+    }
+    if(_argc >= 2 && _argv[1] != NULL)
+    {
+        stable_polls = atoi(_argv[1]);
+        if (stable_polls < 2) stable_polls = 2;
+    }
+
+    uint64_t prev = 0;
+    bool     have_prev = false;
+    int      consecutive = 0;
+    int      elapsed = 0;
+
+    while (elapsed < max_ms)
+    {
+        uint64_t h = 0;
+        if (!sdlEngine_getFrameHash(&h, 0))
+        {
+            printf("wait_stable: framehash failed; aborting\n");
+            return SH_ERR;
+        }
+
+        if (have_prev && h == prev)
+        {
+            consecutive++;
+            if (consecutive >= stable_polls)
+            {
+                return SH_CONTINUE;
+            }
+        }
+        else
+        {
+            consecutive = 1;
+        }
+        prev = h;
+        have_prev = true;
+
+        usleep(WAIT_STABLE_INTERVAL_MS * 1000);
+        elapsed += WAIT_STABLE_INTERVAL_MS;
+    }
+
+    printf("wait_stable: timed out after %d ms (frame still changing)\n",
+           max_ms);
+    /* Non-fatal: return CONTINUE so the test proceeds and the
+     * subsequent screenshot diff will surface the real problem. */
+    return SH_CONTINUE;
+}
+
 static int shell_quit( void *_self, int _argc, char **_argv)
 {
     (void) _self;
@@ -400,6 +466,9 @@ static _climenu_option _options[] =
                                 NULL,   screenshot_sync
     },
     {"sleep",   "Wait some number of ms",           NULL,   shell_sleep },
+    {"wait_stable", "[max_ms=2000] [stable_polls=3] Wait until the framebuffer is stable",
+                                NULL,   shell_wait_stable
+    },
     {"help",    "Print this help",                  NULL,   shell_help },
     {"nop",     "Do nothing (useful for comments)", NULL,   shell_nop},
     {"quit",    "Quit, close the emulator",         NULL,   shell_quit },

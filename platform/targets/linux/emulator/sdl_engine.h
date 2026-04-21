@@ -53,6 +53,18 @@ void sdlEngine_run();
 bool sdlEngine_waitScreenshot(uint32_t timeout_ms);
 
 /**
+ * Compute an FNV-1a hash of the most recently rendered framebuffer.
+ * The SDL thread caches each frame into an internal buffer protected
+ * by a mutex; this call simply hashes that buffer, so it is safe to
+ * call from any thread and never blocks the SDL event loop.
+ *
+ * @param out_hash receives the computed hash on success.
+ * @param timeout_ms ignored; retained for API stability.
+ * @return true on success, false if the engine is not initialized.
+ */
+bool sdlEngine_getFrameHash(uint64_t *out_hash, uint32_t timeout_ms);
+
+/**
  * Thread-safe check to verify if the application entered the SDL main loop.
  *
  * @return true after sdl_task() started.
