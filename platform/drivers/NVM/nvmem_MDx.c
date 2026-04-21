@@ -140,12 +140,18 @@ void nvm_readHwInfo(hwInfo_t *info)
     uint16_t freqMin = 0;
     uint16_t freqMax = 0;
     uint8_t  lcdInfo = 0;
+    #ifdef PLATFORM_MD9600
+    uint8_t  hwVersionMajor = 0;
+    #endif
 
     // Security register 3: base address 0x3000
     nvm_devRead(&secReg, 0x3000, info->name, 8);
     nvm_devRead(&secReg, 0x3014, &freqMin, 2);
     nvm_devRead(&secReg, 0x3016, &freqMax, 2);
     nvm_devRead(&secReg, 0x301D, &lcdInfo, 1);
+    #ifdef PLATFORM_MD9600
+    nvm_devRead(&secReg, 0x3035, &hwVersionMajor, 1);
+    #endif
 
     // Ensure correct null-termination of device name by removing the 0xff.
     for(uint8_t i = 0; i < sizeof(info->name); i++)
@@ -157,7 +163,11 @@ void nvm_readHwInfo(hwInfo_t *info)
     freqMin = ((uint16_t) bcdToBin(freqMin))/10;
     freqMax = ((uint16_t) bcdToBin(freqMax))/10;
 
+    #ifdef PLATFORM_MD9600
+    info->hw_version = hwVersionMajor;
+    #else
     info->hw_version = lcdInfo & 0x03;
+    #endif
 
     #ifdef PLATFORM_MD3x0
     // Single band device, either VHF or UHF
