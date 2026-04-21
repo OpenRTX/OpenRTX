@@ -17,6 +17,7 @@ Uint32 SDL_Backlight_Event;     // Shared custom SDL event to change backlight
 static SDL_Window   *window;
 static SDL_Renderer *renderer;
 static SDL_Texture  *displayTexture;
+static SDL_sem      *screenshot_sync_sem;  // Posted after a sync screenshot completes
 
 static bool       ready = false;  // Signal if the main loop is ready
 static keyboard_t sdl_keys;       // Store the keyboard status
@@ -273,6 +274,15 @@ void sdlEngine_init()
     SDL_Screenshot_Event = SDL_RegisterEvents(2);
     SDL_Backlight_Event = SDL_Screenshot_Event+1;
 
+    // Semaphore for synchronous screenshot completion handshake.
+    screenshot_sync_sem = SDL_CreateSemaphore(0);
+    if (screenshot_sync_sem == NULL)
+    {
+        printf("Failed to create screenshot sync semaphore: %s\n",
+               SDL_GetError());
+        exit(1);
+    }
+
     chan_init(&fb_sync);
 
     window = SDL_CreateWindow("OpenRTX",
@@ -335,6 +345,12 @@ void sdlEngine_run()
                 char *filename = (char *)ev.user.data1;
                 screenshot_display(filename);
                 free(ev.user.data1);
+                /* code != 0 indicates the requester wants to block until
+                 * the BMP is on disk; post the handshake semaphore. */
+                if (ev.user.code != 0)
+                {
+                    SDL_SemPost(screenshot_sync_sem);
+                }
             }
             else if (ev.type == SDL_Backlight_Event)
             {
@@ -369,7 +385,21 @@ void sdlEngine_run()
     SDL_DestroyTexture(displayTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    if (screenshot_sync_sem != NULL)
+    {
+        SDL_DestroySemaphore(screenshot_sync_sem);
+        screenshot_sync_sem = NULL;
+    }
     SDL_Quit();
+}
+
+bool sdlEngine_waitScreenshot(uint32_t timeout_ms)
+{
+    if (screenshot_sync_sem == NULL)
+    {
+        return false;
+    }
+    return SDL_SemWaitTimeout(screenshot_sync_sem, timeout_ms) == 0;
 }
 
 bool sdlEngine_ready()

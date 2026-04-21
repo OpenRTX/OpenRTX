@@ -249,11 +249,53 @@ static int screenshot(void *_self, int _argc, char **_argv)
     SDL_Event e;
     SDL_zero(e);
     e.type = SDL_Screenshot_Event;
+    e.user.code = 0;        /* async: do not post the handshake semaphore */
     e.user.data1 = malloc(len+1);
     memset(e.user.data1, 0, len+1);
     strcpy(e.user.data1, filename);
 
     return SDL_PushEvent(&e) == 1 ? SH_CONTINUE : SH_ERR;
+}
+
+/* Default timeout for screenshot_sync, in milliseconds.  Generous
+ * because the SDL thread may be busy servicing input/render events when
+ * the request is enqueued. */
+#define SCREENSHOT_SYNC_TIMEOUT_MS 5000
+
+static int screenshot_sync(void *_self, int _argc, char **_argv)
+{
+    (void) _self;
+    char *filename = "screenshot.bmp";
+
+    if(_argc && _argv[0] != NULL)
+    {
+        filename = _argv[0];
+    }
+
+    int len = strlen(filename);
+
+    SDL_Event e;
+    SDL_zero(e);
+    e.type = SDL_Screenshot_Event;
+    e.user.code = 1;        /* sync: SDL thread will post the handshake */
+    e.user.data1 = malloc(len+1);
+    memset(e.user.data1, 0, len+1);
+    strcpy(e.user.data1, filename);
+
+    if(SDL_PushEvent(&e) != 1)
+    {
+        free(e.user.data1);
+        return SH_ERR;
+    }
+
+    if(!sdlEngine_waitScreenshot(SCREENSHOT_SYNC_TIMEOUT_MS))
+    {
+        printf("screenshot_sync: timed out after %d ms waiting for %s\n",
+               SCREENSHOT_SYNC_TIMEOUT_MS, filename);
+        return SH_ERR;
+    }
+
+    return SH_CONTINUE;
 }
 
 static int setFloat(void *_self, int _argc, char **_argv)
@@ -353,6 +395,9 @@ static _climenu_option _options[] =
     {"show",     "Show current radio state (ptt, rssi, etc)", NULL, printState},
     {"screenshot", "[screenshot.bmp] Save screenshot to first arg or screenshot.bmp if none given",
                                 NULL,   screenshot
+    },
+    {"screenshot_sync", "[screenshot.bmp] Like screenshot, but block until the BMP is written",
+                                NULL,   screenshot_sync
     },
     {"sleep",   "Wait some number of ms",           NULL,   shell_sleep },
     {"help",    "Print this help",                  NULL,   shell_help },
