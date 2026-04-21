@@ -36,7 +36,7 @@ void _ui_drawMainTop(ui_state_t * ui_state)
     // If the radio has no built-in battery, print input voltage
 #ifdef CONFIG_BAT_NONE
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_RIGHT,
-              color_white,"%.1fV", last_state.v_bat);
+              color_white,"%u.%uV", last_state.v_bat/1000, (last_state.v_bat % 1000) /100);
 #else
     if(last_state.settings.showBatteryIcon) {
         // print battery icon on top bar, use 4 px padding
