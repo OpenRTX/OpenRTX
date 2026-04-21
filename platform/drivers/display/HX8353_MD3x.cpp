@@ -203,7 +203,7 @@ void display_init()
      * Since we do not have the datasheet for the controller employed in this
      * screen, we can only do copy-and-paste...
      */
-    uint8_t lcd_type = platform_getHwInfo()->hw_version;
+    uint8_t lcd_type = platform_getHwInfo()->hw_version & 0x03;
 
     if((lcd_type == 2) || (lcd_type == 3))
     {

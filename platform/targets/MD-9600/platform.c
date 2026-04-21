@@ -21,18 +21,7 @@
 #include "drivers/chSelector/chSelector.h"
 #include "core/gps.h"
 
-/* TODO: Hardcoded hwInfo until we implement reading from flash */
-static const hwInfo_t hwInfo =
-{
-    .vhf_maxFreq = 174,
-    .vhf_minFreq = 136,
-    .vhf_band    = 1,
-    .uhf_maxFreq = 480,
-    .uhf_minFreq = 400,
-    .uhf_band    = 1,
-    .hw_version  = 0,
-    .name        = "MD-9600"
-};
+static hwInfo_t hwInfo;
 
 void platform_init()
 {
@@ -61,7 +50,10 @@ void platform_init()
     gpio_setMode(SPI2_SDI, ALTERNATE | ALTERNATE_FUNC(5));
     spiStm32_init(&spi2, 1300000, 0);
 
+    memset(&hwInfo, 0x00, sizeof(hwInfo));
+
     nvm_init();                      /* Initialise non volatile memory manager */
+    nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
     toneGen_init();                  /* Initialise tone generator              */
     rtc_init();                      /* Initialise RTC                         */
     backlight_init();                /* Initialize Backlight                   */
