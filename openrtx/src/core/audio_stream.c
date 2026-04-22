@@ -172,12 +172,13 @@ void audioStream_terminate(const streamId id)
 
 dataBlock_t inputStream_getData(streamId id)
 {
-    const struct audioDevice *dev = streams[id].dev;
     dataBlock_t block = {NULL, 0};
     int ret;
 
     if(validateStream(id) == false)
         return block;
+
+    const struct audioDevice *dev = streams[id].dev;
 
     if(streams[id].ctx.bufMode == BUF_LINEAR)
     {
