@@ -1,15 +1,15 @@
-sleep 3000
+wait_stable 5000 3
 nop Navigate to Settings: Enter menu, Settings is first item, Enter
 key enter
-sleep 500
+wait_stable
 key enter
-sleep 500
+wait_stable
 nop Settings menu: Display, M17, Module 17, Default Settings
-screenshot settings_top.bmp
+screenshot_sync settings_top.bmp
 nop Scroll down through all items
 key DOWN DOWN DOWN
-sleep 500
-screenshot settings_scrolled.bmp
+wait_stable
+screenshot_sync settings_scrolled.bmp
 key ESC
-sleep 500
+wait_stable
 quit

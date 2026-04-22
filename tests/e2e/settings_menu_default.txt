@@ -1,16 +1,16 @@
-sleep 3000
+wait_stable 5000 3
 nop Navigate to Settings: Enter menu, Down x4 to Settings, Enter
 key enter
-sleep 500
+wait_stable
 key DOWN DOWN DOWN DOWN enter
-sleep 500
+wait_stable
 nop Settings menu top: Display, Time & Date, GPS, Radio visible
-screenshot settings_top.bmp
+screenshot_sync settings_top.bmp
 nop Scroll down to see more items
 key DOWN DOWN DOWN DOWN
-sleep 500
+wait_stable
 nop Settings menu scrolled: M17 selected, FM, Accessibility, Default Settings below
-screenshot settings_scrolled.bmp
+screenshot_sync settings_scrolled.bmp
 key ESC
-sleep 500
+wait_stable
 quit
