@@ -95,7 +95,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
-
+        {
             // Get Bandwidth string
             if(last_state.channel.bandwidth == BW_12_5)
                 sniprintf(bw_str, 8, "NFM");
@@ -119,6 +119,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                           color_white, "%s", bw_str );
             }
             break;
+        }
 
         case OPMODE_DMR:
             // Print talkgroup
