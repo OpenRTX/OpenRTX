@@ -36,7 +36,7 @@ typedef struct {
 
 typedef struct {
     const char *userWord;
-    const voicePrompt_t vp;
+    const enum voicePrompt vp;
 } userDictEntry_t;
 
 typedef struct {
@@ -205,14 +205,14 @@ static uint16_t userDictLookup(const char *ptr, int *advanceBy)
  * \internal
  *
  */
-static bool GetSymbolVPIfItShouldBeAnnounced(char symbol, vpFlags_t flags,
-                                             voicePrompt_t *vp)
+static bool GetSymbolVPIfItShouldBeAnnounced(char symbol, enum vpFlags flags,
+                                             enum voicePrompt *vp)
 {
     *vp = PROMPT_SILENCE;
 
     const char indexedSymbols[] =
         "%.+-*#!,@:?()~/[]<>=$'`&|_^{}"; // Must match order of symbols in
-                                         // voicePrompt_t enum.
+                                         // enum voicePrompt enum.
     const char commonSymbols[] = "%.+-*#";
 
     bool announceCommonSymbols = (flags & vpAnnounceCommonSymbols) ? true :
@@ -396,7 +396,7 @@ void vp_queuePrompt(const uint16_t prompt)
     }
 }
 
-void vp_queueString(const char *string, vpFlags_t flags)
+void vp_queueString(const char *string, enum vpFlags flags)
 {
     if (state.settings.vpLevel < vpLow)
         return;
@@ -409,7 +409,7 @@ void vp_queueString(const char *string, vpFlags_t flags)
 
     while (*string != '\0') {
         int advanceBy = 0;
-        voicePrompt_t vp = userDictLookup(string, &advanceBy);
+        enum voicePrompt vp = userDictLookup(string, &advanceBy);
 
         if (vp != 0) {
             vp_queuePrompt(vp);

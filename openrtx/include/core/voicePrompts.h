@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -22,7 +22,7 @@ extern "C" {
  * WARNING: this enum must match the order of prompts defined in the
  * wordlist.csv file in the voicePrompts generator project.
  */
-typedef enum {
+enum voicePrompt {
     PROMPT_SILENCE,        //
     PROMPT_0,              // 0
     PROMPT_1,              // 1
@@ -169,7 +169,7 @@ typedef enum {
     PROMPT_CUSTOM9,        // parrot
     PROMPT_CUSTOM10,       // unused
     NUM_VOICE_PROMPTS,
-} voicePrompt_t;
+};
 
 // The name of the voice prompt file is always encoded as the last prompt.
 #define PROMPT_VOICE_NAME \
@@ -178,7 +178,7 @@ typedef enum {
 /**
  * Flags controlling how vp_queueString operates.
  */
-typedef enum {
+enum vpFlags {
     vpDefault = 0x00,
     vpAnnounceCaps = 0x01,
     vpAnnounceCustomPrompts = 0x02,
@@ -187,33 +187,33 @@ typedef enum {
     vpAnnounceLessCommonSymbols = 0x10,
     vpAnnounceASCIIValueForUnknownChars = 0x20,
     vpAnnouncePhoneticRendering = 0x40,
-} vpFlags_t;
+};
 
 /**
  * Queuing flags determining if speech is interrupted, played immediately,
  * whether prompts are queued for values, etc.
  */
-typedef enum {
+enum vpQueueFlags {
     vpqDefault = 0,
     vpqInit = 0x01,            // stop any voice prompts already in progress.
     vpqPlayImmediately = 0x02, // call play after queue at all levels.
     vpqPlayImmediatelyAtMediumOrHigher = 0x04,
     vpqIncludeDescriptions = 0x08,
     vpqAddSeparatingSilence = 0x10
-} vpQueueFlags_t;
+};
 
 /**
  * Voice prompt verbosity levels.
  */
-typedef enum {
+enum vpVerbosity {
     vpNone = 0,
     vpBeep,
     vpLow,
     vpMedium,
     vpHigh,
-} vpVerbosity_t;
+};
 
-typedef enum {
+enum vpSummaryInfoFlags {
     vpChannelNameOrVFO = 0x01,
     vpFrequencies = 0x02,
     vpRadioMode = 0x04,
@@ -221,9 +221,9 @@ typedef enum {
     vpPower = 0x10,
     vpBankNameOrAllChannels = 0x20,
     vpAllInfo = 0xff
-} vpSummaryInfoFlags_t;
+};
 
-typedef enum {
+enum vpGPSInfoFlags {
     vpGPSNone = 0,
     vpGPSIntro = 0x01,
     vpGPSFixQuality = 0x02,
@@ -235,7 +235,7 @@ typedef enum {
     vpGPSDirection = 0x80,
     vpGPSSatCount = 0x100,
     vpGPSAll = 0x1ff,
-} vpGPSInfoFlags_t;
+};
 
 /**
  * Initialise the voice prompt system and load vp table of contents.
@@ -271,7 +271,7 @@ void vp_queuePrompt(const uint16_t prompt);
  * @param string: string to be spelled.
  * @param flags: control flags.
  */
-void vp_queueString(const char *string, vpFlags_t flags);
+void vp_queueString(const char *string, enum vpFlags flags);
 
 /**
  * Append a signed integer to the queue.

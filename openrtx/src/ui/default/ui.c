@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -803,7 +803,7 @@ static void _ui_changeVoiceLevel(int variation)
     state.settings.vpLevel += variation;
 
     // Force these flags to ensure the changes are spoken for levels 1 through 3.
-    vpQueueFlags_t flags = vpqInit
+    enum vpQueueFlags flags = vpqInit
                          | vpqAddSeparatingSilence
                          | vpqPlayImmediately;
 
@@ -893,7 +893,7 @@ int _ui_handleToneSelectScroll(bool direction_up)
     bool tone_rx_enable = state.channel.fm.rxToneEn;
     uint8_t tone_flags = tone_tx_enable << 1 | tone_rx_enable;
 
-    if(direction_up) 
+    if(direction_up)
         tone_flags++;
     else
         tone_flags--;
@@ -930,7 +930,7 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     ui_state.input_number = input_getPressedNumber(msg);
 #endif // CONFIG_UI_NO_KEYBOARD
     // CTCSS Encode/Decode Selection
-    vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
+    enum vpQueueFlags queueFlags = vp_getVoiceLevelQueueFlags();
 
     switch(ui_state.input_number)
     {
@@ -1319,7 +1319,7 @@ static uint8_t  priorGPSFixType = 0;
 static uint8_t  priorSatellitesInView = 0;
 static uint32_t vpGPSLastUpdate = 0;
 
-static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
+static enum vpGPSInfoFlags GetGPSDirectionOrSpeedChanged()
 {
     if (!state.settings.gps_enabled)
         return vpGPSNone;
@@ -1328,7 +1328,7 @@ static vpGPSInfoFlags_t GetGPSDirectionOrSpeedChanged()
     if (now - vpGPSLastUpdate < 8000)
         return vpGPSNone;
 
-    vpGPSInfoFlags_t whatChanged=  vpGPSNone;
+    enum vpGPSInfoFlags whatChanged = vpGPSNone;
 
     if (state.gps_data.fix_quality != priorGPSFixQuality)
     {
@@ -1420,7 +1420,7 @@ void ui_updateFSM(bool *sync_rtx)
         kbd_msg_t msg;
         msg.value = event.payload;
         bool f1Handled = false;
-        vpQueueFlags_t queueFlags = vp_getVoiceLevelQueueFlags();
+        enum vpQueueFlags queueFlags = vp_getVoiceLevelQueueFlags();
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
         if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
@@ -2607,7 +2607,7 @@ void ui_updateFSM(bool *sync_rtx)
             (state.settings.vpLevel > vpLow) &&
             (!txOngoing && !rtx_rxSquelchOpen()))
         {// automatically read speed and direction changes only!
-            vpGPSInfoFlags_t whatChanged = GetGPSDirectionOrSpeedChanged();
+            enum vpGPSInfoFlags whatChanged = GetGPSDirectionOrSpeedChanged();
             if (whatChanged != vpGPSNone)
                 vp_announceGPSInfo(whatChanged);
         }

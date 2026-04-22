@@ -23,13 +23,13 @@
 
 const uint16_t BOOT_MELODY[] = { 400, 3, 600, 3, 800, 3, 0, 0 };
 
-static void clearCurrPromptIfNeeded(const vpQueueFlags_t flags)
+static void clearCurrPromptIfNeeded(const enum vpQueueFlags flags)
 {
     if (flags & vpqInit)
         vp_flush();
 }
 
-static void playIfNeeded(const vpQueueFlags_t flags)
+static void playIfNeeded(const enum vpQueueFlags flags)
 {
     uint8_t vpLevel = state.settings.vpLevel;
 
@@ -39,7 +39,7 @@ static void playIfNeeded(const vpQueueFlags_t flags)
         vp_play();
 }
 
-static void addSilenceIfNeeded(const vpQueueFlags_t flags)
+static void addSilenceIfNeeded(const enum vpQueueFlags flags)
 {
     if ((flags & vpqAddSeparatingSilence) == 0)
         return;
@@ -50,7 +50,7 @@ static void addSilenceIfNeeded(const vpQueueFlags_t flags)
 
 void vp_announceChannelName(const channel_t *channel,
                             const uint16_t channelNumber,
-                            const vpQueueFlags_t flags)
+                            const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -87,7 +87,7 @@ void vp_queueFrequency(const freq_t freq)
 }
 
 void vp_announceFrequencies(const freq_t rx, const freq_t tx,
-                            const vpQueueFlags_t flags)
+                            const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -104,7 +104,7 @@ void vp_announceFrequencies(const freq_t rx, const freq_t tx,
     playIfNeeded(flags);
 }
 
-void vp_announceRadioMode(const uint8_t mode, const vpQueueFlags_t flags)
+void vp_announceRadioMode(const uint8_t mode, const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -129,7 +129,8 @@ void vp_announceRadioMode(const uint8_t mode, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags)
+void vp_announceBandwidth(const uint8_t bandwidth,
+                          const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -143,7 +144,7 @@ void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announcePower(const uint32_t power, const vpQueueFlags_t flags)
+void vp_announcePower(const uint32_t power, const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -165,14 +166,14 @@ void vp_announcePower(const uint32_t power, const vpQueueFlags_t flags)
 void vp_announceChannelSummary(const channel_t *channel,
                                const uint16_t channelNumber,
                                const uint16_t bank,
-                               const vpSummaryInfoFlags_t infoFlags)
+                               const enum vpSummaryInfoFlags infoFlags)
 {
     if (channel == NULL)
         return;
 
     vp_flush();
 
-    vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
+    enum vpQueueFlags localFlags = vpqAddSeparatingSilence;
 
     // Force on the descriptions for level 3.
     if (state.settings.vpLevel == vpHigh) {
@@ -262,7 +263,7 @@ void vp_announceInputChar(const char ch)
 }
 
 void vp_announceInputReceiveOrTransmit(const bool tx,
-                                       const vpQueueFlags_t flags)
+                                       const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -282,14 +283,14 @@ void vp_replayLastPrompt()
         vp_play();
 }
 
-void vp_announceError(const vpQueueFlags_t flags)
+void vp_announceError(const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
     vp_queueStringTableEntry(&currentLanguage->error);
     playIfNeeded(flags);
 }
 
-void vp_announceText(const char *text, const vpQueueFlags_t flags)
+void vp_announceText(const char *text, const enum vpQueueFlags flags)
 {
     if ((text == NULL) || (*text == '\0'))
         return;
@@ -310,7 +311,7 @@ void vp_announceText(const char *text, const vpQueueFlags_t flags)
 
 void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
                       const bool txToneEnabled, const uint8_t txTone,
-                      const vpQueueFlags_t flags)
+                      const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -369,7 +370,7 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
     playIfNeeded(flags);
 }
 
-void vp_announceSquelch(const uint8_t squelch, const vpQueueFlags_t flags)
+void vp_announceSquelch(const uint8_t squelch, const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -381,7 +382,7 @@ void vp_announceSquelch(const uint8_t squelch, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceContact(const contact_t *contact, const vpQueueFlags_t flags)
+void vp_announceContact(const contact_t *contact, const enum vpQueueFlags flags)
 {
     if (contact == NULL)
         return;
@@ -400,7 +401,7 @@ void vp_announceContact(const contact_t *contact, const vpQueueFlags_t flags)
 }
 
 bool vp_announceContactWithIndex(const uint16_t index,
-                                 const vpQueueFlags_t flags)
+                                 const enum vpQueueFlags flags)
 {
     if (index == 0)
         return false;
@@ -414,7 +415,7 @@ bool vp_announceContactWithIndex(const uint16_t index,
     return true;
 }
 
-void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags)
+void vp_announceTimeslot(const uint8_t timeslot, const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -427,7 +428,7 @@ void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags)
 }
 
 void vp_announceColorCode(const uint8_t rxColorCode, const uint8_t txColorCode,
-                          const vpQueueFlags_t flags)
+                          const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -447,7 +448,7 @@ void vp_announceColorCode(const uint8_t rxColorCode, const uint8_t txColorCode,
     playIfNeeded(flags);
 }
 
-void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags)
+void vp_announceBank(const uint16_t bank, const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -463,7 +464,7 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags)
 }
 
 void vp_announceM17Info(const channel_t *channel, bool isEditing,
-                        const vpQueueFlags_t flags)
+                        const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -503,10 +504,10 @@ static bool IsCompassCloseEnoughToCardinalPoint()
            (tmg_true > (315 - margin) && tmg_true < (315 + margin));   // n.w.
 }
 
-void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
+void vp_announceGPSInfo(enum vpGPSInfoFlags gpsInfoFlags)
 {
     vp_flush();
-    vpQueueFlags_t flags = vpqIncludeDescriptions | vpqAddSeparatingSilence;
+    enum vpQueueFlags flags = vpqIncludeDescriptions | vpqAddSeparatingSilence;
 
     if (gpsInfoFlags & vpGPSIntro) {
         vp_queueStringTableEntry(&currentLanguage->gps);
@@ -619,8 +620,9 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         int32_t latitude = abs(state.gps_data.latitude);
         uint8_t latitude_int = latitude / 1000000;
         int32_t latitude_dec = latitude % 1000000;
-        voicePrompt_t direction = (state.gps_data.latitude < 0) ? PROMPT_SOUTH :
-                                                                  PROMPT_NORTH;
+        enum voicePrompt direction = (state.gps_data.latitude < 0) ?
+                                         PROMPT_SOUTH :
+                                         PROMPT_NORTH;
         sniprintf(buffer, 16, "%d.%06" PRId32, latitude_int, latitude_dec);
         stripTrailingZeroes(buffer);
         vp_queuePrompt(PROMPT_LATITUDE);
@@ -633,8 +635,9 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         int32_t longitude = abs(state.gps_data.longitude);
         uint8_t longitude_int = longitude / 1000000;
         int32_t longitude_dec = longitude % 1000000;
-        voicePrompt_t direction = (state.gps_data.longitude < 0) ? PROMPT_WEST :
-                                                                   PROMPT_EAST;
+        enum voicePrompt direction = (state.gps_data.longitude < 0) ?
+                                         PROMPT_WEST :
+                                         PROMPT_EAST;
         sniprintf(buffer, 16, "%d.%06" PRId32, longitude_int, longitude_dec);
         stripTrailingZeroes(buffer);
 
@@ -724,7 +727,7 @@ void vp_announceSettingsTimeDate()
 }
 #endif // CONFIG_RTC
 
-void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
+void vp_announceSettingsVoiceLevel(const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
     switch (state.settings.vpLevel) {
@@ -750,7 +753,7 @@ void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
 }
 
 void vp_announceSettingsOnOffToggle(const char *const *stringTableStringPtr,
-                                    const vpQueueFlags_t flags, bool val)
+                                    const enum vpQueueFlags flags, bool val)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -764,7 +767,7 @@ void vp_announceSettingsOnOffToggle(const char *const *stringTableStringPtr,
 }
 
 void vp_announceSettingsInt(const char *const *stringTableStringPtr,
-                            const vpQueueFlags_t flags, int val)
+                            const enum vpQueueFlags flags, int val)
 {
     clearCurrPromptIfNeeded(flags);
 
@@ -778,8 +781,8 @@ void vp_announceSettingsInt(const char *const *stringTableStringPtr,
 
 void vp_announceScreen(uint8_t ui_screen)
 {
-    const vpSummaryInfoFlags_t infoFlags = vpChannelNameOrVFO | vpFrequencies
-                                         | vpRadioMode;
+    const enum vpSummaryInfoFlags infoFlags = vpChannelNameOrVFO | vpFrequencies
+                                            | vpRadioMode;
 
     switch (ui_screen) {
         case MAIN_VFO:
@@ -836,7 +839,7 @@ void vp_announceBuffer(const char *const *stringTableStringPtr, bool editMode,
             vp_queuePrompt(PROMPT_EDIT);
     }
 
-    vpFlags_t flags = vpAnnounceCommonSymbols;
+    enum vpFlags flags = vpAnnounceCommonSymbols;
     // add edit mode flags to adjust what is spoken.
     // extra symbols not relevant when entering callsign.
     if ((editMode == true) && (callsign == false))
@@ -906,10 +909,10 @@ void vp_announceDisplayTimer()
     vp_play();
 }
 
-vpQueueFlags_t vp_getVoiceLevelQueueFlags()
+enum vpQueueFlags vp_getVoiceLevelQueueFlags()
 {
     uint8_t vpLevel = state.settings.vpLevel;
-    vpQueueFlags_t flags = vpqInit | vpqAddSeparatingSilence;
+    enum vpQueueFlags flags = vpqInit | vpqAddSeparatingSilence;
 
     switch (vpLevel) {
         case vpNone:
@@ -961,7 +964,7 @@ void vp_announceSplashScreen()
         return;
     }
 
-    vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
+    enum vpQueueFlags localFlags = vpqAddSeparatingSilence;
 
     // Force on the descriptions for level 3.
     if (state.settings.vpLevel == vpHigh) {
@@ -976,7 +979,7 @@ void vp_announceSplashScreen()
     vp_play();
 }
 
-void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags)
+void vp_announceTimeZone(const int8_t timeZone, const enum vpQueueFlags flags)
 {
     clearCurrPromptIfNeeded(flags);
 
