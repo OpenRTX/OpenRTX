@@ -673,7 +673,7 @@ void _ui_drawMenuContacts(ui_state_t* ui_state)
 #ifdef CONFIG_GPS
 void _ui_drawMenuGPS()
 {
-    char *fix_buf, *type_buf;
+    const char *fix_buf, *type_buf;
     gfx_clearScreen();
     // Print "GPS" on top bar
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -710,7 +710,7 @@ void _ui_drawMenuGPS()
                 fix_buf = "RTK";
                 break;
             default:
-                fix_buf = (char*)currentLanguage->error;
+                fix_buf = currentLanguage->error;
                 break;
         }
 
@@ -726,7 +726,7 @@ void _ui_drawMenuGPS()
                 type_buf = "3D";
                 break;
             default:
-                type_buf = (char*)currentLanguage->error;
+                type_buf = currentLanguage->error;
                 break;
         }
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
@@ -736,7 +736,7 @@ void _ui_drawMenuGPS()
         int32_t latitude     = abs(last_state.gps_data.latitude);
         uint8_t latitude_int = latitude / 1000000;
         int32_t latitude_dec = latitude % 1000000;
-        char *direction_lat  = (last_state.gps_data.latitude < 0) ? "S     " : "N     ";
+        const char *direction_lat  = (last_state.gps_data.latitude < 0) ? "S     " : "N     ";
 
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, direction_lat);
@@ -749,7 +749,7 @@ void _ui_drawMenuGPS()
         int32_t longitude     = abs(last_state.gps_data.longitude);
         uint8_t longitude_int = longitude / 1000000;
         int32_t longitude_dec = longitude % 1000000;
-        char *direction_lon   = (last_state.gps_data.longitude < 0) ? "W     " : "E     ";
+        const char *direction_lon   = (last_state.gps_data.longitude < 0) ? "W     " : "E     ";
 
         gfx_print(layout.line2_pos, layout.top_font, TEXT_ALIGN_CENTER,
                   color_white, direction_lon);
@@ -1294,7 +1294,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     else
     {
         // Smaller font to fit larger strings on screen (i.e "2.5W")
-        gfx_print(pos_2, layout.top_font - 1, TEXT_ALIGN_RIGHT,
+        gfx_print(pos_2, (fontSize_t)(layout.top_font - 1), TEXT_ALIGN_RIGHT,
                   color_white, "%d.%dW", power_int, power_dec);
     }
 
