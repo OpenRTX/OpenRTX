@@ -79,7 +79,8 @@ static int update_settings_store(const settings_t *settings,
  * Checks the integrity of a settings store
  *
  * @param store pointer to the settings_store to check
- * @return -1 if the store is valid but stale, 0 if the store is corrupted, 1 if the store is valid and current
+ * @return -1 if the store is valid but stale, 0 if the store is corrupted,
+ * 1 if the store is valid and current
  */
 static int check_store_integrity(const settings_store_t *store)
 {
@@ -163,31 +164,24 @@ static int find_last_store(const int dev, const int part_nb, size_t *offset,
  * @param store pointer to the store to read to
  * @return 0 if successful, negative error code otherwise
  */
-int read_store(const int dev, const int part, size_t offset,
-               settings_store_t *store)
+static int read_store(const int dev, const int part, size_t offset,
+                      settings_store_t *store)
 {
     // Read store header
     int ret = nvm_read(dev, part, offset, store, sizeof(settings_header_t));
     if (ret < 0)
         return ret;
 
-    if (store->header.length <= sizeof(settings_store_t)) {
-        if (store->header.length < sizeof(settings_store_t)) {
-            // Pre-init with default settings
-            store->settings = default_settings;
-        }
+    if (store->header.length > sizeof(settings_store_t))
+        return -E2BIG;
 
-        // read settings
-        ret = nvm_read(dev, part, offset + sizeof(settings_header_t),
-                       &(store->settings),
-                       store->header.length - sizeof(settings_header_t));
-        if (ret < 0)
-            return ret;
+    if (store->header.length < sizeof(settings_store_t))
+        store->settings = default_settings;
 
-    } else
-        return -E2BIG; // Settings in NVM too large
-
-    return 0;
+    ret = nvm_read(dev, part, offset + sizeof(settings_header_t),
+                   &(store->settings),
+                   store->header.length - sizeof(settings_header_t));
+    return ret;
 }
 
 /**
@@ -202,8 +196,8 @@ int read_store(const int dev, const int part, size_t offset,
  *         2 if the store is valid but stale, 3 if the store is valid and current,
  *         negative error code otherwise
  */
-int get_latest_valid_store(const int dev, const int part,
-                           settings_store_t *store, size_t *offset)
+static int get_latest_valid_store(const int dev, const int part,
+                                  settings_store_t *store, size_t *offset)
 {
     struct nvmPartition pInfo;
     int ret = nvm_getPart(dev, part, &pInfo);
@@ -221,44 +215,59 @@ int get_latest_valid_store(const int dev, const int part,
         // Find beginning of latest store
         int ret = find_last_store(dev, part, &read_offset, end_lim);
 
-        // In NVM devices that do not need erase before write, partitions can
-        // not be corrupted.
-        if ((ret == -EILSEQ) && erase_before_write)
-            return 0; // Corrupt partition
-        else if (ret == -EILSEQ) {
-            // We wound an invalid header, but because we do not need to erase
-            // before write, this is not considered a corrupt partitin
-            if (read_offset == 0)
-                return 1; // Starts with invalid header -> empty partition
+        switch (ret) {
+            case -EILSEQ:
+                // In NVM devices that do not need erase before write,
+                // partitions cannot be corrupted.
+                if (erase_before_write)
+                    return 0;
 
-            end_lim = read_offset - 1;
-            continue; // We want to find the store before the corruption
-        } else if (ret == -ENOENT)
-            return 1; // Empty partition
-        else if ((ret < 0) && (ret != -EILSEQ))
-            return ret;
+                // We wound an invalid header, but because we do not need to
+                // erase before write, this is not considered a corrupt partiton
+                if (read_offset == 0)
+                    return 1; // Starts with invalid header -> empty partition
+
+                end_lim = read_offset - 1;
+                continue; // We want to find the store before the corruption
+                break;
+
+            case -ENOENT:
+                return 1; // Empty partition
+                break;
+
+            default:
+                if (ret < 0)
+                    return ret;
+        }
 
         ret = read_store(dev, part, read_offset, store);
         if (ret == -E2BIG) {
             end_lim -= store->header.length; // Skip this store
             continue;
-        } else if (ret < 0)
+        } else if (ret < 0) {
             return ret;
+        }
 
         // Free space will be right after the first store found (last in partition)
         if (*offset == 0)
             *offset = read_offset + store->header.length;
 
         ret = check_store_integrity(store);
-        if (ret == 1)        // Valid
-            return 3;
-        else if (ret == 0)   // Invalid
-            end_lim =
-                read_offset; // Limit the parsing to right before this store
-        else if (ret == -1)  // Stale
-            return 2;
-    }
+        switch (ret) {
+            case -1:
+                return 2; // Stale partition
+                break;
 
+            case 0:
+                // Limit the parsing to right before this store
+                end_lim = read_offset;
+                break;
+
+            case 1:
+                return 3; // Valid
+                break;
+        }
+    }
     return 0; // No valid store, partition is considered corrupted
 }
 
@@ -276,8 +285,9 @@ int get_latest_valid_store(const int dev, const int part,
 
  * @return 0 if successful, negative error code otherwise
  */
-int write_store(const int dev, const int part, const settings_store_t *store,
-                size_t *offset, bool erase)
+static int write_store(const int dev, const int part,
+                       const settings_store_t *store, size_t *offset,
+                       bool erase)
 {
     struct nvmPartition pInfo;
     int ret = nvm_getPart(dev, part, &pInfo);
@@ -288,17 +298,13 @@ int write_store(const int dev, const int part, const settings_store_t *store,
     const bool erase_before_write = dDesc->dev->info->device_info & NVM_ERASE;
 
     // Check if we have enough space to write the store
-    if ((*offset + sizeof(settings_store_t)) > pInfo.size)
-        erase = true;
+    if ((*offset + sizeof(settings_store_t)) > pInfo.size) {
+        if (erase_before_write) {
+            ret = nvm_erase(dev, part, 0, pInfo.size);
+            if (ret < 0)
+                return ret;
+        }
 
-    if (erase && erase_before_write) {
-        ret = nvm_erase(dev, part, 0, pInfo.size);
-        if (ret < 0)
-            return ret;
-
-        *offset = 0;
-    } else if (erase) {
-        // We do not need to erase anything, simply set the offset to 0.
         *offset = 0;
     }
 
@@ -369,7 +375,7 @@ void print_settings(settings_t *settings)
  * @param s storage to populate
  * @return 0 in case of success, negative error code otherwise
  */
-int populate_latest_store(settings_storage_t *s)
+static int populate_latest_store(settings_storage_t *s)
 {
     // One of each per partition
     settings_store_t store_A, store_B;
@@ -442,8 +448,8 @@ int populate_latest_store(settings_storage_t *s)
     return 0;
 }
 
-int settings_storage_init(settings_storage_t *s, const int nvm_dev,
-                          const int part_A, const int part_B)
+int settings_initStorage(settings_storage_t *s, const int nvm_dev,
+                         const int part_A, const int part_B)
 {
     s->dev = nvm_dev;
     s->part_A = part_A;
@@ -452,7 +458,7 @@ int settings_storage_init(settings_storage_t *s, const int nvm_dev,
     return default_settings_store(&(s->latest_store));
 }
 
-int settings_storage_load(settings_storage_t *s, settings_t *settings)
+int settings_load(settings_storage_t *s, settings_t *settings)
 {
     // Check if we already read the settings
     if (!s->initialized) {
@@ -464,7 +470,7 @@ int settings_storage_load(settings_storage_t *s, settings_t *settings)
     return 0;
 }
 
-int settings_storage_save(settings_storage_t *s, const settings_t *settings)
+int settings_save(settings_storage_t *s, const settings_t *settings)
 {
     int settings_comparison = memcmp(&(s->latest_store.settings), settings,
                                      sizeof(settings_t));
@@ -479,16 +485,16 @@ int settings_storage_save(settings_storage_t *s, const settings_t *settings)
     }
 
     if (s->write_needed) {
-        if (s->latest_store.header.counter % 2) // Write to part B
-        {
+        if (s->latest_store.header.counter % 2) {
+            // Write to part B
             int ret = write_store(s->dev, s->part_B, &(s->latest_store),
                                   &(s->part_B_offset),
                                   (s->part_B_status == PART_CORRUPTED));
             if (ret < 0)
                 return ret;
             s->part_B_status = PART_CLEAN; // Partition is now clean
-        } else                             // Write to part A
-        {
+        } else {
+            // Write to part A
             int ret = write_store(s->dev, s->part_A, &(s->latest_store),
                                   &(s->part_A_offset),
                                   (s->part_A_status == PART_CORRUPTED));
