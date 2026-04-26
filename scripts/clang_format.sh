@@ -86,6 +86,8 @@ platform/drivers/audio/file_source.c
 platform/drivers/audio/MAX9814.h
 platform/drivers/baseband/MCP4551.h
 platform/drivers/baseband/SA8x8.h
+platform/drivers/baseband/SKY72310.c
+platform/drivers/baseband/SKY72310.h
 platform/drivers/chSelector/chSelector.h
 platform/drivers/display/SH110x_Mod17.h
 platform/drivers/display/SSD1306_Mod17.h
