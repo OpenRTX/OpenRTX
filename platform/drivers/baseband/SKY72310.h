@@ -29,8 +29,9 @@ struct sky73210 {
  * Initialise the PLL.
  *
  * @param dev: pointer to device data.
+ * @param gain: phase detector gain.
  */
-void SKY73210_init(const struct sky73210 *dev);
+void SKY73210_init(const struct sky73210 *dev, const uint8_t gain);
 
 /**
  * Terminate PLL driver.

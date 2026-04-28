@@ -121,7 +121,7 @@ void radio_init(const rtxStatus_t *rtxState)
     spiBitbang_init(&c5000_spi);
 
     gpio_setPin(PLL_PWR);
-    SKY73210_init(&pll);
+    SKY73210_init(&pll, 31);
     C5000.init();
 
     /*

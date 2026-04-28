@@ -28,15 +28,15 @@ static inline void writeReg(const struct sky73210 *dev, const uint16_t value)
     spi_release(dev->spi);
 }
 
-void SKY73210_init(const struct sky73210 *dev)
+void SKY73210_init(const struct sky73210 *dev, const uint8_t gain)
 {
     gpioPin_setMode(&dev->cs, OUTPUT);
     gpioPin_set(&dev->cs);
 
-    writeReg(dev, 0x6000 | 0x1F); // Phase detector gain
-    writeReg(dev, 0x73D0);        // Power down/multiplexer control register
-    writeReg(dev, 0x8000);        // Modulation control register
-    writeReg(dev, 0x9000);        // Modulation data register
+    writeReg(dev, 0x6000 | (gain & 0x1F)); // Phase detector gain
+    writeReg(dev, 0x73D0); // Power down/multiplexer control register
+    writeReg(dev, 0x8000); // Modulation control register
+    writeReg(dev, 0x9000); // Modulation data register
 }
 
 void SKY73210_terminate(const struct sky73210 *dev)

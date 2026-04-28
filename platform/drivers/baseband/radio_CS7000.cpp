@@ -187,7 +187,7 @@ void radio_init(const rtxStatus_t *rtxState)
      * Enable and configure PLL, wait 1ms to ensure that VCXO is stable
      */
     gpioDev_set(VCO_PWR_EN);
-    SKY73210_init(&pll);
+    SKY73210_init(&pll, 16);
 
     /*
      * Set VCTXO bias
