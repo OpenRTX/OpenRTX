@@ -32,6 +32,8 @@ extern "C" {
  */
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 /**
  * This function allows to obtain the value of a given calibration parameter for
  * frequencies outside the calibration points. It works by searching the two
