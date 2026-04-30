@@ -1,0 +1,19 @@
+wait_stable 5000 3
+nop Navigate to Settings > Module 17
+key enter
+wait_stable
+key enter
+wait_stable
+nop Module 17 is at position 2 in Settings
+key DOWN DOWN enter
+wait_stable
+nop Module 17 settings top: Mic Gain, PTT In, PTT Out, TX Phase
+screenshot_sync module17_hw_top.bmp
+nop Scroll down to see more items
+key DOWN DOWN DOWN DOWN
+wait_stable
+nop Module 17 settings scrolled: RX Phase, TX Softpot, RX Softpot
+screenshot_sync module17_hw_scrolled.bmp
+key ESC
+wait_stable
+quit

@@ -1,0 +1,16 @@
+wait_stable 5000 3
+nop Navigate to Info: Enter menu, Down x5 to Info, Enter
+key enter
+wait_stable
+key DOWN DOWN DOWN DOWN DOWN enter
+wait_stable
+nop Info screen top: version, Bat. Voltage, Bat. Charge, RSSI
+screenshot_sync info_top.bmp
+nop Scroll down to see more items
+key DOWN DOWN DOWN DOWN
+wait_stable
+nop Info screen scrolled: Used heap, Band, VHF, UHF, Hw Version
+screenshot_sync info_scrolled.bmp
+key ESC
+wait_stable
+quit

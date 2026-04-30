@@ -1,0 +1,18 @@
+wait_stable 5000 3
+nop Navigate to Settings > Display
+key enter
+wait_stable
+key DOWN DOWN DOWN DOWN enter
+wait_stable
+nop Enter Display submenu (first item in Settings)
+key enter
+wait_stable
+nop Display settings: Timer, Battery Icon
+screenshot_sync display_settings.bmp
+nop Select Battery Icon
+key DOWN
+wait_stable
+screenshot_sync display_battery_icon.bmp
+key ESC
+wait_stable
+quit

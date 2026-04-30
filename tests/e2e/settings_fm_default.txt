@@ -1,0 +1,18 @@
+wait_stable 5000 3
+nop Navigate to Settings > FM
+key enter
+wait_stable
+key DOWN DOWN DOWN DOWN enter
+wait_stable
+nop FM is at position 5 in Settings
+key DOWN DOWN DOWN DOWN DOWN enter
+wait_stable
+nop FM settings: CTCSS Tone, CTCSS En.
+screenshot_sync fm_settings.bmp
+nop Select CTCSS En.
+key DOWN
+wait_stable
+screenshot_sync fm_ctcss_en.bmp
+key ESC
+wait_stable
+quit

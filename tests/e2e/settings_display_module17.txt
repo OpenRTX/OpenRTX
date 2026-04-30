@@ -1,0 +1,14 @@
+wait_stable 5000 3
+nop Navigate to Settings > Display
+key enter
+wait_stable
+key enter
+wait_stable
+nop Enter Display submenu (first item in Settings)
+key enter
+wait_stable
+nop Display settings: Brightness
+screenshot_sync display_settings.bmp
+key ESC
+wait_stable
+quit

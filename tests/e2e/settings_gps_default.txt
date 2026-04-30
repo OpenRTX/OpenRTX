@@ -1,0 +1,22 @@
+wait_stable 5000 3
+nop Navigate to Settings > GPS
+key enter
+wait_stable
+key DOWN DOWN DOWN DOWN enter
+wait_stable
+nop GPS is at position 2 in Settings
+key DOWN DOWN enter
+wait_stable
+nop GPS settings: GPS Enabled, GPS Set Time, UTC Timezone
+screenshot_sync gps_settings.bmp
+nop Select GPS Set Time
+key DOWN
+wait_stable
+screenshot_sync gps_set_time.bmp
+nop Select UTC Timezone
+key DOWN
+wait_stable
+screenshot_sync gps_timezone.bmp
+key ESC
+wait_stable
+quit

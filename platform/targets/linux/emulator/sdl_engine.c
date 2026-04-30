@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include "core/state.h"
 #include "sdl_engine.h"
@@ -17,6 +18,17 @@ Uint32 SDL_Backlight_Event;     // Shared custom SDL event to change backlight
 static SDL_Window   *window;
 static SDL_Renderer *renderer;
 static SDL_Texture  *displayTexture;
+static SDL_sem      *screenshot_sync_sem;  // Posted after a sync screenshot completes
+
+/* Last-rendered framebuffer cache for sdlEngine_getFrameHash().  The SDL
+ * thread copies into this on every successful frame update; readers
+ * acquire the mutex briefly to compute a hash of its current contents.
+ * This avoids an expensive RenderReadPixels round-trip and any event
+ * handshake with the SDL thread, which is critical because the SDL
+ * thread serializes against the gfx thread on fb_sync. */
+static uint8_t   *fb_cache       = NULL;
+static size_t    fb_cache_bytes  = 0;
+static SDL_mutex *fb_cache_mutex = NULL;
 
 static bool       ready = false;  // Signal if the main loop is ready
 static keyboard_t sdl_keys;       // Store the keyboard status
@@ -237,6 +249,20 @@ cleanup:
     return err;
 }
 
+/* FNV-1a 64-bit hash; constant-time per byte, good enough to detect any
+ * single-pixel change in the framebuffer. */
+static uint64_t fnv1a64(const void *data, size_t len)
+{
+    const uint8_t *p = (const uint8_t *)data;
+    uint64_t h = 0xcbf29ce484222325ULL;
+    for (size_t i = 0; i < len; i++)
+    {
+        h ^= p[i];
+        h *= 0x100000001b3ULL;
+    }
+    return h;
+}
+
 static bool set_brightness(uint8_t brightness)
 {
     /*
@@ -272,6 +298,27 @@ void sdlEngine_init()
     // Register SDL custom events to handle screenshot requests and backlight
     SDL_Screenshot_Event = SDL_RegisterEvents(2);
     SDL_Backlight_Event = SDL_Screenshot_Event+1;
+
+    // Semaphore for synchronous screenshot completion handshake.
+    screenshot_sync_sem = SDL_CreateSemaphore(0);
+    if (screenshot_sync_sem == NULL)
+    {
+        printf("Failed to create screenshot sync semaphore: %s\n",
+               SDL_GetError());
+        exit(1);
+    }
+
+    // Allocate framebuffer cache + mutex for sdlEngine_getFrameHash().
+    fb_cache_bytes = (size_t)CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT
+                     * sizeof(PIXEL_SIZE);
+    fb_cache = calloc(1, fb_cache_bytes);
+    fb_cache_mutex = SDL_CreateMutex();
+    if (fb_cache == NULL || fb_cache_mutex == NULL)
+    {
+        printf("Failed to allocate framebuffer cache: %s\n",
+               SDL_GetError());
+        exit(1);
+    }
 
     chan_init(&fb_sync);
 
@@ -335,6 +382,12 @@ void sdlEngine_run()
                 char *filename = (char *)ev.user.data1;
                 screenshot_display(filename);
                 free(ev.user.data1);
+                /* code != 0 indicates the requester wants to block until
+                 * the BMP is on disk; post the handshake semaphore. */
+                if (ev.user.code != 0)
+                {
+                    SDL_SemPost(screenshot_sync_sem);
+                }
             }
             else if (ev.type == SDL_Backlight_Event)
             {
@@ -358,6 +411,34 @@ void sdlEngine_run()
             chan_send(&fb_sync, pixels);
             chan_recv(&fb_sync, NULL);
 
+            /* gfx thread has now written the frame into `pixels`.  Copy
+             * it into fb_cache while we still hold the texture lock so
+             * sdlEngine_getFrameHash() can hash the latest frame
+             * without touching SDL state. */
+            if (fb_cache != NULL && fb_cache_mutex != NULL)
+            {
+                size_t row_bytes =
+                    (size_t)CONFIG_SCREEN_WIDTH * sizeof(PIXEL_SIZE);
+                SDL_LockMutex(fb_cache_mutex);
+                if ((size_t)pitch == row_bytes)
+                {
+                    memcpy(fb_cache, pixels, fb_cache_bytes);
+                }
+                else
+                {
+                    /* Texture rows may be padded; copy row by row. */
+                    const uint8_t *src = (const uint8_t *)pixels;
+                    uint8_t *dst = fb_cache;
+                    for (int y = 0; y < CONFIG_SCREEN_HEIGHT; y++)
+                    {
+                        memcpy(dst, src, row_bytes);
+                        dst += row_bytes;
+                        src += pitch;
+                    }
+                }
+                SDL_UnlockMutex(fb_cache_mutex);
+            }
+
             SDL_UnlockTexture(displayTexture);
             SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
             SDL_RenderPresent(renderer);
@@ -369,7 +450,47 @@ void sdlEngine_run()
     SDL_DestroyTexture(displayTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    if (screenshot_sync_sem != NULL)
+    {
+        SDL_DestroySemaphore(screenshot_sync_sem);
+        screenshot_sync_sem = NULL;
+    }
+    if (fb_cache_mutex != NULL)
+    {
+        SDL_DestroyMutex(fb_cache_mutex);
+        fb_cache_mutex = NULL;
+    }
+    if (fb_cache != NULL)
+    {
+        free(fb_cache);
+        fb_cache = NULL;
+        fb_cache_bytes = 0;
+    }
     SDL_Quit();
+}
+
+bool sdlEngine_waitScreenshot(uint32_t timeout_ms)
+{
+    if (screenshot_sync_sem == NULL)
+    {
+        return false;
+    }
+    return SDL_SemWaitTimeout(screenshot_sync_sem, timeout_ms) == 0;
+}
+
+bool sdlEngine_getFrameHash(uint64_t *out_hash, uint32_t timeout_ms)
+{
+    (void)timeout_ms;  /* hash is synchronous; mutex contention is bounded */
+
+    if (out_hash == NULL || fb_cache == NULL || fb_cache_mutex == NULL)
+    {
+        return false;
+    }
+
+    SDL_LockMutex(fb_cache_mutex);
+    *out_hash = fnv1a64(fb_cache, fb_cache_bytes);
+    SDL_UnlockMutex(fb_cache_mutex);
+    return true;
 }
 
 bool sdlEngine_ready()

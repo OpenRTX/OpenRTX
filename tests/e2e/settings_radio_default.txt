@@ -1,0 +1,22 @@
+wait_stable 5000 3
+nop Navigate to Settings > Radio
+key enter
+wait_stable
+key DOWN DOWN DOWN DOWN enter
+wait_stable
+nop Radio is at position 3 in Settings
+key DOWN DOWN DOWN enter
+wait_stable
+nop Radio settings: Offset, Direction, Step
+screenshot_sync radio_settings.bmp
+nop Select Direction
+key DOWN
+wait_stable
+screenshot_sync radio_direction.bmp
+nop Select Step
+key DOWN
+wait_stable
+screenshot_sync radio_step.bmp
+key ESC
+wait_stable
+quit

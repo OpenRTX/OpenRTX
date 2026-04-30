@@ -1,0 +1,15 @@
+wait_stable 5000 3
+nop Navigate to Info: Enter menu, Down x1 to Info, Enter
+key enter
+wait_stable
+key DOWN enter
+wait_stable
+nop Info screen: version, Used heap, Hw Version, HMI, BB Tuning Pot
+screenshot_sync info_top.bmp
+nop Scroll down
+key DOWN DOWN DOWN DOWN
+wait_stable
+screenshot_sync info_scrolled.bmp
+key ESC
+wait_stable
+quit

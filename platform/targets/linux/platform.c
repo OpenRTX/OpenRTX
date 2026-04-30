@@ -42,7 +42,17 @@ void platform_init()
 void platform_terminate()
 {
     printf("Platform terminate\n");
-    exit(0);
+    /*
+     * Do not call exit() here.  On Linux this function runs on the
+     * openrtx worker thread, which is joined by main() once
+     * sdlEngine_run() returns.  Calling exit() from a non-main thread
+     * starts running atexit handlers concurrently with main()'s own
+     * shutdown path (when main eventually returns), which races on
+     * the libc __exit_funcs_lock and intermittently SIGSEGVs in
+     * __cxa_finalize.  Returning normally lets openrtx_run() unwind,
+     * pthread_join() complete, and main() exit cleanly on a single
+     * thread.
+     */
 }
 
 // Simulate a fully charged lithium battery
