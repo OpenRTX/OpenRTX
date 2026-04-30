@@ -61,6 +61,7 @@ openrtx/include/interfaces/delays.h
 openrtx/include/interfaces/display.h
 openrtx/include/interfaces/nvmem.h
 openrtx/include/interfaces/radio.h
+openrtx/include/interfaces/usb_serial.h
 openrtx/include/peripherals/gps.h
 openrtx/include/peripherals/rng.h
 openrtx/include/peripherals/rtc.h
@@ -98,6 +99,7 @@ platform/drivers/NVM/flash_stm32h7.c
 platform/drivers/GPIO/gpio-native.h
 platform/drivers/GPS/gps_stm32.h
 platform/drivers/GPS/gps_zephyr.h
+platform/drivers/USB/usb_serial_stm32h7.c
 platform/drivers/USB/usb.h
 platform/targets/CS7000/hwconfig.h
 platform/targets/CS7000-PLUS/hwconfig.h
@@ -113,6 +115,7 @@ platform/targets/linux/emulator/sdl_engine.h
 platform/targets/ttwrplus/pmu.h
 tests/platform/mic_test.c
 tests/platform/codec2_encode_test.c
+tests/platform/usb_serial_test.c
 tests/unit/convert_minmea_coord.cpp
 tests/unit/cps.cpp
 tests/unit/linux_inputStream_test.cpp

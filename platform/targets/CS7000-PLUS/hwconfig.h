@@ -63,6 +63,17 @@ extern const struct gpsDevice gps;
 #define CONFIG_GPS_STM32_USART6
 #define CONFIG_NMEA_RBUF_SIZE 128
 
+/* Device supports USB CDC serial */
+#define CONFIG_USB_SERIAL
+
+/* Miosix sets NVIC_SetPriorityGrouping(7), disabling interrupt nesting.
+ * In the resulting flat 0-15 scheme, 14 is near-lowest priority,
+ * consistent with other peripheral drivers. */
+#define USB_OTG_FS_IRQ_PRIORITY  14
+
+/* tinyUSB root-hub port index. USB OTG FS is port 0 on all STM32H7 targets. */
+#define USB_SERIAL_RHPORT        0
+
 /* Use extended addressing for external flash memory */
 #define CONFIG_W25Qx_EXT_ADDR
 
