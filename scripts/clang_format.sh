@@ -92,6 +92,8 @@ platform/drivers/chSelector/chSelector.h
 platform/drivers/display/SH110x_Mod17.h
 platform/drivers/display/SSD1306_Mod17.h
 platform/drivers/display/SSD1309_Mod17.h
+platform/drivers/NVM/emulated_flash.h
+platform/drivers/NVM/emulated_flash.c
 platform/drivers/NVM/flash_stm32.h
 platform/drivers/NVM/flash_stm32f4.c
 platform/drivers/NVM/flash_stm32h7.c
