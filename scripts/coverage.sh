@@ -69,7 +69,7 @@ if [ "$CI_MODE" = false ]; then
     )
 fi
 
-gcovr "${GCOVR_ARGS[@]}"
+uv run gcovr "${GCOVR_ARGS[@]}"
 
 echo ""
 echo "Cobertura XML: ${REPORT_DIR}/cobertura.xml"

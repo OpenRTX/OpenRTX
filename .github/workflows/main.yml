@@ -10,7 +10,7 @@ env:
   DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
 jobs:
   unit-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,8 +20,12 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
-      - name: Install Python tools
-        run: pip install "gcovr>=7.2"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Set up Python
+        run: uv python install
+      - name: Setup packages
+        run: uv sync --locked
       - name: setup meson
         run: |
           cd ${{github.workspace}}
@@ -46,7 +50,7 @@ jobs:
         run: |
           cat build/coverage/coverage.md >> $GITHUB_STEP_SUMMARY
   build-zephyr:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,10 +61,10 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
+        run: uv python install
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
@@ -79,7 +83,7 @@ jobs:
           path: |
             app/build/openrtx_*.uf2
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
