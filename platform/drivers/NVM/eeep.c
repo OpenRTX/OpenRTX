@@ -5,7 +5,7 @@
  */
 
 #include "core/nvmem_access.h"
-#include "core/nvmem_device.h"
+#include "interfaces/nvmem.h"
 #include <stdint.h>
 #include <limits.h>
 #include <errno.h>
@@ -70,7 +70,8 @@ static int findRecord(struct eeepData *priv, uint32_t *memAddr,
     *memAddr = 0xFFFFFFFF;
 
     while (addr < priv->writeAddr) {
-        int ret = nvm_devRead(priv->nvm, addr, &rec, sizeof(struct eeepRecord));
+        int ret = nvm_read(priv->nvm, priv->part, addr, &rec,
+                           sizeof(struct eeepRecord));
         if (ret < 0)
             return ret;
 
@@ -98,8 +99,8 @@ static int writeRecord(struct eeepData *priv, uint16_t virtAddr,
     };
 
     // Write record header
-    int ret = nvm_devWrite(priv->nvm, headAddr, &rec,
-                           sizeof(struct eeepRecord));
+    int ret = nvm_write(priv->nvm, priv->part, headAddr, &rec,
+                        sizeof(struct eeepRecord));
     if (ret < 0)
         return ret;
 
@@ -107,13 +108,14 @@ static int writeRecord(struct eeepData *priv, uint16_t virtAddr,
     // data block has been written. This to be sure that following writes do not
     // end up in a partially-written space.
     priv->writeAddr += sizeof(struct eeepRecord) + len;
-    ret = nvm_devWrite(priv->nvm, dataAddr, data, len);
+    ret = nvm_write(priv->nvm, priv->part, dataAddr, data, len);
     if (ret < 0)
         return ret;
 
     // Finally, update the record header changing the state to "valid".
     rec.status = EEEP_RECORD_VALID;
-    ret = nvm_devWrite(priv->nvm, headAddr, &rec, sizeof(struct eeepRecord));
+    ret = nvm_write(priv->nvm, priv->part, headAddr, &rec,
+                    sizeof(struct eeepRecord));
 
     return ret;
 }
@@ -124,12 +126,15 @@ static int swapBlock(struct eeepData *priv)
     // Note: when computing the next block address we have to take into account
     // that readAddr points at the first record after the page header.
     uint32_t currBlock = priv->readAddr - EEEP_PAGE_HDR_SIZE;
-    uint32_t nextBlock = currBlock + priv->nvm->info->erase_size;
-    if (nextBlock >= (priv->part->offset + priv->part->size))
-        nextBlock = priv->part->offset;
+    uint32_t nextBlock = currBlock + priv->pageSize;
+    struct nvmPartition pInfo;
+
+    nvm_getPart(priv->nvm, priv->part, &pInfo);
+    if (nextBlock >= pInfo.size)
+        nextBlock = 0;
 
     // Erase new page
-    int ret = nvm_devErase(priv->nvm, nextBlock, priv->nvm->info->erase_size);
+    int ret = nvm_erase(priv->nvm, priv->part, nextBlock, priv->pageSize);
     if (ret < 0)
         return ret;
 
@@ -143,7 +148,8 @@ static int swapBlock(struct eeepData *priv)
     while (address < priv->writeAddr) {
         struct eeepRecord rec;
 
-        ret = nvm_devRead(priv->nvm, address, &rec, sizeof(struct eeepRecord));
+        ret = nvm_read(priv->nvm, priv->part, address, &rec,
+                       sizeof(struct eeepRecord));
         if (ret < 0)
             return ret;
 
@@ -183,7 +189,7 @@ static int swapBlock(struct eeepData *priv)
     // Set new write address, mark the page as a page with an ogoing copy
     priv->writeAddr = nextBlock + sizeof(uint32_t);
     uint32_t tmp = EEEP_PAGE_COPYING;
-    ret = nvm_devWrite(priv->nvm, nextBlock, &tmp, sizeof(uint32_t));
+    ret = nvm_write(priv->nvm, priv->part, nextBlock, &tmp, sizeof(uint32_t));
     if (ret < 0)
         goto exit;
 
@@ -193,12 +199,13 @@ static int swapBlock(struct eeepData *priv)
         uint8_t data[256];
         uint32_t address = entryList[i].physAddr;
 
-        ret = nvm_devRead(priv->nvm, address, &rec, sizeof(struct eeepRecord));
+        ret = nvm_read(priv->nvm, priv->part, address, &rec,
+                       sizeof(struct eeepRecord));
         if (ret < 0)
             goto exit;
 
         address += sizeof(struct eeepRecord);
-        ret = nvm_devRead(priv->nvm, address, data, rec.size);
+        ret = nvm_read(priv->nvm, priv->part, address, data, rec.size);
         if (ret < 0)
             goto exit;
 
@@ -210,12 +217,12 @@ static int swapBlock(struct eeepData *priv)
     // Finally, set the page as the new active page, invalidate the previous one
     // and update the reading address
     tmp = EEEP_PAGE_ACTIVE;
-    ret = nvm_devWrite(priv->nvm, nextBlock, &tmp, sizeof(uint32_t));
+    ret = nvm_write(priv->nvm, priv->part, nextBlock, &tmp, sizeof(uint32_t));
     if (ret < 0)
         goto exit;
 
     tmp = EEEP_PAGE_INACTIVE;
-    ret = nvm_devWrite(priv->nvm, currBlock, &tmp, sizeof(uint32_t));
+    ret = nvm_write(priv->nvm, priv->part, currBlock, &tmp, sizeof(uint32_t));
     if (ret < 0)
         goto exit;
 
@@ -242,7 +249,8 @@ static int eeep_read(const struct nvmDevice *dev, uint32_t offset, void *data,
         return ret;
 
     // Found, read infoblock
-    ret = nvm_devRead(priv->nvm, memAddr, &rec, sizeof(struct eeepRecord));
+    ret = nvm_read(priv->nvm, priv->part, memAddr, &rec,
+                   sizeof(struct eeepRecord));
     if (ret < 0)
         return ret;
 
@@ -251,7 +259,7 @@ static int eeep_read(const struct nvmDevice *dev, uint32_t offset, void *data,
         len = rec.size;
 
     memAddr += sizeof(struct eeepRecord);
-    ret = nvm_devRead(priv->nvm, memAddr, data, len);
+    ret = nvm_read(priv->nvm, priv->part, memAddr, data, len);
 
     return ret;
 }
@@ -267,7 +275,7 @@ static int eeep_write(const struct nvmDevice *dev, uint32_t offset,
 
     uint32_t usedSpace = (priv->writeAddr - priv->readAddr)
                        + EEEP_PAGE_HDR_SIZE;
-    uint32_t freeSpace = priv->nvm->info->erase_size - usedSpace;
+    uint32_t freeSpace = priv->pageSize - usedSpace;
     uint32_t entrySize = sizeof(struct eeepRecord) + len;
 
     if (entrySize > freeSpace) {
@@ -286,27 +294,25 @@ int eeep_init(const struct nvmDevice *dev, const uint32_t nvm,
     if (desc == NULL)
         return -EINVAL;
 
-    if (part >= desc->nbPart)
-        return -EINVAL;
-
-    uint32_t partAddr = desc->partitions[part].offset;
-    uint32_t partSize = desc->partitions[part].size;
-    uint32_t pageSize = desc->dev->info->erase_size;
-
     struct eeepData *priv = (struct eeepData *)dev->priv;
-    priv->nvm = desc->dev;
-    priv->part = &desc->partitions[part];
+    struct nvmPartition pInfo;
+    int ret = nvm_getPart(nvm, part, &pInfo);
+    if (ret)
+        return ret;
+
+    priv->nvm = nvm;
+    priv->part = part;
     priv->readAddr = 0xFFFFFFFF;
+    priv->pageSize = nvm_getDevInfo(nvm)->erase_size;
 
     // Search for an active page, set the read address to the first record
     // immediately after the page header
-    for (uint32_t i = 0; i < partSize; i += pageSize) {
-        uint32_t pageAddr = partAddr + i;
+    for (uint32_t i = 0; i < pInfo.size; i += priv->pageSize) {
         uint32_t tmp;
 
-        nvm_devRead(priv->nvm, pageAddr, &tmp, sizeof(uint32_t));
+        nvm_read(priv->nvm, priv->part, i, &tmp, sizeof(uint32_t));
         if (tmp == EEEP_PAGE_ACTIVE) {
-            priv->readAddr = pageAddr + EEEP_PAGE_HDR_SIZE;
+            priv->readAddr = i + EEEP_PAGE_HDR_SIZE;
             break;
         }
     }
@@ -315,21 +321,22 @@ int eeep_init(const struct nvmDevice *dev, const uint32_t nvm,
     // active page.
     if (priv->readAddr == 0xFFFFFFFF) {
         uint32_t tmp = EEEP_PAGE_ACTIVE;
-
-        nvm_devErase(priv->nvm, partAddr, partSize);
-        nvm_devWrite(priv->nvm, partAddr, &tmp, sizeof(uint32_t));
-        priv->readAddr = partAddr + EEEP_PAGE_HDR_SIZE;
+        nvm_erase(priv->nvm, priv->part, 0, pInfo.size);
+        nvm_write(priv->nvm, priv->part, 0, &tmp, sizeof(uint32_t));
+        priv->readAddr = EEEP_PAGE_HDR_SIZE;
         priv->writeAddr = priv->readAddr;
     } else {
         uint32_t addr = priv->readAddr;
-        uint32_t end = priv->readAddr + pageSize - EEEP_PAGE_HDR_SIZE;
+        uint32_t end = priv->readAddr + priv->pageSize - EEEP_PAGE_HDR_SIZE;
         priv->writeAddr = end;
 
+        // Walk across page until empty memory is found
         while (addr < end) {
             struct eeepRecord rec;
             uint32_t *tmp = (uint32_t *)&rec;
 
-            nvm_devRead(desc->dev, addr, &rec, sizeof(struct eeepRecord));
+            nvm_read(priv->nvm, priv->part, addr, &rec,
+                     sizeof(struct eeepRecord));
             if (*tmp == 0xFFFFFFFF) {
                 priv->writeAddr = addr;
                 break;

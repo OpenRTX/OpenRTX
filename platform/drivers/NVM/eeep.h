@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -24,8 +24,9 @@ extern const struct nvmInfo eeep_info;
  * Driver private data.
  */
 struct eeepData {
-    const struct nvmDevice *nvm;     ///< Underlying NVM device
-    const struct nvmPartition *part; ///< Partition of underlying NVM device
+    size_t pageSize;    ///< Underlying NVM page size
+    uint32_t nvm;       ///< Underlying NVM device
+    uint32_t part;      ///< Memory partition used for EEPROM emulation
     uint32_t readAddr;  ///< Physical start address for EEEPROM reads
     uint32_t writeAddr; ///< Physical start address for EEEPROM writes
 };
