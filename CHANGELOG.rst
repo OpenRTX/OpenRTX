@@ -7,6 +7,49 @@
 CHANGELOG
 =========
 
+v0.4.4 - 2026-05-01
+===================
+Added
+-----
+- gfx: support for on-screen QR code generation
+- M17: metadata text transmission and reception
+- M17: packet transmission and reception
+- NVM: driver for STM32 internal flash
+- platform: API for vibration motor control
+- codec2: noise reduction of mic input via oversampling
+- test: use gcovr and catch2 for unit tests
+- ui: increases power level granularity
+- AGENTS.md with project guidelines for AI agents
+- CHANGELOG.rst
+
+Changed
+-------
+- core: optimized FIR filter implementation
+- build: rename "build_arm" file to "build_cm4"
+- NVM: reorganized API and data structures
+- M17: optimized CRC calculation routine
+- CS7000 Plus: use VOX input for microphone input level
+- Adopt SPDX-compliant header
+
+Fixed
+-----
+- audio: runtime bugs in Linux file_source module
+- audio: clipping in HR_Cx000 "beep" tone generator
+- gpio_stm32: fix OPEN_DRAIN_PU setup mode
+- ui: missing bound checking in repeater offset input
+- ui: wraparound on repeater offset entry
+
+Thanks to
+---------
+- Jetse PA1JET
+- Joshua VO1RFX
+- Marco DM4RCO
+- Morgan ON4MOD
+- Ryan K0RET
+- Ryan N2BP
+- Roman VA1FOX
+- Wojciech SP5WWP
+
 v0.4.3 - 2025-12-15
 ===================
 Added

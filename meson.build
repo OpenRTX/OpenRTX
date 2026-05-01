@@ -2,7 +2,7 @@
 ## OpenRTX - Modular Open Source Radio Firmware
 ##
 project('OpenRTX', ['c', 'cpp'],
-  version : '0.4.3',
+  version : '0.4.4',
   default_options : ['warning_level=3', 'b_staticpic=false'])
 
 ##
