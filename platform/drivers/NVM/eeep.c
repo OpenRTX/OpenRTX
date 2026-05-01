@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <errno.h>
+#include <stdlib.h>
 #include "eeep.h"
 
 // NOTE: cannot use an enum for these because enum type is "int"
@@ -134,8 +135,9 @@ static int swapBlock(struct eeepData *priv)
         return ret;
 
     // Search for all the active entries
-    // TODO: use dynamic memory allocation
-    struct eeepEntry entryList[8] = { 0 };
+    size_t entryListSize = 8;
+    struct eeepEntry *entryList =
+        (struct eeepEntry *)malloc(entryListSize * sizeof(struct eeepEntry));
     uint32_t address = priv->readAddr;
     uint8_t numEntries = 0;
 
@@ -159,6 +161,16 @@ static int swapBlock(struct eeepData *priv)
 
             // Record not found, append it to the list
             if (pos == numEntries) {
+                if (pos == entryListSize) {
+                    entryListSize *= 2;
+                    void *tmp = reallocarray(entryList, entryListSize,
+                                             sizeof(struct eeepEntry));
+                    if (tmp == NULL) {
+                        free(entryList);
+                        return -ENOMEM;
+                    }
+                    entryList = (struct eeepEntry *)tmp;
+                }
                 entryList[pos].virtAddr = rec.virtAddr;
                 entryList[pos].physAddr = address;
                 numEntries += 1;
@@ -172,8 +184,10 @@ static int swapBlock(struct eeepData *priv)
     priv->writeAddr = nextBlock + sizeof(uint32_t);
     uint32_t tmp = EEEP_PAGE_COPYING;
     ret = nvm_write(priv->nvm, priv->part, nextBlock, &tmp, sizeof(uint32_t));
-    if (ret < 0)
+    if (ret < 0) {
+        free(entryList);
         return ret;
+    }
 
     // Copy over the records to the new page,
     for (uint8_t i = 0; i < numEntries; i++) {
@@ -183,18 +197,25 @@ static int swapBlock(struct eeepData *priv)
 
         ret = nvm_read(priv->nvm, priv->part, address, &rec,
                        sizeof(struct eeepRecord));
-        if (ret < 0)
+        if (ret < 0) {
+            free(entryList);
             return ret;
+        }
 
         address += sizeof(struct eeepRecord);
         ret = nvm_read(priv->nvm, priv->part, address, data, rec.size);
-        if (ret < 0)
+        if (ret < 0) {
+            free(entryList);
             return ret;
+        }
 
         ret = writeRecord(priv, rec.virtAddr, data, rec.size);
-        if (ret < 0)
+        if (ret < 0) {
+            free(entryList);
             return ret;
+        }
     }
+    free(entryList);
 
     // Finally, set the page as the new active page, invalidate the previous one
     // and update the reading address
