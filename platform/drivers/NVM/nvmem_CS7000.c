@@ -93,7 +93,7 @@ void nvm_init()
     spiBitbang_init(&flash_spi);
 #endif
     W25Qx_init(&eflash);
-    eeep_init(&eeep, 0, 1);
+    eeep_init(&eeep, 0, 2);
 }
 
 void nvm_terminate()
