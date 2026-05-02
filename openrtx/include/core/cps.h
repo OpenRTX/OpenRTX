@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -16,7 +16,7 @@
 #define CPS_MAGIC 0x43585452
 // Codeplug version v0.1
 #define CPS_VERSION_MAJOR  0
-#define CPS_VERSION_MINOR  1
+#define CPS_VERSION_MINOR  2
 #define CPS_VERSION_NUMBER (CPS_VERSION_MAJOR << 8) | CPS_VERSION_MINOR
 #define CPS_STR_SIZE 32
 
