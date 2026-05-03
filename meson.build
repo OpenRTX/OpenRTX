@@ -57,6 +57,8 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/voicePromptData.S',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/core/settings.c',
+               'openrtx/src/core/struct_slicer.c',
+               'openrtx/src/core/vfo.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -1107,7 +1109,7 @@ m17_callsign_test = executable('m17_callsign_test',
 m17_metatext_test = executable('m17_metatext_test',
                       sources : unit_test_src + ['tests/unit/M17_metatext.cpp'],
                       kwargs  : unit_test_opts)
-                 
+
 m17_demodulator_test = executable('m17_demodulator_test',
                             sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
                             kwargs: unit_test_opts)
