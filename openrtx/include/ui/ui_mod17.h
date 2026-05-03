@@ -111,7 +111,8 @@ enum m17Items
 {
     M_CALLSIGN = 0,
     M_METATEXT,
-    M_CAN,
+    M_RX_CAN,
+    M_TX_CAN,
     M_CAN_RX
 };
 
