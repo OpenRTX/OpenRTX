@@ -298,7 +298,7 @@ static int write_store(const int dev, const int part,
     const bool erase_before_write = dDesc->dev->info->device_info & NVM_ERASE;
 
     // Check if we have enough space to write the store
-    if ((*offset + sizeof(settings_store_t)) > pInfo.size) {
+    if (((*offset + sizeof(settings_store_t)) > pInfo.size) || erase) {
         if (erase_before_write) {
             ret = nvm_erase(dev, part, 0, pInfo.size);
             if (ret < 0)
