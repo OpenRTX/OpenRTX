@@ -21,6 +21,12 @@ channel_t cps_getDefaultChannel()
 
     #ifdef PLATFORM_MOD17
     channel.mode      = OPMODE_M17;
+
+    channel.m17.can = 0;
+    channel.m17.dest[0] = 'A';
+    channel.m17.dest[1] = 'L';
+    channel.m17.dest[2] = 'L';
+    channel.m17.dest[3] = '\0';
     #else
     channel.mode      = OPMODE_FM;
     channel.fm.rxToneEn = 0; //disabled
@@ -32,14 +38,6 @@ channel_t cps_getDefaultChannel()
     channel.sqlLevel  = 4;      // S3
     channel.power     = 1000;   // 1W
     channel.rx_only   = false;  // Enable tx by default
-
-    // These 3 should be in channel.m17 but can be changed
-    // at any time so can not depend on current opmode.
-    channel.m17_can = 0;
-    channel.m17_dest[0] = 'A';
-    channel.m17_dest[1] = 'L';
-    channel.m17_dest[2] = 'L';
-    channel.m17_dest[3] = '\0';
 
     // Set initial frequency based on supported bands
     const hwInfo_t* hwinfo  = platform_getHwInfo();

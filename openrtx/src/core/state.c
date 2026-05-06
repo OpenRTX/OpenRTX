@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "core/tuner.h"
 #include "core/ui.h"
 #include <stdio.h>
 #include <string.h>
@@ -41,8 +42,8 @@ void state_init()
      * Try loading VFO configuration from nonvolatile memory and default to sane
      * values in case of failure.
      */
-    if (nvm_readVfoChannelData(&state.channel) < 0) {
-        state.channel = cps_getDefaultChannel();
+    if (nvm_readVfoChannelData(&state.tuner) < 0) {
+        state.tuner = tuner_getDefault();
     }
 
 /*
@@ -57,7 +58,6 @@ void state_init()
     state.volume = platform_getVolumeLevel();
 
     state.channel_index = 0; // Set default channel index (it is 0-based)
-    state.bank_enabled = false;
     state.rtxStatus = RTX_OFF;
     state.emergency = false;
     state.txDisable = false;
@@ -76,7 +76,7 @@ void state_terminate()
         state.settings.brightness = 5;
     }
 
-    nvm_writeSettingsAndVfo(&state.settings, &state.channel);
+    nvm_writeSettingsAndVfo(&state.settings, &state.tuner);
     pthread_mutex_destroy(&state_mutex);
 }
 
@@ -130,5 +130,5 @@ void state_task()
 void state_resetSettingsAndVfo()
 {
     state.settings = default_settings;
-    state.channel = cps_getDefaultChannel();
+    state.tuner = tuner_getDefault();
 }

@@ -98,8 +98,9 @@ typedef struct
             rxTone   : 7;   //< RX CTC/DCS tone index
     uint8_t txToneEn : 1,   //< TX CTC/DCS tone enable
             txTone   : 7;   //< TX CTC/DCS tone index
+    uint8_t sqlLevel;       //< Squelch level
 }
-__attribute__((packed)) fmInfo_t; // 2B
+__attribute__((packed)) fmInfo_t; // 3B
 
 
 
@@ -183,12 +184,15 @@ enum m17gps_t
  */
 typedef struct
 {
-    uint8_t  mode  : 4,         ///< Channel operation mode
-             encr  : 4;         ///< Encryption mode
-    uint8_t gps_mode;           ///< Channel GPS mode
+    uint8_t  mode      : 4,     ///< Channel operation mode
+             encr      : 4;     ///< Encryption mode
+    uint8_t  can       : 4,     ///< Channel Access Number
+             gps_mode  : 1,     ///< Channel GPS mode
+             _reserved : 3;
     uint16_t contact_index;     ///< Index to retrieve data from contact list
+    char     dest[10];          ///< M17 destination
 }
-__attribute__((packed)) m17Info_t; // 4B
+__attribute__((packed)) m17Info_t; // 14B
 
 /**
  * Data structure describing M17-specific contact fields.
@@ -242,11 +246,6 @@ typedef struct
     char    descr[CPS_STR_SIZE];   //< Description of the channel
     geo_t   ch_location;           //< Transmitter geolocation
 
-    // These three values should really be in m17Info_t below but
-    // because these can be changed in the settings at any time,
-    // they can not be dependant on the selected opMode.
-    uint8_t m17_can : 4;             ///< M17 Channel Access Number
-    char    m17_dest[10];           ///< M17 destination
 
     union
     {

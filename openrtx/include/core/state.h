@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include "core/cps.h"
 #include "core/gps.h"
+#include "core/tuner.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,10 +36,8 @@ typedef struct {
     uint8_t tuner_mode;
 
     uint16_t channel_index;
-    channel_t channel;
-    channel_t vfo_channel;
-    bool bank_enabled;
-    uint16_t bank;
+    struct tuner tuner;
+
     uint8_t rtxStatus;
     bool tone_enabled;
 

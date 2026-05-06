@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "core/cps.h"
 #include "hwconfig.h"
 #include <pthread.h>
 #include "core/ui.h"
@@ -21,6 +22,7 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
+#include "core/tuner.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -69,27 +71,44 @@ void *ui_threadFunc(void *arg)
         if(sync_rtx)
         {
             pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode      = state.channel.mode;
-            rtx_cfg.bandwidth   = state.channel.bandwidth;
-            rtx_cfg.rxFrequency = state.channel.rx_frequency;
-            rtx_cfg.txFrequency = state.channel.tx_frequency;
-            rtx_cfg.txPower     = state.channel.power;
-            rtx_cfg.sqlLevel    = state.channel.sqlLevel;
-            rtx_cfg.rxToneEn    = state.channel.fm.rxToneEn;
-            rtx_cfg.rxTone      = ctcss_tone[state.channel.fm.rxTone];
-            rtx_cfg.txToneEn    = state.channel.fm.txToneEn;
-            rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
+            rtx_cfg.opMode      = tuner_get_opmode(&state.tuner);
+
+            switch(rtx_cfg.opMode){
+                case OPMODE_FM:
+                {
+                    fmInfo_t fm;
+                    tuner_get_FM_params(&state.tuner, &fm);
+                    rtx_cfg.rxToneEn    = fm.rxToneEn;
+                    rtx_cfg.rxTone      = fm.rxTone;
+                    rtx_cfg.txToneEn    = fm.txToneEn;
+                    rtx_cfg.txTone      = fm.txTone;
+                    rtx_cfg.sqlLevel    = fm.sqlLevel;
+                }
+                    break;
+                case OPMODE_M17:
+                {
+                    m17Info_t m17;
+                    tuner_get_M17_params(&state.tuner, &m17);
+                    rtx_cfg.m17_can     = m17.can;
+                    strncpy(rtx_cfg.destination_address, m17.dest, 10);
+                }
+                    break;
+
+
+            }
+            rtx_cfg.bandwidth   = tuner_get_bandwidth(&state.tuner);
+            rtx_cfg.rxFrequency = tuner_get_rx_frequency(&state.tuner);
+            rtx_cfg.txFrequency = tuner_get_tx_frequency(&state.tuner);
+            rtx_cfg.txPower     = tuner_get_power(&state.tuner);
             rtx_cfg.toneEn      = state.tone_enabled;
 
             // Enable Tx if channel allows it and we are in UI main screen
-            rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
+            const channel_t *chan = tuner_get_channel(&state.tuner);
+            rtx_cfg.txDisable = ((chan == NULL)?false:chan->rx_only) || state.txDisable;
 
             // Copy new M17 CAN, source and destination addresses
-            rtx_cfg.m17_can = state.channel.m17_can;
             rtx_cfg.canRxEn = state.settings.m17_can_rx;
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
-            strncpy(rtx_cfg.destination_address, state.channel.m17_dest, 10);
-
             pthread_mutex_unlock(&rtx_mutex);
 
             rtx_configure(&rtx_cfg);

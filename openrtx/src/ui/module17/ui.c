@@ -337,7 +337,7 @@ static void _ui_changeBrightness(int variation)
 
 static void _ui_changeM17CAN(int variation)
 {
-    int8_t can = state.channel.m17_can + variation;
+    int8_t can = state.tuner.core.vfo.m17.can + variation;
 
     // M17 CAN ranges from 0 to 15
     if(can > 15)
@@ -346,7 +346,7 @@ static void _ui_changeM17CAN(int variation)
     if(can < 0)
         can = 15;
 
-    state.channel.m17_can = can;
+    state.tuner.core.vfo.m17.can = can;
 }
 
 static void _ui_changeWiper(uint16_t *wiper, int variation)
@@ -512,7 +512,7 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_callsign);
                         // Save selected callsign and disable input mode
-                        strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
+                        strncpy(state.tuner.core.vfo.m17.dest, ui_state.new_callsign, 10);
                         *sync_rtx = true;
                         ui_state.edit_mode = false;
                     }

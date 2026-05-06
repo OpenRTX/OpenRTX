@@ -47,6 +47,7 @@
  *      └─────────────────────────┘
  */
 
+#include "core/tuner.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -600,16 +601,18 @@ static bool _ui_drawDarkOverlay()
 
 static int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx)
 {
+    // TODO. I think this should call tuner_set_mode_bank and bank_mode should be added back to state struct
+
     channel_t channel;
     int32_t selected_channel = channel_index;
     // If a bank is active, get index from current bank
-    if(state.bank_enabled)
+    if(tuner_get_mode(&state.tuner) == TUNER_BANK)
     {
         bankHdr_t bank = { 0 };
-        cps_readBankHeader(&bank, state.bank);
+        cps_readBankHeader(&bank, state.tuner.core.bank_index);
         if((channel_index < 0) || (channel_index >= bank.ch_count))
             return -1;
-        channel_index = cps_readBankData(state.bank, channel_index);
+        channel_index = cps_readBankData(state.tuner.core.bank_index, channel_index);
     }
 
     int result = cps_readChannel(&channel, channel_index);
