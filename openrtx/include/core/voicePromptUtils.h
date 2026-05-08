@@ -145,7 +145,7 @@ void vp_announceBank(const uint16_t bank, const enum vpQueueFlags flags);
 /**
  *
  */
-void vp_announceM17Info(const channel_t *channel, bool isEditing,
+void vp_announceM17Info(const m17Info_t *m17, bool isEditing,
                         const enum vpQueueFlags flags);
 
 /**

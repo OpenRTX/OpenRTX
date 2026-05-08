@@ -1,9 +1,11 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "core/tuner.h"
+#include "rtx/rtx.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -348,7 +350,7 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     // Only returning the sign
     if(index == R_DIRECTION)
     {
-        buf[0] = (last_state.channel.tx_frequency >= last_state.channel.rx_frequency) ? '+' : '-';
+        buf[0] = (tuner_get_tx_frequency(&last_state.tuner) >= tuner_get_rx_frequency(&last_state.tuner)) ? '+' : '-';
         buf[1] = '\0';
 
         return 0;
@@ -360,8 +362,8 @@ int _ui_getRadioValueName(char *buf, uint8_t max_len, uint8_t index)
     {
         case R_OFFSET:
         {
-            uint32_t txFreq = last_state.channel.tx_frequency;
-            uint32_t rxFreq = last_state.channel.rx_frequency;
+            uint32_t txFreq = tuner_get_tx_frequency(&last_state.tuner);
+            uint32_t rxFreq = tuner_get_rx_frequency(&last_state.tuner);
 
             // Yes, we're basically reinventing the abs() here. The problem is
             // that abs() works on signed integers and using it would mean
@@ -413,15 +415,17 @@ int _ui_getM17EntryName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= settings_m17_num)
+    if(index >= settings_m17_num || (tuner_get_opmode(&last_state.tuner) != OPMODE_M17))
         return -1;
+
+    m17Info_t m17;
+    tuner_get_M17_params(&last_state.tuner, &m17);
 
     switch(index)
     {
         case M17_CALLSIGN:
             sniprintf(buf, max_len, "%s", last_state.settings.callsign);
             break;
-
         case M17_METATEXT:
             // limit display to 8 characters
             if (strlen(last_state.settings.M17_meta_text) > 7)
@@ -435,9 +439,8 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
             else
                 sniprintf(buf, max_len, "%s", last_state.settings.M17_meta_text);
         break;
-
         case M17_CAN:
-            sniprintf(buf, max_len, "%d", last_state.settings.m17_can);
+            sniprintf(buf, max_len, "%d", m17.can);
             break;
         case M17_CAN_RX:
             sniprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ?
@@ -461,20 +464,23 @@ int _ui_getFMEntryName(char* buf, uint8_t max_len, uint8_t index)
 
 int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
 {
-    if (index >= settings_fm_num)
+    if (index >= settings_fm_num || (tuner_get_opmode(&last_state.tuner) != OPMODE_FM))
         return -1;
+
+    fmInfo_t fm;
+    tuner_get_FM_params(&last_state.tuner, &fm);
 
     switch (index) {
         case CTCSS_Tone: {
-            uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+            uint16_t tone = ctcss_tone[fm.txTone];
             sniprintf(buf, max_len, "%d.%d", (tone / 10), (tone % 10));
             break;
         }
 
         case CTCSS_Enabled:
             sniprintf(buf, max_len, "%s",
-                    _ui_getToneEnabledString(last_state.channel.fm.txToneEn,
-                                             last_state.channel.fm.rxToneEn,
+                    _ui_getToneEnabledString(fm.txToneEn,
+                                             fm.rxToneEn,
                                              false));
             break;
     }
@@ -1153,7 +1159,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     // Header
     _ui_drawMacroTop();
     // First row
-    if (last_state.channel.mode == OPMODE_FM)
+    if (tuner_get_opmode(&last_state.tuner) == OPMODE_FM)
     {
 /*
  * If we have a keyboard installed draw all numbers, otherwise draw only the
@@ -1164,17 +1170,19 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #endif  // CONFIG_UI_NO_KEYBOARD
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       yellow_fab413, "1");
-        if (last_state.channel.mode == OPMODE_FM)
+        if (tuner_get_opmode(&last_state.tuner) == OPMODE_FM)
         {
+            fmInfo_t fm;
+            tuner_get_FM_params(&last_state.tuner, &fm);
             char encdec_str[9]  = {0};
             sniprintf(encdec_str, 9, "  %s",
-                    _ui_getToneEnabledString(last_state.channel.fm.txToneEn,
-                                             last_state.channel.fm.rxToneEn,
+                    _ui_getToneEnabledString(fm.txToneEn,
+                                             fm.rxToneEn,
                                              true));
 
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, encdec_str);
-            uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+            uint16_t tone = ctcss_tone[fm.txTone];
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "       %d.%d", (tone / 10), (tone % 10));
 #if defined(CONFIG_UI_NO_KEYBOARD)
@@ -1186,7 +1194,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                   color_white,   "       T-");
     }
 #ifdef CONFIG_M17
-    else if (last_state.channel.mode == OPMODE_M17)
+    else if (tuner_get_opmode(&last_state.tuner) == OPMODE_M17)
     {
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   yellow_fab413, "1");
@@ -1205,7 +1213,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                   color_white, " T+");
     }
 #ifdef CONFIG_M17
-    else if (last_state.channel.mode == OPMODE_M17)
+    else if (tuner_get_opmode(&last_state.tuner) == OPMODE_M17)
     {
         char encdec_str[9] = "        ";
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -1224,10 +1232,10 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
               yellow_fab413, "4");
 
-    if (last_state.channel.mode == OPMODE_FM)
+    if (tuner_get_opmode(&last_state.tuner) == OPMODE_FM)
     {
         char bw_str[12] = { 0 };
-        switch (last_state.channel.bandwidth)
+        switch (last_state.tuner.core.vfo.bandwidth)
         {
             case BW_12_5:
                 sniprintf(bw_str, 12, "  BW12.5");
@@ -1241,7 +1249,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                   color_white, bw_str);
     }
 #ifdef CONFIG_M17
-    else if (last_state.channel.mode == OPMODE_M17)
+    else if (tuner_get_opmode(&last_state.tuner) == OPMODE_M17)
     {
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "       ");
@@ -1256,7 +1264,7 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
               yellow_fab413, "5");
 
     char mode_str[12] = "";
-    switch(last_state.channel.mode)
+    switch(tuner_get_opmode(&last_state.tuner))
     {
         case OPMODE_FM:
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "         FM");
@@ -1282,8 +1290,8 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 
     // Compute x.y format for TX power avoiding to pull in floating point math.
     // Remember that power is expressed in mW!
-    unsigned int power_int = (last_state.channel.power / 1000);
-    unsigned int power_dec = (last_state.channel.power % 1000) / 100;
+    unsigned int power_int = (tuner_get_power(&last_state.tuner) / 1000);
+    unsigned int power_dec = (tuner_get_opmode(&last_state.tuner) % 1000) / 100;
 
     if (power_dec == 0)
     {

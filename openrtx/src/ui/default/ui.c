@@ -47,6 +47,7 @@
  *      └─────────────────────────┘
  */
 
+#include "core/tuner.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -600,16 +601,18 @@ static bool _ui_drawDarkOverlay()
 
 static int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx)
 {
+    // TODO. I think this should call tuner_set_mode_bank and bank_mode should be added back to state struct
+
     channel_t channel;
     int32_t selected_channel = channel_index;
     // If a bank is active, get index from current bank
-    if(state.bank_enabled)
+    if(tuner_get_mode(&state.tuner) == TUNER_BANK)
     {
         bankHdr_t bank = { 0 };
-        cps_readBankHeader(&bank, state.bank);
+        cps_readBankHeader(&bank, state.tuner.core.bank_index);
         if((channel_index < 0) || (channel_index >= bank.ch_count))
             return -1;
-        channel_index = cps_readBankData(state.bank, channel_index);
+        channel_index = cps_readBankData(state.tuner.core.bank_index, channel_index);
     }
 
     int result = cps_readChannel(&channel, channel_index);
@@ -787,8 +790,8 @@ static void _ui_changeMacroLatch(bool newVal)
 #ifdef CONFIG_M17
 static inline void _ui_changeM17Can(int variation)
 {
-    uint8_t can = state.settings.m17_can;
-    state.settings.m17_can = (can + variation) % 16;
+    uint8_t can = state.channel.m17_can;
+    state.channel.m17_can = (can + variation) % 16;
 }
 #endif
 
@@ -1050,13 +1053,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 #endif // PLATFORM_TTWRPLUS
     {
 #ifdef CONFIG_KNOB_ABSOLUTE // If the radio has an absolute position knob
-        state.settings.sqlLevel = platform_getChSelector() - 1;
+        state.channel.sqlLevel = platform_getChSelector() - 1;
 #endif // CONFIG_KNOB_ABSOLUTE
-        if(state.settings.sqlLevel > 0)
+        if(state.channel.sqlLevel > 0)
         {
-            state.settings.sqlLevel -= 1;
+            state.channel.sqlLevel -= 1;
             *sync_rtx = true;
-            vp_announceSquelch(state.settings.sqlLevel, queueFlags);
+            vp_announceSquelch(state.channel.sqlLevel, queueFlags);
         }
     }
 
@@ -1067,13 +1070,13 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
 #endif // PLATFORM_TTWRPLUS
     {
 #ifdef CONFIG_KNOB_ABSOLUTE
-        state.settings.sqlLevel = platform_getChSelector() - 1;
+        state.channel.sqlLevel = platform_getChSelector() - 1;
 #endif
-        if(state.settings.sqlLevel < 15)
+        if(state.channel.sqlLevel < 15)
         {
-            state.settings.sqlLevel += 1;
+            state.channel.sqlLevel += 1;
             *sync_rtx = true;
-            vp_announceSquelch(state.settings.sqlLevel, queueFlags);
+            vp_announceSquelch(state.channel.sqlLevel, queueFlags);
         }
     }
 }
@@ -1498,7 +1501,7 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, ui_state.new_callsign, 10);
+                            strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                             vp_announceM17Info(NULL,  ui_state.edit_mode,
@@ -1507,7 +1510,7 @@ void ui_updateFSM(bool *sync_rtx)
                         else if(msg.keys & KEY_HASH)
                         {
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, "", 1);
+                            strncpy(state.channel.m17_dest, "", 1);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                             vp_announceM17Info(NULL,  ui_state.edit_mode,
@@ -1687,14 +1690,14 @@ void ui_updateFSM(bool *sync_rtx)
                         {
                             _ui_textInputConfirm(ui_state.new_callsign);
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, ui_state.new_callsign, 10);
+                            strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                         }
                         else if(msg.keys & KEY_HASH)
                         {
                             // Save selected dst ID and disable input mode
-                            strncpy(state.settings.m17_dest, "", 1);
+                            strncpy(state.channel.m17_dest, "", 1);
                             ui_state.edit_mode = false;
                             *sync_rtx = true;
                         }

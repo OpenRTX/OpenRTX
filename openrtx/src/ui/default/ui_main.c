@@ -1,12 +1,15 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "core/cps.h"
+#include "core/tuner.h"
 #include "interfaces/platform.h"
 #include "interfaces/cps_io.h"
 #include "interfaces/delays.h"
+#include "rtx/rtx.h"
 #include <stdio.h>
 #include <stdint.h>
 #include "ui/ui_default.h"
@@ -60,10 +63,12 @@ void _ui_drawMainTop(ui_state_t * ui_state)
 void _ui_drawBankChannel()
 {
     // Print Bank number, channel number and Channel name
-    uint16_t b = (last_state.bank_enabled) ? last_state.bank : 0;
+    uint16_t b = (tuner_get_mode(&last_state.tuner) == TUNER_BANK) ? last_state.tuner.core.bank_index : 0;
+    char name[32];
+    tuner_get_channel_name(&last_state.tuner, name, sizeof(name));
     gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
               color_white, "%01d-%03d: %.12s",
-              b, last_state.channel_index + 1, last_state.channel.name);
+              b, last_state.channel_index + 1, name);
 }
 
 const char* _ui_getToneEnabledString(bool tone_tx_enable, bool tone_rx_enable,
@@ -92,23 +97,26 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 {
     char bw_str[8] = { 0 };
 
-    switch(last_state.channel.mode)
+    switch(tuner_get_opmode(&last_state.tuner))
     {
         case OPMODE_FM:
+        {
+            fmInfo_t fm;
+            tuner_get_FM_params(&last_state.tuner, &fm);
 
             // Get Bandwidth string
-            if(last_state.channel.bandwidth == BW_12_5)
+            if(last_state.tuner.core.vfo.bandwidth == BW_12_5)
                 sniprintf(bw_str, 8, "NFM");
-            else if(last_state.channel.bandwidth == BW_25)
+            else if(last_state.tuner.core.vfo.bandwidth == BW_25)
                 sniprintf(bw_str, 8, "FM");
 
             // Get encdec string
-            bool tone_tx_enable = last_state.channel.fm.txToneEn;
-            bool tone_rx_enable = last_state.channel.fm.rxToneEn;
+            bool tone_tx_enable = fm.txToneEn;
+            bool tone_rx_enable = fm.rxToneEn;
             // Print Bandwidth, Tone and encdec info
             if (tone_tx_enable || tone_rx_enable)
             {
-                uint16_t tone = ctcss_tone[last_state.channel.fm.txTone];
+                uint16_t tone = ctcss_tone[fm.txTone];
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s %d.%d %s", bw_str, (tone / 10),
                           (tone % 10), _ui_getToneEnabledString(tone_tx_enable, tone_rx_enable, true));
@@ -118,6 +126,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                           color_white, "%s", bw_str );
             }
+        }
             break;
 
         case OPMODE_DMR:
@@ -219,8 +228,8 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
 
 void _ui_drawFrequency()
 {
-    freq_t freq = platform_getPttStatus() ? last_state.channel.tx_frequency
-                                          : last_state.channel.rx_frequency;
+    freq_t freq = platform_getPttStatus() ? tuner_get_tx_frequency(&last_state.tuner)
+                                          : tuner_get_rx_frequency(&last_state.tuner);
 
     // Print big numbers frequency
     char freq_str[16] = {0};
@@ -258,8 +267,8 @@ void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
         }
         gfx_print(layout.line3_large_pos, layout.input_font, TEXT_ALIGN_CENTER,
                   color_white, " Tx:%03lu.%04lu",
-                  (unsigned long)last_state.channel.tx_frequency/1000000,
-                  (unsigned long)(last_state.channel.tx_frequency%1000000)/100);
+                  (unsigned long)tuner_get_tx_frequency(&last_state.tuner)/1000000,
+                  (unsigned long)(tuner_get_tx_frequency(&last_state.tuner)%1000000)/100);
     }
     else if(ui_state->input_set == SET_TX)
     {
@@ -290,14 +299,22 @@ void _ui_drawMainBottom()
 {
     // Squelch bar
     rssi_t   rssi = last_state.rssi;
-    uint8_t  squelch = last_state.settings.sqlLevel;
+
+    uint8_t  squelch = 0;
+    if(tuner_get_opmode(&state.tuner)==OPMODE_FM)
+    {
+        fmInfo_t fm;
+        tuner_get_FM_params(&state.tuner, &fm);
+        squelch = fm.sqlLevel;
+    }
+
     uint8_t  volume = last_state.volume;
     uint16_t meter_width = CONFIG_SCREEN_WIDTH - 2 * layout.horizontal_pad;
     uint16_t meter_height = layout.bottom_h;
     point_t meter_pos = { layout.horizontal_pad,
                           CONFIG_SCREEN_HEIGHT - meter_height - layout.bottom_pad};
     uint8_t mic_level = platform_getMicLevel();
-    switch(last_state.channel.mode)
+    switch(tuner_get_opmode(&state.tuner))
     {
         case OPMODE_FM:
             gfx_drawSmeter(meter_pos,

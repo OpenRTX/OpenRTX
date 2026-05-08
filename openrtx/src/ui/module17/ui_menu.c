@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -196,7 +196,7 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
                 snprintf(buf, max_len, "%s", last_state.settings.M17_meta_text);
             break;
         case M_CAN:
-            snprintf(buf, max_len, "%d", last_state.settings.m17_can);
+            sniprintf(buf, max_len, "%d", last_state.channel.m17_can);
             break;
         case M_CAN_RX:
             snprintf(buf, max_len, "%s", (last_state.settings.m17_can_rx) ? "on" : "off");
