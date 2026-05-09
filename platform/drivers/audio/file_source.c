@@ -41,6 +41,7 @@ static int fileSource_data(struct streamCtx *ctx, stream_sample_t **buf)
 
     FILE *fp = (FILE *)ctx->priv;
     stream_sample_t *dest = ctx->buffer;
+    *buf = dest;
     size_t size = ctx->bufSize;
     size_t i = 0;
 
