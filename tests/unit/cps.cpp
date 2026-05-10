@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "core/cps.h"
+#include "rtx/rtx.h"
 #include <catch2/catch_test_macros.hpp>
 #include <cstring>
 
@@ -51,22 +53,18 @@ TEST_CASE("CPS channel insertion and ordering", "[cps]")
     cps_create("/tmp/test3.rtxc");
     cps_open("/tmp/test3.rtxc");
 
-    channel_t c1 = {
-        0,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 1",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t c2 = {
-        0,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 2",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t c3 = {
-        0,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 3",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t c4 = {
-        0,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 4",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
+    channel_t c1 = cps_getDefaultChannel();
+    channel_t c2 = cps_getDefaultChannel();
+    channel_t c3 = cps_getDefaultChannel();
+    channel_t c4 = cps_getDefaultChannel();
+    c1.mode = OPMODE_NONE;
+    c1.mode = OPMODE_NONE;
+    c1.mode = OPMODE_NONE;
+    c2.mode = OPMODE_NONE;
+    strcpy(c1.name, "Test channel 1");
+    strcpy(c2.name, "Test channel 2");
+    strcpy(c3.name, "Test channel 3");
+    strcpy(c4.name, "Test channel 4");
     cps_insertChannel(c1, 0);
     cps_insertChannel(c2, 0);
     cps_insertChannel(c3, 0);
@@ -74,13 +72,13 @@ TEST_CASE("CPS channel insertion and ordering", "[cps]")
 
     channel_t c = { 0 };
     cps_readChannel(&c, 0);
-    REQUIRE(strncmp(c3.name, c.name, 32L) == 0);
+    REQUIRE(strncmp(c3.name, c.name, CPS_STR_SIZE) == 0);
     cps_readChannel(&c, 1);
-    REQUIRE(strncmp(c4.name, c.name, 32L) == 0);
+    REQUIRE(strncmp(c4.name, c.name, CPS_STR_SIZE) == 0);
     cps_readChannel(&c, 2);
-    REQUIRE(strncmp(c2.name, c.name, 32L) == 0);
+    REQUIRE(strncmp(c2.name, c.name, CPS_STR_SIZE) == 0);
     cps_readChannel(&c, 3);
-    REQUIRE(strncmp(c1.name, c.name, 32L) == 0);
+    REQUIRE(strncmp(c1.name, c.name, CPS_STR_SIZE) == 0);
 
     cps_close();
 }
@@ -92,10 +90,10 @@ TEST_CASE("CPS contact index fix on insertion", "[cps][!mayfail]")
 
     contact_t ct1 = { "Test contact 1", 0, { { 0 } } };
     contact_t ct2 = { "Test contact 2", 0, { { 0 } } };
-    channel_t ch1 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 1",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
+    channel_t ch1 = cps_getDefaultChannel();
+    ch1.mode = OPMODE_DMR;
+    strcpy(ch1.name, "Test channel 1");
+
     cps_insertContact(ct1, 0);
     cps_insertChannel(ch1, 0);
     cps_insertContact(ct2, 0);
@@ -114,26 +112,22 @@ TEST_CASE("CPS complex codeplug creation", "[cps]")
 
     contact_t ct1 = { "Test contact 1", 0, { { 0 } } };
     contact_t ct2 = { "Test contact 2", 0, { { 0 } } };
-    channel_t ch1 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 1",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch2 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 2",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch3 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 3",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch4 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 4",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch5 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 5",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
+    channel_t ch1 = cps_getDefaultChannel();
+    channel_t ch2 = cps_getDefaultChannel();
+    channel_t ch3 = cps_getDefaultChannel();
+    channel_t ch4 = cps_getDefaultChannel();
+    channel_t ch5 = cps_getDefaultChannel();
+    ch1.mode = OPMODE_DMR;
+    ch2.mode = OPMODE_DMR;
+    ch3.mode = OPMODE_DMR;
+    ch4.mode = OPMODE_DMR;
+    ch5.mode = OPMODE_DMR;
+    strcpy(ch1.name, "Test channel 1");
+    strcpy(ch1.name, "Test channel 2");
+    strcpy(ch1.name, "Test channel 3");
+    strcpy(ch1.name, "Test channel 4");
+    strcpy(ch1.name, "Test channel 5");
+
     bankHdr_t b1 = { "Test Bank 1", 0 };
     bankHdr_t b2 = { "Test Bank 2", 0 };
     cps_insertContact(ct2, 0);
@@ -161,26 +155,22 @@ TEST_CASE("CPS out-of-order codeplug creation", "[cps]")
 
     contact_t ct1 = { "Test contact 1", 0, { { 0 } } };
     contact_t ct2 = { "Test contact 2", 0, { { 0 } } };
-    channel_t ch1 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 1",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch2 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 2",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch3 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 3",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch4 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 4",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
-    channel_t ch5 = {
-        2,  0,     0, 0, 0,     0,        0, 0, 0, 0, "Test channel 5",
-        "", { 0 }, 0, 0, "ALL", { { 0 } }
-    };
+    channel_t ch1 = cps_getDefaultChannel();
+    channel_t ch2 = cps_getDefaultChannel();
+    channel_t ch3 = cps_getDefaultChannel();
+    channel_t ch4 = cps_getDefaultChannel();
+    channel_t ch5 = cps_getDefaultChannel();
+    ch1.mode = OPMODE_DMR;
+    ch2.mode = OPMODE_DMR;
+    ch3.mode = OPMODE_DMR;
+    ch4.mode = OPMODE_DMR;
+    ch5.mode = OPMODE_DMR;
+    strcpy(ch1.name, "Test channel 1");
+    strcpy(ch1.name, "Test channel 2");
+    strcpy(ch1.name, "Test channel 3");
+    strcpy(ch1.name, "Test channel 4");
+    strcpy(ch1.name, "Test channel 5");
+
     bankHdr_t b1 = { "Test Bank 1", 0 };
     bankHdr_t b2 = { "Test Bank 2", 0 };
     cps_insertContact(ct1, 0);

@@ -1107,7 +1107,7 @@ m17_callsign_test = executable('m17_callsign_test',
 m17_metatext_test = executable('m17_metatext_test',
                       sources : unit_test_src + ['tests/unit/M17_metatext.cpp'],
                       kwargs  : unit_test_opts)
-                 
+
 m17_demodulator_test = executable('m17_demodulator_test',
                             sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
                             kwargs: unit_test_opts)
@@ -1117,7 +1117,7 @@ m17_rrc_test = executable('m17_rrc_test',
                           kwargs: unit_test_opts)
 
 cps_test = executable('cps_test',
-                      sources : unit_test_src + ['tests/unit/cps.cpp'],
+                      sources : unit_test_src + ['tests/unit/cps.cpp', 'openrtx/src/core/cps.c'],
                       kwargs  : unit_test_opts)
 
 linux_inputStream_test = executable('linux_inputStream_test',
