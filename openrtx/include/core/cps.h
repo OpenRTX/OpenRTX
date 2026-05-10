@@ -7,6 +7,10 @@
 #ifndef CPS_H
 #define CPS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "core/datatypes.h"
@@ -316,5 +320,9 @@ __attribute__((packed)) cps_header_t; // 88B
  * the running hardware on limitations.
  */
 channel_t cps_getDefaultChannel();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // CPS_H
