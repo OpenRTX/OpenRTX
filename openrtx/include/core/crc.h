@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -40,6 +40,15 @@ uint16_t crc_m17(const void *data, const size_t len);
  * @return CCITT CRC.
  */
 uint16_t crc_ccitt(const void *data, const size_t len);
+
+/**
+ * @brief Compute an 8-bit CRC over a given block of data.
+ *
+ * @param data input data.
+ * @param len data length in bytes
+ * @return uint8_t 8-bit CRC
+ */
+uint8_t crc8(const uint8_t *data, const size_t len);
 
 #ifdef __cplusplus
 }
