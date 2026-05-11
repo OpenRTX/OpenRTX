@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -36,5 +36,22 @@ uint16_t crc_ccitt(const void *data, const size_t len)
         crc = (crc << 8) ^ (x << 12) ^ (x << 5) ^ x;
     }
 
+    return crc;
+}
+
+uint8_t crc8(const uint8_t *data, const size_t len)
+{
+    uint8_t crc = 0xff;
+
+    for (size_t i = 0; i < len; i++) {
+        crc ^= data[i];
+
+        for (uint8_t j = 0; j < 8; j++) {
+            if (crc & 0x80)
+                crc = (crc << 1) ^ 0x31;
+            else
+                crc = (crc << 1);
+        }
+    }
     return crc;
 }
