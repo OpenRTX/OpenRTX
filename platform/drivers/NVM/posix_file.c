@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -62,7 +62,9 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset,
         return -EBADF;
 
     lseek(pDev->fd, offset, SEEK_SET);
-    return read(pDev->fd, data, len);
+    int n = read(pDev->fd, data, len);
+
+    return (n>0)?0:errno;
 }
 
 static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset,
@@ -74,7 +76,8 @@ static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset,
         return -EBADF;
 
     lseek(pDev->fd, offset, SEEK_SET);
-    return write(pDev->fd, data, len);
+    int n = write(pDev->fd, data, len);
+    return (n>0)?0:errno;
 }
 
 const struct nvmOps posix_file_ops =

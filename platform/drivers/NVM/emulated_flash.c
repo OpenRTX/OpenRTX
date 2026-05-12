@@ -62,7 +62,8 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset,
         return -EBADF;
 
     lseek(pDev->fd, offset, SEEK_SET);
-    return read(pDev->fd, data, len);
+    int n = read(pDev->fd, data, len);
+    return (n>0)?0:errno;
 }
 
 static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset,
@@ -92,7 +93,7 @@ static int nvm_api_write(const struct nvmDevice *dev, uint32_t offset,
     lseek(pDev->fd, offset, SEEK_SET);
     ret = write(pDev->fd, tmp, len);
     free(tmp);
-    return ret;
+    return (ret>0)?0:errno;
 }
 
 static int nvm_api_erase(const struct nvmDevice *dev, uint32_t address,
@@ -116,7 +117,7 @@ static int nvm_api_erase(const struct nvmDevice *dev, uint32_t address,
         if (ret < 0)
             return ret;
     }
-    return len;
+    return 0;
 }
 
 const struct nvmOps emulated_flash_ops = {
