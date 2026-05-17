@@ -21,6 +21,7 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
+#include "core/messages.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -64,6 +65,7 @@ void *ui_threadFunc(void *arg)
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
         vp_tick();                           // continue playing voice prompts in progress if any.
+        messages_tick();                     // Refresh message inbox snapshot.
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)

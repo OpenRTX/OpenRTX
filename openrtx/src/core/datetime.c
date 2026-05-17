@@ -149,3 +149,18 @@ void realignTimeInfo(datetime_t *time)
         }
     }
 }
+
+int datetime_cmp(const datetime_t *a, const datetime_t *b)
+{
+    if (a->year != b->year)
+        return (int)(uint8_t)a->year - (int)(uint8_t)b->year;
+    if (a->month != b->month)
+        return (int)a->month - (int)b->month;
+    if (a->date != b->date)
+        return (int)a->date - (int)b->date;
+    if (a->hour != b->hour)
+        return (int)a->hour - (int)b->hour;
+    if (a->minute != b->minute)
+        return (int)a->minute - (int)b->minute;
+    return (int)a->second - (int)b->second;
+}

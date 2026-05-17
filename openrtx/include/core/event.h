@@ -29,11 +29,18 @@ enum eventType_t
  */
 typedef union
 {
+#ifdef __cplusplus
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
     struct
     {
         uint32_t type    : 2,
                  payload : 30;
     };
+#ifdef __cplusplus
+#pragma GCC diagnostic pop
+#endif
 
     uint32_t value;
 }event_t;

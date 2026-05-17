@@ -57,6 +57,15 @@ datetime_t localTimeToUtc(const datetime_t local_time, const int8_t timezone);
  */
 void realignTimeInfo(datetime_t *time);
 
+/**
+ * @brief Compare two datetime_t timestamps.
+ *
+ * @param a: pointer to first datetime_t.
+ * @param b: pointer to second datetime_t.
+ * @return negative if a < b, zero if equal, positive if a > b.
+ */
+int datetime_cmp(const datetime_t *a, const datetime_t *b);
+
 #ifdef __cplusplus
 }
 #endif

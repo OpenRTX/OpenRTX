@@ -11,6 +11,7 @@
 #include "core/event.h"
 #include "core/state.h"
 #include "core/battery.h"
+#include "core/messages.h"
 #include "hwconfig.h"
 #include "interfaces/platform.h"
 #include "interfaces/nvmem.h"
@@ -28,6 +29,7 @@ const size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
 void state_init()
 {
     pthread_mutex_init(&state_mutex, NULL);
+    messages_init();
 
     /*
      * Try loading settings from nonvolatile memory and default to sane values
@@ -79,6 +81,7 @@ void state_terminate()
     }
 
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);
+    messages_terminate();
     pthread_mutex_destroy(&state_mutex);
 }
 

@@ -77,4 +77,7 @@ extern const struct gpsDevice gps;
 }
 #endif
 
+/* Message registry snapshot capacity. */
+#define CONFIG_MSG_SNAPSHOT_SIZE 32
+
 #endif /* HWCONFIG_H */
