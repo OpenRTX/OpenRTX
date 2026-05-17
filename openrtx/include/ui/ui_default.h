@@ -52,7 +52,9 @@ enum uiScreen
     SETTINGS_FM,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+    MESSAGES_LIST,
+    MESSAGES_DETAIL
 };
 
 enum SetRxTx
@@ -73,7 +75,8 @@ enum menuItems
 #endif
     M_SETTINGS,
     M_INFO,
-    M_ABOUT
+    M_ABOUT,
+    M_MESSAGES
 };
 
 enum settingsItems
@@ -221,6 +224,14 @@ typedef struct ui_state_t
     long long m17_meta_text_last_scroll_tick;
     char new_message[53];
     bool edit_message;
+    char compose_recipient[10]; /**< Editable TX destination for compose screen */
+    char compose_body[822];     /**< SMS body text being composed */
+    uint8_t compose_focus;        /**< 0=To row, 1=Message row, 2=Send row */
+    bool compose_editing;         /**< To overlay (callsign input) is active */
+    bool compose_body_editing;    /**< Body text entry mode is active */
+    bool compose_is_reply;        /**< True when replying; controls title bar */
+    int16_t detail_scroll;        /**< Body scroll offset in pixels */
+    int16_t detail_scroll_max;    /**< Max scroll offset (set each frame) */
 #ifdef CONFIG_RTC
     // Variables used for Time & Date input
     datetime_t new_timedate;

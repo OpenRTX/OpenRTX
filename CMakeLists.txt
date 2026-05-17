@@ -104,6 +104,7 @@ target_sources(app
     openrtx/src/core/nvmem_access.c
     openrtx/src/core/MessageRegistry.cpp
     openrtx/src/core/messages.cpp
+    openrtx/src/core/messages_demo.c
     openrtx/src/rtx/rtx.cpp
     openrtx/src/rtx/OpMode_FM.cpp
     openrtx/src/rtx/OpMode_M17.cpp
@@ -120,6 +121,7 @@ target_sources(app
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c
     openrtx/src/ui/default/ui_menu.c
+    openrtx/src/ui/default/ui_messages.c
     openrtx/src/ui/default/ui_strings.c
 
     subprojects/codec2/src/dump.c

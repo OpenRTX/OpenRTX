@@ -136,6 +136,14 @@ public:
      */
     uint8_t sourceMode(size_t idx) const;
 
+    /**
+     * @brief Return the vtable of the source that produced snapshot entry @p idx.
+     *
+     * @param idx: zero-based snapshot index.
+     * @return borrowed pointer to the source vtable, or nullptr if out of range.
+     */
+    const message_type_vtable_t *getVtable(size_t idx) const;
+
 private:
     const SourceEntry *sources;
     size_t sourcesLen;

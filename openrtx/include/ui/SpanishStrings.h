@@ -95,5 +95,10 @@ const stringsTable_t spanishStrings =
     .radio             = "Radio",
     .CAN               = "CAN",
     .canRxCheck        = "CAN RX Check",
+    .messages          = "Mensajes",
+    .noMessages        = "Sin mensajes",
+    .newMessage        = "Nuevo Mensaje",
+    .reply             = "Responder",
+    .deleteMessage     = "Eliminar",
 };
 #endif  // SPANISHSTRINGS_H

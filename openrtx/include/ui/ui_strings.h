@@ -100,6 +100,11 @@ typedef struct
     const char* CAN;
     const char* canRxCheck;
     const char* metaText;
+    const char* messages;
+    const char* noMessages;
+    const char* newMessage;
+    const char* reply;
+    const char* deleteMessage;
 }
 stringsTable_t;
 

@@ -80,6 +80,7 @@ openrtx_inc = ['openrtx/include', 'platform']
 ui_src_default = ['openrtx/src/ui/default/ui.c',
                   'openrtx/src/ui/default/ui_main.c',
                   'openrtx/src/ui/default/ui_menu.c',
+                  'openrtx/src/ui/default/ui_messages.c',
                   'openrtx/src/ui/default/ui_strings.c']
 
 ui_src_module17 = ['openrtx/src/ui/module17/ui.c',
@@ -345,7 +346,8 @@ linux_src = ['platform/targets/linux/emulator/emulator.c',
              'platform/drivers/audio/file_source.c',
              'platform/targets/linux/platform.c',
              'platform/drivers/CPS/cps_io_libc.c',
-             'platform/drivers/NVM/posix_file.c']
+             'platform/drivers/NVM/posix_file.c',
+             'openrtx/src/core/messages_demo.c']
 
 linux_inc = ['platform/targets/linux',
              'platform/targets/linux/emulator']
@@ -364,7 +366,7 @@ linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
 #
 linux_default_src = linux_src + ui_src_default
 linux_default_def = linux_def + {'CONFIG_SCREEN_WIDTH': '160', 'CONFIG_SCREEN_HEIGHT': '128', 'CONFIG_PIX_FMT_RGB565': '',
-                                 'CONFIG_GPS': '', 'CONFIG_RTC': ''}
+                                 'CONFIG_GPS': '', 'CONFIG_RTC': '', 'CONFIG_MESSAGES_DEMO': ''}
 linux_small_def   = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIGHT': '64', 'CONFIG_PIX_FMT_BW': '',
                                  'CONFIG_GPS': '', 'CONFIG_RTC': ''}
 

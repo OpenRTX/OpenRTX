@@ -286,6 +286,17 @@ int messages_start_compose(uint8_t mode);
  */
 uint8_t messages_source_mode(size_t idx);
 
+/**
+ * @brief Return the vtable of the source that produced snapshot entry @p idx.
+ *
+ * The returned pointer is valid for the lifetime of the registry.
+ * Used by UI code to dispatch render_list_row and render_detail.
+ *
+ * @param idx: zero-based snapshot index.
+ * @return borrowed pointer to the source vtable, or NULL if out of range.
+ */
+const message_type_vtable_t *messages_get_vtable(size_t idx);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -156,3 +156,10 @@ uint8_t MessageRegistry::sourceMode(size_t idx) const
         return 0;
     return sources[snapshotSource[idx]].vtable->mode_id;
 }
+
+const message_type_vtable_t *MessageRegistry::getVtable(size_t idx) const
+{
+    if (idx >= snapshotLen)
+        return nullptr;
+    return sources[snapshotSource[idx]].vtable;
+}

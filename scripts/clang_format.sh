@@ -52,6 +52,7 @@ openrtx/include/core/nvmem_device.h
 openrtx/include/core/openrtx.h
 openrtx/include/core/state.h
 openrtx/include/core/messages.h
+openrtx/include/core/messages_demo.h
 openrtx/include/core/MessageRegistry.hpp
 openrtx/include/core/ui.h
 openrtx/include/core/utils.h
@@ -84,6 +85,8 @@ openrtx/src/core/memory_profiling.cpp
 openrtx/src/core/state.c
 openrtx/src/core/MessageRegistry.cpp
 openrtx/src/core/messages.cpp
+openrtx/src/core/messages_demo.c
+openrtx/src/ui/default/ui_messages.c
 openrtx/src/core/voicePrompts.c
 openrtx/src/core/voicePromptUtils.c
 openrtx/src/protocols/M17/Callsign.cpp

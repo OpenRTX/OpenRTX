@@ -62,6 +62,7 @@
 #include "core/battery.h"
 #include "core/input.h"
 #include "core/utils.h"
+#include "core/messages.h"
 #include "hwconfig.h"
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
@@ -104,6 +105,9 @@ extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
+/* Messages inbox UI functions — implemented in ui_messages.c */
+extern void _ui_drawMessagesList(ui_state_t *ui_state);
+extern void _ui_drawMessagesDetail(ui_state_t *ui_state);
 // TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
 {
@@ -115,7 +119,8 @@ const char *menu_items[] =
 #endif
     "Settings",
     "Info",
-    "About"
+    "About",
+    "Messages"
 };
 
 const char *settings_items[] =
@@ -1844,6 +1849,10 @@ void ui_updateFSM(bool *sync_rtx)
                         case M_ABOUT:
                             state.ui_screen = MENU_ABOUT;
                             break;
+                        case M_MESSAGES:
+                            ui_state.menu_selected = 0;
+                            state.ui_screen        = MESSAGES_LIST;
+                            break;
                     }
                     // Reset menu selection
                     ui_state.menu_selected = 0;
@@ -2040,6 +2049,76 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
+            // Messages inbox list screen
+            case MESSAGES_LIST:
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
+                    if(ui_state.menu_selected > 0)
+                        ui_state.menu_selected -= 1;
+                }
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    if((size_t)ui_state.menu_selected + 1 < messages_count())
+                        ui_state.menu_selected += 1;
+                }
+                else if(msg.keys & KEY_ENTER)
+                {
+                    messages_invoke_action(ui_state.menu_selected,
+                                          MSG_ACTION_MARK_READ);
+                    state.ui_screen = MESSAGES_DETAIL;
+                }
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_TOP);
+                break;
+            // Messages detail screen
+            case MESSAGES_DETAIL:
+            {
+                /* Scroll step matches 6pt Ubuntu yAdvance */
+                static const int16_t SCROLL_STEP = 14;
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
+                    if(ui_state.detail_scroll > 0)
+                    {
+                        /* Scroll body up */
+                        ui_state.detail_scroll -= SCROLL_STEP;
+                        if(ui_state.detail_scroll < 0)
+                            ui_state.detail_scroll = 0;
+                    }
+                    else if(ui_state.menu_selected > 0)
+                    {
+                        /* Edge: go to previous message, reset scroll */
+                        ui_state.menu_selected -= 1;
+                        ui_state.detail_scroll = INT16_MAX;
+                    }
+                    else
+                    {
+                        /* Already at first message — clamp. */
+                    }
+                }
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    if(ui_state.detail_scroll < ui_state.detail_scroll_max)
+                    {
+                        /* Scroll body down */
+                        ui_state.detail_scroll += SCROLL_STEP;
+                        if(ui_state.detail_scroll > ui_state.detail_scroll_max)
+                            ui_state.detail_scroll = ui_state.detail_scroll_max;
+                    }
+                    else if((size_t)ui_state.menu_selected + 1 < messages_count())
+                    {
+                        /* Edge: go to next message, reset scroll */
+                        ui_state.menu_selected += 1;
+                        ui_state.detail_scroll = 0;
+                    }
+                    else
+                    {
+                        /* Already at last message — clamp. */
+                    }
+                }
+                else if(msg.keys & KEY_ESC)
+                    state.ui_screen = MESSAGES_LIST;
+                break;
+            }
 #ifdef CONFIG_RTC
             // Time&Date settings screen
             case SETTINGS_TIMEDATE:
@@ -2753,6 +2832,14 @@ bool ui_updateGUI()
         // Low battery screen
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
+            break;
+        // Messages inbox list screen
+        case MESSAGES_LIST:
+            _ui_drawMessagesList(&ui_state);
+            break;
+        // Messages detail screen
+        case MESSAGES_DETAIL:
+            _ui_drawMessagesDetail(&ui_state);
             break;
     }
 
