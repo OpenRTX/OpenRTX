@@ -112,6 +112,10 @@ void rtx_task()
     }
 
     if (reconfigure) {
+        // Hard lockout implies PTT gate: enforce consistency in the RTX thread.
+        if (rtxStatus.txDisable)
+            rtxStatus.pttDisable = 1;
+
         // Force TX and RX tone squelch to off for OpModes different from FM.
         if (rtxStatus.opMode != OPMODE_FM) {
             rtxStatus.txToneEn = 0;
