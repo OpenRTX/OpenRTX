@@ -1259,6 +1259,10 @@ m17_replay_test = executable('m17_replay_test',
                              sources : unit_test_src + m17_replay_src + m17_signal_src + ['tests/unit/M17_replay.cpp'],
                              kwargs  : m17_replay_test_opts)
 
+rtx_tx_disable_test = executable('rtx_tx_disable_test',
+                                  sources : unit_test_src + ['tests/unit/rtx_tx_disable.cpp'],
+                                  kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1273,3 +1277,4 @@ test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
+test('RTX TX Disable Test', rtx_tx_disable_test)
