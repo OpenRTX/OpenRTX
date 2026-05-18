@@ -20,11 +20,12 @@ extern "C" {
 typedef struct {
     uint8_t opMode;         /**< Operating mode (FM, DMR, ...) */
 
-    uint8_t bandwidth : 2;  /**< Channel bandwidth             */
-    uint8_t txDisable : 1;  /**< Disable TX operation          */
-    uint8_t scan      : 1;  /**< Scan enabled                  */
-    uint8_t opStatus  : 2;  /**< Operating status (OFF, ...)   */
-    uint8_t           : 2;  /**< Padding to 8 bits             */
+    uint8_t bandwidth  : 2; /**< Channel bandwidth              */
+    uint8_t txDisable  : 1; /**< Hard channel TX lockout        */
+    uint8_t pttDisable : 1; /**< PTT/voice TX gate              */
+    uint8_t scan       : 1; /**< Scan enabled                   */
+    uint8_t opStatus   : 2; /**< Operating status (OFF, ...)    */
+    uint8_t            : 1; /**< Padding to 8 bits              */
 
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */

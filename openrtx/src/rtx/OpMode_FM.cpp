@@ -116,7 +116,7 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
 
     // TX logic
     if(platform_getPttStatus() && (status->opStatus != TX) &&
-                                  (status->txDisable == 0))
+                                  (status->pttDisable == 0))
     {
         audioPath_release(rxAudioPath);
         radio_disableRtx();
