@@ -81,8 +81,10 @@ void *ui_threadFunc(void *arg)
             rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
             rtx_cfg.toneEn      = state.tone_enabled;
 
-            // Enable Tx if channel allows it and we are in UI main screen
-            rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
+            // Hard channel TX lockout: rx-only channels block all transmission.
+            // PTT gate: additionally blocked when the UI is outside VFO/MEM screens.
+            rtx_cfg.txDisable  = state.channel.rx_only;
+            rtx_cfg.pttDisable = state.channel.rx_only || state.pttDisable;
 
             // Copy new M17 CAN, source and destination addresses
             rtx_cfg.can = state.settings.m17_can;
