@@ -147,7 +147,7 @@ void OpMode_M17::offState(rtxStatus_t *const status)
         return;
     }
 
-    if(platform_getPttStatus() && (status->txDisable == 0))
+    if(platform_getPttStatus() && (status->pttDisable == 0))
     {
         startTx = true;
         status->opStatus = TX;
