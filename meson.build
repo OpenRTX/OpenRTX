@@ -1151,3 +1151,8 @@ test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
+
+rtx_tx_disable_test = executable('rtx_tx_disable_test',
+                                  sources : unit_test_src + ['tests/unit/rtx_tx_disable.cpp'],
+                                  kwargs  : unit_test_opts)
+test('RTX TX Disable Test', rtx_tx_disable_test)
