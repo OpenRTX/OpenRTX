@@ -1483,9 +1483,9 @@ void ui_updateFSM(bool *sync_rtx)
             case MAIN_VFO:
             {
                 // Enable Tx in MAIN_VFO mode
-                if (state.txDisable)
+                if (state.pttDisable)
                 {
-                    state.txDisable = false;
+                    state.pttDisable = false;
                     *sync_rtx = true;
                 }
 
@@ -1681,9 +1681,9 @@ void ui_updateFSM(bool *sync_rtx)
             // MEM screen
             case MAIN_MEM:
                 // Enable Tx in MAIN_MEM mode
-                if (state.txDisable)
+                if (state.pttDisable)
                 {
-                    state.txDisable = false;
+                    state.pttDisable = false;
                     *sync_rtx = true;
                 }
                 if (ui_state.input_locked)
@@ -2586,9 +2586,9 @@ void ui_updateFSM(bool *sync_rtx)
 
         // Enable Tx only if in MAIN_VFO or MAIN_MEM states
         bool inMemOrVfo = (state.ui_screen == MAIN_VFO) || (state.ui_screen == MAIN_MEM);
-        if ((macro_menu == true) || ((inMemOrVfo == false) && (state.txDisable == false)))
+        if ((macro_menu == true) || ((inMemOrVfo == false) && (state.pttDisable == false)))
         {
-            state.txDisable = true;
+            state.pttDisable = true;
             *sync_rtx = true;
         }
         if (!f1Handled && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
