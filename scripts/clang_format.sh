@@ -155,8 +155,6 @@ platform/drivers/NVM/AT24Cx.h
 platform/drivers/NVM/AT24Cx_GDx.c
 platform/drivers/NVM/W25Qx.c
 platform/drivers/NVM/W25Qx.h
-platform/drivers/NVM/eeep.c
-platform/drivers/NVM/eeep.h
 platform/drivers/NVM/flash_zephyr.c
 platform/drivers/NVM/flash_zephyr.h
 platform/drivers/NVM/nvmem_CS7000.c
