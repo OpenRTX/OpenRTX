@@ -9,7 +9,9 @@
 #include "calibration/calibInfo_GDx.h"
 #include "drivers/SPI/spi_bitbang.h"
 #include "hwconfig.h"
+#include "core/settings.h"
 #include "core/utils.h"
+#include "core/vfo.h"
 #include "drivers/NVM/AT24Cx.h"
 #include "drivers/NVM/W25Qx.h"
 
@@ -23,18 +25,18 @@ AT24Cx_DEVICE_DEFINE(eeprom);
 
 static const struct nvmPartition eFlashPartitions[] = {
 #if defined(PLATFORM_GD77)
-    {
-        .offset = 0x8F000,
-        .size = 0xE0,
-    },
+    NVM_PART_DEFINE(0x8F000, 0xE0),
 #elif defined(PLATFORM_DM1801)
-    {
-        .offset = 0x6F000,
-        .size = 0xE0,
-    },
+    NVM_PART_DEFINE(0x6F000, 0xE0),
 #else
 #error GDx calibration: platform not supported
 #endif
+};
+
+static const struct nvmPartition eepromPartitions[] = {
+    NVM_PART_DEFINE(0x0000, 2048), // 2 kB, settings part A
+    NVM_PART_DEFINE(0x0800, 2048), // 2 kB, settings part B
+    NVM_PART_DEFINE(0x1000, 1024), // 1kB, VFO storage
 };
 
 static const struct nvmDescriptor nvmDevices[] = {
@@ -51,8 +53,8 @@ static const struct nvmDescriptor nvmDevices[] = {
         .dev = &eeprom,
         .baseAddr = 0x00000000,
         .size = 0x10000, // 64 kB, 512 kbit
-        .nbPart = 0,
-        .partitions = NULL,
+        .nbPart = ARRAY_SIZE(eepromPartitions),
+        .partitions = eepromPartitions,
     },
 };
 
