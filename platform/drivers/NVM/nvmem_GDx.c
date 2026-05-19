@@ -9,7 +9,9 @@
 #include "calibration/calibInfo_GDx.h"
 #include "drivers/SPI/spi_bitbang.h"
 #include "hwconfig.h"
+#include "core/settings.h"
 #include "core/utils.h"
+#include "core/vfo.h"
 #include "drivers/NVM/AT24Cx.h"
 #include "drivers/NVM/W25Qx.h"
 
@@ -31,6 +33,13 @@ static const struct nvmPartition eFlashPartitions[] = {
 #endif
 };
 
+static const struct nvmPartition eepromPartitions[] = {
+    NVM_PART_DEFINE(0x0000, 0xE000), // 56 kB, unused space
+    NVM_PART_DEFINE(0xE000, 2048),   // 2 kB, settings part A
+    NVM_PART_DEFINE(0xE800, 2048),   // 2 kB, settings part B
+    NVM_PART_DEFINE(0xF000, 1024),   // 1kB, VFO storage
+};
+
 static const struct nvmDescriptor nvmDevices[] = {
     {
         .name = "External flash",
@@ -45,8 +54,8 @@ static const struct nvmDescriptor nvmDevices[] = {
         .dev = &eeprom,
         .baseAddr = 0x00000000,
         .size = 0x10000, // 64 kB, 512 kbit
-        .nbPart = 0,
-        .partitions = NULL,
+        .nbPart = ARRAY_SIZE(eepromPartitions),
+        .partitions = eepromPartitions,
     },
 };
 
@@ -115,6 +124,13 @@ void nvm_init()
     spiBitbang_init(&nvm_spi);
     W25Qx_init(&eflash);
     AT24Cx_init();
+
+    /*
+     * Settings: device 1, partitions 2 and 3
+     * VFO: device 1, partition 4
+     */
+    settings_init(1, 2, 1, 3);
+    vfo_init(1, 4);
 }
 
 void nvm_terminate()
