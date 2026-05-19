@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# This file is part of OpenRTX.
+
+#Build dirs
+/build*
+
+# Meson wrap lock file
+subprojects/.wraplock
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Binaries
+*.bin
+*.elf
+*.hex
+*.map
+
+# Python byte-compiled
+*/__pycache__
+
+# Python virtual environments
+.venv/
+
+# Kdevelop files
+*.kdev4
+.kdev4/
+
+# gutentags
+tags
+
+
+# subprojects
+subprojects/radio_tool
+subprojects/codec2
+subprojects/tinyusb
+subprojects/XPowersLib
+subprojects/catch2
+
+# ignore log files
+*.log
+
+# ignore linux openrtx emulator history file
+.emulatorsh_history
+
+# Compiled script
+scripts/get_demod_log
+
+# OpenRTX Codeplugs
+*.rtxc

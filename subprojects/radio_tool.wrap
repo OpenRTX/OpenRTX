@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/v0l/radio_tool
+revision = head
+patch_directory = radio_tool
+
+[provide]
+program_names = radio_tool

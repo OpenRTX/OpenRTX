@@ -1,0 +1,124 @@
+p
+p
+p
+p
+r 12
+key 1 2 3 4 5 6 enter
+key esc
+key 1 2 3 4 5 6 enter
+key 4 5 1 8 enter
+key 4 5 1 8 enter
+key 4 6 9 enter
+key esc
+key enter
+key down down down
+key down
+key enter
+key esc
+key down down down down down
+key enter
+key esc
+p
+p
+key enter
+key esc
+key 4 5 1 8 enter
+key 1 4 6 5 2 enter
+p
+p
+key enter down down down down down enter
+key esc
+key down down down down
+key enter
+key esc
+key esc
+key enter up up enter
+key up
+key esc
+key esc
+r 12
+r 15
+s
+vb 7.6
+key enter
+key esc
+s
+channel 1
+channel 2
+ch 3
+ch 5
+ch 15
+key esc
+ch 2
+key esc
+key esc
+key esc
+key enter
+key esc
+key esc
+key enter
+key down down down
+key enter
+key enter
+key down
+key enter
+key up
+key up
+key up
+key up
+key up
+key up
+key down
+key down
+key esc
+
+p
+p
+key esc
+key esc
+key esc
+key up
+key esc
+key up
+key up
+key 4 5 1 8 enter enter
+p
+p
+key  1 4 6 5 2 enter 4 5 1 8 enter
+p
+p
+p
+p
+key enter up up enter
+key up
+key esc
+key down down down down enter
+key esc
+key down down down down down enter
+key esc
+key esc
+
+key esc
+key esc
+key esc
+key up
+key esc
+key up
+key up
+key 4 5 1 8 enter enter
+p
+p
+key  1 4 6 5 2 enter 4 5 1 8 enter
+ready
+p
+p
+p
+p
+key enter up up enter
+key up
+key esc
+key down down down down enter
+key esc
+key down down down down down enter
+key esc
+key esc

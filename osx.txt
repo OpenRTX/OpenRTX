@@ -1,0 +1,18 @@
+# deps: brew install gcc@9 codec2 binutils
+[binaries]
+c       = 'gcc-9'
+cpp     = 'g++-9'
+#ld      = 'ld'
+ar      = 'gcc-ar-9'
+#as      = 'as'
+size    = '/usr/local/opt/binutils/bin/gsize'
+objdump = '/usr/local/opt/binutils/bin/objdump'
+objcopy = '/usr/local/opt/binutils/bin/objcopy'
+#strip   = 'arm-miosix-eabi-strip'
+#gdb     = 'arm-miosix-eabi-gdb'
+#terminal= 'x-terminal-emulator'
+#openocd = '/usr/local/bin/openocd'
+
+[properties]
+c_args      = ['-I/usr/local/include']
+cpp_args    = ['-I/usr/local/include']

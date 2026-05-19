@@ -1,0 +1,141 @@
+name: "Build and test"
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+env:
+  RADIO_TOOL_VERSION: 0.2.2
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+  DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
+jobs:
+  unit-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
+      - name: Install Python tools
+        run: pip install "gcovr>=7.2"
+      - name: setup meson
+        run: |
+          cd ${{github.workspace}}
+          meson setup build -Db_coverage=true
+      - name: Run unit tests
+        run: meson test -C build --print-errorlogs --test-args '--reporter junit'
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v6
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: '**/build/meson-logs/testlog.junit.xml'
+      - name: Generate coverage report
+        if: always()
+        run: bash scripts/coverage.sh --ci build
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/cobertura.xml
+      - name: Add coverage to Github step summary
+        run: |
+          cat build/coverage/coverage.md >> $GITHUB_STEP_SUMMARY
+  build-zephyr:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: app
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: app
+          toolchains: xtensa-espressif_esp32s3_zephyr-elf
+          sdk-version: 0.17.0
+      - name: Compile zephyr
+        run: |
+          cd app
+          meson setup build
+          meson compile -C build openrtx_ttwrplus_uf2
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zephyr-release-bins
+          path: |
+            app/build/openrtx_*.uf2
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Compile using devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_NAME }}
+          push: never
+          runCmd: |
+            meson setup build_linux &&
+            meson setup --cross-file cross_cm4.txt build_cm4 &&
+            meson setup --cross-file cross_cm7.txt build_cm7 &&
+            meson compile -C build_linux openrtx_linux &&
+            meson compile -C build_linux openrtx_linux_smallscreen &&
+            meson compile -C build_linux openrtx_linux_mod17 &&
+            meson compile -C build_cm4 openrtx_cs7000_bin &&
+            meson compile -C build_cm4 openrtx_cs7000_dfu &&
+            meson compile -C build_cm4 openrtx_dm1701_wrap &&
+            meson compile -C build_cm4 openrtx_dm1801_wrap &&
+            meson compile -C build_cm4 openrtx_md3x0_wrap &&
+            meson compile -C build_cm4 openrtx_md9600_wrap &&
+            meson compile -C build_cm4 openrtx_mduv3x0_wrap &&
+            meson compile -C build_cm4 openrtx_mod17_bin &&
+            meson compile -C build_cm4 openrtx_gd77_wrap &&
+            meson compile -C build_cm7 openrtx_cs7000p_wrap &&
+            meson compile -C build_cm7 openrtx_cs7000p_dfu &&
+            chmod -R 777 * &&
+            ls build_cm7/ &&
+            ls build_cm4/ &&
+            ls build_linux/ &&
+            mv build_cm7/openrtx_cs7000p_wrap openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm7/openrtx_cs7000p_dfu openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu &&
+            mv build_cm4/openrtx_cs7000_bin openrtx_cs7000_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_cs7000_dfu openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu &&
+            mv build_cm4/openrtx_dm1701_wrap openrtx_dm1701_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_dm1801_bin.sgl openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl &&
+            mv build_cm4/openrtx_gd77_bin.sgl openrtx_gd77_${{ env.BRANCH_NAME }}.sgl &&
+            mv build_linux/openrtx_linux openrtx_linux_${{ env.BRANCH_NAME }} &&
+            mv build_cm4/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-bins
+          path: |
+            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu
+            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu
+            ${{github.workspace}}/openrtx_dm1701_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl
+            ${{github.workspace}}/openrtx_gd77_${{ env.BRANCH_NAME }}.sgl
+            ${{github.workspace}}/openrtx_linux_${{ env.BRANCH_NAME }}
+            ${{github.workspace}}/openrtx_md3x0_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
+          if-no-files-found: error

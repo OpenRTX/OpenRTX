@@ -1,0 +1,9 @@
+sleep 4000
+nop SAT menu
+key enter DOWN down down down down enter 
+ready
+screenshot sat.bmp
+nop GPS menu
+key esc DOWN down down down enter 
+ready
+screenshot gps.bmp

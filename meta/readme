@@ -1,0 +1,16 @@
+
+
+
+uidev:
+	meson compile -C build_linux openrtx_linux
+	cat sat_menu_dev.txt | build_linux/openrtx_linux
+	convert SAT.bmp -resize 600% SAT.jpg
+
+
+valgrind:
+	meson compile -C build_linux openrtx_linux
+	cat leak_check.txt | valgrind --leak-check=full --log-file=valgrind.log build_linux/openrtx_linux
+record:
+	meson compile -C build_linux openrtx_linux
+	cat record_demo.txt | build_linux/openrtx_linux
+

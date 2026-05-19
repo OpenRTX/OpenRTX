@@ -1,0 +1,9 @@
+key enter down down down down down enter
+sleep 1000
+key down enter 
+sleep 5000
+nop sleep 1000
+nop key enter 
+nop sleep 1000
+nop screenshot delta.bmp
+
