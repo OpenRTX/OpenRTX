@@ -395,14 +395,18 @@ void gfx_drawVLine(int16_t x, uint16_t width, color_t color)
  * @param f: font used as the source of glyphs
  * @param text: the input text
  * @param length: the length of the input text, used for boundary checking
+ * @param max_width: right-edge pixel limit for line measurement
  */
-static inline uint16_t get_line_size(GFXfont f, const char *text, uint16_t length)
+static inline uint16_t get_line_size(GFXfont f, const char *text,
+                                     uint16_t length, uint16_t max_width)
 {
     uint16_t line_size = 0;
     for(unsigned i = 0; i < length && text[i] != '\n' && text[i] != '\r'; i++)
     {
+        if(text[i] < f.first || text[i] > f.last)
+            continue;
         GFXglyph glyph = f.glyph[text[i] - f.first];
-        if (line_size + glyph.xAdvance < CONFIG_SCREEN_WIDTH)
+        if (line_size + glyph.xAdvance <= max_width)
             line_size += glyph.xAdvance;
         else
             break;
@@ -447,7 +451,7 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     size_t len = strlen(buf);
 
     // Compute size of the first row in pixels
-    uint16_t line_size = get_line_size(f, buf, len);
+    uint16_t line_size = get_line_size(f, buf, len, CONFIG_SCREEN_WIDTH);
     uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
     // Save initial start.y value to calculate vertical size
@@ -468,7 +472,8 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
           }
           else
           {
-            line_size = get_line_size(f, &buf[i+1], len-(i+1));
+            line_size = get_line_size(f, &buf[i+1], len-(i+1),
+                                      CONFIG_SCREEN_WIDTH);
             start.x = reset_x = get_reset_x(alignment, line_size, start.x);
           }
           start.y += f.yAdvance;
@@ -494,7 +499,8 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
         if (start.x + glyph.xAdvance > CONFIG_SCREEN_WIDTH)
         {
             // Compute size of the remaining text for this new line
-            line_size = get_line_size(f, &buf[i], len - i);
+            line_size = get_line_size(f, &buf[i], len - i,
+                                      CONFIG_SCREEN_WIDTH);
             // Pass reset_x (the original start x) not start.x (current pos)
             start.x = reset_x = get_reset_x(alignment, line_size, reset_x);
             start.y += f.yAdvance;
@@ -536,6 +542,44 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     text_size.x = line_size;
     text_size.y = (start.y - saved_start_y) + line_h;
     return text_size;
+}
+
+uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
+                         uint16_t max_x, size_t char_count)
+{
+    GFXfont f = fonts[size];
+    size_t len = strlen(buf);
+    if (char_count < len)
+        len = char_count;
+
+    uint16_t cur_x = start_x;
+    uint16_t cur_y = (uint16_t)f.yAdvance;
+
+    for (unsigned i = 0; i < len; i++) {
+        char c = buf[i];
+
+        if (c == '\n') {
+            cur_x = start_x;
+            cur_y += (uint16_t)f.yAdvance;
+            continue;
+        } else if (c == '\r') {
+            cur_x = start_x;
+            continue;
+        }
+
+        if (c < f.first || c > f.last)
+            continue;
+        GFXglyph glyph = f.glyph[c - f.first];
+
+        if (cur_x + glyph.xAdvance > max_x) {
+            cur_x = start_x;
+            cur_y += (uint16_t)f.yAdvance;
+        }
+
+        cur_x += glyph.xAdvance;
+    }
+
+    return cur_y;
 }
 
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,

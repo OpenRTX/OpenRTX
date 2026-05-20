@@ -215,6 +215,29 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf);
 
 /**
+ * Measure the pixel height of text as it would be laid out by
+ * gfx_printBufferClipped, without drawing anything.
+ *
+ * Simulates the same word-wrap line-break decisions (wrap at max_x).
+ * Alignment is not simulated; only the vertical extent is computed.
+ * Passing char_count < strlen(buf) lets callers find the y-coordinate
+ * of an arbitrary cursor position for scroll-offset calculations.
+ *
+ * start_x must match the x coordinate that will be passed to
+ * gfx_printBufferClipped so that wrap decisions use the same effective
+ * line width.
+ *
+ * @param size: text font size.
+ * @param buf: NUL-terminated string.
+ * @param start_x: left-edge x position (matches gfx_printBufferClipped start).
+ * @param max_x: right-edge pixel limit used for word-wrap.
+ * @param char_count: characters to measure; pass SIZE_MAX to measure all.
+ * @return y-extent in pixels of the text block; always >= one line height.
+ */
+uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
+                         uint16_t max_x, size_t char_count);
+
+/**
  * Prints text on the screen at the specified coordinates.
  * @param start: text line start point, in pixel coordinates.
  * @param size: text font size, defined as enum.
