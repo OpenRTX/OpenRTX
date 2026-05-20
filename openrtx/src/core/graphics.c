@@ -403,7 +403,7 @@ static inline uint16_t get_line_size(GFXfont f, const char *text,
     uint16_t line_size = 0;
     for(unsigned i = 0; i < length && text[i] != '\n' && text[i] != '\r'; i++)
     {
-        if(text[i] < f.first || text[i] > f.last)
+        if (text[i] < f.first || text[i] > f.last)
             continue;
         GFXglyph glyph = f.glyph[text[i] - f.first];
         if (line_size + glyph.xAdvance <= max_width)
@@ -417,20 +417,22 @@ static inline uint16_t get_line_size(GFXfont f, const char *text,
 
 /**
  * Compute the start x coordinate of a new line of given pixel size
- * @param alinment: enum representing the text alignment
+ * @param alignment: enum representing the text alignment
  * @param line_size: the size of the current text line in pixels
+ * @param startx: left-edge x position of the text block
+ * @param max_width: right-edge pixel limit (width of the text region)
  */
 static inline uint16_t get_reset_x(textAlign_t alignment, uint16_t line_size,
-                                                          uint16_t startx)
+                                   uint16_t startx, uint16_t max_width)
 {
     switch(alignment)
     {
         case TEXT_ALIGN_LEFT:
             return startx;
         case TEXT_ALIGN_CENTER:
-            return (CONFIG_SCREEN_WIDTH - line_size)/2;
+            return (max_width - line_size)/2;
         case TEXT_ALIGN_RIGHT:
-            return CONFIG_SCREEN_WIDTH - line_size - startx;
+            return max_width - line_size - startx;
     }
 
     return 0;
@@ -446,102 +448,9 @@ uint8_t gfx_getFontHeight(fontSize_t size)
 point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf)
 {
-    GFXfont f = fonts[size];
-
-    size_t len = strlen(buf);
-
-    // Compute size of the first row in pixels
-    uint16_t line_size = get_line_size(f, buf, len, CONFIG_SCREEN_WIDTH);
-    uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
-    start.x = reset_x;
-    // Save initial start.y value to calculate vertical size
-    int16_t saved_start_y = start.y;
-    uint16_t line_h = 0;
-
-    /* For each char in the string */
-    for(unsigned i = 0; i < len; i++)
-    {
-        char c = buf[i];
-
-        // Handle newline and carriage return before accessing glyph table
-        if (c == '\n')
-        {
-          if(alignment != TEXT_ALIGN_CENTER)
-          {
-            start.x = reset_x;
-          }
-          else
-          {
-            line_size = get_line_size(f, &buf[i+1], len-(i+1),
-                                      CONFIG_SCREEN_WIDTH);
-            start.x = reset_x = get_reset_x(alignment, line_size, start.x);
-          }
-          start.y += f.yAdvance;
-          continue;
-        }
-        else if (c == '\r')
-        {
-          start.x = reset_x;
-          continue;
-        }
-
-        GFXglyph glyph = f.glyph[c - f.first];
-        uint8_t *bitmap = f.bitmap;
-
-        uint16_t bo = glyph.bitmapOffset;
-        uint8_t w = glyph.width, h = glyph.height;
-        int8_t xo = glyph.xOffset,
-               yo = glyph.yOffset;
-        uint8_t xx, yy, bits = 0, bit = 0;
-        line_h = h;
-
-        // Handle wrap around
-        if (start.x + glyph.xAdvance > CONFIG_SCREEN_WIDTH)
-        {
-            // Compute size of the remaining text for this new line
-            line_size = get_line_size(f, &buf[i], len - i,
-                                      CONFIG_SCREEN_WIDTH);
-            // Pass reset_x (the original start x) not start.x (current pos)
-            start.x = reset_x = get_reset_x(alignment, line_size, reset_x);
-            start.y += f.yAdvance;
-        }
-
-        // Draw bitmap
-        for (yy = 0; yy < h; yy++)
-        {
-            for (xx = 0; xx < w; xx++)
-            {
-                if (!(bit++ & 7))
-                {
-                    bits = bitmap[bo++];
-                }
-
-                if (bits & 0x80)
-                {
-                    if (start.y + yo + yy < CONFIG_SCREEN_HEIGHT &&
-                        start.x + xo + xx < CONFIG_SCREEN_WIDTH &&
-                        start.y + yo + yy > 0 &&
-                        start.x + xo + xx > 0)
-                    {
-                        point_t pos;
-                        pos.x = start.x + xo + xx;
-                        pos.y = start.y + yo + yy;
-                        gfx_setPixel(pos, color);
-
-                    }
-                }
-
-                bits <<= 1;
-            }
-        }
-
-        start.x += glyph.xAdvance;
-    }
-    // Calculate text size
-    point_t text_size = {0, 0};
-    text_size.x = line_size;
-    text_size.y = (start.y - saved_start_y) + line_h;
-    return text_size;
+    return gfx_printBufferClipped(start, size, alignment, color, buf,
+                                  CONFIG_SCREEN_WIDTH, 0,
+                                  CONFIG_SCREEN_HEIGHT - 1);
 }
 
 uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
@@ -580,6 +489,103 @@ uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
     }
 
     return cur_y;
+}
+
+point_t gfx_printBufferClipped(point_t start, fontSize_t size,
+                               textAlign_t alignment, color_t color,
+                               const char *buf, uint16_t max_x,
+                               int16_t clip_top_y, int16_t clip_bot_y)
+{
+    GFXfont f = fonts[size];
+
+    size_t len = strlen(buf);
+
+    uint16_t line_size = get_line_size(f, buf, (uint16_t)len, max_x);
+    uint16_t max_line_size = line_size;
+    uint16_t origin_x = start.x;
+    uint16_t reset_x = get_reset_x(alignment, line_size, origin_x, max_x);
+    start.x = reset_x;
+    int16_t saved_start_y = start.y;
+    uint16_t line_h = 0;
+
+    for (unsigned i = 0; i < len; i++) {
+        /* Even the topmost pixel of the next glyph falls below clip_bot_y. */
+        if ((int16_t)(start.y - (int16_t)f.yAdvance) > clip_bot_y)
+            break;
+
+        char c = buf[i];
+
+        /* Handle control characters before accessing the glyph table. */
+        if (c == '\n') {
+            if (line_size > max_line_size)
+                max_line_size = line_size;
+            line_size = get_line_size(f, &buf[i + 1],
+                                      (uint16_t)(len - (i + 1)), max_x);
+            if (alignment == TEXT_ALIGN_CENTER
+                || alignment == TEXT_ALIGN_RIGHT) {
+                start.x = reset_x = get_reset_x(alignment, line_size, origin_x,
+                                                max_x);
+            } else {
+                start.x = reset_x;
+            }
+            start.y += f.yAdvance;
+            continue;
+        } else if (c == '\r') {
+            start.x = reset_x;
+            continue;
+        }
+
+        if (c < f.first || c > f.last)
+            continue;
+        GFXglyph glyph = f.glyph[c - f.first];
+        uint8_t *bitmap = f.bitmap;
+
+        uint16_t bo = glyph.bitmapOffset;
+        uint8_t w = glyph.width, h = glyph.height;
+        int8_t xo = glyph.xOffset, yo = glyph.yOffset;
+        uint8_t xx, yy, bits = 0, bit = 0;
+        line_h = h;
+
+        /* Wrap when the glyph would exceed the right-edge limit. */
+        if (start.x + glyph.xAdvance > max_x) {
+            if (line_size > max_line_size)
+                max_line_size = line_size;
+            line_size = get_line_size(f, &buf[i], (uint16_t)(len - i), max_x);
+            start.x = reset_x = get_reset_x(alignment, line_size, origin_x,
+                                            max_x);
+            start.y += f.yAdvance;
+        }
+
+        /* Draw pixels, suppressing those outside the clip window. */
+        for (yy = 0; yy < h; yy++) {
+            for (xx = 0; xx < w; xx++) {
+                if (!(bit++ & 7))
+                    bits = bitmap[bo++];
+
+                if (bits & 0x80) {
+                    int16_t px = (int16_t)(start.x + xo + xx);
+                    int16_t py = (int16_t)(start.y + yo + yy);
+
+                    if (py >= clip_top_y && py <= clip_bot_y && py >= 0
+                        && px >= 0 && px < (int16_t)max_x) {
+                        point_t pos = {(uint16_t)px, (uint16_t)py};
+                        gfx_setPixel(pos, color);
+                    }
+                }
+
+                bits <<= 1;
+            }
+        }
+
+        start.x += glyph.xAdvance;
+    }
+
+    if (line_size > max_line_size)
+        max_line_size = line_size;
+    point_t text_size = {0, 0};
+    text_size.x = max_line_size;
+    text_size.y = (start.y - saved_start_y) + line_h;
+    return text_size;
 }
 
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
