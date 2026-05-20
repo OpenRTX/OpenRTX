@@ -451,27 +451,18 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     uint16_t reset_x = get_reset_x(alignment, line_size, start.x);
     start.x = reset_x;
     // Save initial start.y value to calculate vertical size
-    uint16_t saved_start_y = start.y;
+    int16_t saved_start_y = start.y;
     uint16_t line_h = 0;
 
     /* For each char in the string */
     for(unsigned i = 0; i < len; i++)
     {
         char c = buf[i];
-        GFXglyph glyph = f.glyph[c - f.first];
-        uint8_t *bitmap = f.bitmap;
 
-        uint16_t bo = glyph.bitmapOffset;
-        uint8_t w = glyph.width, h = glyph.height;
-        int8_t xo = glyph.xOffset,
-               yo = glyph.yOffset;
-        uint8_t xx, yy, bits = 0, bit = 0;
-        line_h = h;
-
-        // Handle newline and carriage return
+        // Handle newline and carriage return before accessing glyph table
         if (c == '\n')
         {
-          if(alignment!=TEXT_ALIGN_CENTER)
+          if(alignment != TEXT_ALIGN_CENTER)
           {
             start.x = reset_x;
           }
@@ -489,12 +480,23 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
           continue;
         }
 
+        GFXglyph glyph = f.glyph[c - f.first];
+        uint8_t *bitmap = f.bitmap;
+
+        uint16_t bo = glyph.bitmapOffset;
+        uint8_t w = glyph.width, h = glyph.height;
+        int8_t xo = glyph.xOffset,
+               yo = glyph.yOffset;
+        uint8_t xx, yy, bits = 0, bit = 0;
+        line_h = h;
+
         // Handle wrap around
         if (start.x + glyph.xAdvance > CONFIG_SCREEN_WIDTH)
         {
-            // Compute size of the first row in pixels
-            line_size = get_line_size(f, buf, len);
-            start.x = reset_x = get_reset_x(alignment, line_size, start.x);
+            // Compute size of the remaining text for this new line
+            line_size = get_line_size(f, &buf[i], len - i);
+            // Pass reset_x (the original start x) not start.x (current pos)
+            start.x = reset_x = get_reset_x(alignment, line_size, reset_x);
             start.y += f.yAdvance;
         }
 
@@ -532,7 +534,7 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
     // Calculate text size
     point_t text_size = {0, 0};
     text_size.x = line_size;
-    text_size.y = (saved_start_y - start.y) + line_h;
+    text_size.y = (start.y - saved_start_y) + line_h;
     return text_size;
 }
 
