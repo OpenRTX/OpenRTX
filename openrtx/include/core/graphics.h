@@ -220,6 +220,11 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
  *
  * Simulates the same word-wrap line-break decisions (wrap at max_x).
  * Alignment is not simulated; only the vertical extent is computed.
+ * Wrap decisions always use start_x as the left margin of every line,
+ * which matches left-aligned layout.  For TEXT_ALIGN_CENTER or
+ * TEXT_ALIGN_RIGHT the actual rendered start.x may be larger than
+ * start_x, so the wrap point may differ and the returned height may
+ * not exactly match what gfx_printBufferClipped produces.
  * Passing char_count < strlen(buf) lets callers find the y-coordinate
  * of an arbitrary cursor position for scroll-offset calculations.
  *
@@ -236,6 +241,34 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
  */
 uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
                          uint16_t max_x, size_t char_count);
+
+/**
+ * Prints text from a char buffer into a clipped rectangular region.
+ *
+ * Like gfx_printBuffer but with an explicit right-edge limit and a
+ * vertical clip window.  Word-wrap fires when the next glyph would
+ * exceed max_x rather than CONFIG_SCREEN_WIDTH.  Pixels outside the
+ * range [clip_top_y, clip_bot_y] are suppressed without affecting
+ * layout, so a negative start.y can be used to implement scrolling.
+ *
+ * The returned text_size.y reflects only the lines processed before
+ * clip_bot_y is reached, not the full height of the text block.  Use
+ * gfx_measureText to obtain the total height for scroll calculations.
+ *
+ * @param start: top-left origin for the text block, in pixel coordinates.
+ * @param size: text font size.
+ * @param alignment: text alignment.
+ * @param color: text colour.
+ * @param buf: NUL-terminated string to render.
+ * @param max_x: right-edge pixel limit (exclusive) for word-wrap.
+ * @param clip_top_y: topmost pixel row to draw (inclusive).
+ * @param clip_bot_y: bottommost pixel row to draw (inclusive).
+ * @return text width and height of the processed portion as point_t.
+ */
+point_t gfx_printBufferClipped(point_t start, fontSize_t size,
+                               textAlign_t alignment, color_t color,
+                               const char *buf, uint16_t max_x,
+                               int16_t clip_top_y, int16_t clip_bot_y);
 
 /**
  * Prints text on the screen at the specified coordinates.
