@@ -128,6 +128,7 @@ tests/unit/ui_check_standby.cpp
 tests/unit/M17_metatext.cpp
 tests/unit/M17_packet.cpp
 tests/unit/dsp_oversampling.cpp
+tests/unit/gfx_text.cpp
 EOF
 )
 
