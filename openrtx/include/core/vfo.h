@@ -55,4 +55,15 @@ int vfo_load(struct vfo_storage *s, channel_t *vfo);
  */
 int vfo_save(struct vfo_storage *s, const channel_t *vfo);
 
+/**
+ * Get the storage overhead over the size of the vfo itself (channel_t).
+ * If s is a pointer to a valid vfo_storage struct, the overhead is computed by
+ * taking the number of slices into account. If s is a NULL pointer, the
+ * overhead is computed over a single slice.
+ *
+ * @param s NULL or pointer to a vfo_storage struct
+ * @return size_t storage overhead in bytes
+ */
+size_t vfo_storageOverhead(const struct vfo_storage *s);
+
 #endif

@@ -66,7 +66,7 @@ int vfo_load(struct vfo_storage *s, channel_t *vfo)
 
     // Read the slices from memory, insert them in the structure
     for (size_t i = 0; i < n; i++) {
-        int ret = nvm_read(s->nvm_dev, s->nvm_part, i, tmp, s->entry_size);
+        int ret = nvm_read(s->nvm_dev, s->nvm_part, i*s->entry_size, tmp, s->entry_size);
         if (ret == 0)
             ret = struct_slicer_insert(&(s->slicer_conf),
                                        (uint8_t *)&(s->saved_vfo), tmp, i);
@@ -111,7 +111,7 @@ int vfo_save(struct vfo_storage *s, const channel_t *vfo)
             ret = struct_slicer_get_slice(
                 &(s->slicer_conf), (const uint8_t *)&(s->saved_vfo), i, tmp);
             if (ret == 0)
-                ret = nvm_write(s->nvm_dev, s->nvm_part, i, tmp, s->entry_size);
+                ret = nvm_write(s->nvm_dev, s->nvm_part, i*s->entry_size, tmp, s->entry_size);
 
             if (ret < 0) {
                 free(tmp);
@@ -148,7 +148,7 @@ int vfo_save(struct vfo_storage *s, const channel_t *vfo)
                 int ret = struct_slicer_get_slice(
                     &(s->slicer_conf), (const uint8_t *)&buffer, slice, tmp);
                 if (ret == 0)
-                    ret = nvm_write(s->nvm_dev, s->nvm_part, slice, tmp,
+                    ret = nvm_write(s->nvm_dev, s->nvm_part, slice*s->entry_size, tmp,
                                     s->entry_size);
                 if (ret < 0) {
                     free(tmp);
@@ -167,4 +167,12 @@ int vfo_save(struct vfo_storage *s, const channel_t *vfo)
     }
 
     return 0;
+}
+
+size_t vfo_storageOverhead(const struct vfo_storage *s)
+{
+    if(s == NULL)
+        return sizeof(struct vfo) - sizeof(channel_t) + struct_slicer_header_size();
+    else
+        return sizeof(struct vfo) - sizeof(channel_t) + struct_slicer_header_size() * struct_slicer_nb_slices(&(s->slicer_conf));
 }
