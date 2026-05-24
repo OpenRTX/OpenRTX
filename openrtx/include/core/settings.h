@@ -100,66 +100,66 @@ typedef enum
 /**
  * Structure defining the header of the settings store
  */
- typedef struct {
+ struct settings_header {
     uint32_t MAGIC;   ///< Must be 0x584E504F ("OPNX")
     uint16_t length;  ///< Total length of the structure (incl. header)
-    uint16_t counter; ///< Free-running counter, incremented each time settings are savec
+    uint16_t counter; ///< Free-running counter, incremented each time settings are saved
     uint16_t crc;     ///< Checksum of the structure (crc field set to 0)
- } __attribute__((packed)) settings_header_t;
+ } __attribute__((packed));
 
 /**
  * Structure defining the binary layout of the settings in NVM memory
  */
-typedef struct {
-    settings_header_t header; ///< Settings store header
+struct settings_store{
+    struct settings_header header; ///< Settings store header
     settings_t settings;      ///< Device settings
-} __attribute__((packed)) settings_store_t;
+} __attribute__((packed));
 
-typedef struct settings_storage_s {
+struct settings_storage {
     int dev;                       ///< NVM device number
     int part_A;                    ///< NVM partition number for partition A
     int part_B;                    ///< NVM partition number for partition B
     size_t part_A_offset;          ///< Offset to free space in partition A
     size_t part_B_offset;          ///< Offset to free space in partition B
-    settings_store_t latest_store; ///< Contains the most up-to-date settings
+    struct settings_store latest_store; ///< Contains the most up-to-date settings
     bool initialized; ///< Do latest settings contain the settings read from nvm?
     bool write_needed; ///< Do we need to write the settings (settings have changed or are an old version)
     part_status part_A_status; ///< Is partition A clean, empty, or corrupted
     part_status part_B_status; ///< Is partition B clean, empty, or corrupted
-} settings_storage_t;
+};
 
 /**
- * Initialize a settings_storage_t structure to save and load device settings.
+ * Initialize a settings_storage structure to save and load device settings.
  *
- * @param s pointer to a pre-allocated settings_storage_t structure to be initialized
+ * @param s pointer to a pre-allocated settings_storage structure to be initialized
  * @param nvm_dev NVM device number in which to store the device settings
  * @param part_A NVM device partition number for storage partition A
  * @param part_B NVM device partition number for storage partition B
  * @return 0 if successful, negative error code otherwise
  */
-int settings_initStorage(settings_storage_t *s, const int nvm_dev,
+int settings_initStorage(struct settings_storage *s, const int nvm_dev,
                          const int part_A, const int part_B);
 
 /**
  * Load device settings from non-volatile memory.
  *
- * @param s pointer to an initialized settings_storage_t structure
+ * @param s pointer to an initialized settings_storage structure
  * @param settings pointer to a settings_t structure where to write the
  * loaded settings
  * @return 0 if successful, negative error code otherwise
  */
-int settings_load(settings_storage_t *s, settings_t *settings);
+int settings_load(struct settings_storage *s, settings_t *settings);
 
 /**
  * Save device settings to non-volatile memory.
  * Will not perform any actual write if the settings haven't changed.
  *
- * @param s pointer to an initialized settings_storage_t structure
+ * @param s pointer to an initialized settings_storage structure
  * @param settings pointer to a settings_t structure containing the settings
  * to save
  * @return 0 if successful, negative error code otherwise
  */
-int settings_save(settings_storage_t *s, const settings_t *settings);
+int settings_save(struct settings_storage *s, const settings_t *settings);
 
 #ifdef __cplusplus
 }
