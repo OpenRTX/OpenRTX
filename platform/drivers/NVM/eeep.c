@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include "eeep.h"
 
 // NOTE: cannot use an enum for these because enum type is "int"
@@ -20,6 +21,8 @@
 #define EEEP_PAGE_INACTIVE (0x00000000)
 #define EEEP_PAGE_HDR_SIZE sizeof(uint32_t)
 #define EEEP_MAX_ENTRIES (8)
+
+#define WITHIN(x, a, b) ((x >= a) && (x < b))
 
 enum RecordStatus {
     EEEP_RECORD_EMPTY = 0xFF,
@@ -287,6 +290,39 @@ static int eeep_write(const struct nvmDevice *dev, uint32_t offset,
     return writeRecord(priv, offset, data, len);
 }
 
+static int eeep_erase(const struct nvmDevice *dev, const uint32_t offset,
+                      const size_t len)
+{
+    struct eeepData *priv = (struct eeepData *)dev->priv;
+    uint32_t addr = priv->readAddr;
+
+    if ((offset + len) > 0xFFFF)
+        return -EINVAL;
+
+    while (addr < priv->writeAddr) {
+        struct eeepRecord rec;
+        int ret;
+
+        ret = nvm_read(priv->nvm, priv->part, addr, &rec,
+                       sizeof(struct eeepRecord));
+        if (ret < 0)
+            return ret;
+
+        if ((rec.status == EEEP_RECORD_VALID)
+            && WITHIN(rec.virtAddr, offset, (offset + len))) {
+            rec.status = EEEP_RECORD_ERASED;
+            ret = nvm_write(priv->nvm, priv->part, addr, &rec,
+                            sizeof(struct eeepRecord));
+            if (ret < 0)
+                return ret;
+        }
+
+        addr = nextRecordAddress(addr, &rec);
+    }
+
+    return 0;
+}
+
 int eeep_init(const struct nvmDevice *dev, const uint32_t nvm,
               const uint32_t part)
 {
@@ -359,7 +395,7 @@ int eeep_terminate(const struct nvmDevice *dev)
 const struct nvmOps eeep_ops = {
     .read = eeep_read,
     .write = eeep_write,
-    .erase = NULL,
+    .erase = eeep_erase,
     .sync = NULL,
 };
 
@@ -367,5 +403,5 @@ const struct nvmInfo eeep_info = {
     .write_size = 1,
     .erase_size = 1,
     .erase_cycles = INT_MAX,
-    .device_info = NVM_EEEPROM | NVM_WRITE,
+    .device_info = NVM_EEEPROM | NVM_WRITE | NVM_ERASE,
 };
