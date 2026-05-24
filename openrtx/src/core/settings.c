@@ -23,10 +23,10 @@ static const uint32_t SETTINGS_MAGIC = 0x584E504F; // "OPNX"
  * @param store
  * @return uint16_t
  */
-static inline uint16_t settings_crc16(const settings_store_t *store)
+static inline uint16_t settings_crc16(const struct settings_store *store)
 {
-    settings_store_t tmp;
-    memcpy(&tmp, store, sizeof(settings_store_t));
+    struct settings_store tmp;
+    memcpy(&tmp, store, sizeof(struct settings_store));
 
     tmp.header.crc = 0;
     return crc_ccitt((void *)&tmp, tmp.header.length);
@@ -39,14 +39,14 @@ static inline uint16_t settings_crc16(const settings_store_t *store)
  * @param store a pointer to an allocated settings_store_t
  * @return 0 in case of success, negative error code otherwise
  */
-static int default_settings_store(settings_store_t *store)
+static int default_settings_store(struct settings_store *store)
 {
     if (!store)
         return -EINVAL;
 
     store->header.MAGIC = SETTINGS_MAGIC;
     store->header.counter = 0;
-    store->header.length = sizeof(settings_store_t);
+    store->header.length = sizeof(struct settings_store);
     store->settings = default_settings;
     store->header.crc = settings_crc16(store);
     return 0;
@@ -62,13 +62,13 @@ static int default_settings_store(settings_store_t *store)
  * @return 0 if successful, negative error code otherwise
  */
 static int update_settings_store(const settings_t *settings,
-                                 settings_store_t *store)
+                                 struct settings_store *store)
 {
     if (!settings || !store)
         return -EINVAL;
 
     store->header.counter++;
-    store->header.length = sizeof(settings_store_t);
+    store->header.length = sizeof(struct settings_store);
     store->settings = *settings;
     store->header.crc = settings_crc16(store);
     return 0;
@@ -82,15 +82,15 @@ static int update_settings_store(const settings_t *settings,
  * @return -1 if the store is valid but stale, 0 if the store is corrupted,
  * 1 if the store is valid and current
  */
-static int check_store_integrity(const settings_store_t *store)
+static int check_store_integrity(const struct settings_store *store)
 {
     if (store->header.MAGIC != SETTINGS_MAGIC)
         return 0;
 
-    if (store->header.length > sizeof(settings_store_t))
+    if (store->header.length > sizeof(struct settings_store))
         return 0;
 
-    bool stale = (store->header.length != sizeof(settings_store_t));
+    bool stale = (store->header.length != sizeof(struct settings_store));
 
     if (store->header.crc == settings_crc16(store))
         return stale ? -1 : 1;
@@ -117,14 +117,14 @@ static int check_store_integrity(const settings_store_t *store)
 static int find_last_store(const int dev, const int part_nb, size_t *offset,
                            size_t limit)
 {
-    settings_header_t header_buffer;
+    struct settings_header header_buffer;
     *offset = 0;
     size_t prev_offset = 0;
 
     // Go through the partition to find settings struct
-    while (*offset < (limit - sizeof(settings_header_t))) {
+    while (*offset < (limit - sizeof(struct settings_header))) {
         int ret = nvm_read(dev, part_nb, *offset, &header_buffer,
-                           sizeof(settings_header_t));
+                           sizeof(struct settings_header));
         if (ret < 0)
             return ret;
 
@@ -165,22 +165,22 @@ static int find_last_store(const int dev, const int part_nb, size_t *offset,
  * @return 0 if successful, negative error code otherwise
  */
 static int read_store(const int dev, const int part, size_t offset,
-                      settings_store_t *store)
+                      struct settings_store *store)
 {
     // Read store header
-    int ret = nvm_read(dev, part, offset, store, sizeof(settings_header_t));
+    int ret = nvm_read(dev, part, offset, store, sizeof(struct settings_header));
     if (ret < 0)
         return ret;
 
-    if (store->header.length > sizeof(settings_store_t))
+    if (store->header.length > sizeof(struct settings_store))
         return -E2BIG;
 
-    if (store->header.length < sizeof(settings_store_t))
+    if (store->header.length < sizeof(struct settings_store))
         store->settings = default_settings;
 
-    ret = nvm_read(dev, part, offset + sizeof(settings_header_t),
+    ret = nvm_read(dev, part, offset + sizeof(struct settings_header),
                    &(store->settings),
-                   store->header.length - sizeof(settings_header_t));
+                   store->header.length - sizeof(struct settings_header));
     return ret;
 }
 
@@ -197,7 +197,7 @@ static int read_store(const int dev, const int part, size_t offset,
  *         negative error code otherwise
  */
 static int get_latest_valid_store(const int dev, const int part,
-                                  settings_store_t *store, size_t *offset)
+                                  struct settings_store *store, size_t *offset)
 {
     struct nvmPartition pInfo;
     int ret = nvm_getPart(dev, part, &pInfo);
@@ -286,7 +286,7 @@ static int get_latest_valid_store(const int dev, const int part,
  * @return 0 if successful, negative error code otherwise
  */
 static int write_store(const int dev, const int part,
-                       const settings_store_t *store, size_t *offset,
+                       const struct settings_store *store, size_t *offset,
                        bool erase)
 {
     struct nvmPartition pInfo;
@@ -298,7 +298,7 @@ static int write_store(const int dev, const int part,
     const bool erase_before_write = dDesc->dev->info->device_info & NVM_ERASE;
 
     // Check if we have enough space to write the store
-    if (((*offset + sizeof(settings_store_t)) > pInfo.size) || erase) {
+    if (((*offset + sizeof(struct settings_store)) > pInfo.size) || erase) {
         if (erase_before_write) {
             ret = nvm_erase(dev, part, 0, pInfo.size);
             if (ret < 0)
@@ -309,11 +309,11 @@ static int write_store(const int dev, const int part,
     }
 
     ret = nvm_write(dev, part, *offset, (void *)store,
-                    sizeof(settings_store_t));
+                    sizeof(struct settings_store));
     if (ret < 0)
         return ret;
 
-    *offset += sizeof(settings_store_t);
+    *offset += sizeof(struct settings_store);
 
     // In NVM devices that do not require erase before write, we need to
     // mark where the last entry was written to avoid having successive
@@ -334,7 +334,7 @@ static int write_store(const int dev, const int part,
  *
  * @param store store to print
  */
-void print_store(settings_store_t *store)
+void print_store(struct settings_store *store)
 {
     printf("Store at address 0x%08zX\r\n", (size_t)(store));
     printf("\tHeader:");
@@ -344,7 +344,7 @@ void print_store(settings_store_t *store)
     printf("\t\tcrc=0x%04X\r\n", store->header.crc);
     printf("\tsettings=0x");
     uint8_t *tmp = (uint8_t *)&(store->settings);
-    for (size_t i = 0; i < store->header.length - sizeof(settings_header_t);
+    for (size_t i = 0; i < store->header.length - sizeof(struct settings_header);
          i++) {
         printf("%02X", tmp[i]);
     }
@@ -369,16 +369,16 @@ void print_settings(settings_t *settings)
 
 /**
  * \internal
- * Populates the latest store of a settings_storage_t struct with the latest
+ * Populates the latest store of a settings_storage struct with the latest
  * non-corrupted version available across both partitions.
  *
  * @param s storage to populate
  * @return 0 in case of success, negative error code otherwise
  */
-static int populate_latest_store(settings_storage_t *s)
+static int populate_latest_store(struct settings_storage *s)
 {
     // One of each per partition
-    settings_store_t store_A, store_B;
+    struct settings_store store_A, store_B;
     size_t offset_A, offset_B;
     bool store_A_stale = false, store_B_stale = false;
 
@@ -448,7 +448,7 @@ static int populate_latest_store(settings_storage_t *s)
     return 0;
 }
 
-int settings_initStorage(settings_storage_t *s, const int nvm_dev,
+int settings_initStorage(struct settings_storage *s, const int nvm_dev,
                          const int part_A, const int part_B)
 {
     s->dev = nvm_dev;
@@ -458,7 +458,7 @@ int settings_initStorage(settings_storage_t *s, const int nvm_dev,
     return default_settings_store(&(s->latest_store));
 }
 
-int settings_load(settings_storage_t *s, settings_t *settings)
+int settings_load(struct settings_storage *s, settings_t *settings)
 {
     // Check if we already read the settings
     if (!s->initialized) {
@@ -470,7 +470,7 @@ int settings_load(settings_storage_t *s, settings_t *settings)
     return 0;
 }
 
-int settings_save(settings_storage_t *s, const settings_t *settings)
+int settings_save(struct settings_storage *s, const settings_t *settings)
 {
     int settings_comparison = memcmp(&(s->latest_store.settings), settings,
                                      sizeof(settings_t));
