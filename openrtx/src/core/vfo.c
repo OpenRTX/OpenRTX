@@ -93,6 +93,12 @@ int vfo_load(struct vfo_storage *s, channel_t *vfo)
 int vfo_save(struct vfo_storage *s, const channel_t *vfo)
 {
     if (s->full_write_needed) {
+        struct nvmPartition pInfo;
+        nvm_getPart(s->nvm_dev, s->nvm_part, &pInfo);
+        int ret = nvm_erase(s->nvm_dev, s->nvm_part, 0, pInfo.size);
+        if(ret < 0)
+            return ret;
+
         uint8_t *tmp = (uint8_t *)malloc(s->entry_size);
         if (tmp == NULL) {
             return -ENOMEM;
@@ -102,7 +108,7 @@ int vfo_save(struct vfo_storage *s, const channel_t *vfo)
 
         unsigned int n = struct_slicer_nb_slices(&(s->slicer_conf));
         for (size_t i = 0; i < n; i++) {
-            int ret = struct_slicer_get_slice(
+            ret = struct_slicer_get_slice(
                 &(s->slicer_conf), (const uint8_t *)&(s->saved_vfo), i, tmp);
             if (ret == 0)
                 ret = nvm_write(s->nvm_dev, s->nvm_part, i, tmp, s->entry_size);
