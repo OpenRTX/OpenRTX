@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include "eeep.h"
 
 // NOTE: cannot use an enum for these because enum type is "int"
@@ -115,6 +116,19 @@ static int writeRecord(struct eeepData *priv, uint16_t virtAddr,
                     sizeof(struct eeepRecord));
 
     return ret;
+}
+
+static int eraseRecord(struct eeepData *priv, uint16_t virtAddr)
+{
+    uint32_t addr;
+    if(findRecord(priv, &addr, virtAddr) == 0)
+    {
+        uint8_t rec_stat = EEEP_RECORD_ERASED;
+        int ret = nvm_write(priv->nvm, priv->part, addr, &rec_stat, sizeof(uint8_t));
+        if(ret < 0)
+            return ret;
+    }
+    return 0;
 }
 
 static int swapBlock(struct eeepData *priv)
@@ -287,6 +301,54 @@ static int eeep_write(const struct nvmDevice *dev, uint32_t offset,
     return writeRecord(priv, offset, data, len);
 }
 
+static int eeep_erase(const struct nvmDevice *dev, const uint32_t offset,
+                      const size_t len)
+{
+    struct eeepData *priv = (struct eeepData *)dev->priv;
+    int ret;
+
+    if ((offset + len > 0xFFFF))
+        return -EINVAL;
+
+    // For few records, erase one by one
+    if(len <= 5)
+    {
+        for(size_t i = 0; i < len; i++)
+        {
+            ret = eraseRecord(priv, offset + i);
+            if(ret < 0)
+                return ret;
+        }
+        return 0;
+    }
+
+    // Otherwise, go through the memory and erase entries matching the space
+    // to be erased
+    const uint32_t addr_lo = offset;
+    const uint32_t addr_hi = offset + len;
+    const uint8_t erased_status = EEEP_RECORD_ERASED;
+    uint32_t addr = priv->readAddr;
+    struct eeepRecord rec;
+
+    while (addr < priv->writeAddr) {
+        ret = nvm_read(priv->nvm, priv->part, addr, &rec,
+                           sizeof(struct eeepRecord));
+        if (ret < 0)
+            return ret;
+
+        if ((rec.status == EEEP_RECORD_VALID) && (rec.virtAddr >= addr_lo) && (rec.virtAddr < addr_hi))
+        {
+            ret = nvm_write(priv->nvm, priv->part, addr, &erased_status, sizeof(uint8_t));
+            if(ret < 0)
+                return ret;
+        }
+
+        addr = nextRecordAddress(addr, &rec);
+    }
+
+    return 0;
+}
+
 int eeep_init(const struct nvmDevice *dev, const uint32_t nvm,
               const uint32_t part)
 {
@@ -359,10 +421,10 @@ int eeep_terminate(const struct nvmDevice *dev)
 
 const struct nvmOps eeep_ops = { .read = eeep_read,
                                  .write = eeep_write,
-                                 .erase = NULL,
+                                 .erase = eeep_erase,
                                  .sync = NULL };
 
 const struct nvmInfo eeep_info = { .write_size = 1,
                                    .erase_size = 1,
                                    .erase_cycles = INT_MAX,
-                                   .device_info = NVM_EEEPROM | NVM_WRITE };
+                                   .device_info = NVM_EEEPROM | NVM_WRITE | NVM_ERASE };
