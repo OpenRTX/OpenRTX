@@ -21,6 +21,7 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
+#include "interfaces/usb_serial.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -122,6 +123,10 @@ void *main_thread(void *arg)
 
     long long time = 0;
 
+    #if defined(CONFIG_USB_SERIAL)
+    usb_serial_init();
+    #endif
+
     #if defined(CONFIG_GPS)
     const struct gpsDevice *gps = platform_initGps();
     if(gps != NULL)
@@ -141,6 +146,11 @@ void *main_thread(void *arg)
         if(platform_pwrButtonStatus() == false)
             state.devStatus = SHUTDOWN;
         pthread_mutex_unlock(&state_mutex);
+
+        // Run USB serial task
+        #if defined(CONFIG_USB_SERIAL)
+        usb_serial_task();
+        #endif
 
         // Run GPS task
         #if defined(CONFIG_GPS)
