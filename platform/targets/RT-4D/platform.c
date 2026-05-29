@@ -10,6 +10,7 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
 #include <peripherals/gpio.h>
+#include <stdio.h>
 
 static hwInfo_t hwInfo = {
     .vhf_maxFreq = 174,
@@ -30,6 +31,7 @@ void platform_init()
     gpio_setMode(RED_LED, OUTPUT);
 
     gpio_setMode(AIN_VBAT, ANALOG);
+    gpio_setMode(PTT_SW, ALTERNATE);
 
     adcAt32_init(&adc1);
     nvm_init();
@@ -69,7 +71,8 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    return false;
+    /* PTT line has a pullup resistor with PTT switch closing to ground */
+    return (gpio_readPin(PTT_SW) == 0) ? true : false;
 }
 
 bool platform_pwrButtonStatus()
