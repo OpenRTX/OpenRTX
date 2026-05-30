@@ -9,6 +9,7 @@
 
 #include "hwconfig.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 /** \file
  * The settings.h file is the header defining the structure for the device
