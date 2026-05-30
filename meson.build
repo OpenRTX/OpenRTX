@@ -800,7 +800,7 @@ mod17_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : mod17_args,
   'cpp_args'           : mod17_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_mod17.ld']
 }
 
 ttwrplus_opts = {
