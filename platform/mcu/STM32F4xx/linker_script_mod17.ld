@@ -58,7 +58,7 @@ ENTRY(_Z13Reset_Handlerv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)   : ORIGIN = 0x08000000, LENGTH = 1M - 128K
+    flash(rx)   : ORIGIN = 0x08000000, LENGTH = 1M - 256K
 
     /*
      * Note, the small ram starts at 0x10000000 but it is necessary to add the
@@ -67,6 +67,8 @@ MEMORY
     smallram(wx) : ORIGIN = 0x10000200, LENGTH = 64K-0x200
     largeram(wx) : ORIGIN = 0x20000000, LENGTH = 128K
 }
+
+_flash_eeep_start_ = ORIGIN(flash) + LENGTH(flash);
 
 /* now define the output sections  */
 SECTIONS
