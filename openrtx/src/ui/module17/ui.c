@@ -17,6 +17,8 @@
 #include "core/battery.h"
 #include "core/input.h"
 #include "hwconfig.h"
+#include "calibration/calibInfo_Mod17.h"
+#include "core/state.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -790,11 +792,7 @@ void ui_updateFSM(bool *sync_rtx)
                         ui_state.edit_mode = false;
 
                         // Reset calibration values
-                        mod17CalData.tx_wiper     = 0x080;
-                        mod17CalData.rx_wiper     = 0x080;
-                        mod17CalData.bb_tx_invert = 0;
-                        mod17CalData.bb_rx_invert = 0;
-                        mod17CalData.mic_gain     = 0;
+                        mod17CalData = default_mod17Calib;
 
                         state_resetSettingsAndVfo();
                         nvm_writeSettings(&state.settings);
