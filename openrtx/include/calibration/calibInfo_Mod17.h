@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -25,5 +25,17 @@ typedef struct
              _padding      : 4;
 }
 mod17Calib_t;
+
+static const mod17Calib_t default_mod17Calib =
+{
+    .tx_wiper       = 0x80,
+    .rx_wiper       = 0x80,
+    .mic_gain       = 0,
+    .bb_tx_invert   = 0,
+    .bb_rx_invert   = 0,
+    .ptt_in_level   = 0,
+    .ptt_out_level  = 0,
+    ._padding       = 0
+};
 
 #endif /* CALIBINFO_MOD17_H */

@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -93,13 +93,6 @@ void platform_init()
         hwInfo.flags |= MOD17_FLAGS_SOFTPOT;
         mcp4551_init(&i2c1, SOFTPOT_TX);
     }
-
-    /* Set defaults for calibration */
-    mod17CalData.tx_wiper     = 0x080;
-    mod17CalData.rx_wiper     = 0x080;
-    mod17CalData.bb_tx_invert = 0;
-    mod17CalData.bb_rx_invert = 0;
-    mod17CalData.mic_gain     = 0;
 
     /*
      * Hardware version is set using a voltage divider on PA3.
