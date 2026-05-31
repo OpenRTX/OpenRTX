@@ -4,188 +4,141 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "interfaces/nvmem.h"
 #include "calibration/calibInfo_Mod17.h"
-#include <string.h>
+#include "drivers/NVM/flash_stm32.h"
+#include "core/nvmem_access.h"
+#include "drivers/NVM/eeep.h"
+#include "interfaces/nvmem.h"
+#include "core/settings.h"
+#include "core/utils.h"
+#include "core/vfo.h"
 #include "core/crc.h"
-#include "flash.h"
+#include <string.h>
+#include <errno.h>
 
-/*
- * Data structures defining the memory layout used for saving and restore
- * of user settings and VFO configuration.
- */
-typedef struct
-{
-    uint16_t     crc;
-    settings_t   settings;
-    mod17Calib_t calibration;
-}
-__attribute__((packed)) dataBlock_t;
+struct nvmCalRecord {
+    uint16_t crc;
+    uint16_t length;
+    mod17Calib_t data;
+} __attribute__((packed));
 
-typedef struct
-{
-    uint32_t    magic;
-    uint32_t    flags[32];
-    dataBlock_t data[1024];
-}
-__attribute__((packed)) memory_t;
+extern uint8_t _flash_eeep_start_;
+mod17Calib_t mod17CalData; // Calibration data, to be saved and loaded
+uint16_t calibCrc;
 
-static const uint32_t MEM_MAGIC   = 0x584E504F;    // "OPNX"
-static const uint32_t baseAddress = 0x080E0000;
-memory_t *memory = ((memory_t *) baseAddress);
+INTERNAL_FLASH_DEVICE_DEFINE(flashDevice)
+EEEP_DEVICE_DEFINE(eeepDevice)
 
-mod17Calib_t mod17CalData;   // Calibration data, to be saved and loaded
-
-const struct nvmTable nvmTab = {
-    .areas = NULL,
-    .nbAreas = 0,
+const struct nvmPartition eeepPartitions[] = {
+    NVM_PART_DEFINE(0x0000, 1024), // First partition, sliced vfo
+    NVM_PART_DEFINE(0x0400, 1024), // Second partition, settings
+    NVM_PART_DEFINE(0x0800, 1024), // Third partition, calib data
 };
 
-/**
- * \internal
- * Utility function to find the currently active data block inside memory, that
- * is the one containing the last saved settings. Blocks containing legacy data
- * are marked with numbers starting from 4096.
- *
- * @return number currently active data block or -1 if memory data is invalid.
- */
-static int findActiveBlock()
-{
-    // Check for invalid memory data
-    if(memory->magic != MEM_MAGIC)
-        return -1;
-
-    uint16_t block = 0;
-    uint16_t bit   = 0;
-
-    // Find the first 32-bit block not full of zeroes
-    for(; block < 32; block++)
+const struct nvmDescriptor storage[] = {
     {
-        if(memory->flags[block] != 0x00000000)
-        {
-            break;
-        }
-    }
-
-    // Find the last zero within a block
-    for(; bit < 32; bit++)
+        .name = "Internal flash storage",
+        .dev = (const struct nvmDevice *)&flashDevice,
+        .baseAddr = (const size_t)(&_flash_eeep_start_),
+        .size = 256 * 1024, // 256K, last two sectors
+        .nbPart = 0,
+        .partitions = NULL,
+    },
     {
-        if((memory->flags[block] & (1 << bit)) != 0)
-        {
-            break;
-        }
+        .name = "Emulated EEPROM",
+        .dev = (const struct nvmDevice *)&eeepDevice,
+        .baseAddr = 0x00000000,
+        .size = 0xFFFF,
+        .nbPart = ARRAY_SIZE(eeepPartitions),
+        .partitions = eeepPartitions,
     }
+};
 
-    block = (block * 32) + bit;
-    block -= 1;
-
-    // Check data validity
-    const size_t crcLen = sizeof(settings_t) + sizeof(mod17Calib_t);
-    uint16_t crc = crc_ccitt(&(memory->data[block].settings), crcLen);
-    if(crc != memory->data[block].crc)
-        return -2;
-
-    return block;
-}
+const struct nvmTable nvmTab = {
+    .areas = storage,
+    .nbAreas = ARRAY_SIZE(storage),
+};
 
 void nvm_init()
 {
+    stm32Flash_init(&flashDevice, 128 * 1024);
+    eeep_init(&eeepDevice, 0, 0);
 
+    /*
+     * Settings: device 1, partition 2
+     * VFO: device 1, partition 1
+     */
+    settings_initSingle(1, 2);
+    vfo_init(1, 1);
+    nvm_readCalibData(&mod17CalData);
 }
 
 void nvm_terminate()
 {
-
+    eeep_terminate(&eeepDevice);
+    stm32Flash_terminate(&flashDevice);
 }
 
 void nvm_readCalibData(void *buf)
 {
-    (void) buf;
+    struct nvmCalRecord record;
+
+    memcpy(buf, &default_mod17Calib, sizeof(default_mod17Calib));
+    nvm_read(1, 3, 0, &record, sizeof(record));
+
+    if (record.length > sizeof(mod17Calib_t))
+        return;
+
+    if (record.crc != crc_ccitt(&record.data, record.length))
+        return;
+
+    memcpy(buf, &record.data, record.length);
+    calibCrc = record.crc;
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
 {
-    (void) info;
+    (void)info;
 }
 
 int nvm_readVfoChannelData(channel_t *channel)
 {
-    // Module 17 has no channels: just load default values for it
-    channel->mode         = OPMODE_M17;
-    channel->bandwidth    = BW_12_5;
-    channel->power        = 1.0;
-    channel->rx_frequency = 430000000;
-    channel->tx_frequency = 430000000;
-    channel->fm.rxToneEn  = 0; //disabled
-    channel->fm.rxTone    = 0; //and no ctcss/dcs selected
-    channel->fm.txToneEn  = 0;
-    channel->fm.txTone    = 0;
+    (void)channel;
 
-    return 0;
+    return -1;
 }
 
 int nvm_readSettings(settings_t *settings)
 {
-    int block = findActiveBlock();
+    (void)settings;
 
-    // Invalid data found
-    if(block < 0) return -1;
-
-    memcpy(settings,      &(memory->data[block].settings),    sizeof(settings_t));
-    memcpy(&mod17CalData, &(memory->data[block].calibration), sizeof(mod17Calib_t));
-
-    return 0;
+    return -1;
 }
 
 int nvm_writeSettings(const settings_t *settings)
 {
-    uint32_t addr    = 0;
-    int      block   = findActiveBlock();
-    uint16_t prevCrc = 0;
-
-    /*
-     * Memory never initialised or save space finished: erase all the sector.
-     * On STM32F405 the settings are saved in sector 11, starting at address
-     * 0x08060000.
-     */
-    if((block < 0) || (block >= 2047))
-    {
-        flash_eraseSector(11);
-        addr = ((uint32_t) &(memory->magic));
-        flash_write(addr, &MEM_MAGIC, sizeof(MEM_MAGIC));
-        block = 0;
-    }
-    else
-    {
-        prevCrc = memory->data[block].crc;
-        block += 1;
-    }
-
-    dataBlock_t tmpBlock;
-    memcpy((&tmpBlock.settings),    settings,      sizeof(settings_t));
-    memcpy((&tmpBlock.calibration), &mod17CalData, sizeof(mod17Calib_t));
-
-    const size_t crcLen = sizeof(settings_t) + sizeof(mod17Calib_t);
-    tmpBlock.crc = crc_ccitt(&(tmpBlock.settings), crcLen);
-
-    // New data is equal to the old one, avoid saving
-    if((block != 0) && (tmpBlock.crc == prevCrc))
-        return 0;
-
-    // Save data
-    addr = ((uint32_t) &(memory->data[block]));
-    flash_write(addr, &tmpBlock, sizeof(dataBlock_t));
-
-    // Update the flags marking used data blocks
-    uint32_t flag = ~(1 << (block % 32));
-    addr = ((uint32_t) &(memory->flags[block / 32]));
-    flash_write(addr, &flag, sizeof(uint32_t));
+    (void)settings;
 
     return 0;
 }
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    (void) vfo;
-    return nvm_writeSettings(settings);
+    (void)settings;
+    (void)vfo;
+
+    return 0;
+}
+
+int nvm_writeCalibData(void *cal)
+{
+    struct nvmCalRecord record;
+
+    memcpy(&record.data, cal, sizeof(mod17Calib_t));
+    record.length = sizeof(mod17Calib_t);
+    record.crc = crc_ccitt(&record.data, record.length);
+    if (record.crc == calibCrc)
+        return 0;
+
+    return nvm_write(1, 3, 0, &record, sizeof(record));
 }

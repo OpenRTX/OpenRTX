@@ -517,6 +517,7 @@ mod17_src = ['platform/targets/Module17/platform.c',
              'platform/drivers/display/SSD1309_Mod17.c',
              'platform/drivers/keyboard/keyboard_Mod17.c',
              'platform/drivers/NVM/nvmem_Mod17.c',
+             'platform/drivers/NVM/eeep.c',
              'platform/drivers/CPS/cps_io_native_Mod17.c',
              'platform/drivers/baseband/radio_Mod17.cpp',
              'platform/drivers/audio/audio_Mod17.c',
@@ -848,7 +849,7 @@ mod17_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : mod17_args,
   'cpp_args'           : mod17_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
+  'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_mod17.ld']
 }
 
 rt4d_opts = {
