@@ -21,6 +21,7 @@ enum AdcChannel {
 
 extern const struct i2cDevice i2c1;
 extern const struct i2cDevice i2c2;
+extern int nvm_writeCalibData(void *cal);
 
 enum Mod17HwVersion {
     MOD17_HW_V01_D = 0, /* Hardware version 0.1d */
