@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "core/state.h"
 #include <stdio.h>
 #include <stdint.h>
 #include "ui/ui_mod17.h"
@@ -514,7 +515,8 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_callsign);
                         // Save selected callsign and disable input mode
-                        strncpy(state.channel.m17_dest, ui_state.new_callsign, 10);
+                        strncpy(state.channel.m17_dest, ui_state.new_callsign, 9);
+                        nvm_writeSettingsAndVfo(&state.settings, &state.channel);
                         *sync_rtx = true;
                         ui_state.edit_mode = false;
                     }
@@ -531,6 +533,7 @@ void ui_updateFSM(bool *sync_rtx)
                         // Save selected message and disable input mode
                         strncpy(state.channel.M17_meta_text, ui_state.new_meta_text, 52);
                         ui_state.edit_meta_text = false;
+                        vfo_save(&state.channel);
                         *sync_rtx = true;
                     }
                     else if(msg.keys & KEY_ESC)
@@ -550,6 +553,7 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                     else if (msg.keys & KEY_RIGHT)
                     {
+                        ui_state.new_callsign[0] = '\0';
                         ui_state.edit_mode = true;
                     }
                 }
@@ -696,10 +700,8 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_meta_text);
                         // Save selected message and disable input mode
-==== BASE ====
                         strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
-                        ui_state.edit_message = false;
-==== BASE ====
+                        vfo_save(&state.channel);
                         ui_state.edit_mode = false;
                     }
                     else if(msg.keys & KEY_ESC)
@@ -766,7 +768,7 @@ void ui_updateFSM(bool *sync_rtx)
                     else if(msg.keys & KEY_ESC)
                     {
                         *sync_rtx = true;
-                        nvm_writeSettings(&state.settings);
+                        nvm_writeSettingsAndVfo(&state.settings, &state.channel);
                         _ui_menuBack(MENU_SETTINGS);
                     }
                 }
