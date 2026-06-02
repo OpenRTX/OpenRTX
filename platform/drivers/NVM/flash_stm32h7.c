@@ -57,10 +57,10 @@ static inline bool unlock_bank2()
     return false;
 }
 
-static bool eraseSector_bank1(const uint8_t secNum)
+static int eraseSector_bank1(const uint8_t secNum)
 {
     if (unlock_bank1() == false)
-        return false;
+        return -EIO;
 
     // Flash busy, wait until previous operation finishes
     while ((FLASH->SR1 & FLASH_SR_BSY) != 0)
@@ -78,13 +78,13 @@ static bool eraseSector_bank1(const uint8_t secNum)
 
     FLASH->CR1 &= ~FLASH_CR_SER;
 
-    return true;
+    return 0;
 }
 
-static bool eraseSector_bank2(const uint8_t secNum)
+static int eraseSector_bank2(const uint8_t secNum)
 {
     if (unlock_bank2() == false)
-        return false;
+        return -EIO;
 
     // Flash busy, wait until previous operation finishes
     while ((FLASH->SR2 & FLASH_SR_BSY) != 0)
@@ -102,7 +102,7 @@ static bool eraseSector_bank2(const uint8_t secNum)
 
     FLASH->CR2 &= ~FLASH_CR_SER;
 
-    return true;
+    return 0;
 }
 
 /**
@@ -110,15 +110,15 @@ static bool eraseSector_bank2(const uint8_t secNum)
  * Erase one sector of the MCU flash memory.
  *
  * @param secNum: sector number.
- * @return true for successful erase, false otherwise.
+ * @return 0 on success, negative errno on failure.
  */
-static bool eraseSector(const uint8_t secNum)
+static int eraseSector(const uint8_t secNum)
 {
     uint8_t bank = secNum / 8;
     uint8_t sector = secNum % 8;
 
     if (sector > 7)
-        return false;
+        return -EINVAL;
 
     switch (bank) {
         case 0:
@@ -130,7 +130,7 @@ static bool eraseSector(const uint8_t secNum)
             break;
     }
 
-    return false;
+    return -EINVAL;
 }
 
 static void write_bank1(void *mem, const void *buf, const size_t len)
@@ -298,8 +298,9 @@ static int nvm_api_erase(const struct nvmDevice *dev, uint32_t address,
     size_t nb_sectors = len / FLASH_SECTOR_SIZE;
 
     for (size_t i = 0; i < nb_sectors; i++) {
-        if (!eraseSector(first_sector + i))
-            return -EIO; // Could not erase flash
+        int ret = eraseSector(first_sector + i);
+        if (ret < 0)
+            return ret; // Could not erase flash
     }
 
     return 0;
