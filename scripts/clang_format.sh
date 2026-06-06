@@ -51,7 +51,6 @@ openrtx/include/core/event.h
 openrtx/include/core/fir.hpp
 openrtx/include/core/goertzel.hpp
 openrtx/include/core/gps.h
-openrtx/include/core/graphics.h
 openrtx/include/core/iir.hpp
 openrtx/include/core/queue.h
 openrtx/include/core/ringbuf.hpp
@@ -101,7 +100,6 @@ openrtx/src/core/cps.c
 openrtx/src/core/data_conversion.c
 openrtx/src/core/datetime.c
 openrtx/src/core/gps.c
-openrtx/src/core/graphics.c
 openrtx/src/core/openrtx.c
 openrtx/src/core/queue.c
 openrtx/src/core/threads.c
