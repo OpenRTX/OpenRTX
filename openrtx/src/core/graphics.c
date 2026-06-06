@@ -647,9 +647,11 @@ point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
      */
     int symSize = size + FONT_SIZE_NUM;
     char buffer[2] = { 0 };
+    uint16_t origin_x = start.x;
 
     buffer[0] = (char)symbol;
-    return gfx_printBuffer(start, symSize, alignment, color, buffer);
+    point_t adv = gfx_printBuffer(start, symSize, alignment, color, buffer);
+    return (point_t){ origin_x + adv.x, start.y };
 }
 
 /*
