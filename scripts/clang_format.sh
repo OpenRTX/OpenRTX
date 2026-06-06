@@ -142,6 +142,8 @@ tests/unit/M17_packet.cpp
 tests/unit/dsp_oversampling.cpp
 tests/unit/gfx_text.cpp
 tests/unit/messages_test.cpp
+openrtx/include/core/packet_io.h
+openrtx/src/core/packet_io.c
 EOF
 )
 

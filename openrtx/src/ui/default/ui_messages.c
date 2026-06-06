@@ -39,6 +39,7 @@ void _ui_drawMessagesList(ui_state_t *ui_state)
               currentLanguage->messages);
 
     size_t total = messages_count();
+    bool can_compose = messages_can_compose(last_state.channel.mode);
 
     if (total == 0) {
         point_t center = { CONFIG_SCREEN_WIDTH / 2, CONFIG_SCREEN_HEIGHT / 2 };
@@ -46,7 +47,7 @@ void _ui_drawMessagesList(ui_state_t *ui_state)
                   currentLanguage->noMessages);
 
         /* Show "New" hint in bottom bar if a compose source matches current mode. */
-        if (messages_can_compose(last_state.channel.mode)) {
+        if (can_compose) {
             point_t bot = { layout.bottom_pos.x,
                             CONFIG_SCREEN_HEIGHT - layout.bottom_h / 2 };
             gfx_print(bot, layout.top_font, TEXT_ALIGN_RIGHT, color_white,
