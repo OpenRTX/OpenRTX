@@ -42,6 +42,7 @@ openrtx/include/core/battery.h
 openrtx/include/core/beeps.h
 openrtx/include/core/crc.h
 openrtx/include/core/dsp.h
+openrtx/include/core/graphics.h
 openrtx/include/core/data_conversion.h
 openrtx/include/core/datatypes.h
 openrtx/include/core/input.h
@@ -73,6 +74,7 @@ openrtx/include/rtx/OpMode.hpp
 openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
 openrtx/src/core/dsp.cpp
+openrtx/src/core/graphics.c
 openrtx/src/core/audio_codec.c
 openrtx/src/core/input.c
 openrtx/src/core/nvmem_access.c
