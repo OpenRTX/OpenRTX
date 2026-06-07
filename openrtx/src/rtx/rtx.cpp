@@ -88,9 +88,9 @@ void rtx_configure(const rtxStatus_t *cfg)
     pthread_mutex_unlock(cfgMutex);
 }
 
-rtxStatus_t rtx_getCurrentStatus()
+const rtxStatus_t *rtx_getStatus()
 {
-    return rtxStatus;
+    return &rtxStatus;
 }
 
 void rtx_task()
