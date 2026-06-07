@@ -88,7 +88,10 @@ enum opstatus {
  */
 enum pktStatus {
     PKT_STATUS_IDLE,      /**< No operation in progress */
-    PKT_STATUS_SUBMITTED, /**< Submitted to RX/TX queue */
+    PKT_STATUS_SUBMITTED, /**< Acquired by the rtx subsystem; descriptor
+                           *   fields must not be modified by the
+                           *   application layer until status transitions
+                           *   to DONE or ERROR. */
     PKT_STATUS_DONE,      /**< RX/TX done */
     PKT_STATUS_ERROR,     /**< RX/TX error */
 };

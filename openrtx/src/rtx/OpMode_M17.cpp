@@ -9,6 +9,7 @@
 #include "interfaces/audio.h"
 #include "interfaces/radio.h"
 #include "protocols/M17/Datatypes.hpp"
+#include "protocols/M17/PacketFrame.hpp"
 #include "rtx/OpMode_M17.hpp"
 #include "core/audio_codec.h"
 #include <errno.h>
@@ -16,6 +17,7 @@
 #include "core/state.h"
 #include "core/utils.h"
 #include "rtx/rtx.h"
+#include <cstring>
 
 #ifdef PLATFORM_MOD17
 #include "calibration/calibInfo_Mod17.h"
@@ -29,7 +31,8 @@ using namespace M17;
 
 OpMode_M17::OpMode_M17() :
     startRx(false), startTx(false), locked(false), dataValid(false),
-    extendedCall(false), invertTxPhase(false), invertRxPhase(false)
+    extendedCall(false), invertTxPhase(false), invertRxPhase(false),
+    currRxPkt(nullptr), currTxPkt(nullptr)
 {
 }
 
@@ -48,6 +51,11 @@ void OpMode_M17::enable()
     extendedCall = false;
     startRx = true;
     startTx = false;
+    pktDeframer.reset();
+    currRxPkt = nullptr;
+    currTxPkt.store(nullptr, std::memory_order_relaxed);
+    pktTxStarted = false;
+    pktTxLastSent = false;
 }
 
 void OpMode_M17::disable()
@@ -102,7 +110,10 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
             break;
 
         case TX:
-            txState(status);
+            if (currTxPkt != nullptr)
+                txPacketState(status);
+            else
+                txState(status);
             break;
 
         default:
@@ -145,6 +156,21 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
     if (platform_getPttStatus() && (status->pttDisable == 0)) {
         startTx = true;
+        status->opStatus = TX;
+        return;
+    }
+
+    if (currTxPkt != nullptr) {
+        // Packet TX bypasses pttDisable (caller authorization via addPacketTx()
+        // is sufficient), but the hard RF lockout must still be respected.
+        if (status->txDisable) {
+            struct pktDesc *pkt = currTxPkt.load(std::memory_order_acquire);
+            pkt->res = -EPERM;
+            pkt->status = PKT_STATUS_ERROR;
+            currTxPkt.store(nullptr, std::memory_order_release);
+            return;
+        }
+        startTx = false;
         status->opStatus = TX;
         return;
     }
@@ -237,10 +263,10 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                 bool callMatch = (Callsign(status->source_address) == dst)
                               || dst.isSpecial();
 
-                // Open audio path only if CAN and callsign match
+                // Open audio path only for stream frames with matching CAN/callsign
                 uint8_t pthSts = audioPath_getStatus(rxAudioPath);
                 if ((pthSts == PATH_CLOSED) && (canMatch == true)
-                    && (callMatch == true)) {
+                    && (callMatch == true) && (type == FrameType::STREAM)) {
                     rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK,
                                                     PRIO_RX);
                     pthSts = audioPath_getStatus(rxAudioPath);
@@ -256,13 +282,58 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     codec_pushFrame(sf.data(), false);
                     codec_pushFrame(sf.data() + 8, false);
                 }
+                // Handle incoming packet frame; CAN and callsign filters apply
+                else if (type == FrameType::PACKET && canMatch && callMatch) {
+                    PacketFrame pf = decoder.getPacketFrame();
+
+                    // Claim an RX descriptor on the first frame of
+                    // a new packet (currRxPkt == nullptr means idle).
+                    if (currRxPkt == nullptr) {
+                        if (rxPktQueue.tryPop(currRxPkt) != 0)
+                            currRxPkt = nullptr;
+                        if (currRxPkt != nullptr) {
+                            struct m17Packet *packet =
+                                static_cast<struct m17Packet *>(
+                                    currRxPkt->buffer);
+                            pktDeframer.init(packet->payload,
+                                             currRxPkt->size - 20);
+                        } else {
+                            pktDeframer.init(nullptr, 0);
+                        }
+                    }
+
+                    auto result = pktDeframer.pushFrame(pf);
+
+                    if (result == DeframerResult::COMPLETE) {
+                        if (currRxPkt != nullptr) {
+                            struct m17Packet *packet =
+                                static_cast<struct m17Packet *>(
+                                    currRxPkt->buffer);
+                            Callsign dst = lsf.getDestination();
+                            Callsign src = lsf.getSource();
+                            strncpy(packet->dst, dst, 10);
+                            strncpy(packet->src, src, 10);
+                            currRxPkt->res = (ssize_t)pktDeframer.length();
+                            currRxPkt->status = PKT_STATUS_DONE;
+                            currRxPkt = nullptr;
+                        }
+                    } else if (result != DeframerResult::IN_PROGRESS) {
+                        // Any error: abort reassembly
+                        if (currRxPkt != nullptr) {
+                            currRxPkt->res = -EIO;
+                            currRxPkt->status = PKT_STATUS_ERROR;
+                            currRxPkt = nullptr;
+                        }
+                    }
+                }
             }
         }
     }
 
     locked = lock;
 
-    if (platform_getPttStatus()) {
+    bool shouldExit = platform_getPttStatus() || (currTxPkt != nullptr);
+    if (shouldExit) {
         demodulator.stopBasebandSampling();
         locked = false;
         status->opStatus = OFF;
@@ -375,26 +446,100 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     }
 }
 
-bool OpMode_M17::compareCallsigns(const std::string &localCs,
-                                  const std::string &incomingCs)
+int OpMode_M17::addPacketRx(struct pktDesc *packet)
 {
-    if ((incomingCs == "ALL") || (incomingCs == "INFO")
-        || (incomingCs == "ECHO"))
-        return true;
+    if ((packet->buffer == NULL) || (packet->size < 20))
+        return -EINVAL;
 
-    std::string truncatedLocal(localCs);
-    std::string truncatedIncoming(incomingCs);
+    int ret = rxPktQueue.tryPush(packet);
+    if (ret != 0)
+        return -EAGAIN;
+    return 0;
+}
 
-    int slashPos = localCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedLocal = localCs.substr(slashPos + 1);
+int OpMode_M17::addPacketTx(struct pktDesc *packet)
+{
+    if ((packet->buffer == NULL) || (packet->size < 20))
+        return -EINVAL;
 
-    slashPos = incomingCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedIncoming = incomingCs.substr(slashPos + 1);
+    struct pktDesc *expected = nullptr;
+    if (!currTxPkt.compare_exchange_strong(expected, packet,
+                                           std::memory_order_acq_rel,
+                                           std::memory_order_relaxed))
+        return -EBUSY;
+    return 0;
+}
 
-    if (truncatedLocal == truncatedIncoming)
-        return true;
+void OpMode_M17::txPacketState(rtxStatus_t *const status)
+{
+    frame_t m17Frame;
+    struct pktDesc *pkt = currTxPkt.load(std::memory_order_acquire);
 
-    return false;
+    // Phase 0: initialise and transmit preamble + LSF
+    if (!pktTxStarted) {
+        struct m17Packet *packet = static_cast<struct m17Packet *>(pkt->buffer);
+        size_t payloadLen = pkt->size - 20;
+
+        if (!pktFramer.init(packet->payload, payloadLen)) {
+            pkt->res = -EINVAL;
+            pkt->status = PKT_STATUS_ERROR;
+            currTxPkt.store(nullptr, std::memory_order_release);
+            startRx = true;
+            status->opStatus = OFF;
+            return;
+        }
+
+        // Build Link Setup Frame
+        LinkSetupFrame lsf;
+        lsf.clear();
+        lsf.setSource(packet->src);
+
+        Callsign dst(packet->dst);
+        if (!dst.isEmpty())
+            lsf.setDestination(dst);
+
+        streamType_t type;
+        type.fields.dataMode = DATAMODE_PACKET;
+        type.fields.dataType = DATATYPE_DATA;
+        type.fields.CAN = status->can;
+        lsf.setType(type);
+
+        encoder.reset();
+        encoder.encodeLsf(lsf, m17Frame);
+
+        radio_enableTx();
+        modulator.invertPhase(invertTxPhase);
+        modulator.start();
+        modulator.sendPreamble();
+        modulator.sendFrame(m17Frame);
+
+        pktTxStarted = true;
+        pktTxLastSent = false;
+        return;
+    }
+
+    // Phase 2: last packet frame was already sent — send EOT and clean up
+    if (pktTxLastSent) {
+        encoder.encodeEotFrame(m17Frame);
+        modulator.sendFrame(m17Frame);
+        modulator.stop();
+
+        pkt->res = (ssize_t)(pkt->size - 20);
+        pkt->status = PKT_STATUS_DONE;
+        currTxPkt.store(nullptr, std::memory_order_release);
+        pktTxStarted = false;
+        pktTxLastSent = false;
+
+        startRx = true;
+        status->opStatus = OFF;
+        return;
+    }
+
+    // Phase 1: send one packet frame per tick
+    PacketFrame pf;
+    bool isLast = pktFramer.nextFrame(pf);
+    encoder.encodePacketFrame(pf, m17Frame);
+    modulator.sendFrame(m17Frame);
+    if (isLast)
+        pktTxLastSent = true;
 }
