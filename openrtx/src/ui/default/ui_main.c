@@ -130,7 +130,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
-            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+            rtxStatus_t rtxStatus = *rtx_getStatus();
 
             if(rtxStatus.lsfOk)
             {
@@ -361,7 +361,7 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
 
     #ifdef CONFIG_M17
     // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
-    rtxStatus_t status = rtx_getCurrentStatus();
+    rtxStatus_t status = *rtx_getStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
         _ui_drawFrequency();
@@ -385,7 +385,7 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
 
     #ifdef CONFIG_M17
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
-    rtxStatus_t status = rtx_getCurrentStatus();
+    rtxStatus_t status = *rtx_getStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
     {
