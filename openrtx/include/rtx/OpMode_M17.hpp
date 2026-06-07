@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -12,8 +12,12 @@
 #include "protocols/M17/Demodulator.hpp"
 #include "protocols/M17/Modulator.hpp"
 #include "protocols/M17/MetaText.hpp"
+#include "protocols/M17/PacketDeframer.hpp"
+#include "protocols/M17/PacketFramer.hpp"
 #include "core/audio_path.h"
+#include "core/ringbuf.hpp"
 #include "OpMode.hpp"
+#include <atomic>
 
 /**
  * Specialisation of the OpMode class for the management of M17 operating mode.
@@ -43,6 +47,9 @@ public:
      * Disable the operating mode. This function stops the DMA transfers
      * between the baseband, microphone and speakers. It also ensures that
      * the radio, the audio amplifier and the microphone are in OFF state.
+     * Packet descriptors still pending are handed back to their owner with
+     * PKT_STATUS_ERROR, as are any submitted while the mode is disabled when
+     * it is next enabled.
      *
      * Application must ensure this function is being called when exiting the
      * current operating mode.
@@ -81,6 +88,22 @@ public:
         return dataValid;
     }
 
+    /**
+     * Submit a packet reception request.
+     *
+     * @param packet: pointer to packet descriptor.
+     * @return zero on success, a negative error code otherwise.
+     */
+    virtual int addPacketRx(struct pktDesc *packet) override;
+
+    /**
+     * Submit a packet transmission request.
+     *
+     * @param packet: pointer to packet descriptor.
+     * @return zero on success, a negative error code otherwise.
+     */
+    virtual int addPacketTx(struct pktDesc *packet) override;
+
 private:
     /**
      * Function handling the OFF operating state.
@@ -106,25 +129,52 @@ private:
      */
     void txState(rtxStatus_t *const status);
 
+    /**
+     * Function handling packet TX.
+     *
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status.
+     */
+    void txPacketState(rtxStatus_t *const status);
+
+    /**
+     * Hand back every pending packet descriptor with PKT_STATUS_ERROR and
+     * res set to -ECANCELED. Called on both enable() and disable(), so that
+     * the mode owns descriptors only while it is enabled: one submitted to a
+     * disabled mode is never completed, it is returned on the next enable().
+     */
+    void cancelPackets();
+
     // GPS update interval in superframes. Each superframe is 6 LICH frames
     // (~240 ms), so 25 superframes ≈ 6 seconds.
     static constexpr uint16_t GPS_UPDATE_TICKS = 25;
 
-    bool startRx;                 ///< Flag for RX management.
-    bool startTx;                 ///< Flag for TX management.
-    bool locked;                  ///< Demodulator locked on data stream.
-    bool dataValid;               ///< Demodulated data is valid
-    bool extendedCall;            ///< Extended callsign data received
-    bool invertTxPhase;           ///< TX signal phase inversion setting.
-    bool invertRxPhase;           ///< RX signal phase inversion setting.
-    pathId rxAudioPath;           ///< Audio path ID for RX
-    pathId txAudioPath;           ///< Audio path ID for TX
-    M17::Modulator modulator;     ///< M17 modulator.
-    M17::Demodulator demodulator; ///< M17 demodulator.
-    M17::FrameDecoder decoder;    ///< M17 frame decoder
-    M17::FrameEncoder encoder;    ///< M17 frame encoder
-    uint16_t gpsTimer;            ///< GPS data transmission interval timer
-    M17::MetaText metaText;       ///< M17 metatext accumulator
+    bool startRx;                    ///< Flag for RX management.
+    bool startTx;                    ///< Flag for TX management.
+    bool locked;                     ///< Demodulator locked on data stream.
+    bool dataValid;                  ///< Demodulated data is valid
+    bool extendedCall;               ///< Extended callsign data received
+    bool invertTxPhase;              ///< TX signal phase inversion setting.
+    bool invertRxPhase;              ///< RX signal phase inversion setting.
+    pathId rxAudioPath;              ///< Audio path ID for RX
+    pathId txAudioPath;              ///< Audio path ID for TX
+    M17::Modulator modulator;        ///< M17 modulator.
+    M17::Demodulator demodulator;    ///< M17 demodulator.
+    M17::FrameDecoder decoder;       ///< M17 frame decoder
+    M17::FrameEncoder encoder;       ///< M17 frame encoder
+    uint16_t gpsTimer;               ///< GPS data transmission interval timer
+    M17::MetaText metaText;          ///< M17 metatext accumulator
+    M17::PacketDeframer pktDeframer; ///< Data Link Layer packet deframer
+    M17::PacketFramer pktFramer;     ///< Data Link Layer packet framer
+
+    NbRingBuffer<struct pktDesc *, 1>
+        rxPktQueue;            ///< Pending RX descriptor (single-slot)
+    struct pktDesc *currRxPkt; ///< Descriptor being filled
+
+    std::atomic<struct pktDesc *>
+        currTxPkt;      ///< Pending TX descriptor (single-slot)
+    bool pktTxStarted;  ///< Phase flag: preamble+LSF sent
+    bool pktTxLastSent; ///< Phase flag: last packet frame sent
 };
 
 #endif /* OPMODE_M17_H */
