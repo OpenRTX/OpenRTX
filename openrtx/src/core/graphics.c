@@ -431,6 +431,12 @@ uint8_t gfx_getFontHeight(fontSize_t size)
     return glyph.height;
 }
 
+uint16_t gfx_getTextWidth(fontSize_t size, const char *buf)
+{
+    GFXfont f = fonts[size];
+    return get_line_size(f, buf, strlen(buf), CONFIG_SCREEN_WIDTH);
+}
+
 point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf)
 {
