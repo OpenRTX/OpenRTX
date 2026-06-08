@@ -222,13 +222,34 @@ void _ui_drawFrequency()
     freq_t freq = platform_getPttStatus() ? last_state.channel.tx_frequency
                                           : last_state.channel.rx_frequency;
 
-    // Print big numbers frequency
     char freq_str[16] = {0};
-    sniprintf(freq_str, sizeof(freq_str), "%lu.%06lu", (freq / 1000000lu), (freq % 1000000lu));
-    stripTrailingZeroes(freq_str);
+    sniprintf(freq_str, sizeof(freq_str), "%03lu.%05lu",
+              (freq / 1000000lu), (freq % 1000000lu) / 10);
 
-    gfx_print(layout.line3_large_pos, layout.line3_large_font, TEXT_ALIGN_CENTER,
-              color_white, "%s", freq_str);
+    size_t len = strlen(freq_str);
+    char main_str[16] = {0};
+    char small_str[3] = {0};
+    strncpy(main_str, freq_str, len - 2);
+    strncpy(small_str, freq_str + len - 2, 2);
+
+    fontSize_t small_font = FONT_SIZE_5PT;
+    if (layout.line3_large_font > FONT_SIZE_6PT)
+    {
+        small_font = (fontSize_t)(layout.line3_large_font - 2);
+    }
+
+    uint16_t main_width = gfx_getTextWidth(layout.line3_large_font, main_str);
+    uint16_t small_width = gfx_getTextWidth(small_font, small_str);
+    uint16_t total_width = main_width + small_width;
+    int16_t start_x = (CONFIG_SCREEN_WIDTH - total_width) / 2;
+
+    point_t main_pos = { (uint16_t)start_x, layout.line3_large_pos.y };
+    gfx_print(main_pos, layout.line3_large_font, TEXT_ALIGN_LEFT,
+              color_white, "%s", main_str);
+
+    point_t small_pos = { (uint16_t)(start_x + main_width), layout.line3_large_pos.y };
+    gfx_print(small_pos, small_font, TEXT_ALIGN_LEFT,
+              color_white, "%s", small_str);
 }
 
 void _ui_drawVFOMiddleInput(ui_state_t* ui_state)
