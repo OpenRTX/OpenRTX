@@ -69,8 +69,7 @@ BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: false
-BreakConstructorInitializersBeforeComma: false
-BreakConstructorInitializers: BeforeComma
+BreakConstructorInitializers: AfterColon
 BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: false
 ColumnLimit: 80
@@ -107,7 +106,7 @@ ObjCBinPackProtocolList: Auto
 ObjCBlockIndentWidth: 4
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
-PackConstructorInitializers: NextLine
+PackConstructorInitializers: BinPack
 
 # Taken from git's rules
 PenaltyBreakAssignment: 30
