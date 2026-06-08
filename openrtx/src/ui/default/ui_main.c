@@ -223,8 +223,8 @@ void _ui_drawFrequency()
                                           : last_state.channel.rx_frequency;
 
     char freq_str[16] = {0};
-    sniprintf(freq_str, sizeof(freq_str), "%03lu.%04lu",
-              (freq / 1000000lu), (freq % 1000000lu) / 100);
+    sniprintf(freq_str, sizeof(freq_str), "%03lu.%05lu",
+              (freq / 1000000lu), (freq % 1000000lu) / 10);
 
     size_t len = strlen(freq_str);
     char main_str[16] = {0};
