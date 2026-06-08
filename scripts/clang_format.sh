@@ -71,6 +71,7 @@ openrtx/include/protocols/M17/PacketFrame.hpp
 openrtx/include/protocols/M17/MetaText.hpp
 openrtx/include/rtx/rtx.h
 openrtx/include/rtx/OpMode.hpp
+openrtx/include/rtx/OpMode_M17.hpp
 openrtx/include/ui/utils.h
 openrtx/src/core/crc.c
 openrtx/src/core/dsp.cpp
@@ -84,6 +85,7 @@ openrtx/src/core/voicePrompts.c
 openrtx/src/core/voicePromptUtils.c
 openrtx/src/protocols/M17/Callsign.cpp
 openrtx/src/protocols/M17/FrameDecoder.cpp
+openrtx/src/rtx/OpMode_M17.cpp
 openrtx/src/rtx/rtx.cpp
 platform/drivers/ADC/ADC0_GDx.h
 platform/drivers/audio/file_source.h
