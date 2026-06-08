@@ -236,6 +236,15 @@ uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
                          uint16_t max_x, size_t char_count);
 
 /**
+ * Measures the pixel width of a single line of text.
+ *
+ * @param size: text font size.
+ * @param buf: NUL-terminated string.
+ * @return width in pixels of the text line.
+ */
+uint16_t gfx_getTextWidth(fontSize_t size, const char *buf);
+
+/**
  * Prints text from a char buffer into a clipped rectangular region.
  *
  * Like gfx_printBuffer but with an explicit right-edge limit and a
