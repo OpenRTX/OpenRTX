@@ -85,7 +85,6 @@ openrtx/include/protocols/M17/Synchronizer.hpp
 openrtx/include/protocols/M17/Utils.hpp
 openrtx/include/protocols/M17/Viterbi.hpp
 openrtx/include/rtx/OpMode_FM.hpp
-openrtx/include/rtx/OpMode_M17.hpp
 openrtx/include/ui/EnglishStrings.h
 openrtx/include/ui/SpanishStrings.h
 openrtx/include/ui/ui_default.h
@@ -114,7 +113,6 @@ openrtx/src/protocols/M17/LinkSetupFrame.cpp
 openrtx/src/protocols/M17/MetaText.cpp
 openrtx/src/protocols/M17/Modulator.cpp
 openrtx/src/rtx/OpMode_FM.cpp
-openrtx/src/rtx/OpMode_M17.cpp
 openrtx/src/ui/default/ui.c
 openrtx/src/ui/default/ui_main.c
 openrtx/src/ui/default/ui_menu.c
