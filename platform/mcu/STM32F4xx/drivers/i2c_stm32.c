@@ -88,7 +88,7 @@ static int i2c_readImpl(const struct i2cDevice *dev, const uint8_t addr,
     uint8_t   *bytes = (uint8_t *) data;
 
     if(length == 0 || bytes == NULL)
-        return EINVAL;
+        return -EINVAL;
 
     // Send start
     i2c->CR1 |= I2C_CR1_START;
@@ -109,7 +109,7 @@ static int i2c_readImpl(const struct i2cDevice *dev, const uint8_t addr,
         if((i2c->SR1 & I2C_SR1_AF_Msk) != 0)
         {
             i2c->CR1 |= I2C_CR1_STOP;
-            return ENODEV;
+            return -ENODEV;
         }
     }
 
@@ -117,7 +117,7 @@ static int i2c_readImpl(const struct i2cDevice *dev, const uint8_t addr,
     if((i2c->SR2 & I2C_SR2_TRA_Msk) != 0)
     {
         i2c->CR1 |= I2C_CR1_STOP;
-        return EPROTO;
+        return -EPROTO;
     }
 
     for(size_t i = 0; i < length; i++)
@@ -146,7 +146,7 @@ static int i2c_writeImpl(const struct i2cDevice *dev, const uint8_t addr,
     const uint8_t *bytes = (const uint8_t *) data;
 
     if(length == 0 || bytes == NULL)
-        return EINVAL;
+        return -EINVAL;
 
     // Send start
     i2c->CR1 |= I2C_CR1_START;
@@ -162,7 +162,7 @@ static int i2c_writeImpl(const struct i2cDevice *dev, const uint8_t addr,
         if((i2c->SR1 & I2C_SR1_AF_Msk) != 0)
         {
             i2c->CR1 |= I2C_CR1_STOP;
-            return ENODEV;
+            return -ENODEV;
         }
     }
 
@@ -170,7 +170,7 @@ static int i2c_writeImpl(const struct i2cDevice *dev, const uint8_t addr,
     if((i2c->SR2 & I2C_SR2_TRA_Msk) == 0)
     {
         i2c->CR1 |= I2C_CR1_STOP;
-        return EPROTO; // We are not transmitter
+        return -EPROTO; // We are not transmitter
     }
 
     // Send data
