@@ -110,12 +110,25 @@ openrtx_inc += ['lib/QRCode/include']
 openrtx_inc += ['lib/qdec/include']
 
 # CODEC2, open source speech codec, compile from source on embedded
+# Always download the subproject — the Zephyr/CMake build needs the source
+# files at subprojects/codec2/src/*.c regardless of which library is used
+# for linking. For native builds, prefer system libraries (pkg-config or
+# find_library) so homebrew, Nix, and distro packages work. For cross
+# builds (embedded), use the subproject build.
 codec2_proj = subproject('codec2')
-if meson.is_cross_build()
-  codec2_dep  = codec2_proj.get_variable('codec2_dep')
+if not meson.is_cross_build()
+  # Try pkg-config first (homebrew, Nix, and other pkg-config-based installs)
+  codec2_dep = dependency('codec2', method: 'pkg-config', required: false)
+  if not codec2_dep.found()
+    # Fall back to compiler's built-in library search (libcodec2-dev on Debian/Ubuntu)
+    cpp        = meson.get_compiler('cpp')
+    codec2_dep = cpp.find_library('codec2', required: false)
+  endif
+  if not codec2_dep.found()
+    codec2_dep = codec2_proj.get_variable('codec2_dep')
+  endif
 else
-  cpp        = meson.get_compiler('cpp')
-  codec2_dep = cpp.find_library('codec2')
+  codec2_dep = codec2_proj.get_variable('codec2_dep')
 endif
 
 # Catch2, C++ testing framework (only for native/linux builds)

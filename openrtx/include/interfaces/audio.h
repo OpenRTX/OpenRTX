@@ -132,8 +132,11 @@ struct audioDevice
     const void               *config;    ///< Driver configuration
     const uint8_t             instance;  ///< Driver instance number
     const uint8_t             endpoint;  ///< Driver sink or source endpoint
-}
-__attribute__((packed));
+#if defined(__APPLE__) && defined(__aarch64__)
+} __attribute__((aligned(8)));
+#else
+} __attribute__((packed));
+#endif
 
 extern const struct audioDevice inputDevices[];
 extern const struct audioDevice outputDevices[];
