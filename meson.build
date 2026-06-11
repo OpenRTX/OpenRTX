@@ -67,7 +67,9 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/Demodulator.cpp',
                'openrtx/src/protocols/M17/FrameEncoder.cpp',
                'openrtx/src/protocols/M17/FrameDecoder.cpp',
-               'openrtx/src/protocols/M17/LinkSetupFrame.cpp']
+               'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
+               'openrtx/src/protocols/M17/PacketDeframer.cpp',
+               'openrtx/src/protocols/M17/PacketFramer.cpp']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -1188,6 +1190,14 @@ rtx_tx_disable_test = executable('rtx_tx_disable_test',
                                   sources : unit_test_src + ['tests/unit/rtx_tx_disable.cpp'],
                                   kwargs  : unit_test_opts)
 
+m17_packet_disassembly_test = executable('m17_packet_disassembly_test',
+                                         sources : unit_test_src + ['tests/unit/M17_packet_disassembly.cpp'],
+                                         kwargs  : unit_test_opts)
+
+m17_packet_framing_test = executable('m17_packet_framing_test',
+                                     sources : unit_test_src + ['tests/unit/M17_packet_framing.cpp'],
+                                     kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1202,3 +1212,5 @@ test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('RTX TX Disable Test', rtx_tx_disable_test)
+test('M17 Packet Disassembly Test', m17_packet_disassembly_test)
+test('M17 Packet Framing Test', m17_packet_framing_test)
