@@ -12,6 +12,7 @@
 #endif
 
 #include "Datatypes.hpp"
+#include "m17.h"
 #include <cstring>
 
 namespace M17
