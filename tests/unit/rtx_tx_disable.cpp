@@ -16,11 +16,10 @@ extern "C" {
  *   rtx_cfg.txDisable  = channel_rx_only;
  *   rtx_cfg.pttDisable = channel_rx_only || ui_ptt_guard;
  */
-static void apply_tx_flags(rtxStatus_t *cfg,
-                            uint8_t channel_rx_only,
-                            bool ui_ptt_guard)
+static void apply_tx_flags(rtxStatus_t *cfg, uint8_t channel_rx_only,
+                           bool ui_ptt_guard)
 {
-    cfg->txDisable  = channel_rx_only;
+    cfg->txDisable = channel_rx_only;
     cfg->pttDisable = channel_rx_only || ui_ptt_guard;
 }
 
@@ -31,28 +30,28 @@ TEST_CASE("RTX TX disable flag separation", "[rtx]")
     SECTION("Normal channel, UI on VFO/MEM: both gates open")
     {
         apply_tx_flags(&cfg, 0, false);
-        REQUIRE(cfg.txDisable  == 0);
+        REQUIRE(cfg.txDisable == 0);
         REQUIRE(cfg.pttDisable == 0);
     }
 
     SECTION("RX-only channel: both gates locked")
     {
         apply_tx_flags(&cfg, 1, false);
-        REQUIRE(cfg.txDisable  == 1);
+        REQUIRE(cfg.txDisable == 1);
         REQUIRE(cfg.pttDisable == 1);
     }
 
     SECTION("UI screen guard only: PTT gate closes, hard gate stays open")
     {
         apply_tx_flags(&cfg, 0, true);
-        REQUIRE(cfg.txDisable  == 0);
+        REQUIRE(cfg.txDisable == 0);
         REQUIRE(cfg.pttDisable == 1);
     }
 
     SECTION("RX-only channel with UI screen guard: both gates locked")
     {
         apply_tx_flags(&cfg, 1, true);
-        REQUIRE(cfg.txDisable  == 1);
+        REQUIRE(cfg.txDisable == 1);
         REQUIRE(cfg.pttDisable == 1);
     }
 }
@@ -75,7 +74,7 @@ TEST_CASE("RTX thread pttDisable enforcement", "[rtx]")
 
     SECTION("txDisable=1 forces pttDisable=1 regardless of incoming value")
     {
-        cfg.txDisable  = 1;
+        cfg.txDisable = 1;
         cfg.pttDisable = 0;
         apply_rtx_enforcement(&cfg);
         REQUIRE(cfg.pttDisable == 1);
@@ -83,19 +82,19 @@ TEST_CASE("RTX thread pttDisable enforcement", "[rtx]")
 
     SECTION("txDisable=0 leaves pttDisable unchanged")
     {
-        cfg.txDisable  = 0;
+        cfg.txDisable = 0;
         cfg.pttDisable = 1;
         apply_rtx_enforcement(&cfg);
-        REQUIRE(cfg.txDisable  == 0);
+        REQUIRE(cfg.txDisable == 0);
         REQUIRE(cfg.pttDisable == 1);
     }
 
     SECTION("txDisable=0 and pttDisable=0: both remain open")
     {
-        cfg.txDisable  = 0;
+        cfg.txDisable = 0;
         cfg.pttDisable = 0;
         apply_rtx_enforcement(&cfg);
-        REQUIRE(cfg.txDisable  == 0);
+        REQUIRE(cfg.txDisable == 0);
         REQUIRE(cfg.pttDisable == 0);
     }
 }
