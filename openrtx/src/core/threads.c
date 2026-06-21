@@ -21,8 +21,7 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
-#include "protocols/APRS/packet_list.h"
-#include "protocols/APRS/constants.h"
+#include "core/packet_engine.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -127,9 +126,7 @@ void *main_thread(void *arg)
 
     long long time = 0;
 #ifdef CONFIG_APRS
-    uint8_t aprsFrame[APRS_PACLEN];
-    struct pktDesc aprsDesc = { 0 };
-    struct aprsPacket *packet;
+    packetEngine_init();
 #endif
 
     #if defined(CONFIG_GPS)
@@ -161,29 +158,8 @@ void *main_thread(void *arg)
         state_task();
 
 #ifdef CONFIG_APRS
-        if (state.channel.mode == OPMODE_APRS) {
-            switch (aprsDesc.status) {
-                case PKT_STATUS_IDLE:
-                    aprsDesc.buffer = aprsFrame;
-                    aprsDesc.size = APRS_PACLEN;
-                    rtx_addPacketRx(&aprsDesc);
-                    break;
-
-                case PKT_STATUS_SUBMITTED:
-                    break;
-
-                case PKT_STATUS_DONE:
-                    packet = aprsPktFromFrame(aprsDesc.buffer, aprsDesc.size);
-                    state.aprsStoredPkts = aprsPktList_insert(state.aprsStoredPkts,
-                                                    packet);
-                    /* fallthrough */
-                case PKT_STATUS_ERROR:
-                    aprsDesc.status = PKT_STATUS_IDLE;
-                    aprsDesc.size = APRS_PACLEN;
-                    rtx_addPacketRx(&aprsDesc);
-                    break;
-            }
-        }
+        if (state.channel.mode == OPMODE_APRS)
+            packetEngine_task();
 #endif
 
         // Run this loop once every 5ms
