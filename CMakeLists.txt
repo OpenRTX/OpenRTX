@@ -38,11 +38,11 @@ if (${BOARD} STREQUAL "c62")
     #Load BK1080 driver
     list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/platform/drivers-zephyr/baseband/bk1080)
 
-    #Load CSK SDK modules required for LSF
-    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/freertos_shims)
-    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/af)
-    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/lsf)
-    list(APPEND ZEPHYR_EXTRA_MODULES  ${CMAKE_CURRENT_LIST_DIR}/platform/targets/c62/modules/lib/urpc)
+    #Load C62 platform modules from west workspace
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/freertos_shims)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/af)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/lsf)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/urpc)
 
     #find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 

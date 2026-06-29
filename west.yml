@@ -13,6 +13,8 @@ manifest:
   remotes:
     - name: zephyr
       url-base: https://github.com/zephyrproject-rtos
+    - name: c62-dependencies
+      url-base: https://github.com/OE3ANC
 
   projects:
     - name: zephyr
@@ -31,3 +33,31 @@ manifest:
       west-commands: west/west-commands.yml
       groups:
         - hal
+
+    - name: openrtx-c62-modules-af
+      remote: c62-dependencies
+      revision: openrtx-c62
+      path: modules/lib/af
+      groups:
+        - c62
+
+    - name: openrtx-c62-modules-freertos_shims
+      remote: c62-dependencies
+      revision: openrtx-c62
+      path: modules/lib/freertos_shims
+      groups:
+        - c62
+
+    - name: openrtx-c62-modules-lsf
+      remote: c62-dependencies
+      revision: openrtx-c62
+      path: modules/lib/lsf
+      groups:
+        - c62
+
+    - name: openrtx-c62-modules-urpc
+      remote: c62-dependencies
+      revision: openrtx-c62
+      path: modules/lib/urpc
+      groups:
+        - c62

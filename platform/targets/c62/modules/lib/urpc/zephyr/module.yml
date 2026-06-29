@@ -1,2 +1,0 @@
-build:
-  cmake: targets/ap_zephyr
