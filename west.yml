@@ -10,6 +10,9 @@ manifest:
   defaults:
     remote: zephyr
 
+  group-filter:
+    - -c62
+
   remotes:
     - name: zephyr
       url-base: https://github.com/zephyrproject-rtos

@@ -988,8 +988,12 @@ foreach t : targets
                     command : [uf2conv, '-D', '@INPUT@'])
   # C62 is a Zephyr target, we compile it using west and package it in uf2 format
   elif name == 'openrtx_c62'
+      c62_modules = custom_target('c62_west_update',
+                                  output  : 'c62_west_update.stamp',
+                                  command : ['sh', '-c', 'west update --group-filter +c62 && touch @OUTPUT@'])
+
       bin = custom_target(name,
-                          input   : txt,
+                          input   : [txt, c62_modules],
                           output  : name+'_bin',
                           command : [west,
                                     'build',
