@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 diff -ruN /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt
 --- /home/josh/utm/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt	2025-01-18 15:48:46.831505179 -0500
 +++ /home/josh/.listenai/csk-sdk-v2/zephyr/drivers/spi/CMakeLists.txt	2025-03-22 20:30:52.369159480 -0400

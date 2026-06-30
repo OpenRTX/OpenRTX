@@ -1,4 +1,8 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 #include <csk/csk6_pinctrl.dtsi>
 
 #define c62_pinctrl pinctrl \

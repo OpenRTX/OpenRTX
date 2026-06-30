@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # Call this file with "lisa zep exec ./run_build_c62.sh"
 

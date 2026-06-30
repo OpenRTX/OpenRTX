@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #define DT_DRV_COMPAT beken_bk1080
 
 

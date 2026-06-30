@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 if(CONFIG_BK4819)
   zephyr_library()
