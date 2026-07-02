@@ -56,6 +56,7 @@ enum uiScreen
 #ifdef CONFIG_MESSAGES
     MESSAGES_LIST,
     MESSAGES_DETAIL,
+    SETTINGS_MESSAGES,
 #endif
 };
 
@@ -97,6 +98,9 @@ enum settingsItems
     S_M17,
 #endif
     S_FM,
+#ifdef CONFIG_MESSAGES
+    S_MESSAGES,
+#endif
     S_ACCESSIBILITY,
     S_RESET2DEFAULTS,
 };
@@ -157,6 +161,14 @@ enum settingsFMItems
     CTCSS_Tone,
     CTCSS_Enabled
 };
+
+#ifdef CONFIG_MESSAGES
+enum settingsMessagesItems
+{
+    SM_NOTIFICATION = 0,
+    SM_TONE,
+};
+#endif
 
 /**
  * Struct containing a set of positions and sizes that get
@@ -264,6 +276,9 @@ extern const char *settings_gps_items[];
 extern const char *settings_radio_items[];
 extern const char *settings_m17_items[];
 extern const char *settings_fm_items[];
+#ifdef CONFIG_MESSAGES
+extern const char *settings_messages_items[];
+#endif
 extern const char * settings_accessibility_items[];
 extern const char *backup_restore_items[];
 extern const char *info_items[];
@@ -275,6 +290,9 @@ extern const uint8_t settings_gps_num;
 extern const uint8_t settings_radio_num;
 extern const uint8_t settings_m17_num;
 extern const uint8_t settings_fm_num;
+#ifdef CONFIG_MESSAGES
+extern const uint8_t settings_messages_num;
+#endif
 extern const uint8_t settings_accessibility_num;
 extern const uint8_t backup_restore_num;
 extern const uint8_t info_num;

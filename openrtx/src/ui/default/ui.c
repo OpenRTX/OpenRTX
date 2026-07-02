@@ -66,6 +66,7 @@
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
 #include "core/messages.h"
+#include "core/notification.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -100,6 +101,9 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsFM(ui_state_t* ui_state);
+#ifdef CONFIG_MESSAGES
+extern void _ui_drawSettingsMessages(ui_state_t* ui_state);
+#endif
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
@@ -141,6 +145,9 @@ const char *settings_items[] =
     "M17",
 #endif
     "FM",
+#ifdef CONFIG_MESSAGES
+    "Messages",
+#endif
     "Accessibility",
     "Default Settings"
 };
@@ -188,6 +195,14 @@ const char* settings_fm_items[] =
     "CTCSS Tone",
     "CTCSS En."
 };
+
+#ifdef CONFIG_MESSAGES
+const char* settings_messages_items[] =
+{
+    "Notification",
+    "Tone"
+};
+#endif
 
 const char * settings_accessibility_items[] =
 {
@@ -274,6 +289,9 @@ const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 #endif
 const uint8_t settings_fm_num = sizeof(settings_fm_items) / sizeof(settings_fm_items[0]);
+#ifdef CONFIG_MESSAGES
+const uint8_t settings_messages_num = sizeof(settings_messages_items) / sizeof(settings_messages_items[0]);
+#endif
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -1987,6 +2005,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_FM:
                             state.ui_screen = SETTINGS_FM;
                             break;
+#ifdef CONFIG_MESSAGES
+                        case S_MESSAGES:
+                            state.ui_screen = SETTINGS_MESSAGES;
+                            break;
+#endif
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2524,6 +2547,57 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
 
+#ifdef CONFIG_MESSAGES
+            case SETTINGS_MESSAGES:
+                if(ui_state.edit_mode)
+                {
+                    if(msg.keys & KEY_ESC)
+                        ui_state.edit_mode = false;
+
+                    switch(ui_state.menu_selected)
+                    {
+                        case SM_NOTIFICATION:
+                            if((msg.keys & KEY_DOWN) || (msg.keys & KNOB_LEFT)
+                               || (msg.keys & KEY_UP) || (msg.keys & KNOB_RIGHT))
+                            {
+                                state.settings.notification_type =
+                                    (state.settings.notification_type == NOTIFY_NONE)
+                                        ? NOTIFY_TONE : NOTIFY_NONE;
+                            }
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = false;
+                            break;
+                        case SM_TONE:
+                            if((msg.keys & KEY_DOWN) || (msg.keys & KNOB_LEFT))
+                            {
+                                if(state.settings.msg_notification_tone == 0)
+                                    state.settings.msg_notification_tone = MSG_TONE_COUNT - 1;
+                                else
+                                    state.settings.msg_notification_tone--;
+                                notification_play_tone_preview(state.settings.msg_notification_tone);
+                            }
+                            else if((msg.keys & KEY_UP) || (msg.keys & KNOB_RIGHT))
+                            {
+                                state.settings.msg_notification_tone =
+                                    (state.settings.msg_notification_tone + 1) % MSG_TONE_COUNT;
+                                notification_play_tone_preview(state.settings.msg_notification_tone);
+                            }
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = false;
+                            break;
+                    }
+                }
+                else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_messages_num);
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_messages_num);
+                else if(msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                else if(msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
+#endif
+
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2882,6 +2956,12 @@ bool ui_updateGUI()
         case SETTINGS_FM:
             _ui_drawSettingsFM(&ui_state);
             break;
+#ifdef CONFIG_MESSAGES
+        // Messages settings screen
+        case SETTINGS_MESSAGES:
+            _ui_drawSettingsMessages(&ui_state);
+            break;
+#endif
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;
