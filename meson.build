@@ -1192,25 +1192,15 @@ rtx_tx_disable_test = executable('rtx_tx_disable_test',
                                   sources : unit_test_src + ['tests/unit/rtx_tx_disable.cpp'],
                                   kwargs  : unit_test_opts)
 
-# The message registry/facade is a standalone subsystem: its unit test
-# enables CONFIG_MESSAGES and picks its own snapshot capacity directly,
-# rather than depending on which target hwconfig.h happens to enable it.
-# This keeps the test deterministic and lets it validate the subsystem
-# ahead of any target actually wiring the feature in.
-messages_test_opts = {
-    'c_args'             : linux_c_args + ['-DCONFIG_MESSAGES', '-DCONFIG_MSG_SNAPSHOT_SIZE=64'],
-    'cpp_args'           : linux_cpp_args + ['-DCONFIG_MESSAGES', '-DCONFIG_MSG_SNAPSHOT_SIZE=64'],
-    'include_directories': linux_inc,
-    'dependencies'       : [sdl_dep, threads_dep, codec2_dep, catch2_dep],
-    'link_args'          : linux_l_args,
-}
-
+# CONFIG_MESSAGES and CONFIG_MSG_SNAPSHOT_SIZE now come from the linux
+# target's hwconfig.h (see platform/targets/linux/hwconfig.h), the same as
+# any other target — no test-specific override needed.
 messages_test = executable('messages_test',
                             sources : unit_test_src + [
                                 'openrtx/src/core/messages.cpp',
                                 'tests/unit/messages_test.cpp',
                             ],
-                            kwargs  : messages_test_opts)
+                            kwargs  : unit_test_opts)
 
 m17_packet_disassembly_test = executable('m17_packet_disassembly_test',
                                          sources : unit_test_src + ['tests/unit/M17_packet_disassembly.cpp'],

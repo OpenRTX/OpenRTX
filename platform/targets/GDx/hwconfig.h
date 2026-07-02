@@ -47,4 +47,8 @@ extern const struct spiDevice c6000_spi;
 }
 #endif
 
+/* Message inbox infrastructure. Uses the default snapshot/pool tier from
+ * messages.h/m17_sms.h (32 entries / 3200 bytes). */
+#define CONFIG_MESSAGES
+
 #endif /* HWCONFIG_H */

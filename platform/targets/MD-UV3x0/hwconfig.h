@@ -83,4 +83,8 @@ extern const struct Adc adc1;
 }
 #endif
 
+/* Message inbox infrastructure. Uses the default snapshot/pool tier from
+ * messages.h/m17_sms.h (32 entries / 3200 bytes). */
+#define CONFIG_MESSAGES
+
 #endif /* HWCONFIG_H */

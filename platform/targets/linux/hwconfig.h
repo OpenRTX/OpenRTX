@@ -31,4 +31,9 @@ enum Mod17Flags {
 }
 #endif
 
+/* Message inbox infrastructure. Overrides the default 32-entry/3200-byte
+ * tier from messages.h/m17_sms.h with a larger tier for this target. */
+#define CONFIG_MESSAGES
+#define CONFIG_MSG_SNAPSHOT_SIZE 64
+
 #endif /* HWCONFIG_H */
