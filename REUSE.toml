@@ -62,7 +62,8 @@ path = [
     "openrtx/include/fonts/symbols/sources/wifi-strength-1.svg",
     "openrtx/include/fonts/symbols/sources/wifi-strength-2.svg",
     "openrtx/include/fonts/symbols/sources/wifi-strength-3.svg",
-    "openrtx/include/fonts/symbols/sources/wifi-strength-4.svg"
+    "openrtx/include/fonts/symbols/sources/wifi-strength-4.svg",
+    "openrtx/include/fonts/symbols/sources/mail.svg"
 ]
 SPDX-License-Identifier = "Apache-2.0"
 SPDX-FileCopyrightText = "Pictogrammers"

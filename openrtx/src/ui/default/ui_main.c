@@ -14,6 +14,7 @@
 #include "ui/ui_strings.h"
 #include "core/utils.h"
 #include "ui/utils.h"
+#include "core/messages.h"
 
 void _ui_drawMainBackground()
 {
@@ -52,9 +53,15 @@ void _ui_drawMainTop(ui_state_t * ui_state)
         color_white,"%d%%", last_state.charge);
     }
 #endif
+    point_t icon_pos = layout.top_pos;
     if (ui_state->input_locked == true)
-      gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
-                     color_white, SYMBOL_LOCK);
+      icon_pos = gfx_drawSymbol(icon_pos, layout.top_symbol_size,
+                                TEXT_ALIGN_LEFT, color_white, SYMBOL_LOCK);
+#ifdef CONFIG_MESSAGES
+    if (messages_count_unread() > 0)
+      gfx_drawSymbol(icon_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
+                    color_white, SYMBOL_MAIL);
+#endif
 }
 
 void _ui_drawBankChannel()

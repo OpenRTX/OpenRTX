@@ -52,7 +52,11 @@ enum uiScreen
     SETTINGS_FM,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+#ifdef CONFIG_MESSAGES
+    MESSAGES_LIST,
+    MESSAGES_DETAIL,
+#endif
 };
 
 enum SetRxTx
@@ -70,6 +74,9 @@ enum menuItems
     M_CONTACTS,
 #ifdef CONFIG_GPS
     M_GPS,
+#endif
+#ifdef CONFIG_MESSAGES
+    M_MESSAGES,
 #endif
     M_SETTINGS,
     M_INFO,
@@ -234,6 +241,16 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+#ifdef CONFIG_MESSAGES
+    // Sequence number of the message pinned in MESSAGES_DETAIL. Using the
+    // sequence (rather than a snapshot index) means the detail view keeps
+    // showing the same message across a snapshot rebuild even if its
+    // position shifts; see messages_find_by_sequence().
+    uint32_t messages_detail_seq;
+    // Body scroll offset (pixels) and its current maximum in MESSAGES_DETAIL.
+    int16_t detail_scroll;
+    int16_t detail_scroll_max;
+#endif
 }
 ui_state_t;
 

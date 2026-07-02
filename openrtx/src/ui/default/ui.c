@@ -65,6 +65,7 @@
 #include "hwconfig.h"
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
+#include "core/messages.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -104,6 +105,11 @@ extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
+/* UI messages functions, their implementation is in "ui_messages.c" */
+#ifdef CONFIG_MESSAGES
+extern void _ui_drawMessagesList(ui_state_t* ui_state);
+extern void _ui_drawMessagesDetail(ui_state_t* ui_state);
+#endif
 // TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
 {
@@ -112,6 +118,9 @@ const char *menu_items[] =
     "Contacts",
 #ifdef CONFIG_GPS
     "GPS",
+#endif
+#ifdef CONFIG_MESSAGES
+    "Messages",
 #endif
     "Settings",
     "Info",
@@ -1835,6 +1844,11 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = MENU_GPS;
                             break;
 #endif
+#ifdef CONFIG_MESSAGES
+                        case M_MESSAGES:
+                            state.ui_screen = MESSAGES_LIST;
+                            break;
+#endif
                         case M_SETTINGS:
                             state.ui_screen = MENU_SETTINGS;
                             break;
@@ -2582,6 +2596,135 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+#ifdef CONFIG_MESSAGES
+            // Messages inbox list view
+            case MESSAGES_LIST:
+            {
+                size_t total = messages_count();
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
+                    if(total > 0)
+                    {
+                        if(ui_state.menu_selected > 0)
+                            ui_state.menu_selected--;
+                        else
+                            ui_state.menu_selected = (uint8_t)(total - 1);
+                    }
+                }
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    if(total > 0)
+                    {
+                        if((size_t)ui_state.menu_selected < total - 1)
+                            ui_state.menu_selected++;
+                        else
+                            ui_state.menu_selected = 0;
+                    }
+                }
+                else if(msg.keys & KEY_ENTER)
+                {
+                    size_t idx = ui_state.menu_selected;
+                    struct message_header *hdr = (idx < total) ? messages_get(idx) : NULL;
+                    if(hdr != NULL)
+                    {
+                        // Pin identity by sequence, not index: the snapshot
+                        // may reorder or shrink while this message is open.
+                        ui_state.messages_detail_seq = hdr->sequence;
+                        ui_state.detail_scroll = 0;
+                        ui_state.detail_scroll_max = 0;
+                        if(messages_supported_actions(idx) & MSG_ACTION_MARK_READ)
+                            messages_invoke_action(idx, MSG_ACTION_MARK_READ);
+                        state.ui_screen = MESSAGES_DETAIL;
+                    }
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    ui_state.menu_selected = 0;
+                    state.ui_screen = MENU_TOP;
+                }
+                break;
+            }
+            // Messages detail view
+            case MESSAGES_DETAIL:
+            {
+                size_t idx = messages_find_by_sequence(ui_state.messages_detail_seq);
+                if(idx == SIZE_MAX)
+                {
+                    // The message was deleted or evicted by its source while
+                    // being viewed (e.g. by another action) — bounce back to
+                    // the list rather than showing stale/empty content.
+                    ui_state.menu_selected = 0;
+                    state.ui_screen = MESSAGES_LIST;
+                    break;
+                }
+                /* Scroll step matches 6pt Ubuntu yAdvance */
+                static const int16_t SCROLL_STEP = 14;
+                if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                {
+                    if(ui_state.detail_scroll > 0)
+                    {
+                        /* Scroll body up */
+                        ui_state.detail_scroll -= SCROLL_STEP;
+                        if(ui_state.detail_scroll < 0)
+                            ui_state.detail_scroll = 0;
+                    }
+                    else if (idx > 0)
+                    {
+                        /* Edge: go to previous message, reset scroll.
+                         * Navigate from the freshly resolved idx, not the
+                         * stale menu_selected, so a snapshot rebuild while
+                         * the message is open cannot desync the two. */
+                        struct message_header *prev = messages_get(idx - 1);
+                        if (prev != NULL)
+                        {
+                            ui_state.messages_detail_seq = prev->sequence;
+                            ui_state.menu_selected = (uint8_t)(idx - 1);
+                            /* A message is "seen" the moment it's displayed,
+                             * whether reached from the list or by scrolling
+                             * here from an adjacent message. */
+                            if(messages_supported_actions(idx - 1) &
+                               MSG_ACTION_MARK_READ)
+                                messages_invoke_action(idx - 1,
+                                                       MSG_ACTION_MARK_READ);
+                        }
+                        ui_state.detail_scroll = INT16_MAX;
+                    }
+                }
+                else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                {
+                    if(ui_state.detail_scroll < ui_state.detail_scroll_max)
+                    {
+                        /* Scroll body down */
+                        ui_state.detail_scroll += SCROLL_STEP;
+                        if(ui_state.detail_scroll > ui_state.detail_scroll_max)
+                            ui_state.detail_scroll = ui_state.detail_scroll_max;
+                    }
+                    else if (idx + 1 < messages_count())
+                    {
+                        /* Edge: go to next message, reset scroll.
+                         * Navigate from the freshly resolved idx (see the
+                         * previous-message branch above). */
+                        struct message_header *next = messages_get(idx + 1);
+                        if (next != NULL)
+                        {
+                            ui_state.messages_detail_seq = next->sequence;
+                            ui_state.menu_selected = (uint8_t)(idx + 1);
+                            /* See the previous-message branch above. */
+                            if(messages_supported_actions(idx + 1) &
+                               MSG_ACTION_MARK_READ)
+                                messages_invoke_action(idx + 1,
+                                                       MSG_ACTION_MARK_READ);
+                        }
+                        ui_state.detail_scroll = 0;
+                    }
+                }
+                else if(msg.keys & KEY_ESC)
+                {
+                    state.ui_screen = MESSAGES_LIST;
+                }
+                break;
+            }
+#endif
         }
 
         // Enable Tx only if in MAIN_VFO or MAIN_MEM states
@@ -2754,6 +2897,16 @@ bool ui_updateGUI()
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
             break;
+#ifdef CONFIG_MESSAGES
+        // Messages inbox list view
+        case MESSAGES_LIST:
+            _ui_drawMessagesList(&ui_state);
+            break;
+        // Messages detail view
+        case MESSAGES_DETAIL:
+            _ui_drawMessagesDetail(&ui_state);
+            break;
+#endif
     }
 
     // If MACRO menu is active draw it
