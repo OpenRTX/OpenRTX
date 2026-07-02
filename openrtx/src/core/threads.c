@@ -23,6 +23,8 @@
 #include "core/voicePrompts.h"
 #include "core/messages.h"
 
+#include "core/packet_io.h"
+
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
 #endif
@@ -191,6 +193,11 @@ void create_threads()
 {
     // Create RTX state mutex
     pthread_mutex_init(&rtx_mutex, NULL);
+
+#ifdef CONFIG_MESSAGES
+    // Initialise packet I/O queues before either thread can use them.
+    packet_io_init();
+#endif
 
     // Create rtx radio thread
     pthread_attr_t rtx_attr;
