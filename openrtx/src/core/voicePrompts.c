@@ -12,6 +12,7 @@
 #include "core/voicePrompts.h"
 #include "core/audio_codec.h"
 #include "core/audio_path.h"
+#include "core/notification.h"
 #include <strings.h> // For strncasecmp
 #include <ctype.h>
 #include "core/state.h"
@@ -586,13 +587,19 @@ bool vp_sequenceNotEmpty()
     return (vpCurrentSequence.length > 0);
 }
 
+bool vp_beepBusy()
+{
+    return currentBeepDuration != 0;
+}
+
 void vp_beep(uint16_t freq, uint16_t duration)
 {
     if (state.settings.vpLevel < vpBeep)
         return;
 
-    // Do not play a new one if one is playing.
-    if (currentBeepDuration != 0)
+    // Do not play a new one if one is playing, and don't steal the beeper
+    // out from under an in-progress notification tone.
+    if ((currentBeepDuration != 0) || notification_toneActive())
         return;
 
     // avoid extra long beeps!
@@ -614,7 +621,7 @@ void vp_beepSeries(const uint16_t *beepSeries)
     if (state.settings.vpLevel < vpBeep)
         return;
 
-    if (currentBeepDuration != 0)
+    if ((currentBeepDuration != 0) || notification_toneActive())
         return;
 
     enableSpkOutput();

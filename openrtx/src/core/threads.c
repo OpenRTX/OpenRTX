@@ -22,6 +22,7 @@
 #include "core/gps.h"
 #include "core/voicePrompts.h"
 #include "core/messages.h"
+#include "core/notification.h"
 
 #include "core/packet_io.h"
 
@@ -64,12 +65,24 @@ void *ui_threadFunc(void *arg)
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
         ui_updateFSM(&sync_rtx);            // Update UI FSM
         ui_saveState();                     // Save local state copy
+#ifdef CONFIG_MESSAGES
+        enum notification_type notif_type =
+            (enum notification_type)state.settings.notification_type;
+        uint8_t notif_tone = state.settings.msg_notification_tone;
+#endif
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
         vp_tick();                           // continue playing voice prompts in progress if any.
 
 #ifdef CONFIG_MESSAGES
-        messages_tick();                     // Refresh message inbox snapshot.
+        // Refresh the message inbox snapshot; if new unread entries
+        // arrived, trigger the configured notification tone.
+        size_t new_unread = messages_tick();
+        if (new_unread > 0)
+        {
+            notification_play_message_tone(notif_type, notif_tone);
+        }
+        notification_tick();                 // Advance notification tone sequencer.
 #endif
 
         // If synchronization needed take mutex and update RTX configuration

@@ -58,6 +58,8 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/core/messages.cpp',
                'openrtx/src/core/packet_io.c',
+               'openrtx/src/core/rtttl.c',
+               'openrtx/src/core/notification.cpp',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -1210,6 +1212,13 @@ packet_io_test = executable('packet_io_test',
                              ],
                              kwargs  : unit_test_opts)
 
+rtttl_test = executable('rtttl_test',
+                         sources : unit_test_src + [
+                             'openrtx/src/core/rtttl.c',
+                             'tests/unit/rtttl_test.cpp',
+                         ],
+                         kwargs  : unit_test_opts)
+
 m17_packet_disassembly_test = executable('m17_packet_disassembly_test',
                                          sources : unit_test_src + ['tests/unit/M17_packet_disassembly.cpp'],
                                          kwargs  : unit_test_opts)
@@ -1242,6 +1251,7 @@ test('GFX Text Test',        gfx_text_test)
 test('RTX TX Disable Test', rtx_tx_disable_test)
 test('Messages Registry Test', messages_test)
 test('Packet IO Test', packet_io_test)
+test('RTTTL Parser Test', rtttl_test)
 test('M17 Packet Disassembly Test', m17_packet_disassembly_test)
 test('M17 Packet Framing Test', m17_packet_framing_test)
 test('M17 SMS Packet Test', m17_sms_packet_test)

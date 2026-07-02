@@ -310,6 +310,15 @@ bool vp_isPlaying();
 bool vp_sequenceNotEmpty();
 
 /**
+ * Check if vp_beep()/vp_beepSeries() is currently driving the beeper.
+ * Queried by notification.cpp to avoid starting a notification tone on top
+ * of an in-progress beep.
+ *
+ * @return true if a beep or beep series is currently playing.
+ */
+bool vp_beepBusy();
+
+/**
  * play a beep at a given frequency for a given duration.
  */
 void vp_beep(uint16_t freq, uint16_t duration);

@@ -104,6 +104,8 @@ target_sources(app
     openrtx/src/core/nvmem_access.c
     openrtx/src/core/messages.cpp
     openrtx/src/core/packet_io.c
+    openrtx/src/core/rtttl.c
+    openrtx/src/core/notification.cpp
     openrtx/src/rtx/rtx.cpp
     openrtx/src/rtx/OpMode_FM.cpp
     openrtx/src/rtx/OpMode_M17.cpp
