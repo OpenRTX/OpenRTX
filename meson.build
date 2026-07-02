@@ -56,6 +56,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/voicePromptUtils.c',
                'openrtx/src/core/voicePromptData.S',
                'openrtx/src/core/nvmem_access.c',
+               'openrtx/src/core/messages.cpp',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -1191,6 +1192,26 @@ rtx_tx_disable_test = executable('rtx_tx_disable_test',
                                   sources : unit_test_src + ['tests/unit/rtx_tx_disable.cpp'],
                                   kwargs  : unit_test_opts)
 
+# The message registry/facade is a standalone subsystem: its unit test
+# enables CONFIG_MESSAGES and picks its own snapshot capacity directly,
+# rather than depending on which target hwconfig.h happens to enable it.
+# This keeps the test deterministic and lets it validate the subsystem
+# ahead of any target actually wiring the feature in.
+messages_test_opts = {
+    'c_args'             : linux_c_args + ['-DCONFIG_MESSAGES', '-DCONFIG_MSG_SNAPSHOT_SIZE=64'],
+    'cpp_args'           : linux_cpp_args + ['-DCONFIG_MESSAGES', '-DCONFIG_MSG_SNAPSHOT_SIZE=64'],
+    'include_directories': linux_inc,
+    'dependencies'       : [sdl_dep, threads_dep, codec2_dep, catch2_dep],
+    'link_args'          : linux_l_args,
+}
+
+messages_test = executable('messages_test',
+                            sources : unit_test_src + [
+                                'openrtx/src/core/messages.cpp',
+                                'tests/unit/messages_test.cpp',
+                            ],
+                            kwargs  : messages_test_opts)
+
 m17_packet_disassembly_test = executable('m17_packet_disassembly_test',
                                          sources : unit_test_src + ['tests/unit/M17_packet_disassembly.cpp'],
                                          kwargs  : unit_test_opts)
@@ -1221,6 +1242,7 @@ test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('RTX TX Disable Test', rtx_tx_disable_test)
+test('Messages Registry Test', messages_test)
 test('M17 Packet Disassembly Test', m17_packet_disassembly_test)
 test('M17 Packet Framing Test', m17_packet_framing_test)
 test('M17 SMS Packet Test', m17_sms_packet_test)
