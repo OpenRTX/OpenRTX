@@ -1268,3 +1268,14 @@ m17_sms_source_test = executable('m17_sms_source_test',
                                   kwargs  : unit_test_opts)
 
 test('M17 SMS Source Test', m17_sms_source_test)
+
+m17_sms_loopback_test = executable('m17_sms_loopback_test',
+                                    sources : ['openrtx/src/core/m17_sms.cpp',
+                                               'openrtx/src/core/packet_io.c',
+                                               'openrtx/src/core/datetime.c',
+                                               'openrtx/src/protocols/M17/SmsPacket.cpp',
+                                               'tests/unit/m17_sms_loopback_stubs.cpp',
+                                               'tests/unit/m17_sms_loopback_test.cpp'],
+                                    kwargs  : unit_test_opts)
+
+test('M17 SMS Loopback Test', m17_sms_loopback_test)
