@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 #include "ui/ui_default.h"
 #include "ui/ui_strings.h"
 #include "core/messages.h"
@@ -24,6 +25,8 @@ extern void _ui_drawMenuList(uint8_t selected,
 /**
  * \internal Callback for _ui_drawMenuList(): formats snapshot entry @p index
  * as "<unread-marker><sender> <body preview>", truncated to fit MAX_ENTRY_LEN.
+ * When compose is available, a virtual "New Message" entry is appended after
+ * the last real message (at index == messages_count()).
  *
  * @return 0 on success, -1 if index is out of range (stops the list).
  */
@@ -59,7 +62,10 @@ void _ui_drawMessagesList(ui_state_t *ui_state)
     gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
               currentLanguage->messages);
 
-    if (messages_count() == 0) {
+    size_t count = messages_count();
+    bool can_compose = messages_can_compose(last_state.channel.mode);
+
+    if (count == 0 && !can_compose) {
         gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->noMessages);
         return;
@@ -147,5 +153,128 @@ void _ui_drawMessagesDetail(ui_state_t *ui_state)
     gfx_print(bot_pos, layout.top_font, TEXT_ALIGN_CENTER, color_black,
               counter);
 }
+
+#ifdef CONFIG_M17_SMS
+/**
+ * Resolve the effective compose recipient: an explicitly-typed
+ * compose_recipient overrides the channel's configured m17_dest, which in
+ * turn overrides @p fallback. Shared by the compose draw code (which wants
+ * a localized placeholder string) and the send code (which needs the M17
+ * protocol's literal broadcast address, not a translated one) so the
+ * resolution order only has to be maintained in one place.
+ */
+const char *_ui_resolveComposeRecipient(const ui_state_t *ui_state,
+                                        const char *m17_dest,
+                                        const char *fallback)
+{
+    if (ui_state->compose_recipient[0] != '\0')
+        return ui_state->compose_recipient;
+    if (m17_dest[0] != '\0')
+        return m17_dest;
+    return fallback;
+}
+
+void _ui_drawMessagesCompose(ui_state_t *ui_state)
+{
+    gfx_clearScreen();
+
+    /* Title bar */
+    const char *title = ui_state->compose_is_reply ?
+                            currentLanguage->reply :
+                            currentLanguage->newMessage;
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
+              title);
+
+    /* ---- To row (row 0) ---- */
+    point_t to_rpos = layout.line1_pos;
+
+    if (!ui_state->compose_editing && ui_state->compose_focus == 0) {
+        point_t rect_pos = { 0, (int16_t)(to_rpos.y - layout.menu_h + 3) };
+        gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white,
+                     true);
+    }
+
+    color_t to_col = (ui_state->compose_focus == 0
+                      && !ui_state->compose_editing) ?
+                         color_black :
+                         color_white;
+    {
+        const char *rcpt = _ui_resolveComposeRecipient(
+            ui_state, last_state.settings.m17_dest, currentLanguage->broadcast);
+        char val[11] = { 0 };
+        sniprintf(val, sizeof(val), "%.10s", rcpt);
+        gfx_print(to_rpos, layout.menu_font, TEXT_ALIGN_LEFT, to_col, "To");
+        gfx_print(to_rpos, layout.menu_font, TEXT_ALIGN_RIGHT, to_col, val);
+    }
+
+    /* ---- Body area (row 1) ---- */
+    static const uint8_t BOX_PAD = 2;
+    int16_t to_row_top = (int16_t)(to_rpos.y - layout.menu_h + 3);
+    int16_t body_top = (int16_t)(to_row_top + layout.menu_h);
+    int16_t send_h_top = (int16_t)(layout.bottom_pos.y - layout.menu_h + 3);
+    int16_t body_bot = (int16_t)(send_h_top - 1);
+    uint16_t body_w =
+        (uint16_t)(CONFIG_SCREEN_WIDTH - 2u * layout.horizontal_pad);
+    uint16_t body_h = (uint16_t)(body_bot - body_top + 1);
+    point_t body_orig = { (int16_t)layout.horizontal_pad, body_top };
+
+    if (ui_state->compose_focus == 1 && ui_state->compose_body_editing)
+        gfx_drawRect(body_orig, body_w, body_h, color_white, true);
+    gfx_drawRect(body_orig, body_w, body_h, color_white, false);
+
+    color_t body_col = (ui_state->compose_focus == 1
+                        && ui_state->compose_body_editing) ?
+                           color_black :
+                           color_white;
+    uint8_t font_h = gfx_getFontHeight(layout.message_font);
+    uint16_t max_x = (uint16_t)(layout.horizontal_pad + body_w - BOX_PAD);
+    int16_t clip_top = (int16_t)(body_top + 1);
+    int16_t clip_bot = (int16_t)(body_bot - 1);
+
+    uint16_t cursor_y =
+        gfx_measureText(layout.message_font, ui_state->compose_body,
+                        (uint16_t)(layout.horizontal_pad + BOX_PAD), max_x,
+                        (size_t)ui_state->input_position + 1);
+    int16_t visible_h = clip_bot - clip_top;
+    int16_t scroll_offset = 0;
+    if ((int16_t)cursor_y > visible_h)
+        scroll_offset = (int16_t)cursor_y - visible_h;
+
+    point_t text_start = { (int16_t)(layout.horizontal_pad + BOX_PAD),
+                           (int16_t)(clip_top + font_h - scroll_offset) };
+    gfx_printBufferClipped(text_start, layout.message_font, TEXT_ALIGN_LEFT,
+                           body_col, ui_state->compose_body, max_x, clip_top,
+                           clip_bot);
+
+    /* ---- Send row (row 2) ---- */
+    point_t send_rpos = { (int16_t)layout.horizontal_pad, layout.bottom_pos.y };
+    if (ui_state->compose_focus == 2) {
+        point_t rect_pos = { 0, (int16_t)(send_rpos.y - layout.menu_h + 3) };
+        gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white,
+                     true);
+    }
+    color_t send_col = (ui_state->compose_focus == 2) ? color_black :
+                                                        color_white;
+    gfx_print(send_rpos, layout.menu_font, TEXT_ALIGN_CENTER, send_col,
+              currentLanguage->send);
+
+    /* ---- To-field editing overlay ---- */
+    if (ui_state->compose_editing) {
+        uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
+        uint16_t rect_height =
+            (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h)) / 2;
+        point_t rect_origin = {
+            (int16_t)((CONFIG_SCREEN_WIDTH - rect_width) / 2),
+            (int16_t)((CONFIG_SCREEN_HEIGHT - rect_height) / 2)
+        };
+        gfx_drawRect(rect_origin, rect_width, rect_height, color_black, true);
+        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+        gfx_printLine(1, 1, layout.top_h,
+                      CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                      layout.horizontal_pad, layout.input_font,
+                      TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+    }
+}
+#endif /* CONFIG_M17_SMS */
 
 #endif /* CONFIG_MESSAGES */

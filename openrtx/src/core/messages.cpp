@@ -14,6 +14,10 @@
 #include "core/messages_demo.h"
 #endif
 
+#ifdef CONFIG_M17_SMS
+#include "core/m17_sms.h"
+#endif
+
 /* ------------------------------------------------------------------
  * Compile-time source table.
  *
@@ -27,13 +31,16 @@
  * zero-size array is a GNU extension tolerated by clang (used for the
  * linux/host build) but rejected as a hard error by arm-miosix-eabi-g++
  * (used for cm4/cm7 targets).  MessageRegistry already skips any entry
- * whose vtable is NULL, so the sentinel is completely inert — it costs one
+ * whose ops is NULL, so the sentinel is completely inert — it costs one
  * harmless iteration in tick()'s source loop, nothing more.
  * ------------------------------------------------------------------ */
 
 static const SourceEntry sources[] = {
 #ifdef CONFIG_MESSAGES_DEMO
-    { &messages_demo_vtable, &messages_demo_ctx },
+    { &messages_demo_ops, &messages_demo_ctx },
+#endif
+#ifdef CONFIG_M17_SMS
+    { &m17_sms_ops, NULL },
 #endif
     { nullptr, nullptr }, /* sentinel — keep last, see comment above */
 };

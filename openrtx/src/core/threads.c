@@ -26,6 +26,10 @@
 
 #include "core/packet_io.h"
 
+#ifdef CONFIG_M17_SMS
+#include "core/m17_sms.h"
+#endif
+
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
 #endif
@@ -189,9 +193,16 @@ void *rtx_threadFunc(void *arg)
 
     rtx_init(&rtx_mutex);
 
+#ifdef CONFIG_M17_SMS
+    m17_sms_init();
+#endif
+
     while(state.devStatus == RUNNING)
     {
         rtx_task();
+#ifdef CONFIG_M17_SMS
+        m17_sms_task_rtx();
+#endif
     }
 
     rtx_terminate();

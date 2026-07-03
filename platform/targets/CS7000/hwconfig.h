@@ -75,4 +75,9 @@ extern const struct gpsDevice gps;
 #define CONFIG_MESSAGES
 #define CONFIG_MSG_SNAPSHOT_SIZE 64
 
+/* M17 SMS message source. */
+#define CONFIG_M17_SMS
+#define M17_SMS_MAX_MESSAGES 64
+#define M17_SMS_POOL_BYTES 6400
+
 #endif /* HWCONFIG_H */
