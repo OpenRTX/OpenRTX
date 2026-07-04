@@ -1,6 +1,11 @@
 name: "Build devcontainer"
 on:
   workflow_dispatch:
+  # Rebuild weekly: this image is the layer cache for the "Build and test"
+  # workflow and goes stale whenever the ubuntu:24.04 base image is updated
+  # upstream, forcing every CI run to rebuild the full toolchain.
+  schedule:
+    - cron: '30 4 * * 1'
   push:
     branches:
       - master
@@ -17,8 +22,6 @@ on:
       - '.devcontainer/devcontainer.json'
 
 env:
-  RADIO_TOOL_VERSION: 0.2.2
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
 jobs:
   build:
