@@ -37,8 +37,15 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # compile miosix compiler
-RUN git clone --depth 1 https://github.com/fedetft/miosix-kernel.git \
-  && cd miosix-kernel/tools/compiler/gcc-9.2.0-mp3.2 \
+# Pinned to Miosix v3.01: upstream layout changes have broken this build
+# before (see issue #469), bump the SHA deliberately.
+ARG MIOSIX_KERNEL_SHA=361e8c35b09ad73c15ded5332dff21ce8c9a711d
+RUN git init miosix-kernel \
+  && cd miosix-kernel \
+  && git remote add origin https://github.com/fedetft/miosix-kernel.git \
+  && git fetch --depth 1 origin ${MIOSIX_KERNEL_SHA} \
+  && git checkout FETCH_HEAD \
+  && cd tools/compiler/gcc-9.2.0-mp3.2 \
   && sh download.sh \
   && bash install-script.sh -j`nproc`
 
