@@ -5,12 +5,18 @@ on:
   pull_request:
 
 env:
-  RADIO_TOOL_VERSION: 0.2.2
-  BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
+
+# Cancel superseded runs of the same PR, keep all runs on branches
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   unit-test:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,6 +53,7 @@ jobs:
           cat build/coverage/coverage.md >> $GITHUB_STEP_SUMMARY
   build-zephyr:
     runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,6 +87,7 @@ jobs:
             app/build/openrtx_*.uf2
   build:
     runs-on: ubuntu-24.04
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
