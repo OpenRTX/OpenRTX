@@ -85,6 +85,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Replace slashes in branch name
+        run: echo "BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '/' '-')" >> "$GITHUB_ENV"
       - name: Compile using devcontainer
         uses: devcontainers/ci@v0.3
         with:
