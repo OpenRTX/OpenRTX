@@ -2391,6 +2391,12 @@ void ui_updateFSM(bool *sync_rtx)
                                 _ui_textInputConfirm(ui_state.new_callsign);
                                 // Save selected callsign and disable input mode
                                 strncpy(state.settings.callsign, ui_state.new_callsign, 10);
+                                // Push the new identity to the RTX thread now:
+                                // rtxStatus_t.source_address is what incoming
+                                // unicast traffic is matched against, and it
+                                // would otherwise stay stale until some other
+                                // action (e.g. a channel change) syncs it.
+                                *sync_rtx = true;
                                 ui_state.edit_mode = false;
                                 vp_announceBuffer(&currentLanguage->callsign,
                                                   false, true, state.settings.callsign);
