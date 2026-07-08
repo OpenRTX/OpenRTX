@@ -8,8 +8,11 @@
 #include "core/audio_codec.h"
 #include <pthread.h>
 #include "core/threads.h"
-// codec2 system library has a weird include prefix
-#if defined(PLATFORM_LINUX)
+// codec2 system library has a weird include prefix. The native Linux build
+// links the distro libcodec2 (headers under codec2/), but the WebAssembly build
+// links the bundled codec2 subproject, which exposes the header flat like the
+// embedded targets do.
+#if defined(PLATFORM_LINUX) && !defined(__EMSCRIPTEN__)
 #include <codec2/codec2.h>
 #else
 #include "codec2.h"
