@@ -1,0 +1,126 @@
+<!doctype html>
+<!--
+  SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+  SPDX-License-Identifier: GPL-3.0-or-later
+
+  Emscripten shell for the OpenRTX browser emulator. Emscripten substitutes the
+  compiled JS at the {{{ SCRIPT }}} marker below. The SDL2 renderer draws into
+  the <canvas id="canvas"> element.
+
+  This page MUST be served with cross-origin isolation headers so the
+  SharedArrayBuffer that backs pthreads is available:
+      Cross-Origin-Opener-Policy: same-origin
+      Cross-Origin-Embedder-Policy: require-corp
+  Use scripts/serve_wasm.py, which sets them for you.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenRTX (WebAssembly)</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem 1rem;
+      background: #111;
+      color: #eee;
+    }
+    h1 { font-size: 1.1rem; font-weight: 600; margin: 0; letter-spacing: .04em; }
+    #canvas {
+      /* The radio screen is tiny (160x128); scale it up with crisp pixels. */
+      image-rendering: pixelated;
+      width: 480px;
+      height: 384px;
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 6px;
+    }
+    .hint { font-size: .8rem; color: #999; max-width: 480px; text-align: center; }
+    kbd {
+      background: #222; border: 1px solid #444; border-radius: 3px;
+      padding: 0 .3em; font-size: .85em;
+    }
+    #cli { display: flex; gap: .4rem; width: 480px; }
+    #cli input {
+      flex: 1; background: #000; color: #0f0; border: 1px solid #333;
+      border-radius: 4px; padding: .4rem; font-family: monospace;
+    }
+    #output {
+      width: 480px; height: 120px; overflow-y: auto; background: #000;
+      color: #9f9; border: 1px solid #333; border-radius: 4px;
+      padding: .4rem; font-family: monospace; font-size: .78rem;
+      white-space: pre-wrap; margin: 0;
+    }
+    #status { font-size: .8rem; color: #fa0; min-height: 1em; }
+  </style>
+</head>
+<body>
+  <h1>OpenRTX &middot; WebAssembly emulator</h1>
+
+  <!-- SDL2 draws here. tabindex makes the canvas keyboard-focusable. -->
+  <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+
+  <div class="hint">
+    Click the screen, then use the keyboard:
+    <kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>&larr;</kbd><kbd>&rarr;</kbd> navigate &middot;
+    <kbd>Enter</kbd> select &middot; <kbd>Esc</kbd> back &middot;
+    <kbd>0</kbd>&ndash;<kbd>9</kbd> keypad &middot;
+    <kbd>PgUp</kbd>/<kbd>PgDn</kbd> knob &middot; <kbd>M</kbd> monitor
+  </div>
+
+  <div id="status">Loading&hellip;</div>
+
+  <!-- Bridge to the native command shell (replaces GNU readline). -->
+  <form id="cli" onsubmit="return sendCommand();">
+    <input id="cliInput" type="text" placeholder="emulator command (e.g. 'help', 'screenshot shot.bmp')" autocomplete="off">
+    <button type="submit">Run</button>
+  </form>
+  <pre id="output"></pre>
+
+  <script>
+    const outputEl = document.getElementById('output');
+    const statusEl = document.getElementById('status');
+
+    function log(text) {
+      outputEl.textContent += text + '\n';
+      outputEl.scrollTop = outputEl.scrollHeight;
+    }
+
+    // Runs one line through the native emulator command shell. Exported from C
+    // as emulator_command() via EMSCRIPTEN_KEEPALIVE.
+    function sendCommand() {
+      const input = document.getElementById('cliInput');
+      const cmd = input.value.trim();
+      if (cmd && Module && Module.ccall) {
+        try {
+          const ret = Module.ccall('emulator_command', 'number', ['string'], [cmd]);
+          log('> ' + cmd + '  (=> ' + ret + ')');
+        } catch (e) {
+          log('command failed: ' + e);
+        }
+      }
+      input.value = '';
+      return false; // never submit the form
+    }
+
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      print: (t) => log(t),
+      printErr: (t) => log(t),
+      setStatus: (t) => { statusEl.textContent = t; },
+      onRuntimeInitialized: () => {
+        statusEl.textContent = '';
+        document.getElementById('canvas').focus();
+      },
+    };
+  </script>
+
+  {{{ SCRIPT }}}
+</body>
+</html>

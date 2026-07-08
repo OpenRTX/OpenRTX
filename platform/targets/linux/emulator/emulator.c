@@ -11,8 +11,12 @@
 #include <string.h>
 #include "SDL2/SDL.h"
 
+#ifndef __EMSCRIPTEN__
 #include "readline/readline.h"
 #include "readline/history.h"
+#else
+#include <emscripten.h>
+#endif
 
 #include "emulator.h"
 #include "sdl_engine.h"
@@ -463,6 +467,35 @@ static int process_line(char *line)
     }
 }
 
+#ifdef __EMSCRIPTEN__
+/*
+ * Browser builds have no terminal or stdin, so the GNU readline command shell
+ * is replaced by a JS->C bridge. emulator_command() runs a single shell line
+ * (the same grammar the readline loop fed to process_line) and is exported to
+ * JavaScript via EMSCRIPTEN_KEEPALIVE, so the page can drive scripted
+ * keypresses, screenshots, etc. The command infrastructure below (process_line
+ * and the _options table) is shared with the native readline path.
+ */
+EMSCRIPTEN_KEEPALIVE
+int emulator_command(const char *line)
+{
+    if(line == NULL)
+        return SH_WHAT;
+
+    // process_line() tokenises in place, so operate on a mutable copy.
+    char *copy = strdup(line);
+    if(copy == NULL)
+        return SH_ERR;
+
+    int ret = process_line(copy);
+    free(copy);
+
+    if(ret == SH_EXIT_OK)
+        emulator_state.powerOff = true;
+
+    return ret;
+}
+#else
 void *startCLIMenu(void *arg)
 {
     (void) arg;
@@ -529,6 +562,7 @@ void *startCLIMenu(void *arg)
 
     return NULL;
 }
+#endif // __EMSCRIPTEN__
 
 
 
@@ -536,6 +570,9 @@ void emulator_start()
 {
     sdlEngine_init();
 
+#ifndef __EMSCRIPTEN__
+    // The readline command shell runs on its own thread. Browser builds drive
+    // commands through emulator_command() instead (see above).
     pthread_t cli_thread;
     int err = pthread_create(&cli_thread, NULL, startCLIMenu, NULL);
 
@@ -543,6 +580,7 @@ void emulator_start()
     {
         printf("An error occurred starting the emulator CLI thread: %d\n", err);
     }
+#endif
 }
 
 keyboard_t emulator_getKeys()

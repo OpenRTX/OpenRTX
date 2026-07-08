@@ -79,6 +79,25 @@ static int create_dir(const char *path)
 
 void nvm_init()
 {
+#ifdef __EMSCRIPTEN__
+    // The browser has no HOME/XDG directories. Persist radio state under a
+    // fixed path in the Emscripten virtual filesystem. This lives in MEMFS by
+    // default (ephemeral); the JS shell may mount IDBFS at /persist to make it
+    // survive page reloads.
+    char memory_path[NVM_MAX_PATHLEN];
+    strcpy(memory_path, "/persist/");
+
+    if(create_dir(memory_path) != 0)
+        exit(1);
+
+    strcat(memory_path, "state.bin");
+
+    int ret = posixFile_init(&stateDevice, memory_path, 1024);
+    if(ret < 0)
+        printf("Opening of state file failed with status %d\n", ret);
+
+    return;
+#else
     const char *env_state_path = getenv("XDG_STATE_HOME");
     const char *openrtx        = "/OpenRTX/";
 
@@ -135,6 +154,7 @@ void nvm_init()
 toolong:
     printf("Expected path was too long\n");
     exit(1);
+#endif // __EMSCRIPTEN__
 }
 
 void nvm_terminate()

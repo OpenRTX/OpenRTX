@@ -1,0 +1,30 @@
+# Meson cross file for the WebAssembly (Emscripten) build of the OpenRTX
+# Linux emulator.
+#
+# Requires the Emscripten SDK (emcc/em++) on PATH. Configure with:
+#
+#     meson setup build_wasm --cross-file cross_wasm.txt
+#     ninja -C build_wasm wasm
+#
+# SDL2, pthreads and the emscripten-specific link flags are applied by the
+# `wasm` target in meson.build, not here, so this file stays a plain toolchain
+# description.
+
+[binaries]
+c      = 'emcc'
+cpp    = 'em++'
+ar     = 'emar'
+ranlib = 'emranlib'
+strip  = 'emstrip'
+
+[built-in options]
+# The native Linux emulator builds with C++ exceptions enabled; keep parity in
+# the browser (std::string / std::random and codec2 rely on it).
+cpp_args      = ['-fexceptions']
+cpp_link_args = ['-fexceptions']
+
+[host_machine]
+system     = 'emscripten'
+cpu_family = 'wasm32'
+cpu        = 'wasm32'
+endian     = 'little'

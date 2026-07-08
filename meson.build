@@ -1104,6 +1104,57 @@ cm7 = alias_target('cm7', cm7_targets)
 linux = alias_target('linux', linux_targets)
 
 ##
+## ------------------------ WebAssembly (Emscripten) ---------------------------
+##
+## A browser build of the Linux emulator. It only materialises when meson is
+## configured with the emscripten cross file (cross_wasm.txt), so native and
+## embedded builds are completely unaffected.
+##
+## It reuses the standard 160x128 RGB565 UI sources/defines, but instead of the
+## system SDL2/pthreads it uses Emscripten's bundled SDL2 (-sUSE_SDL=2) and
+## pthreads (Web Workers + SharedArrayBuffer). -sPROXY_TO_PTHREAD runs main() on
+## a worker so the existing blocking pthread/mutex/chan concurrency model keeps
+## working unchanged while the browser's main thread stays free for the event
+## loop and SDL rendering. GNU readline is compiled out (see emulator.c).
+##
+## Build:  meson setup build_wasm --cross-file cross_wasm.txt
+##         ninja -C build_wasm wasm
+## Serve:  python scripts/serve_wasm.py build_wasm   (sets COOP/COEP headers,
+##         required for SharedArrayBuffer)
+##
+if meson.is_cross_build() and host_machine.system() == 'emscripten'
+
+  wasm_shell = meson.current_source_dir() / 'platform/targets/wasm/shell.html'
+
+  # -pthread and -sUSE_SDL=2 must be passed at both compile and link time.
+  wasm_em_args = ['-sUSE_SDL=2', '-pthread']
+
+  wasm_c_args   = linux_c_args   + wasm_em_args
+  wasm_cpp_args = linux_cpp_args + wasm_em_args
+
+  wasm_link_args = wasm_em_args + [
+    '-sPROXY_TO_PTHREAD',
+    '-sPTHREAD_POOL_SIZE=8',
+    '-sALLOW_MEMORY_GROWTH=1',
+    '-sINITIAL_MEMORY=64MB',
+    '-sEXPORTED_RUNTIME_METHODS=ccall,cwrap,FS',
+    '--shell-file', wasm_shell,
+  ]
+
+  openrtx_wasm = executable('openrtx_wasm',
+                            sources             : linux_default_src + main_src,
+                            include_directories : linux_inc,
+                            dependencies        : [codec2_dep],
+                            c_args              : wasm_c_args,
+                            cpp_args            : wasm_cpp_args,
+                            link_args           : wasm_link_args,
+                            name_suffix         : 'html')
+
+  alias_target('wasm', openrtx_wasm)
+
+endif
+
+##
 ## ----------------------------------- Unit Tests ------------------------------
 ##
 
