@@ -109,8 +109,58 @@ bool horse_crypto_argon2id_derive(
     uint8_t *key_out,
     size_t key_len);
 
-/* Unlock stored private key with passphrase. Placeholder: not implemented. */
-bool horse_crypto_unlock_private_key(const char *passphrase, size_t len);
+/* True when a real crypto backend (libsodium) is linked in. */
+bool horse_crypto_available(void);
+
+/* Generate an X25519 keypair (public, secret). */
+bool horse_crypto_x25519_keypair(uint8_t *pk_out, uint8_t *sk_out);
+
+/* Derive a 32-byte session key from X25519 ECDH + BLAKE2b. */
+bool horse_crypto_derive_session_key(const uint8_t *local_x25519_sk,
+                                     const uint8_t *remote_x25519_pk,
+                                     uint8_t *session_key_out);
+
+/* Build a 96-bit voice nonce from the 16-bit frame counter. */
+void horse_crypto_voice_nonce_from_fn(uint16_t frame_num,
+                                      uint8_t nonce_96bit[12]);
+
+/* Encrypt/decrypt a horse_identity_keys_t blob with a derived wrap key. */
+bool horse_crypto_encrypt_identity(const horse_identity_keys_t *identity,
+                                   const uint8_t *wrap_key,
+                                   size_t wrap_key_len,
+                                   uint8_t *blob_out,
+                                   size_t blob_cap,
+                                   size_t *blob_len);
+
+bool horse_crypto_decrypt_identity(const uint8_t *blob,
+                                   size_t blob_len,
+                                   const uint8_t *wrap_key,
+                                   size_t wrap_key_len,
+                                   horse_identity_keys_t *identity_out);
+
+bool horse_crypto_identity_fingerprint(const horse_identity_keys_t *identity,
+                                       uint8_t fp_out[32]);
+
+/* Derive per-call frame auth key from a verified session Ed25519 signature. */
+bool horse_crypto_derive_frame_auth_key(const uint8_t session_signature[64],
+                                        uint8_t auth_key_out[32]);
+
+/* Build the 44-byte session message signed at the start of each transmission. */
+void horse_crypto_build_session_message(const uint8_t src[6],
+                                        const uint8_t dst[6],
+                                        const uint8_t eph_pk[32],
+                                        uint8_t message_out[44]);
+
+/* Compute or verify a 32-bit voice authentication tag (cleartext voice). */
+bool horse_crypto_voice_auth_tag(const uint8_t auth_key[32],
+                                 uint16_t frame_num,
+                                 const uint8_t *melpe96bits,
+                                 uint8_t tag_out[4]);
+
+bool horse_crypto_voice_auth_verify(const uint8_t auth_key[32],
+                                    uint16_t frame_num,
+                                    const uint8_t *melpe96bits,
+                                    const uint8_t tag[4]);
 
 /* Sign data with Ed25519 (without encryption).
  * Input:

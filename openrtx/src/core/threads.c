@@ -21,6 +21,9 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
+#ifdef CONFIG_HORSE
+#include "protocols/horse/horse_provision.h"
+#endif
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -149,6 +152,10 @@ void *main_thread(void *arg)
 
         // Run state update task
         state_task();
+
+#ifdef CONFIG_HORSE
+        horse_provision_poll();
+#endif
 
         // Run this loop once every 5ms
         time += 5;

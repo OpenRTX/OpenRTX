@@ -11,6 +11,7 @@
 #include "protocols/horse/HorseFrameEncoder.hpp"
 #include "protocols/horse/HorseDemodulator.hpp"
 #include "protocols/horse/HorseModulator.hpp"
+#include "protocols/horse/horse_crypto.h"
 #include "core/audio_path.h"
 #include "OpMode.hpp"
 
@@ -34,6 +35,9 @@ private:
     void offState(rtxStatus_t* const status);
     void rxState(rtxStatus_t* const status);
     void txState(rtxStatus_t* const status);
+    void resetRxCrypto();
+    void tryFinalizeRxSessionSig();
+    void sendTxVoiceFrame(const uint8_t *melpe, bool isLast, horse::frame_t &outFrame);
 
     bool startRx;
     bool startTx;
@@ -47,6 +51,23 @@ private:
     horse::HorseDemodulator demodulator;
     horse::HorseFrameDecoder decoder;
     horse::HorseFrameEncoder encoder;
+
+    uint8_t sessionKey[HORSE_SESSION_KEY_BYTES];
+    uint8_t frameAuthKey[HORSE_SESSION_KEY_BYTES];
+    uint8_t rxSessionSig[HORSE_ED25519_SIGNATURE_BYTES];
+    uint8_t txSessionSig[HORSE_ED25519_SIGNATURE_BYTES];
+    uint8_t rxLsfEphPk[HORSE_X25519_PUBLICKEY_BYTES];
+    uint8_t rxLsfFlags;
+    uint8_t rxSigChunks;
+    horse::call_t rxLsfSrc;
+    horse::call_t rxLsfDst;
+    bool sessionValid;
+    bool encryptTx;
+    bool encryptRx;
+    bool signTx;
+    bool signRx;
+    bool txSigSent;
+    bool rxSigReady;
 };
 
 #endif  // OPMODE_HORSE_H

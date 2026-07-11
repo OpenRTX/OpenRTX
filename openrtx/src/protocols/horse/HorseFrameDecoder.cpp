@@ -5,6 +5,7 @@
  */
 
 #include "protocols/horse/HorseFrameDecoder.hpp"
+#include "protocols/horse/horse_crypto.h"
 #include "protocols/horse/ldpc_horse.h"
 #include <cstring>
 
@@ -64,6 +65,20 @@ void HorseFrameDecoder::getLsfCallsigns(call_t& src, call_t& dst)
 {
     src = lsfSrc;
     dst = lsfDst;
+}
+
+bool HorseFrameDecoder::getLsfCrypto(const frame_t& frame, uint8_t eph_pk[32],
+                                     uint8_t* flags)
+{
+    if (frame.size() < 2 + LSF_FLAGS_OFFSET + 1)
+        return false;
+
+    if (eph_pk != nullptr)
+        std::memcpy(eph_pk, frame.data() + 2 + LSF_EPH_PK_OFFSET,
+                    HORSE_X25519_PUBLICKEY_BYTES);
+    if (flags != nullptr)
+        *flags = frame[2 + LSF_FLAGS_OFFSET];
+    return true;
 }
 
 void HorseFrameDecoder::getVoicePayload(const frame_t& frame, uint8_t* melpe96bits,

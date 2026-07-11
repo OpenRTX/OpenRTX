@@ -41,7 +41,7 @@ void horse_codec_init(void)
     horse_initCnt += 1;
     pthread_mutex_unlock(&horse_init_mutex);
 
-    if (horse_initCnt > 0)
+    if (horse_initCnt > 1)
         return;
 
     horse_running = false;

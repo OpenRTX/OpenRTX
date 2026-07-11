@@ -76,6 +76,8 @@ horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
              'openrtx/src/protocols/horse/melpe_horse.c',
              'openrtx/src/protocols/horse/ldpc_horse.c',
              'openrtx/src/protocols/horse/horse_crypto.c',
+             'openrtx/src/protocols/horse/horse_keystore.c',
+             'openrtx/src/protocols/horse/horse_provision.c',
              'openrtx/src/core/horse_codec.c',
              'openrtx/src/rtx/OpMode_Horse.cpp']
 
@@ -125,6 +127,13 @@ openrtx_inc += ['lib/qdec/include']
 
 # libsodium (optional, used for Horse crypto on supported platforms)
 sodium_dep = dependency('libsodium', required: false)
+
+horse_crypto_args = []
+horse_deps = []
+if sodium_dep.found()
+  horse_deps += sodium_dep
+  horse_crypto_args += '-DHAVE_LIBSODIUM'
+endif
 
 # CODEC2, open source speech codec, compile from source on embedded
 codec2_proj = subproject('codec2')
@@ -780,9 +789,9 @@ linux_mod17_opts = {
 md3x0_opts = {
   'sources'            : md3x0_src,
   'include_directories': md3x0_inc,
-  'dependencies'       : [codec2_dep],
-  'c_args'             : md3x0_args,
-  'cpp_args'           : md3x0_args,
+  'dependencies'       : [codec2_dep] + horse_deps,
+  'c_args'             : md3x0_args + horse_crypto_args,
+  'cpp_args'           : md3x0_args + horse_crypto_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld']
 }
 

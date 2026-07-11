@@ -4,8 +4,8 @@ Horse is an **experimental encrypted digital voice mode** implemented in this fo
 It reuses large parts of the M17 DSP chain but defines its own framing and cryptography.
 
 > Important: Horse is experimental and under active development.  
-> Cryptographic implementations use libsodium where available (Linux builds), but embedded targets may use fallback implementations.  
-> This mode should not be relied upon for production secure communication until fully audited.
+> Cryptographic implementations use libsodium where available (Linux builds and MD‑3x0 when cross‑compiled with sodium).  
+> Without libsodium, crypto operations fail closed. This mode should not be relied upon for production secure communication until fully audited.
 
 ### Why is it named "Horse"?
 
@@ -22,9 +22,41 @@ Horse mode uses **4‑FSK (4‑level Frequency Shift Keying)** modulation, so it
   - Voice frame: `VOICE_SYNC_WORD = {0x7E, 0x9B}`
   - End‑of‑Transmission (EOT): `EOT_SYNC_WORD = {0x3C, 0xD8}`
 - **Voice payload structure (per frame):**
-  - `96` bits MELPe‑2400 voice (`VOICE_MELPE_BITS`)
-  - `16`‑bit frame counter (`VOICE_FRAME_COUNTER_BITS`)
-  - `32`‑bit authentication/tag field (`VOICE_TAG_BITS`)
+  - `16`‑bit frame number (`VOICE_FRAME_COUNTER_BITS`), MSB set on last voice frame
+  - `96` bits voice codec data (`VOICE_MELPE_BITS`, 12 bytes on air)
+  - `32`‑bit tag field (`VOICE_TAG_BITS`): encryption MAC and/or per‑frame auth tag
+
+Voice frames use LDPC encoding (`ldpc_horse.c`) after the 18‑byte clear payload
+(2‑byte FN + 12‑byte voice + 4‑byte tag).
+
+### Link Setup Frame (LSF) layout
+
+The 46‑byte LSF payload (after the 2‑byte sync word) is:
+
+| Offset | Size | Field |
+|--------|------|-------|
+| 0 | 6 | Source address (base‑40, M17‑compatible) |
+| 6 | 6 | Destination address |
+| 12 | 32 | Ephemeral X25519 public key (encrypt mode only; zero otherwise) |
+| 44 | 1 | Flags (`LSF_FLAG_ENCRYPTED = 0x01`, `LSF_FLAG_SIGNED = 0x02`) |
+| 45 | 1 | Reserved |
+
+The ephemeral public key is sent in cleartext. Both peers derive the same
+32‑byte session key via X25519 ECDH and BLAKE2b (`horse_crypto_derive_session_key()`).
+
+### Signature transport frames
+
+When signing is enabled, the 64‑byte Ed25519 session signature is split across
+**six dedicated voice frames** before ordinary voice data:
+
+- Frame numbers: `0x7000` … `0x7005` (`SIG_FRAME_BASE`, `SIG_FRAME_COUNT`)
+- Each frame carries 12 bytes of signature material in the voice payload field
+- The session message signed at TX start is `src || dst || eph_pk` (44 bytes);
+  `eph_pk` is included only when the encrypted flag is also set
+
+Per‑frame authentication tags (signed‑only mode) use a key derived from the
+verified session signature (`horse_crypto_derive_frame_auth_key()`).
+Combined encrypt+sign mode uses the encryption MAC for voice integrity instead.
 
 ### Modulation details
 
@@ -61,28 +93,31 @@ Horse uses modern cryptographic primitives with per‑session keys and optional 
   - **Ed25519** (32‑byte public, 64‑byte secret): used for digital signatures
   - **X25519** (32‑byte public, 32‑byte secret): used for key exchange
   - Keys are provisioned to the radio via `horse_provision.py` and stored encrypted with a user passphrase
-- **Session keys:** 32‑byte symmetric keys generated per call (`HORSE_SESSION_KEY_BYTES`).
-- **Public‑key encryption (ECIES‑style):**
-  - Curve: **X25519** (elliptic‑curve Diffie‑Hellman).
-  - API in `horse_crypto.h`:
-    - `horse_crypto_ecies_encrypt_session_key(...)` — wraps session key using X25519 ECDH + XChaCha20‑Poly1305
-    - `horse_crypto_ecies_decrypt_session_key(...)` — unwraps session key using recipient's X25519 secret key
-  - Flow:
-    1. On transmit, a fresh 32‑byte session key is generated.
-    2. An ephemeral X25519 keypair is generated.
-    3. ECDH is performed: `shared = ephemeral_sk * recipient_x25519_pk`
-    4. AEAD key and nonce are derived from the shared secret via BLAKE2b.
-    5. Session key is encrypted with XChaCha20‑Poly1305 (detached tag).
-    6. Ephemeral public key + ciphertext + tag are carried in Horse link setup signalling.
+- **Session keys:** 32‑byte symmetric keys derived per call (`HORSE_SESSION_KEY_BYTES`).
+- **On‑air key agreement (encrypt mode):**
+  - TX generates an ephemeral X25519 keypair and places the public key in the LSF.
+  - TX derives `session_key = BLAKE2b(ECDH(eph_sk, contact.x25519_pk))`.
+  - RX derives the same key with `BLAKE2b(ECDH(local_x25519_sk, eph_pk))`.
+  - Implemented in `horse_crypto_derive_session_key()`.
+- **ECIES session key wrapping (API only):**
+  - `horse_crypto_ecies_encrypt_session_key()` / `horse_crypto_ecies_decrypt_session_key()`
+    wrap an arbitrary session key for storage or tooling; the live Horse TX/RX path
+    uses the LSF ephemeral public key scheme above instead.
 - **Voice encryption (XChaCha20 + BLAKE2b MAC):**
   - API in `horse_crypto_voice_encrypt(...)` / `horse_crypto_voice_decrypt(...)`.
   - Algorithm: **XChaCha20 stream cipher** with a 96‑bit nonce expanded to 192 bits and a **BLAKE2b‑derived 32‑bit MAC** carried in the `VOICE_TAG_BITS` field.
 - **Digital signatures (Ed25519):**
   - API in `horse_crypto.h`:
-    - `horse_crypto_sign(...)` — sign data with Ed25519 secret key
-    - `horse_crypto_verify(...)` — verify Ed25519 signature with public key
-  - Use case: Sign voice frames or control messages **without encryption** for authentication and non‑repudiation.
-  - Signatures are 64 bytes (`HORSE_ED25519_SIGNATURE_BYTES`) and can be carried alongside voice payload or in link setup frames.
+    - `horse_crypto_sign()` / `horse_crypto_verify()` — session‑level Ed25519 signature
+    - `horse_crypto_build_session_message()` — assemble the 44‑byte signed payload
+    - `horse_crypto_derive_frame_auth_key()` — derive per‑call frame auth key from signature
+    - `horse_crypto_voice_auth_tag()` / `horse_crypto_voice_auth_verify()` — cleartext per‑frame auth
+  - On TX, the session signature is sent in six frames (`fn = 0x7000` … `0x7005`).
+  - On RX, frames are reassembled and verified against the contact's `ed25519_pk`.
+- **Identity storage and unlock:**
+  - `horse_keystore.c` stores the provisioned identity encrypted at rest (Argon2id + XChaCha20‑Poly1305).
+  - `settings_t.horse_passphrase` unlocks the keystore at mode enable (`OpMode_Horse::enable()`).
+  - Without a valid passphrase or libsodium backend, crypto operations fail closed.
 - **Passphrase‑based key derivation (Argon2id):**
   - API in `horse_crypto_argon2id_derive(...)`.
   - Implemented via libsodium’s `crypto_pwhash` API where available, with a PBKDF2 fallback on platforms that do not ship libsodium.
@@ -90,11 +125,19 @@ Horse uses modern cryptographic primitives with per‑session keys and optional 
 
 **Implementation status:**
 
-- **ECIES session key wrapping:** Fully implemented with libsodium (X25519 + XChaCha20‑Poly1305) on Linux builds.
-- **Voice encryption:** Fully implemented with libsodium (XChaCha20 + BLAKE2b MAC) on Linux builds.
-- **Digital signatures:** Fully implemented with libsodium (Ed25519) on Linux builds.
-- **Argon2id:** Implemented via libsodium where available, PBKDF2 fallback otherwise.
-- **Embedded targets:** Fall back to placeholder implementations when libsodium is not available (cleartext mode).
+- **Linux emulator / unit tests:** Full libsodium backend; encrypt, sign, and combined modes exercised in `OpMode_Horse` and unit tests.
+- **Voice codec:** CODEC2 2400 (two 20 ms frames per 40 ms Horse frame) via `melpe_horse.c`; true MELPe‑2400 is not yet integrated.
+- **Embedded targets (MD‑3x0, etc.):** Crypto fails closed when libsodium is not linked (`horse_crypto_available()` returns false). Cross‑compiled libsodium is required for on‑device encrypt/sign.
+- **LDPC:** Placeholder repeat‑2 matrix; full LDPC matrix still pending.
+
+Run unit tests:
+
+```bash
+meson setup build_linux
+meson test -C build_linux
+```
+
+Horse‑specific tests: `Horse Frame Unit Test`, `Horse Crypto Unit Test`.
 
 ---
 
@@ -108,7 +151,12 @@ Horse‑specific per‑channel information:
 
 - `horseInfo_t`:
   - `rxCan` / `txCan` (4‑bit each): logical **channel IDs** for receive/transmit.
-  - `contact_index` (16‑bit): index into the global contact table, pointing to the Horse contact for this channel.
+  - `encrypt_en` (1‑bit): enable encrypted voice on this channel.
+  - `sign_en` (1‑bit): enable signed voice on this channel.
+  - `contact_index` (16‑bit): index into the global contact table for the peer's public keys.
+
+If both `encrypt_en` and `sign_en` are zero, firmware defaults to encrypt when
+crypto is available (backward compatible with earlier always‑encrypt behaviour).
 
 Each `channel_t` in the codeplug contains a `mode` (FM/DMR/M17/Horse) and a tagged union of mode‑specific data.  
 For Horse, the `horse` field of that union is populated with `horseInfo_t`.
@@ -122,11 +170,12 @@ Horse extends the generic `contact_t` structure with a Horse‑specific view:
   - `mode`: which mode the contact is for (DMR, M17, Horse, …).
   - `info.horse` (`horseContact_t` when `mode == OPMODE_HORSE`):
     - `address[6]`: Horse address encoded in the same base‑40 scheme used for M17 callsigns.
+    - `x25519_pk[32]`: peer public key for encrypted sessions.
+    - `ed25519_pk[32]`: peer public key for signature verification.
 
-The current codeplug layout stores:
-
-- A **symbolic identity** (name and base‑40 address) for each Horse contact.
-- A **reference** from each Horse channel to a Horse contact via `contact_index`.
+Each Horse channel references one contact via `contact_index`. That contact must
+carry the peer keys required by the selected mode (X25519 for encrypt,
+Ed25519 for sign, both for combined).
 
 ### How identity keys fit into this design
 
@@ -153,9 +202,10 @@ Horse identity keys use **Ed25519/X25519** (not GnuPG/OpenPGP directly). The wor
 
 **Current implementation status:**
 
-- `horse_provision.py` provides full key generation and provisioning workflow.
-- Firmware crypto functions are implemented with libsodium on Linux builds.
-- Embedded targets (STM32/MK22) use fallback implementations until libsodium is ported.
+- `horse_provision.py` provides key generation and provisioning (USB serial and Linux FIFO).
+- `horse_keystore.c` and `horse_provision.c` are integrated in firmware init and the main thread poll loop.
+- `OpMode_Horse` applies encrypt/sign/combined modes at runtime when libsodium is available.
+- Embedded targets without libsodium fail closed (no cleartext crypto stubs).
 
 ---
 
@@ -174,7 +224,7 @@ This fork includes two tools for Horse key management:
 - `generate <label>` — Generate a new Horse identity and store it in the kernel keyring.
 - `list` — List all stored identities in the keyring.
 - `show <label>` — Display identity details (public keys, fingerprints).
-- `provision <label> [--port DEVICE]` — Send identity to radio over USB‑CDC serial.
+- `provision <label> [--port DEVICE] [--fifo PATH]` — Send identity to radio over USB‑CDC serial or a Linux FIFO (`/tmp/openrtx_horse_prov.fifo` in the emulator).
 
 **Example workflow:**
 
@@ -189,8 +239,12 @@ python3 scripts/horse_provision.py list
 python3 scripts/horse_provision.py provision M0ABC
 
 # Or specify port manually
-python3 scripts/horse_provision.py provision M0ABC --port /dev/ttyACM0
+# Or use the Linux emulator FIFO
+python3 scripts/horse_provision.py provision M0ABC --fifo /tmp/openrtx_horse_prov.fifo
 ```
+
+Set the radio passphrase in codeplug settings (`horse_passphrase`, max 32 characters)
+before transmitting or receiving encrypted/signed traffic.
 
 ### `horse_keytool.py` – collecting Horse public keys from GnuPG
 
@@ -254,26 +308,63 @@ This command will:
   - `openrtx/include/protocols/horse/HorseConstants.hpp`
 - **DSP / modulation path:**
   - `openrtx/src/protocols/horse/HorseModulator.cpp`
+- **Runtime integration:**
+  - `openrtx/src/rtx/OpMode_Horse.cpp` — TX/RX state machine, encrypt/sign/combined paths
+  - `openrtx/src/protocols/horse/horse_keystore.c` — encrypted identity storage
+  - `openrtx/src/protocols/horse/horse_provision.c` — USB/FIFO provisioning handler
 - **Cryptography API:**
   - `openrtx/include/protocols/horse/horse_crypto.h` — API definitions
-  - `openrtx/src/protocols/horse/horse_crypto.c` — Implementation (libsodium on Linux, fallbacks on embedded)
+  - `openrtx/src/protocols/horse/horse_crypto.c` — libsodium backend (fail‑closed without it)
   - Functions:
-    - `horse_crypto_ecies_encrypt_session_key()` / `horse_crypto_ecies_decrypt_session_key()` — Session key wrapping (X25519 + XChaCha20‑Poly1305)
+    - `horse_crypto_derive_session_key()` — X25519 ECDH session key from LSF eph_pk
     - `horse_crypto_voice_encrypt()` / `horse_crypto_voice_decrypt()` — Voice frame encryption (XChaCha20 + BLAKE2b MAC)
-    - `horse_crypto_sign()` / `horse_crypto_verify()` — Digital signatures (Ed25519)
+    - `horse_crypto_sign()` / `horse_crypto_verify()` — Session Ed25519 signature
+    - `horse_crypto_build_session_message()` / `horse_crypto_derive_frame_auth_key()` — Signed‑mode helpers
+    - `horse_crypto_voice_auth_tag()` / `horse_crypto_voice_auth_verify()` — Cleartext per‑frame auth
     - `horse_crypto_argon2id_derive()` — Passphrase‑based key derivation
+- **Unit tests:**
+  - `tests/unit/horse_frame.cpp` — LSF/voice/EOT round‑trip, LSF crypto fields, signature frame transport
+  - `tests/unit/horse_crypto.cpp` — Voice encrypt/decrypt, Ed25519, session auth round‑trip
 - **Codeplug integration:**
   - `openrtx/include/core/cps.h` (`horseInfo_t`, `horseContact_t`, and `channel_t` / `contact_t` unions)
 
-## Usage modes
+## Operational modes
 
-Horse supports two operational modes:
+Horse supports three channel configurations via `horseInfo_t.encrypt_en` and
+`horseInfo_t.sign_en`. All modes require an unlocked identity keystore and a
+valid `contact_index` with the peer's public keys.
 
-1. **Encrypted mode:** Voice frames are encrypted with XChaCha20 using a session key wrapped via X25519 ECDH. Provides confidentiality and authentication (via MAC).
+### 1. Encrypted mode (`encrypt_en=1`, `sign_en=0`)
 
-2. **Signed mode:** Voice frames are sent in cleartext but signed with Ed25519. Provides authentication and non‑repudiation without encryption. Use `horse_crypto_sign()` to sign frames and `horse_crypto_verify()` to verify received signatures.
+- LSF carries ephemeral X25519 public key and `LSF_FLAG_ENCRYPTED`.
+- Voice payload is encrypted with XChaCha20; 32‑bit MAC in the tag field.
+- Provides confidentiality and per‑frame integrity.
 
-Both modes can be used independently or combined (encrypted + signed frames).
+### 2. Signed mode (`encrypt_en=0`, `sign_en=1`)
+
+- LSF sets `LSF_FLAG_SIGNED`; no ephemeral key in LSF.
+- TX signs `src || dst` (44 bytes, `eph_pk` zeroed) and sends the 64‑byte
+  Ed25519 signature in six frames (`fn = 0x7000` … `0x7005`).
+- Voice is cleartext; each frame carries a 32‑bit auth tag derived from the
+  verified session signature.
+- RX drops voice until the signature is reassembled and verified against
+  `contact.ed25519_pk`.
+
+### 3. Combined mode (`encrypt_en=1`, `sign_en=1`)
+
+- LSF sets both flags; ephemeral key is included in the signed session message.
+- Session signature frames are sent after the LSF, then encrypted voice.
+- Per‑frame integrity comes from the encryption MAC (no separate auth tag).
+
+### TX/RX sequence (signed or combined)
+
+1. Link Setup Frame (src, dst, flags, optional eph_pk)
+2. Six signature transport frames (if `sign_en`)
+3. Voice frames (encrypted, signed‑only, or both per mode)
+4. End‑of‑Transmission frame
+
+Implementation: `OpMode_Horse::txState()` / `rxState()` in
+`openrtx/src/rtx/OpMode_Horse.cpp`.
 
 ---
 

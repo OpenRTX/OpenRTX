@@ -24,7 +24,7 @@ static int test_lsf_roundtrip()
     call_t dst = {{'C', 'D', '5', '6', '7', '8'}};
     frame_t frame;
 
-    enc.encodeLsf(src, dst, frame);
+    enc.encodeLsf(src, dst, nullptr, 0, frame);
     HorseFrameType type = dec.decodeFrame(frame);
     if (type != HorseFrameType::LINK_SETUP)
     {
@@ -115,12 +115,73 @@ static int test_voice_frame_number()
     return 0;
 }
 
+static int test_lsf_crypto_roundtrip()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = {{'H', 'O', 'R', 'S', 'E', '1'}};
+    call_t dst = {{'H', 'O', 'R', 'S', 'E', '2'}};
+    uint8_t eph_pk[32];
+    for (size_t i = 0; i < sizeof eph_pk; i++)
+        eph_pk[i] = (uint8_t)(i + 1);
+    frame_t frame;
+
+    enc.encodeLsf(src, dst, eph_pk, 0x01, frame);
+    HorseFrameType type = dec.decodeFrame(frame);
+    if (type != HorseFrameType::LINK_SETUP)
+        return -1;
+
+    uint8_t out_pk[32];
+    uint8_t flags = 0;
+    if (!dec.getLsfCrypto(frame, out_pk, &flags))
+        return -1;
+    if (flags != 0x01 || std::memcmp(out_pk, eph_pk, 32) != 0)
+        return -1;
+    return 0;
+}
+
+static int test_sig_frames_roundtrip()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t signature[64];
+    uint8_t rebuilt[64];
+    uint8_t zeroTag[4] = {0};
+    frame_t frame;
+
+    for (size_t i = 0; i < sizeof signature; i++)
+        signature[i] = (uint8_t)(i ^ 0x5A);
+
+    memset(rebuilt, 0, sizeof rebuilt);
+    for (uint16_t i = 0; i < SIG_FRAME_COUNT; i++)
+    {
+        enc.encodeVoiceFrameWithFn(signature + (i * 12), zeroTag,
+                                   SIG_FRAME_BASE + i, frame, false);
+        HorseFrameType type = dec.decodeFrame(frame);
+        if (type != HorseFrameType::VOICE)
+            return -1;
+
+        uint8_t chunk[12];
+        uint16_t fn = 0;
+        dec.getVoicePayload(frame, chunk, nullptr, &fn);
+        if (fn != SIG_FRAME_BASE + i)
+            return -1;
+        memcpy(rebuilt + (i * 12), chunk, 12);
+    }
+
+    if (std::memcmp(rebuilt, signature, sizeof signature) != 0)
+        return -1;
+    return 0;
+}
+
 int main()
 {
     if (test_lsf_roundtrip() != 0) return -1;
+    if (test_lsf_crypto_roundtrip() != 0) return -1;
     if (test_voice_roundtrip() != 0) return -1;
     if (test_eot_detect() != 0) return -1;
     if (test_voice_frame_number() != 0) return -1;
+    if (test_sig_frames_roundtrip() != 0) return -1;
     std::printf("horse_frame_test: all tests passed\n");
     return 0;
 }

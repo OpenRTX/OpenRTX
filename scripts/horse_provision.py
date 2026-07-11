@@ -191,14 +191,22 @@ def recv_provisioning_message(ser, timeout=5.0):
     return msg_type, payload
 
 
-def provision_to_radio(identity, port, baudrate=115200):
-    """Provision identity to radio over USB-CDC."""
-    print(f"Connecting to {port} at {baudrate} baud...")
-    try:
-        ser = serial.Serial(port, baudrate, timeout=1.0)
-    except serial.SerialException as e:
-        print(f"Error opening serial port: {e}", file=sys.stderr)
-        return False
+def provision_to_radio(identity, port=None, fifo=None, baudrate=115200):
+    """Provision identity to radio over USB-CDC or a Linux FIFO."""
+    if fifo:
+        print(f"Connecting to FIFO {fifo}...")
+        try:
+            ser = serial.Serial(fifo, baudrate, timeout=1.0)
+        except serial.SerialException as e:
+            print(f"Error opening FIFO: {e}", file=sys.stderr)
+            return False
+    else:
+        print(f"Connecting to {port} at {baudrate} baud...")
+        try:
+            ser = serial.Serial(port, baudrate, timeout=1.0)
+        except serial.SerialException as e:
+            print(f"Error opening serial port: {e}", file=sys.stderr)
+            return False
 
     try:
         print("Sending HELLO...")
@@ -255,6 +263,10 @@ def main():
     provision_parser = subparsers.add_parser("provision", help="Provision identity to radio")
     provision_parser.add_argument("label", help="Label of identity to provision")
     provision_parser.add_argument(
+        "--fifo",
+        help="Linux FIFO path for emulator provisioning (default: /tmp/openrtx_horse_prov.fifo)",
+    )
+    provision_parser.add_argument(
         "--port",
         help="Serial port (e.g., /dev/ttyACM0). If not specified, will attempt to auto-detect",
     )
@@ -298,15 +310,18 @@ def main():
             identity = load_from_keyring(args.label, args.keyring)
 
             port = args.port
-            if not port:
+            fifo = args.fifo
+            if not port and not fifo:
                 ports = serial.tools.list_ports.comports()
                 if not ports:
-                    print("Error: No serial ports found. Specify --port manually.", file=sys.stderr)
+                    print("Error: No serial ports found. Specify --port or --fifo.",
+                          file=sys.stderr)
                     return 1
                 port = ports[0].device
                 print(f"Auto-detected port: {port}")
 
-            if not provision_to_radio(identity, port, args.baudrate):
+            if not provision_to_radio(identity, port=port, fifo=fifo,
+                                      baudrate=args.baudrate):
                 return 1
 
         return 0

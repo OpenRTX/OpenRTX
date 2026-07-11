@@ -14,8 +14,44 @@
 #include "core/audio_codec.h"
 #include "core/horse_codec.h"
 #include "core/state.h"
+#include "protocols/horse/HorseConstants.hpp"
+#include "protocols/horse/horse_keystore.h"
+#include "interfaces/cps_io.h"
+#include "protocols/horse/horse_crypto.h"
 #include "rtx/rtx.h"
 #include <cstring>
+
+static bool horse_is_sig_frame(uint16_t fn)
+{
+    return fn >= horse::SIG_FRAME_BASE &&
+           fn < (horse::SIG_FRAME_BASE + horse::SIG_FRAME_COUNT);
+}
+
+static bool horse_contact_has_x25519(const contact_t *contact)
+{
+    if (contact == NULL)
+        return false;
+
+    for (size_t i = 0; i < sizeof contact->info.horse.x25519_pk; i++)
+    {
+        if (contact->info.horse.x25519_pk[i] != 0)
+            return true;
+    }
+    return false;
+}
+
+static bool horse_contact_has_ed25519(const contact_t *contact)
+{
+    if (contact == NULL)
+        return false;
+
+    for (size_t i = 0; i < sizeof contact->info.horse.ed25519_pk; i++)
+    {
+        if (contact->info.horse.ed25519_pk[i] != 0)
+            return true;
+    }
+    return false;
+}
 
 #ifdef PLATFORM_MOD17
 #include "calibration/calibInfo_Mod17.h"
@@ -35,13 +71,93 @@ OpMode_Horse::OpMode_Horse()
       invertTxPhase(false),
       invertRxPhase(false),
       rxAudioPath(-1),
-      txAudioPath(-1)
+      txAudioPath(-1),
+      sessionValid(false),
+      encryptTx(false),
+      encryptRx(false),
+      signTx(false),
+      signRx(false),
+      txSigSent(false),
+      rxSigReady(false),
+      rxSigChunks(0)
 {
+    memset(sessionKey, 0, sizeof sessionKey);
+    memset(frameAuthKey, 0, sizeof frameAuthKey);
+    memset(rxSessionSig, 0, sizeof rxSessionSig);
+    memset(txSessionSig, 0, sizeof txSessionSig);
+    memset(rxLsfEphPk, 0, sizeof rxLsfEphPk);
+    rxLsfFlags = 0;
+    memset(&rxLsfSrc, 0, sizeof rxLsfSrc);
+    memset(&rxLsfDst, 0, sizeof rxLsfDst);
 }
 
 OpMode_Horse::~OpMode_Horse()
 {
     disable();
+}
+
+void OpMode_Horse::resetRxCrypto()
+{
+    sessionValid = false;
+    encryptRx = false;
+    signRx = false;
+    rxSigReady = false;
+    rxSigChunks = 0;
+    rxLsfFlags = 0;
+    memset(sessionKey, 0, sizeof sessionKey);
+    memset(frameAuthKey, 0, sizeof frameAuthKey);
+    memset(rxSessionSig, 0, sizeof rxSessionSig);
+    memset(rxLsfEphPk, 0, sizeof rxLsfEphPk);
+    memset(&rxLsfSrc, 0, sizeof rxLsfSrc);
+    memset(&rxLsfDst, 0, sizeof rxLsfDst);
+}
+
+void OpMode_Horse::tryFinalizeRxSessionSig()
+{
+    if (rxSigChunks < SIG_FRAME_COUNT)
+        return;
+
+    contact_t contact = {0};
+    if (state.channel.horse.contact_index == 0 ||
+        cps_readContact(&contact, state.channel.horse.contact_index) != 0 ||
+        contact.mode != OPMODE_HORSE ||
+        !horse_contact_has_ed25519(&contact))
+        return;
+
+    uint8_t session_msg[44];
+    const uint8_t *eph = (rxLsfFlags & LSF_FLAG_ENCRYPTED) ? rxLsfEphPk : NULL;
+    horse_crypto_build_session_message(rxLsfSrc.data(), rxLsfDst.data(), eph,
+                                       session_msg);
+    if (!horse_crypto_verify(contact.info.horse.ed25519_pk, session_msg,
+                             sizeof session_msg, rxSessionSig))
+        return;
+
+    rxSigReady = true;
+    horse_crypto_derive_frame_auth_key(rxSessionSig, frameAuthKey);
+}
+
+void OpMode_Horse::sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
+                                    horse::frame_t &outFrame)
+{
+    uint8_t voiceTag[HORSE_VOICE_TAG_BYTES] = {0};
+    uint8_t payload[HORSE_CODEC_FRAME_BYTES];
+    memcpy(payload, melpe, sizeof payload);
+
+    uint16_t fn = encoder.currentVoiceFrameNumber();
+    if (signTx && !encryptTx && txSigSent)
+        horse_crypto_voice_auth_tag(frameAuthKey, fn, payload, voiceTag);
+
+    if (encryptTx && sessionValid)
+    {
+        uint8_t nonce[12];
+        uint8_t cipher[HORSE_CODEC_FRAME_BYTES];
+        horse_crypto_voice_nonce_from_fn(fn, nonce);
+        horse_crypto_voice_encrypt(sessionKey, nonce, payload,
+                                   HORSE_CODEC_FRAME_BYTES, cipher, voiceTag);
+        encoder.encodeVoiceFrame(cipher, voiceTag, outFrame, isLast);
+    }
+    else
+        encoder.encodeVoiceFrame(payload, voiceTag, outFrame, isLast);
 }
 
 void OpMode_Horse::enable()
@@ -54,6 +170,21 @@ void OpMode_Horse::enable()
     dataValid = false;
     startRx   = true;
     startTx   = false;
+    sessionValid = false;
+    encryptTx = false;
+    encryptRx = false;
+    signTx = false;
+    signRx = false;
+    txSigSent = false;
+    rxSigReady = false;
+    rxSigChunks = 0;
+    memset(sessionKey, 0, sizeof sessionKey);
+    memset(frameAuthKey, 0, sizeof frameAuthKey);
+    memset(rxSessionSig, 0, sizeof rxSessionSig);
+    memset(txSessionSig, 0, sizeof txSessionSig);
+
+    const char *pass = state.settings.horse_passphrase;
+    horse_keystore_unlock(pass, strnlen(pass, sizeof state.settings.horse_passphrase));
 #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     invertTxPhase = true;
     if (platform_getHwInfo()->vhf_band == 1)
@@ -85,6 +216,18 @@ void OpMode_Horse::disable()
     radio_disableRtx();
     modulator.terminate();
     demodulator.terminate();
+    sessionValid = false;
+    encryptTx = false;
+    encryptRx = false;
+    signTx = false;
+    signRx = false;
+    txSigSent = false;
+    rxSigReady = false;
+    rxSigChunks = 0;
+    memset(sessionKey, 0, sizeof sessionKey);
+    memset(frameAuthKey, 0, sizeof frameAuthKey);
+    memset(rxSessionSig, 0, sizeof rxSessionSig);
+    memset(txSessionSig, 0, sizeof txSessionSig);
 }
 
 void OpMode_Horse::update(rtxStatus_t* const status, const bool newCfg)
@@ -167,14 +310,38 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
             if (status->horseLsfOk)
             {
                 dataValid = true;
-                horse::call_t srcCall, dstCall;
-                decoder.getLsfCallsigns(srcCall, dstCall);
-                std::string srcStr = M17::decode_callsign(srcCall);
-                std::string dstStr = M17::decode_callsign(dstCall);
+                resetRxCrypto();
+                decoder.getLsfCallsigns(rxLsfSrc, rxLsfDst);
+                std::string srcStr = M17::decode_callsign(rxLsfSrc);
+                std::string dstStr = M17::decode_callsign(rxLsfDst);
                 strncpy(status->horse_src, srcStr.c_str(), 9);
                 status->horse_src[9] = '\0';
                 strncpy(status->horse_dst, dstStr.c_str(), 9);
                 status->horse_dst[9] = '\0';
+
+                uint8_t eph_pk[HORSE_X25519_PUBLICKEY_BYTES];
+                uint8_t flags = 0;
+                if (decoder.getLsfCrypto(frame, eph_pk, &flags))
+                {
+                    rxLsfFlags = flags;
+                    memcpy(rxLsfEphPk, eph_pk, sizeof rxLsfEphPk);
+                }
+
+                if ((flags & LSF_FLAG_ENCRYPTED) && horse_keystore_is_unlocked())
+                {
+                    const horse_identity_keys_t *id = horse_keystore_get_identity();
+                    if (id != NULL &&
+                        horse_crypto_derive_session_key(id->x25519_sk, eph_pk,
+                                                        sessionKey))
+                    {
+                        sessionValid = true;
+                        encryptRx = true;
+                    }
+                }
+
+                if (flags & LSF_FLAG_SIGNED)
+                    signRx = true;
+
                 if (rxAudioPath < 0)
                 {
                     rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
@@ -188,6 +355,38 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                 uint8_t tag[4];
                 uint16_t fn;
                 decoder.getVoicePayload(frame, melpe, tag, &fn);
+
+                if (horse_is_sig_frame(fn))
+                {
+                    uint16_t chunk = fn - SIG_FRAME_BASE;
+                    if (chunk < SIG_FRAME_COUNT)
+                    {
+                        memcpy(rxSessionSig + (chunk * 12), melpe, 12);
+                        rxSigChunks++;
+                        tryFinalizeRxSessionSig();
+                    }
+                    break;
+                }
+
+                if (encryptRx && sessionValid)
+                {
+                    uint8_t nonce[12];
+                    uint8_t plain[HORSE_CODEC_FRAME_BYTES];
+                    horse_crypto_voice_nonce_from_fn(fn, nonce);
+                    if (!horse_crypto_voice_decrypt(sessionKey, nonce, melpe,
+                                                    HORSE_CODEC_FRAME_BYTES,
+                                                    tag, plain))
+                        break;
+                    memcpy(melpe, plain, sizeof melpe);
+                }
+                else if (signRx)
+                {
+                    if (!rxSigReady)
+                        break;
+                    if (!horse_crypto_voice_auth_verify(frameAuthKey, fn, melpe, tag))
+                        break;
+                }
+
                 if (rxAudioPath >= 0 && horse_codec_running())
                     horse_codec_pushFrame(melpe, false);
             }
@@ -206,6 +405,7 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
         dataValid          = false;
         status->horse_dst[0] = '\0';
         status->horse_src[0] = '\0';
+        resetRxCrypto();
         if (rxAudioPath >= 0)
         {
             horse_codec_stop(rxAudioPath);
@@ -223,33 +423,110 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
         startTx = false;
         txAudioPath = audioPath_request(SOURCE_MIC, SINK_RTX, PRIO_TX);
         if (txAudioPath < 0)
+        {
+            status->opStatus = OFF;
             return;
+        }
         if (!horse_codec_startEncode(txAudioPath))
         {
             audioPath_release(txAudioPath);
+            txAudioPath = -1;
+            status->opStatus = OFF;
             return;
         }
         horse::call_t srcCall, dstCall;
         M17::encode_callsign(status->source_address, srcCall, false);
         M17::encode_callsign(status->destination_address, dstCall, false);
         encoder.reset();
-        encoder.encodeLsf(srcCall, dstCall, outFrame);
+        sessionValid = false;
+        encryptTx = false;
+        signTx = false;
+        txSigSent = false;
+        memset(sessionKey, 0, sizeof sessionKey);
+        memset(frameAuthKey, 0, sizeof frameAuthKey);
+        memset(txSessionSig, 0, sizeof txSessionSig);
+
+        uint8_t eph_pk[HORSE_X25519_PUBLICKEY_BYTES] = {0};
+        uint8_t eph_sk[HORSE_X25519_SECRETKEY_BYTES] = {0};
+        uint8_t flags = 0;
+        contact_t contact = {0};
+        bool have_contact = false;
+        bool want_encrypt = state.channel.horse.encrypt_en;
+        bool want_sign = state.channel.horse.sign_en;
+
+        if (!want_encrypt && !want_sign)
+            want_encrypt = true;
+
+        if (state.channel.horse.contact_index != 0 &&
+            cps_readContact(&contact, state.channel.horse.contact_index) == 0 &&
+            contact.mode == OPMODE_HORSE)
+            have_contact = true;
+
+        const horse_identity_keys_t *id = horse_keystore_get_identity();
+        const bool crypto_ready = horse_crypto_available() &&
+                                  horse_keystore_is_unlocked() && id != NULL &&
+                                  have_contact;
+
+        if (want_encrypt && crypto_ready && horse_contact_has_x25519(&contact) &&
+            horse_crypto_x25519_keypair(eph_pk, eph_sk) &&
+            horse_crypto_derive_session_key(eph_sk, contact.info.horse.x25519_pk,
+                                            sessionKey))
+        {
+            sessionValid = true;
+            encryptTx = true;
+            flags |= LSF_FLAG_ENCRYPTED;
+        }
+        memset(eph_sk, 0, sizeof eph_sk);
+
+        if (want_sign && crypto_ready && horse_contact_has_ed25519(&contact))
+        {
+            uint8_t session_msg[44];
+            const uint8_t *eph = encryptTx ? eph_pk : NULL;
+            horse_crypto_build_session_message(srcCall.data(), dstCall.data(), eph,
+                                               session_msg);
+            if (horse_crypto_sign(id->ed25519_sk, session_msg, sizeof session_msg,
+                                  txSessionSig))
+            {
+                signTx = true;
+                flags |= LSF_FLAG_SIGNED;
+                horse_crypto_derive_frame_auth_key(txSessionSig, frameAuthKey);
+            }
+        }
+
+        encoder.encodeLsf(srcCall, dstCall, encryptTx ? eph_pk : nullptr, flags,
+                          outFrame);
         modulator.invertPhase(invertTxPhase);
         if (!modulator.start())
+        {
+            horse_codec_stop(txAudioPath);
+            audioPath_release(txAudioPath);
+            txAudioPath = -1;
+            status->opStatus = OFF;
             return;
+        }
         modulator.sendPreamble();
         modulator.sendFrame(outFrame);
+
+        if (signTx)
+        {
+            uint8_t zeroTag[HORSE_VOICE_TAG_BYTES] = {0};
+            for (uint16_t i = 0; i < SIG_FRAME_COUNT; i++)
+            {
+                encoder.encodeVoiceFrameWithFn(txSessionSig + (i * 12), zeroTag,
+                                               SIG_FRAME_BASE + i, outFrame, false);
+                modulator.sendFrame(outFrame);
+                sleepFor(0u, 40u);
+            }
+            txSigSent = true;
+        }
     }
 
     uint8_t melpeBuf[HORSE_CODEC_FRAME_BYTES];
-    uint8_t tagZero[4] = {0};
-    if (horse_codec_popFrame(melpeBuf, true) == 0)
-        encoder.encodeVoiceFrame(melpeBuf, tagZero, outFrame, false);
-    else
-    {
+
+    if (horse_codec_popFrame(melpeBuf, true) != 0)
         memset(melpeBuf, 0, sizeof(melpeBuf));
-        encoder.encodeVoiceFrame(melpeBuf, tagZero, outFrame, false);
-    }
+
+    sendTxVoiceFrame(melpeBuf, false, outFrame);
     modulator.sendFrame(outFrame);
     sleepFor(0u, 40u);
 
@@ -257,13 +534,21 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
     {
         if (horse_codec_popFrame(melpeBuf, false) != 0)
             memset(melpeBuf, 0, sizeof(melpeBuf));
-        encoder.encodeVoiceFrame(melpeBuf, tagZero, outFrame, true);
+        sendTxVoiceFrame(melpeBuf, true, outFrame);
         modulator.sendFrame(outFrame);
         encoder.encodeEotFrame(outFrame);
         modulator.sendFrame(outFrame);
         modulator.stop();
         horse_codec_stop(txAudioPath);
         audioPath_release(txAudioPath);
+        txAudioPath = -1;
+        sessionValid = false;
+        encryptTx = false;
+        signTx = false;
+        txSigSent = false;
+        memset(sessionKey, 0, sizeof sessionKey);
+        memset(frameAuthKey, 0, sizeof frameAuthKey);
+        memset(txSessionSig, 0, sizeof txSessionSig);
         status->opStatus = OFF;
     }
 }

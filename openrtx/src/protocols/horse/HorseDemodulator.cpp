@@ -190,9 +190,13 @@ void HorseDemodulator::syncedState()
             quantize(val);
         }
     }
-    uint8_t hd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0]) +
-                 hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
-    if (hd <= 2)
+    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0]) +
+                  hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
+    uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0]) +
+                      hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
+    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0]) +
+                    hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
+    if (lsfHd <= 2 || voiceHd <= 2 || eotHd <= 2)
         demodState = DemodState::LOCKED;
     else
         demodState = DemodState::UNLOCKED;
@@ -217,11 +221,13 @@ void HorseDemodulator::lockedState(int16_t sample)
 
 void HorseDemodulator::syncUpdateState()
 {
+    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0]) +
+                    hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
     uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0]) +
                       hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
     uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0]) +
                     hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
-    if (voiceHd <= 2)
+    if (lsfHd <= 2 || voiceHd <= 2)
         missedSyncs = 0;
     else
         missedSyncs += 1;

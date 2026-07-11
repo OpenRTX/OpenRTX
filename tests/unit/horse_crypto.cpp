@@ -12,6 +12,10 @@
 #include <cstdint>
 #include <cstdlib>
 
+#ifdef HAVE_LIBSODIUM
+#include <sodium.h>
+#endif
+
 static int test_voice_encrypt_decrypt_roundtrip()
 {
     uint8_t session_key[HORSE_SESSION_KEY_BYTES];
@@ -229,6 +233,73 @@ static int test_sign_verify_bad_signature()
     return 0;
 }
 
+static int test_session_frame_auth_roundtrip()
+{
+#ifdef HAVE_LIBSODIUM
+    if (sodium_init() < 0)
+    {
+        std::printf("horse_crypto_test: sodium_init failed\n");
+        return -1;
+    }
+
+    uint8_t ed25519_pk[HORSE_ED25519_PUBLICKEY_BYTES];
+    uint8_t ed25519_sk[HORSE_ED25519_SECRETKEY_BYTES];
+    uint8_t src[6] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    uint8_t dst[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    uint8_t eph_pk[32];
+    uint8_t session_msg[44];
+    uint8_t signature[HORSE_ED25519_SIGNATURE_BYTES];
+    uint8_t auth_key[HORSE_SESSION_KEY_BYTES];
+    uint8_t melpe[12] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+                         0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C};
+    uint8_t tag[HORSE_VOICE_TAG_BYTES];
+
+    crypto_sign_ed25519_keypair(ed25519_pk, ed25519_sk);
+    for (size_t i = 0; i < sizeof eph_pk; i++)
+        eph_pk[i] = (uint8_t)(i + 0x20);
+
+    horse_crypto_build_session_message(src, dst, eph_pk, session_msg);
+    if (!horse_crypto_sign(ed25519_sk, session_msg, sizeof session_msg,
+                           signature))
+    {
+        std::printf("horse_crypto_test: session sign failed\n");
+        return -1;
+    }
+    if (!horse_crypto_verify(ed25519_pk, session_msg, sizeof session_msg,
+                             signature))
+    {
+        std::printf("horse_crypto_test: session verify failed\n");
+        return -1;
+    }
+    if (!horse_crypto_derive_frame_auth_key(signature, auth_key))
+    {
+        std::printf("horse_crypto_test: frame auth key derive failed\n");
+        return -1;
+    }
+    if (!horse_crypto_voice_auth_tag(auth_key, 7, melpe, tag))
+    {
+        std::printf("horse_crypto_test: frame auth tag failed\n");
+        return -1;
+    }
+    if (!horse_crypto_voice_auth_verify(auth_key, 7, melpe, tag))
+    {
+        std::printf("horse_crypto_test: frame auth verify failed\n");
+        return -1;
+    }
+
+    tag[0] ^= 0xFF;
+    if (horse_crypto_voice_auth_verify(auth_key, 7, melpe, tag))
+    {
+        std::printf("horse_crypto_test: frame auth accepted bad tag\n");
+        return -1;
+    }
+#else
+    std::printf("horse_crypto_test: skipping session auth (no libsodium)\n");
+#endif
+
+    return 0;
+}
+
 int main()
 {
     if (test_voice_encrypt_decrypt_roundtrip() != 0)
@@ -242,6 +313,8 @@ int main()
     if (test_sign_verify_roundtrip() != 0)
         return -1;
     if (test_sign_verify_bad_signature() != 0)
+        return -1;
+    if (test_session_frame_auth_roundtrip() != 0)
         return -1;
 
     std::printf("horse_crypto_test: all tests passed\n");
