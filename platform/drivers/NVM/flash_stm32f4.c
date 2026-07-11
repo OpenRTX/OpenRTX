@@ -58,9 +58,9 @@ static inline bool unlock()
  * Erase one sector of the MCU flash memory.
  *
  * @param secNum: sector number.
- * @return true for successful erase, false otherwise.
+ * @return 0 on success, negative errno on failure.
  */
-static bool eraseSector(const uint8_t secNum)
+static int eraseSector(const uint8_t secNum)
 {
     if (unlock() == false)
         return -EIO;
@@ -83,7 +83,7 @@ static bool eraseSector(const uint8_t secNum)
 
     FLASH->CR &= ~FLASH_CR_SER;
 
-    return true;
+    return 0;
 }
 
 /**

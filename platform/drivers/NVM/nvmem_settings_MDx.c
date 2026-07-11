@@ -8,6 +8,7 @@
 #include <string.h>
 #include "core/cps.h"
 #include "core/crc.h"
+#include "core/utils.h"
 #include "flash.h"
 
 /*
@@ -118,7 +119,7 @@ int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
      * On STM32F405 the settings are saved in sector 11, starting at address
      * 0x08060000.
      */
-    if((block < 0) || (block >= 2047))
+    if((block < 0) || ((uint32_t)block >= ARRAY_SIZE(memory->data)))
     {
         flash_eraseSector(11);
         addr = ((uint32_t) &(memory->magic));

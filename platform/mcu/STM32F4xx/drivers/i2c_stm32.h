@@ -22,13 +22,11 @@ extern const struct i2cApi i2cStm32_driver;
  * @param mutx: pointer to mutex, or NULL.
  */
 #define I2C_STM32_DEVICE_DEFINE(name, peripheral, mutx) \
-const struct i2cDevice name =                           \
-{                                                       \
-    .driver = &i2cStm32_driver,                         \
-    .periph = peripheral,                               \
-    .mutex  = mutx                                      \
-};
-
+    const struct i2cDevice name = {                     \
+        .driver = &i2cStm32_driver,                     \
+        .periph = peripheral,                           \
+        .mutex = mutx,                                  \
+    };
 
 /**
  * Initialise an STM32 I2C peripheral with a given bus speed.

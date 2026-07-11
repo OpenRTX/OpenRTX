@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -14,38 +14,33 @@
  * implementation is based on the POSIX syscalls for file management.
  */
 
-
 /**
  * Driver configuration data structure.
  */
-struct nvmFileDevice
-{
-    const void           *priv;    ///< Device driver private data
-    const struct nvmOps  *ops;     ///< Device operations
-    const struct nvmInfo *info;    ///< Device info
-    int                     fd;    ///< File descriptor
+struct nvmFileDevice {
+    const void *priv;           ///< Device driver private data
+    const struct nvmOps *ops;   ///< Device operations
+    const struct nvmInfo *info; ///< Device info
+    int fd;                     ///< File descriptor
 };
 
 /**
  * Driver API functions and info.
  */
-extern const struct nvmOps  posix_file_ops;
+extern const struct nvmOps posix_file_ops;
 extern const struct nvmInfo posix_file_info;
 
 /**
  * Instantiate a POSIX file storage NVM device.
  *
  * @param name: device name.
- * @param path: full path of the file used for data storage.
- * @param dim: size of the storage file, in bytes.
  */
-#define POSIX_FILE_DEVICE_DEFINE(name)      \
-static struct nvmFileDevice name =          \
-{                                           \
-    .ops  = &posix_file_ops,                \
-    .info = &posix_file_info,               \
-    .fd   = -1                              \
-};
+#define POSIX_FILE_DEVICE_DEFINE(name)   \
+    static struct nvmFileDevice name = { \
+        .ops = &posix_file_ops,          \
+        .info = &posix_file_info,        \
+        .fd = -1,                        \
+    };
 
 /**
  * Initialize a POSIX file driver instance.
@@ -55,7 +50,8 @@ static struct nvmFileDevice name =          \
  * @param dev: pointer to device descriptor.
  * @param fileName: full path of the file used for data storage.
  * @param size: file size.
- * @return zero on success, a negative error code otherwise.
+ * @return a negative value on error, 1 if a new file has been created and 0
+ * if an already existing file has been used.
  */
 int posixFile_init(struct nvmFileDevice *dev, const char *fileName,
                    const size_t size);
