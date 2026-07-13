@@ -173,6 +173,34 @@ void AT1846S::setOpMode(const AT1846S_OpMode mode)
     reloadConfig();
 }
 
+void AT1846S::setFrequency(const freq_t freq)
+{
+    // AT1846S datasheet specifies a frequency step of 1/16th of kHz per bit.
+    // Computation of register value is done using 64 bit to avoid overflows,
+    // result is then truncated to 32 bits to fit it into the registers.
+    uint64_t val = ((uint64_t) freq * 16) / 1000;
+    val &= 0xFFFFFFFF;
+
+    uint16_t fHi = (val >> 16) & 0xFFFF;
+    uint16_t fLo = val & 0xFFFF;
+
+    i2c_writeReg16(0x29, fHi);
+    i2c_writeReg16(0x2A, fLo);
+
+    reloadConfig();
+}
+
+void AT1846S::setFuncMode(const AT1846S_FuncMode mode)
+{
+    /*
+     * Functional mode is controlled by bits 5 (RX on) and 6 (TX on) in
+     * register 0x30. With a cast and shift we can set it easily.
+     */
+
+    uint16_t value = static_cast< uint16_t >(mode) << 5;
+    maskSetRegister(0x30, 0x0060, value);
+}
+
 /*
  * Implementation of AT1846S I2C interface through SA8x8
  */

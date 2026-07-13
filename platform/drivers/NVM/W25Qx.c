@@ -241,8 +241,6 @@ static ssize_t W25Qx_writePage(const struct nvmDevice *dev, uint32_t addr,
         writeLen = PAGE_SIZE - addrRange;
     }
 
-    spi_acquire(cfg->spi);
-
     // Write enable bit has to be set before each page program
     enableWrite(cfg);
 
