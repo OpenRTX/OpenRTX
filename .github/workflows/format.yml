@@ -20,3 +20,11 @@ jobs:
         run: ./scripts/clang_format.sh --check
       - name: REUSE Compliance Check (confirm copyright and licenses)
         uses: fsfe/reuse-action@v6
+
+  check-strings:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Check UI string tables are in sync with English
+        run: python3 ./scripts/check_strings.py
