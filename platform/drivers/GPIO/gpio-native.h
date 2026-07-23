@@ -17,6 +17,8 @@
 #include "drivers/GPIO/gpio_mk22.h"
 #elif defined(AT32F423xx)
 #include "gpio_at32f423.h"
+#elif defined(PLATFORM_HD2)
+#include "drivers/GPIO/gpio_hrc7000.h"
 #endif
 
 #endif /* GPIO_NATIVE_H */

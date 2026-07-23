@@ -57,6 +57,29 @@ datetime_t localTimeToUtc(const datetime_t local_time, const int8_t timezone);
  */
 void realignTimeInfo(datetime_t *time);
 
+/**
+ * Convert a civil (proleptic Gregorian) date to a serial day count relative to
+ * the Unix epoch (1970-01-01 = day 0).  Branch-free Howard Hinnant algorithm,
+ * valid for years well outside the datetime_t range.
+ *
+ * @param year: full year, e.g. 2026.
+ * @param month: month, 1-12.
+ * @param day: day of the month, 1-31.
+ * @return days since 1970-01-01 (negative for earlier dates).
+ */
+int32_t civilToDays(int32_t year, uint32_t month, uint32_t day);
+
+/**
+ * Inverse of civilToDays(): split a serial day count (days since 1970-01-01)
+ * back into a civil year/month/day.
+ *
+ * @param days: days since 1970-01-01.
+ * @param year: output, full year.
+ * @param month: output, month 1-12.
+ * @param day: output, day of the month 1-31.
+ */
+void daysToCivil(int32_t days, int32_t *year, uint32_t *month, uint32_t *day);
+
 #ifdef __cplusplus
 }
 #endif
