@@ -54,9 +54,10 @@ set(ORTX_CORE
     ${ORTX}/openrtx/src/core/audio_path.cpp
     ${ORTX}/openrtx/src/core/audio_stream.c
     ${ORTX}/openrtx/src/core/voicePromptUtils.c)
-# Deliberately omitted (stubbed in hd2_stubs.c): voicePrompts.c + audio_codec.c
-# + dsp.cpp (codec2's large static state trips the boot-hang the HD2 build
-# avoids), and rtx.cpp + OpMode_* (radio stack).
+# Deliberately omitted (stubbed in hd2_core_stubs.c): voicePrompts.c +
+# audio_codec.c + dsp.cpp (codec2's large static state trips the boot-hang the
+# HD2 build avoids).  The analog-FM radio stack (rtx.cpp + OpMode_FM.cpp + the
+# HD2 baseband/audio drivers) is now built -- see ORTX_RADIO below.
 
 # --- Default UI -------------------------------------------------------------
 set(ORTX_UI
@@ -88,6 +89,22 @@ set(ORTX_STUBS
     ${ORTX}/platform/drivers/stubs/cps_io_stub.c
     ${ORTX}/platform/drivers/stubs/nvmem_stub.c)
 
+# --- Analog-FM radio stack --------------------------------------------------
+# The hardware-agnostic radio task (rtx.cpp) + the FM operating mode
+# (OpMode_FM.cpp) driving the HD2 baseband/audio drivers: AT1846S transceiver,
+# HR_C7000 codec/modem FM gate (radio_HD2.cpp) and the board audio-routing
+# matrix (audio_HD2.c).  The AT1846S rides the shared HR_C7000 I2C driver
+# (i2c_hrc7000.c, already built with the MCU drivers; instance i2c1 in
+# hwconfig.c).  FM only -- no DMR / M17 / broadcast-FM.  rtx.cpp #includes
+# OpMode_M17.hpp unconditionally, but the M17 object is CONFIG_M17-gated, so
+# OpMode_M17.cpp is not needed here.
+set(ORTX_RADIO
+    ${ORTX}/openrtx/src/rtx/rtx.cpp
+    ${ORTX}/openrtx/src/rtx/OpMode_FM.cpp
+    ${ORTX}/platform/drivers/baseband/radio_HD2.cpp
+    ${ORTX}/platform/drivers/baseband/AT1846S_HD2.cpp
+    ${ORTX}/platform/drivers/audio/audio_HD2.c)
+
 # --- Vendored helper libs the core pulls in ---------------------------------
 set(ORTX_LIBS
     ${ORTX}/lib/minmea/minmea.c
@@ -97,7 +114,7 @@ add_executable(openrtx_hd2
     ${ORTX}/openrtx/src/main.c
     ${CMAKE_SOURCE_DIR}/hd2_glue.cpp
     ${CMAKE_SOURCE_DIR}/hd2_core_stubs.c
-    ${ORTX_CORE} ${ORTX_UI} ${ORTX_HD2} ${ORTX_STUBS} ${ORTX_LIBS})
+    ${ORTX_CORE} ${ORTX_UI} ${ORTX_HD2} ${ORTX_RADIO} ${ORTX_STUBS} ${ORTX_LIBS})
 
 target_include_directories(openrtx_hd2 PRIVATE
     ${CMAKE_SOURCE_DIR}
