@@ -149,3 +149,32 @@ void realignTimeInfo(datetime_t *time)
         }
     }
 }
+
+/*
+ * Civil <-> serial-day conversion (days since 1970-01-01), branch-free after
+ * Howard Hinnant's "chrono-Compatible Low-Level Date Algorithms".
+ */
+int32_t civilToDays(int32_t year, uint32_t month, uint32_t day)
+{
+    year -= (month <= 2);
+    int32_t era = (year >= 0 ? year : year - 399) / 400;
+    uint32_t yoe = (uint32_t)(year - era * 400);
+    uint32_t doy = (153u * (month + (month > 2 ? -3u : 9u)) + 2u) / 5u + day
+                 - 1u;
+    uint32_t doe = yoe * 365u + yoe / 4u - yoe / 100u + doy;
+    return era * 146097 + (int32_t)doe - 719468;
+}
+
+void daysToCivil(int32_t days, int32_t *year, uint32_t *month, uint32_t *day)
+{
+    days += 719468;
+    int32_t era = (days >= 0 ? days : days - 146096) / 146097;
+    uint32_t doe = (uint32_t)(days - era * 146097);
+    uint32_t yoe = (doe - doe / 1460u + doe / 36524u - doe / 146096u) / 365u;
+    int32_t yr = (int32_t)yoe + era * 400;
+    uint32_t doy = doe - (365u * yoe + yoe / 4u - yoe / 100u);
+    uint32_t mp = (5u * doy + 2u) / 153u;
+    *day = doy - (153u * mp + 2u) / 5u + 1u;
+    *month = mp + (mp < 10u ? 3u : -9u);
+    *year = yr + (*month <= 2);
+}
