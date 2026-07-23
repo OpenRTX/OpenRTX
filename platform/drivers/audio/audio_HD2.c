@@ -24,11 +24,11 @@
  *     radio.h hook radio_enableAfOutput()/disableAfOutput().
  *   - This file also owns the board-level GPIO twiddles.
  *
- * NOTE (FM bring-up build): there is NO MCU->codec-DAC PCM playback path in
- * this build (outputStream_HD2.cpp is not linked), so the SINK_SPK output
- * device carries a NULL driver -- the endpoint enum is kept, but no PCM stream
- * driver is wired.  The analog FM-RX path (SOURCE_RTX -> SINK_SPK) is pure GPIO
- * and is fully preserved.
+ * MCU->codec-DAC PCM playback (beep / voice prompt) is wired: the SINK_SPK
+ * output device carries the outputStream_HD2.cpp driver, and the
+ * audio_connect(SOURCE_MCU, SINK_SPK) case warms the codec + routes the amp
+ * before the stream arms.  The analog FM-RX path (SOURCE_RTX -> SINK_SPK) is
+ * pure GPIO and is fully preserved.
  *
  * TX (MIC->RTX) is intentionally not keyed here.
  */
@@ -156,13 +156,14 @@ static const uint8_t pathCompatibilityMatrix[9][9] = {
     /* MCU-MCU */ { 1, 1, 0, 1, 1, 0, 0, 0, 0 }
 };
 
-/* No MCU->codec-DAC PCM stream driver in this FM build (outputStream_HD2.cpp
- * is not linked): SINK_SPK carries a NULL driver.  The endpoint enum is kept so
- * the audio_path core still resolves the sink. */
+/* CPU->codec-DAC PCM stream driver (outputStream_HD2.cpp), 8 kHz mono s16 --
+ * the SINK_SPK output device.  SINK_MCU / SINK_RTX carry no driver here. */
+extern const struct audioDriver hd2_pcm_audio_driver;
+
 const struct audioDevice outputDevices[] = {
-    { NULL, 0, 0, SINK_MCU },
-    { NULL, 0, 0, SINK_RTX },
-    { NULL, 0, 0, SINK_SPK },
+    { NULL, NULL, 0, SINK_MCU },
+    { NULL, NULL, 0, SINK_RTX },
+    { &hd2_pcm_audio_driver, NULL, 0, SINK_SPK },
 };
 
 const struct audioDevice inputDevices[] = {

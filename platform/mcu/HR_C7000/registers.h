@@ -88,7 +88,10 @@ typedef struct {
         SYS_INTERP_MASK; /* 0x39c modem/Layer-2 interrupt mask (§4.6.5.10, FM vendor 0x1007f) */
     volatile uint32_t MODEM_IRQ_ACK; /* 0x3a0 write the latch value back to ACK;
                                         unused in this FM-only build (RX-capture/future) */
-    uint32_t RESERVED9[23];          /* 0x3a4 - 0x3fc */
+    uint32_t RESERVED9a[3];          /* 0x3a4 - 0x3ac */
+    volatile uint32_t INT_STATUS;    /* 0x3b0 modem int-status / PCM frame ack
+                                      * latch: bit4 capture, bit5 playback */
+    uint32_t RESERVED9b[19];         /* 0x3b4 - 0x3fc */
     volatile uint32_t
         LAYER2_CONTROL;  /* 0x400 DMR L2 [7]txen [6]rxen TDMA slot-sync;
                             unused in this FM-only build (map completeness) */
@@ -122,6 +125,8 @@ static_assert(offsetof(SOCSYS_TypeDef, RX_IF_FREQ) == 0x1b0,
 static_assert(offsetof(SOCSYS_TypeDef, MODEM_IRQ) == 0x398, "SOCSYS MODEM_IRQ");
 static_assert(offsetof(SOCSYS_TypeDef, MODEM_IRQ_ACK) == 0x3a0,
               "SOCSYS MODEM_IRQ_ACK");
+static_assert(offsetof(SOCSYS_TypeDef, INT_STATUS) == 0x3b0,
+              "SOCSYS INT_STATUS");
 static_assert(offsetof(SOCSYS_TypeDef, LAYER2_CONTROL) == 0x400,
               "SOCSYS LAYER2_CONTROL");
 static_assert(offsetof(SOCSYS_TypeDef, LAYER2_TXRX_CTRL) == 0x408,
@@ -132,6 +137,35 @@ static_assert(offsetof(SOCSYS_TypeDef, FM_PTT) == 0x560, "SOCSYS FM_PTT");
 #define WORK_MODE_FM_MOD 0x80u /* work_mode bit7: FM analog modulator mode */
 #define SYS_INTERP_MASK_FM_VENDOR \
     0x0001007fu /* vendor FM modem/Layer-2 interrupt-mask value */
+
+/*
+ * CPU -> codec-DAC PCM playback bridge (SAHB shared-SRAM mailbox + frame IRQ).
+ * Once armed (AUDIO_BUFFER_CLR=3, AUDIO_CONTROL bit0 + playback bit) the codec requests
+ * one 80-sample frame every 10 ms via the PCM-play PIC source; the ISR acks the
+ * handshake (INT_STATUS bit5) and refills the playback window.  8 kHz mono s16.
+ * Used by outputStream_HD2.cpp.
+ */
+#define SOFT_RSTN_PCM_BITS \
+    0x18u /* SYS_SOFT_RSTN [4:3]: codec/audio PCM blocks */
+#define AUDIO_CONTROL_PCM_EN \
+    0x01u /* AUDIO_CONTROL bit0: 1 = PCM bridge, 0 = direct DAC */
+#define AUDIO_CONTROL_PLAY 0x20u /* AUDIO_CONTROL playback-side enable */
+#define AUDIO_CONTROL_CAP 0x10u  /* AUDIO_CONTROL mic-capture-side enable */
+#define INT_STATUS_PCM_PLAY_ACK \
+    0x20u                        /* INT_STATUS: a playback frame was supplied */
+#define INT_STATUS_PCM_CAP_ACK \
+    0x10u                        /* INT_STATUS: a capture frame was consumed */
+#define PCM_FRAME_SAMPLES 80u    /* s16 samples per 10 ms PCM frame @ 8 kHz */
+/* SAHB shared-SRAM PCM mailbox windows (absolute addresses). */
+#define SAHB_PCM_PLAY \
+    ((volatile uint16_t *)0x180000a0u) /* CPU writes, codec DACs */
+#define SAHB_PCM_CAP \
+    ((volatile uint16_t *)0x18000000u) /* mic ADC frames appear  */
+/* PIC source numbers for the PCM frame IRQs (CK803S exception vec = src + 0x20). */
+#define HD2_IRQ_PCM_PLAY \
+    0x1bu /* codec requests a playback frame (vendor isr_pcm_rd) */
+#define HD2_IRQ_PCM_CAP \
+    0x1cu /* mic capture frame ready       (vendor isr_pcm_wr) */
 
 /* HD2 board PTC pad-mux values (HD2_DIPLEX2_*) live in targets/HD2/pinmap.h. */
 
