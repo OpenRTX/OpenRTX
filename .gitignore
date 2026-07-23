@@ -80,3 +80,7 @@ scripts/get_demod_log
 
 # OpenRTX Codeplugs
 *.rtxc
+
+# HD2 in-tree docker build output
+platform/targets/HD2/build-docker/
+platform/targets/HD2/build/
