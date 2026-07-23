@@ -102,11 +102,20 @@ static uint32_t vpNib = 0;           /* next sample within current clip    */
 static adpcm_ima_state vpIma;
 static unsigned vpLeadin = 0;        /* remaining lead-in silence halves   */
 
-/* Beep management (identical to stock). */
+/* Output ring -- one owner (the UI thread, via vp_tick), so a single static
+ * buffer is safe.  Two 160-sample halves (20 ms each).  Shared by voice-prompt
+ * clips and generated beep tones (they never play simultaneously). */
+static int16_t vpStreamBuf[STREAM_SAMPLES];
+
+/* Beep management.  Beeps play a generated square-wave tone through vpStream
+ * (see beep_tick), NOT a hardware PWM: on this target the PWM tone only sounds
+ * while the codec DAC is actively clocked by a PCM stream, so a bare PWM beep
+ * was silent -- a PCM tone through the proven playback path always sounds. */
 static beepData_t beepSeriesBuffer[BEEP_SEQ_BUF_SIZE];
-static uint16_t currentBeepDuration = 0;
+static uint16_t currentBeepDuration = 0; /* remaining halves of current beep */
 static uint8_t beepSeriesIndex = 0;
-static bool delayBeepUntilTick = false;
+static uint16_t beepFreq = 0;            /* current beep tone frequency (Hz) */
+static uint32_t beepPhase = 0; /* square-wave phase accum (mod 8 kHz) */
 
 /* ---- audio path helpers ---- */
 
@@ -123,39 +132,97 @@ static inline void disableSpkOutput()
     audioPath_release(vpAudioPath);
 }
 
+/* Fill one 160-sample half with a square wave at beepFreq (8 kHz sample rate).
+ * A phase accumulator (mod the 8 kHz rate) keeps successive halves and series
+ * steps phase-continuous.  freq 0 -> silence. */
+static void vpFillBeepHalf(stream_sample_t *dst)
+{
+    if (beepFreq == 0) {
+        memset(dst, 0, STREAM_HALF * sizeof(stream_sample_t));
+        return;
+    }
+    for (unsigned i = 0; i < STREAM_HALF; i++) {
+        beepPhase += beepFreq;
+        if (beepPhase >= 8000u)
+            beepPhase -= 8000u;
+        dst[i] = (beepPhase < 4000u) ? 8000 : -8000;
+    }
+}
+
+/* Open the MCU->SPK path + output stream for a beep (mirrors vp_play's open).
+ * Reused across a beep series; a no-op once the stream is already running. */
+static bool beep_stream_open()
+{
+    enableSpkOutput();
+    if (audioPath_getStatus(vpAudioPath) != PATH_OPEN)
+        return false;
+    if (vpStream < 0) {
+        /* Pre-fill BOTH halves with the tone so it sounds from frame 0 -- a
+         * silent prime would truncate a short keytone (~60 ms) to just a click
+         * before the tone-filled halves cycle in. */
+        vpFillBeepHalf(&vpStreamBuf[0]);
+        vpFillBeepHalf(&vpStreamBuf[STREAM_HALF]);
+        vpStream = audioStream_start(vpAudioPath, vpStreamBuf, STREAM_SAMPLES,
+                                     8000, STREAM_OUTPUT | BUF_CIRC_DOUBLE);
+        if (vpStream < 0) {
+            vpStream = -1;
+            return false;
+        }
+    }
+    return true;
+}
+
 static void beep_flush()
 {
-    if (currentBeepDuration > 0)
-        platform_beepStop();
+    if (vpStream >= 0) {
+        audioStream_stop(vpStream);
+        vpStream = -1;
+    }
     memset(beepSeriesBuffer, 0, sizeof(beepSeriesBuffer));
     currentBeepDuration = 0;
     beepSeriesIndex = 0;
+    beepFreq = 0;
     disableSpkOutput();
 }
 
+/* One 160-sample tone half per tick, paced by the stream syncpoint; duration
+ * counts halves (20 ms each).  Returns true while a beep is in progress so
+ * vp_tick skips the voice-prompt pump (beeps and clips share vpStream). */
 static bool beep_tick()
 {
-    if (currentBeepDuration > 0) {
-        if (delayBeepUntilTick) {
-            platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
-            delayBeepUntilTick = false;
-        }
-        currentBeepDuration--;
-        if (currentBeepDuration == 0) {
-            platform_beepStop();
-            if ((beepSeriesBuffer[beepSeriesIndex + 1].freq != 0)
-                && (beepSeriesBuffer[beepSeriesIndex + 1].duration != 0)) {
-                beepSeriesIndex++;
-                currentBeepDuration =
-                    beepSeriesBuffer[beepSeriesIndex].duration;
-                platform_beepStart(beepSeriesBuffer[beepSeriesIndex].freq);
-            } else {
-                beep_flush();
-            }
-        }
+    if (currentBeepDuration == 0)
+        return false;
+
+    if ((vpStream < 0) || (audioPath_getStatus(vpAudioPath) != PATH_OPEN)) {
+        beep_flush();
         return true;
     }
-    return false;
+    if (outputStream_sync(vpStream, false) == false) {
+        beep_flush();
+        return true;
+    }
+    stream_sample_t *idle = outputStream_getIdleBuffer(vpStream);
+    if (idle == NULL) {
+        beep_flush();
+        return true;
+    }
+    vpFillBeepHalf(idle);
+
+    currentBeepDuration--;
+    if (currentBeepDuration == 0) {
+        if ((beepSeriesBuffer[beepSeriesIndex + 1].freq != 0)
+            && (beepSeriesBuffer[beepSeriesIndex + 1].duration != 0)) {
+            beepSeriesIndex++;
+            currentBeepDuration = beepSeriesBuffer[beepSeriesIndex].duration;
+            beepFreq = beepSeriesBuffer[beepSeriesIndex].freq;
+        } else {
+            /* Drain the last tone half (let it reach the DAC) before stopping,
+             * else the tail is cut and a short beep sounds like a click. */
+            outputStream_sync(vpStream, false);
+            beep_flush();
+        }
+    }
+    return true;
 }
 
 /* ---- dictionary / symbol lookup (identical to stock) ---- */
@@ -389,10 +456,6 @@ void vp_queueStringTableEntry(const char *const *stringTableStringPtr)
     vp_queuePrompt(pos);
 }
 
-/* Output ring -- one owner (the UI thread, via vp_tick), so a single static
- * buffer is safe.  Two 160-sample halves (20 ms each). */
-static int16_t vpStreamBuf[STREAM_SAMPLES];
-
 void vp_play()
 {
     if (state.settings.vpLevel < vpLow)
@@ -403,6 +466,11 @@ void vp_play()
         return;
     if (!vpDataLoaded)
         return;
+
+    /* A queued prompt preempts any in-progress beep -- both use vpStream, and
+     * at voice-prompt level the spoken prompt replaces the keytone. */
+    if (currentBeepDuration != 0)
+        beep_flush();
 
     enableSpkOutput();
     if (audioPath_getStatus(vpAudioPath) != PATH_OPEN)
@@ -471,34 +539,46 @@ void vp_beep(uint16_t freq, uint16_t duration)
 {
     if (state.settings.vpLevel < vpBeep)
         return;
+    if (voicePromptActive) /* a prompt owns vpStream */
+        return;
     if (currentBeepDuration != 0)
         return;
     if (duration > 20)
         duration = 20;
+    if (duration == 0)
+        return;
     beepSeriesBuffer[0].freq = freq;
     beepSeriesBuffer[0].duration = duration;
     beepSeriesBuffer[1].freq = 0;
     beepSeriesBuffer[1].duration = 0;
-    currentBeepDuration = duration;
     beepSeriesIndex = 0;
-    platform_beepStart(freq);
-    enableSpkOutput();
+    beepFreq = freq;
+    beepPhase = 0;
+    if (!beep_stream_open())        /* open path + tone stream */
+        return;
+    currentBeepDuration = duration; /* set last: arms beep_tick */
 }
 
 void vp_beepSeries(const uint16_t *beepSeries)
 {
     if (state.settings.vpLevel < vpBeep)
         return;
+    if (voicePromptActive)
+        return;
     if (currentBeepDuration != 0)
         return;
-    enableSpkOutput();
     if (beepSeries == NULL)
         return;
     memcpy(beepSeriesBuffer, beepSeries,
            BEEP_SEQ_BUF_SIZE * sizeof(beepData_t));
     beepSeriesBuffer[BEEP_SEQ_BUF_SIZE - 1].freq = 0;
     beepSeriesBuffer[BEEP_SEQ_BUF_SIZE - 1].duration = 0;
-    currentBeepDuration = beepSeriesBuffer[0].duration;
+    if (beepSeriesBuffer[0].duration == 0)
+        return;
     beepSeriesIndex = 0;
-    delayBeepUntilTick = true;
+    beepFreq = beepSeriesBuffer[0].freq;
+    beepPhase = 0;
+    if (!beep_stream_open())
+        return;
+    currentBeepDuration = beepSeriesBuffer[0].duration;
 }

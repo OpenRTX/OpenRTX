@@ -172,21 +172,54 @@ const struct audioDevice inputDevices[] = {
     { NULL, 0, 0, SINK_SPK },
 };
 
-/* --- board-level helpers ------------------------------------------------ */
+/* --- board-level audio routing state machine ----------------------------
+ *
+ * The speaker amp is fed through a 2:1 analog source select (PTB17): the
+ * speaker hears EITHER the AT1846S analog FM demod OR the HR_C7000 codec-DAC
+ * lineout, never both.  Three GPIOB lines drive the board audio path:
+ *
+ *   PTB4  SPKR_AMP_PIN    amp mute, active-LOW    (LOW  = amp on)
+ *   PTB10 AUDIO_ROUTE_PIN RX-audio route          (LOW  = routed to speaker)
+ *   PTB17 SPKR_GAIN_PIN   amp-input PATH SELECT   (HIGH = AT1846S analog demod,
+ *                                                  LOW  = codec-DAC lineout)
+ *
+ * States, by the open audio path:
+ *
+ *   idle / no path        amp muted            PTB4=1
+ *   SOURCE_RTX -> SINK_SPK analog FM RX audio  PTB4=0 PTB10=0 PTB17=1 (ANALOG)
+ *                          (AT1846S AF-DSP + chip-side unmute already ran once
+ *                           in radio_enableRx; here it is a pure GPIO gate)
+ *   SOURCE_MCU -> SINK_SPK codec-DAC playback  PTB4=0 PTB10=0 PTB17=0 (CODEC)
+ *                          (beep / voice prompt / PCM stream; codec warmed, and
+ *                           the live AT1846S RX-AF muted via radio_disableAfOutput
+ *                           so the analog demod cannot bleed into the shared node)
+ *
+ * The PATH SELECT (PTB17) is the crux: driving it HIGH for MCU playback leaves
+ * the codec DAC silent and passes AT1846S analog noise instead ("static /
+ * chirps").  spkr_amp_unmute() selects ANALOG; spkr_amp_unmute_codec() selects
+ * the CODEC DAC -- each source must use the matching one.
+ * ------------------------------------------------------------------------- */
 
 static inline void spkr_amp_mute(void)
 {
     gpio_setPin(GPIOB, SPKR_AMP_PIN);    /* PTB4  HIGH = muted    */
-    gpio_clearPin(GPIOB, SPKR_GAIN_PIN); /* PTB17 LOW  = low gain */
+    gpio_clearPin(GPIOB, SPKR_GAIN_PIN); /* PTB17 LOW  = idle select */
 }
 
+/* Analog FM-RX path: amp on + select the AT1846S analog demod (PTB17 HIGH).
+ * Without PTB17 HIGH the analog RX audio is barely audible (see registers.h). */
 static inline void spkr_amp_unmute(void)
 {
-    gpio_clearPin(GPIOB, SPKR_AMP_PIN); /* PTB4  LOW  = on       */
-    gpio_setPin(GPIOB, SPKR_GAIN_PIN);  /* PTB17 HIGH = full gain
-                                            * (without it ALL speaker
-                                            * audio is barely audible
-                                            * -- see pinmap.h) */
+    gpio_clearPin(GPIOB, SPKR_AMP_PIN); /* PTB4  LOW  = amp on         */
+    gpio_setPin(GPIOB, SPKR_GAIN_PIN);  /* PTB17 HIGH = AT1846S analog */
+}
+
+/* MCU codec-DAC path: amp on + select the codec-DAC lineout (PTB17 LOW).
+ * HIGH here would leave the codec DAC silent and pass analog noise. */
+static inline void spkr_amp_unmute_codec(void)
+{
+    gpio_clearPin(GPIOB, SPKR_AMP_PIN);  /* PTB4  LOW = amp on          */
+    gpio_clearPin(GPIOB, SPKR_GAIN_PIN); /* PTB17 LOW = codec-DAC lineout */
 }
 
 static inline void rx_route_on(void)
@@ -232,12 +265,14 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
             break;
 
         case PATH(SOURCE_MCU, SINK_SPK):
-            /* Beep / voice-prompt playback from the MCU (mixes through the
-             * codec DAC -> lineout -> speaker, so the codec must be warm). */
+            /* Beep / voice-prompt / PCM playback from the MCU codec DAC.  Warm
+             * the codec, route to the speaker, and select the codec-DAC lineout
+             * as the amp input (PTB17 LOW) -- NOT the analog demod (PTB17 HIGH),
+             * which would leave the DAC silent (static / chirps). */
             hd2_audio_out_warm();
             radio_disableAfOutput(); /* mute the live analog FM-RX audio */
             rx_route_on();
-            spkr_amp_unmute();
+            spkr_amp_unmute_codec();
             break;
 
         case PATH(SOURCE_MIC, SINK_RTX):
@@ -265,8 +300,8 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
             break;
 
         case PATH(SOURCE_MCU, SINK_SPK):
-            spkr_amp_mute();
-            rx_route_off();         /* close the RX-audio route (PTB10) */
+            spkr_amp_mute(); /* PTB4 HIGH = amp off (mirror the RTX path) */
+            rx_route_off();  /* close the RX-audio route (PTB10) */
             radio_enableAfOutput(); /* restore the FM-RX AF output */
             break;
 

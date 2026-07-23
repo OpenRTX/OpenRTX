@@ -129,10 +129,17 @@ int8_t platform_getChSelector()
 {
     return 0;
 }
+/* Beep / keytone.  On the HD2 the beep is generated as a PCM tone through the
+ * codec-DAC output stream by the voice-prompt player (core/voicePrompts_adpcm.c,
+ * beep_tick): a hardware PWM tone only sounds while a PCM stream is already
+ * clocking the codec DAC, so it cannot stand alone on this target.  These
+ * platform hooks are therefore no-ops here -- the stock codec2 player would
+ * drive them, but the HD2 build links the ADPCM player, which does not. */
 void platform_beepStart(uint16_t freq)
 {
     (void)freq;
 }
+
 void platform_beepStop()
 {
 }

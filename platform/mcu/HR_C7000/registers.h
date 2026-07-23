@@ -366,7 +366,7 @@ typedef struct {
 #define GPIOB ((GPIO_TypeDef *)0x14100000u)
 #define GPIOC ((GPIO_TypeDef *)0x14110000u)
 #define LCD_HW ((LCD_TypeDef *)0x12000000u)
-#define PWM_CH0 ((PWM_Channel_TypeDef *)0x140c0000u)
+#define PWM_CH0 ((PWM_Channel_TypeDef *)0x140c0000u) /* LCD backlight */
 #define I2C1 ((I2C_TypeDef *)0x14070000u) /* radio bus: AT1846S transceiver */
 #define I2C2 ((I2C_TypeDef *)0x14080000u) /* internal bus: RTC */
 #define ADC_HW ((ADC_TypeDef *)0x140d0000u)
