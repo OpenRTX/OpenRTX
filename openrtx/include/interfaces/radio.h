@@ -58,6 +58,19 @@ void radio_setOpmode(const enum opmode mode);
 bool radio_checkRxDigitalSquelch();
 
 /**
+ * Query a hardware RF-squelch decision, for targets whose transceiver has an
+ * on-chip carrier/squelch comparator (with its own hysteresis) that is steadier
+ * than thresholding the raw RSSI.
+ *
+ * @param open: written with the hardware squelch state (true = open) when this
+ * function returns true.
+ * @return true if the target provides a hardware RF-squelch decision (written
+ * to *open); false if it does not, in which case the caller falls back to
+ * thresholding radio_getRssi(). The default implementation returns false.
+ */
+bool radio_checkRxRfSquelch(bool *open);
+
+/**
  * Enable AF output towards the speakers.
  */
 void radio_enableAfOutput();
