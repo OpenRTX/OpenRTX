@@ -54,10 +54,11 @@ set(ORTX_CORE
     ${ORTX}/openrtx/src/core/audio_path.cpp
     ${ORTX}/openrtx/src/core/audio_stream.c
     ${ORTX}/openrtx/src/core/voicePromptUtils.c)
-# Deliberately omitted (stubbed in hd2_core_stubs.c): voicePrompts.c +
-# audio_codec.c + dsp.cpp (codec2's large static state trips the boot-hang the
-# HD2 build avoids).  The analog-FM radio stack (rtx.cpp + OpMode_FM.cpp + the
-# HD2 baseband/audio drivers) is now built -- see ORTX_RADIO below.
+# Voice prompts use the IMA-ADPCM player (ORTX_VP below), NOT the stock
+# codec2-based core/voicePrompts.c: codec2's large static state trips the HD2
+# boot-hang and its decode isn't realtime on this soft-float core.  So
+# audio_codec.c + dsp.cpp stay omitted.  The analog-FM radio stack (rtx.cpp +
+# OpMode_FM.cpp + the HD2 baseband/audio drivers) is built -- see ORTX_RADIO.
 
 # --- Default UI -------------------------------------------------------------
 set(ORTX_UI
@@ -103,18 +104,31 @@ set(ORTX_RADIO
     ${ORTX}/openrtx/src/rtx/OpMode_FM.cpp
     ${ORTX}/platform/drivers/baseband/radio_HD2.cpp
     ${ORTX}/platform/drivers/baseband/AT1846S_HD2.cpp
-    ${ORTX}/platform/drivers/audio/audio_HD2.c)
+    ${ORTX}/platform/drivers/audio/audio_HD2.c
+    ${ORTX}/platform/drivers/audio/outputStream_HD2.cpp)
 
 # --- Vendored helper libs the core pulls in ---------------------------------
 set(ORTX_LIBS
     ${ORTX}/lib/minmea/minmea.c
     ${ORTX}/lib/QRCode/qrcode.c)
 
+# --- Voice prompts (IMA-ADPCM) ----------------------------------------------
+# The generic ADPCM player (core/voicePrompts_adpcm.c + lib/codec) and the core
+# clip container embed (voicePromptData_adpcm.S -> voiceprompts.vpa), selected
+# in place of the codec2-based core/voicePrompts.c + voicePromptData.S.  The .S
+# does `.incbin "../voiceprompts.vpa"`; GAS resolves it via an assembler -I of
+# ${ORTX}/openrtx -> the repo-root voiceprompts.vpa (same as the codec2 embed).
+set(ORTX_VP
+    ${ORTX}/openrtx/src/core/voicePrompts_adpcm.c
+    ${ORTX}/openrtx/src/core/voicePromptData_adpcm.S)
+set_source_files_properties(${ORTX}/openrtx/src/core/voicePromptData_adpcm.S
+    PROPERTIES COMPILE_OPTIONS "-Wa,-I${ORTX}/openrtx")
+
 add_executable(openrtx_hd2
     ${ORTX}/openrtx/src/main.c
     ${CMAKE_SOURCE_DIR}/hd2_glue.cpp
-    ${CMAKE_SOURCE_DIR}/hd2_core_stubs.c
-    ${ORTX_CORE} ${ORTX_UI} ${ORTX_HD2} ${ORTX_RADIO} ${ORTX_STUBS} ${ORTX_LIBS})
+    ${ORTX_CORE} ${ORTX_UI} ${ORTX_HD2} ${ORTX_RADIO} ${ORTX_STUBS}
+    ${ORTX_VP} ${ORTX_LIBS})
 
 target_include_directories(openrtx_hd2 PRIVATE
     ${CMAKE_SOURCE_DIR}
@@ -124,6 +138,7 @@ target_include_directories(openrtx_hd2 PRIVATE
     ${ORTX}/platform/mcu/HR_C7000
     ${ORTX}/lib/minmea/include
     ${ORTX}/lib/QRCode/include
+    ${ORTX}/lib/codec/include
     ${ORTX}/lib/qdec/include)
 
 target_compile_definitions(openrtx_hd2 PRIVATE
