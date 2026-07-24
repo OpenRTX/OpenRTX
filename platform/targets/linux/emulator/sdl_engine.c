@@ -249,7 +249,14 @@ static bool set_brightness(uint8_t brightness)
 
 void sdlEngine_init()
 {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
+    // Set audio stream name hints before any SDL subsystem init so they take
+    // effect when the first audio device is opened. SDL_HINT_APP_NAME works on
+    // macOS (Core Audio); the DEVICE hints are Linux-specific but harmless.
+    SDL_SetHint(SDL_HINT_APP_NAME, "OpenRTX");
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_APP_NAME, "OpenRTX");
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_STREAM_ROLE, "Communications");
+
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) < 0) {
         printf("SDL video init error!!\n");
         exit(1);
     }

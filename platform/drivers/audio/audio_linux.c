@@ -7,6 +7,7 @@
 #include "interfaces/audio.h"
 #include "hwconfig.h"
 #include "file_source.h"
+#include "audio_sdl.h"
 
 static const uint8_t pathCompatibilityMatrix[9][9] = {
     // MIC-SPK MIC-RTX MIC-MCU RTX-SPK RTX-RTX RTX-MCU MCU-SPK MCU-RTX MCU-MCU
@@ -24,7 +25,7 @@ static const uint8_t pathCompatibilityMatrix[9][9] = {
 const struct audioDevice outputDevices[] = {
     { NULL, 0, 0, SINK_MCU },
     { NULL, 0, 0, SINK_RTX },
-    { NULL, 0, 0, SINK_SPK },
+    { &sdl_play_audio_driver, NULL, 0, SINK_SPK },
 };
 
 const struct audioDevice inputDevices[] = {
