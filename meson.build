@@ -341,12 +341,14 @@ linux_src = ['platform/targets/linux/emulator/emulator.c',
              'platform/drivers/baseband/radio_linux.cpp',
              'platform/drivers/audio/audio_linux.c',
              'platform/drivers/audio/file_source.c',
+             'platform/drivers/audio/audio_sdl.cpp',
              'platform/targets/linux/platform.c',
              'platform/drivers/CPS/cps_io_libc.c',
              'platform/drivers/NVM/posix_file.c']
 
 linux_inc = ['platform/targets/linux',
-             'platform/targets/linux/emulator']
+             'platform/targets/linux/emulator',
+             'platform/drivers/audio']
 
 linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
 

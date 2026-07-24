@@ -20,33 +20,29 @@ extern "C" {
  * audio driver.
  */
 
-enum AudioSource
-{
-    SOURCE_MIC = 0,    ///< Receive audio signal from the microphone
-    SOURCE_RTX = 1,    ///< Receive audio signal from the transceiver
-    SOURCE_MCU = 2     ///< Receive audio signal from a memory buffer
+enum AudioSource {
+    SOURCE_MIC = 0, ///< Receive audio signal from the microphone
+    SOURCE_RTX = 1, ///< Receive audio signal from the transceiver
+    SOURCE_MCU = 2  ///< Receive audio signal from a memory buffer
 };
 
-enum AudioSink
-{
-    SINK_SPK = 0,      ///< Send audio signal to the speaker
-    SINK_RTX = 1,      ///< Send audio signal to the transceiver
-    SINK_MCU = 2       ///< Send audio signal to a memory buffer
+enum AudioSink {
+    SINK_SPK = 0, ///< Send audio signal to the speaker
+    SINK_RTX = 1, ///< Send audio signal to the transceiver
+    SINK_MCU = 2  ///< Send audio signal to a memory buffer
 };
 
-enum AudioPriority
-{
-    PRIO_BEEP = 1,     ///< Priority level of system beeps
-    PRIO_RX,           ///< Priority level of incoming audio from RX stage
-    PRIO_PROMPT,       ///< Priority level of voice prompts
-    PRIO_TX            ///< Priority level of outward audio directed to TX stage
+enum AudioPriority {
+    PRIO_BEEP = 1, ///< Priority level of system beeps
+    PRIO_RX,       ///< Priority level of incoming audio from RX stage
+    PRIO_PROMPT,   ///< Priority level of voice prompts
+    PRIO_TX        ///< Priority level of outward audio directed to TX stage
 };
 
-enum BufMode
-{
-    BUF_LINEAR = 1,    ///< Linear buffer mode, conversion stops when full.
-    BUF_CIRC_DOUBLE    ///< Circular double buffer mode, conversion never stops,
-                       ///  thread woken up whenever half of the buffer is full.
+enum BufMode {
+    BUF_LINEAR = 1, ///< Linear buffer mode, conversion stops when full.
+    BUF_CIRC_DOUBLE ///< Circular double buffer mode, conversion never stops,
+                    ///  thread woken up whenever half of the buffer is full.
 };
 
 typedef int16_t stream_sample_t;
@@ -55,23 +51,20 @@ typedef int16_t stream_sample_t;
  * Data structure for audio stream context, to be used to configure audio
  * devices.
  */
-struct streamCtx
-{
-    void            *priv;       ///< Pointer to audio device private data.
-    stream_sample_t *buffer;     ///< Pointer to audio data buffer.
-    size_t           bufSize;    ///< Size of the audio data buffer, in elements.
-    uint8_t          bufMode;    ///< Buffer handling mode, linear or circular double.
-    uint32_t         sampleRate; ///< Sample rate, in Hz.
-    uint8_t          running;    ///< Audio device status, set to 1 when active.
-}
-__attribute__((packed));
+struct streamCtx {
+    void *priv;              ///< Pointer to audio device private data.
+    stream_sample_t *buffer; ///< Pointer to audio data buffer.
+    size_t bufSize;          ///< Size of the audio data buffer, in elements.
+    uint8_t bufMode;     ///< Buffer handling mode, linear or circular double.
+    uint32_t sampleRate; ///< Sample rate, in Hz.
+    uint8_t running;     ///< Audio device status, set to 1 when active.
+} __attribute__((packed));
 
 /**
  * Driver interface for a generic audio device, either an input or output device,
  * bound to a specific input.
  */
-struct audioDriver
-{
+struct audioDriver {
     /**
      * Start an audio stream to or from the device.
      *
@@ -80,7 +73,8 @@ struct audioDriver
      * @param ctx: pointer to audio stream context.
      * @return zero on success, a negative error code on failure.
      */
-    int (*start)(const uint8_t instance, const void *config, struct streamCtx *ctx);
+    int (*start)(const uint8_t instance, const void *config,
+                 struct streamCtx *ctx);
 
     /**
      * Get a pointer to the "free" data section, when running in circular double
@@ -126,14 +120,12 @@ struct audioDriver
  * Audio device descriptor, grouping an audio driver, its configuration and
  * its input/output endpoint.
  */
-struct audioDevice
-{
-    const struct audioDriver *driver;    ///< Audio driver functions
-    const void               *config;    ///< Driver configuration
-    const uint8_t             instance;  ///< Driver instance number
-    const uint8_t             endpoint;  ///< Driver sink or source endpoint
-}
-__attribute__((packed));
+struct audioDevice {
+    const struct audioDriver *driver; ///< Audio driver functions
+    const void *config;               ///< Driver configuration
+    const uint8_t instance;           ///< Driver instance number
+    const uint8_t endpoint;           ///< Driver sink or source endpoint
+} __attribute__((packed, aligned(8)));
 
 extern const struct audioDevice inputDevices[];
 extern const struct audioDevice outputDevices[];
@@ -174,9 +166,9 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink);
  * @param p2Sink: identifier of the output audio peripheral of the second path.
  */
 bool audio_checkPathCompatibility(const enum AudioSource p1Source,
-                                  const enum AudioSink   p1Sink,
+                                  const enum AudioSink p1Sink,
                                   const enum AudioSource p2Source,
-                                  const enum AudioSink   p2Sink);
+                                  const enum AudioSink p2Sink);
 
 #ifdef __cplusplus
 }
