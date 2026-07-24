@@ -5,9 +5,7 @@
  */
 
 #include <stdlib.h>
-#include <math.h>
 #include <errno.h>
-#include <pthread.h>
 #include "SDL2/SDL.h"
 #include "audio_sdl.h"
 
@@ -28,21 +26,6 @@
 // awaiting a user gesture) cannot block the producing thread forever.
 #define PLAY_DRAIN_TIMEOUT_MS 2000
 
-/*
- * SDL's audio subsystem is initialised exactly once for the whole process:
- * either the playback or the beep path can be the first to touch audio, and they
- * run on different threads, so the init must be race-free. pthread_once gives us
- * that; the subsystem is intentionally never de-initialised, matching the
- * process-lifetime nature of the audio devices.
- */
-static pthread_once_t sdlAudioOnce = PTHREAD_ONCE_INIT;
-static int sdlAudioReady = 0;
-
-static void sdlAudioInit(void)
-{
-    sdlAudioReady = (SDL_InitSubSystem(SDL_INIT_AUDIO) == 0) ? 1 : 0;
-}
-
 struct sdlPlayState {
     SDL_AudioDeviceID dev;
     int idleHalf;
@@ -56,10 +39,6 @@ struct sdlPlayState {
  */
 static SDL_AudioDeviceID openDevice(const struct streamCtx *ctx)
 {
-    pthread_once(&sdlAudioOnce, sdlAudioInit);
-    if (sdlAudioReady == 0)
-        return 0;
-
     SDL_AudioSpec want;
     SDL_AudioSpec have;
     SDL_zero(want);
@@ -194,7 +173,7 @@ static void sdlPlay_halt(struct streamCtx *ctx)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wc++20-extensions"
-const struct audioDriver sdl_play_audio_driver = {
+const struct audioDriver sdl_play_audio_driver __attribute__((aligned(8))) = {
     .start = sdlPlay_start,
     .data = sdlPlay_data,
     .sync = sdlPlay_sync,
@@ -202,107 +181,3 @@ const struct audioDriver sdl_play_audio_driver = {
     .terminate = sdlPlay_halt,
 };
 #pragma GCC diagnostic pop
-
-/*
- * Beep tone generator. Beeps are a path separate from the SINK_SPK stream
- * (platform_beepStart/Stop), so they get their own persistent device driven by
- * a dedicated thread that synthesizes a phase-continuous sine wave.
- */
-
-#define BEEP_RATE 48000
-#define BEEP_CHUNK (BEEP_RATE / 50) // 20 ms of samples
-#define BEEP_AMPLITUDE 8000
-
-static pthread_t beepThread;
-static pthread_once_t beepOnce = PTHREAD_ONCE_INIT;
-static pthread_mutex_t beepMutex = PTHREAD_MUTEX_INITIALIZER;
-static int beepActive = 0;
-static uint16_t beepFreq = 0;
-
-static void *beepThreadFunc(void *arg)
-{
-    (void)arg;
-
-    pthread_once(&sdlAudioOnce, sdlAudioInit);
-    if (sdlAudioReady == 0)
-        return NULL;
-
-    SDL_AudioSpec want;
-    SDL_AudioSpec have;
-    SDL_zero(want);
-    want.freq = BEEP_RATE;
-    want.format = AUDIO_S16SYS;
-    want.channels = 1;
-    want.samples = 512;
-
-    SDL_AudioDeviceID dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-    if (dev == 0)
-        return NULL;
-
-    stream_sample_t chunk[BEEP_CHUNK];
-    double phase = 0.0;
-    int playing = 0;
-
-    for (;;) {
-        pthread_mutex_lock(&beepMutex);
-        int active = beepActive;
-        uint16_t freq = beepFreq;
-        pthread_mutex_unlock(&beepMutex);
-
-        if (active != 0) {
-            if (playing == 0) {
-                SDL_ClearQueuedAudio(dev);
-                SDL_PauseAudioDevice(dev, 0);
-                playing = 1;
-            }
-
-            double step = (2.0 * M_PI * (double)freq) / (double)BEEP_RATE;
-            for (size_t i = 0; i < BEEP_CHUNK; i++) {
-                chunk[i] = (stream_sample_t)(BEEP_AMPLITUDE * sin(phase));
-                phase += step;
-                if (phase >= (2.0 * M_PI))
-                    phase -= (2.0 * M_PI);
-            }
-
-            Uint32 chunkBytes = (Uint32)sizeof(chunk);
-            while (SDL_GetQueuedAudioSize(dev)
-                   > (PLAY_QUEUE_SLACK * chunkBytes))
-                SDL_Delay(1);
-
-            SDL_QueueAudio(dev, chunk, chunkBytes);
-        } else {
-            if (playing != 0) {
-                SDL_ClearQueuedAudio(dev);
-                SDL_PauseAudioDevice(dev, 1);
-                playing = 0;
-                phase = 0.0;
-            }
-
-            SDL_Delay(5);
-        }
-    }
-
-    return NULL;
-}
-
-static void beepThreadStart(void)
-{
-    pthread_create(&beepThread, NULL, beepThreadFunc, NULL);
-}
-
-void sdlBeep_start(uint16_t freq)
-{
-    pthread_once(&beepOnce, beepThreadStart);
-
-    pthread_mutex_lock(&beepMutex);
-    beepFreq = freq;
-    beepActive = 1;
-    pthread_mutex_unlock(&beepMutex);
-}
-
-void sdlBeep_stop(void)
-{
-    pthread_mutex_lock(&beepMutex);
-    beepActive = 0;
-    pthread_mutex_unlock(&beepMutex);
-}
