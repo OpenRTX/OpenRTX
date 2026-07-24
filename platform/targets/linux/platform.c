@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "core/gps.h"
 #include "emulator.h"
+#include "toneGenerator_sdl.h"
 
 /*
  * Create the data structure holding Module17 calibration data to make the
@@ -109,12 +110,12 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    printf("platform_beepStart(%u)\n", freq);
+    toneGen_sdl_start(freq);
 }
 
 void platform_beepStop()
 {
-    printf("platform_beepStop()\n");
+    toneGen_sdl_stop();
 }
 
 datetime_t platform_getCurrentTime()
