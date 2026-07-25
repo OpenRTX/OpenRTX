@@ -324,9 +324,6 @@ platform/targets/MD-UV3x0/pinmap.h
 platform/targets/MD-UV3x0/platform.c
 platform/targets/Module17/pinmap.h
 platform/targets/Module17/platform.c
-platform/targets/linux/emulator/emulator.c
-platform/targets/linux/emulator/emulator.h
-platform/targets/linux/emulator/sdl_engine.c
 platform/targets/linux/platform.c
 platform/targets/ttwrplus/platform.c
 platform/targets/ttwrplus/pmu.cpp

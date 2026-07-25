@@ -10,22 +10,20 @@
 #include "sdl_engine.h"
 #include "emulator.h"
 
-chan_t fb_sync;                 // Shared channel to receive frame buffer updates
-Uint32 SDL_Screenshot_Event;    // Shared custom SDL event to request a screenshot
-Uint32 SDL_Backlight_Event;     // Shared custom SDL event to change backlight
+chan_t fb_sync;              // Shared channel to receive frame buffer updates
+Uint32 SDL_Screenshot_Event; // Shared custom SDL event to request a screenshot
+Uint32 SDL_Backlight_Event;  // Shared custom SDL event to change backlight
 
-static SDL_Window   *window;
+static SDL_Window *window;
 static SDL_Renderer *renderer;
-static SDL_Texture  *displayTexture;
+static SDL_Texture *displayTexture;
 
-static bool       ready = false;  // Signal if the main loop is ready
-static keyboard_t sdl_keys;       // Store the keyboard status
-
+static bool ready = false;  // Signal if the main loop is ready
+static keyboard_t sdl_keys; // Store the keyboard status
 
 static bool sdk_key_code_to_key(SDL_Keycode sym, keyboard_t *key)
 {
-    switch (sym)
-    {
+    switch (sym) {
         case SDLK_0:
             *key = KEY_0;
             return true;
@@ -128,7 +126,7 @@ static int screenshot_display(const char *filename)
      * rather than as a parameter
      */
     SDL_Renderer *ren = renderer;
-    SDL_Texture  *tex = displayTexture;
+    SDL_Texture *tex = displayTexture;
     int err = 0;
 
     SDL_Texture *ren_tex;
@@ -139,16 +137,15 @@ static int screenshot_display(const char *filename)
     int format;
     void *pixels;
 
-    pixels  = NULL;
-    surf    = NULL;
+    pixels = NULL;
+    surf = NULL;
     ren_tex = NULL;
-    format  = SDL_PIXELFORMAT_RGBA32;
+    format = SDL_PIXELFORMAT_RGBA32;
 
     /* Get information about texture we want to save */
     st = SDL_QueryTexture(tex, NULL, NULL, &w, &h);
 
-    if (st != 0)
-    {
+    if (st != 0) {
         SDL_Log("Failed querying texture: %s\n", SDL_GetError());
         err++;
         goto cleanup;
@@ -156,8 +153,7 @@ static int screenshot_display(const char *filename)
 
     ren_tex = SDL_CreateTexture(ren, format, SDL_TEXTUREACCESS_TARGET, w, h);
 
-    if (!ren_tex)
-    {
+    if (!ren_tex) {
         SDL_Log("Failed creating render texture: %s\n", SDL_GetError());
         err++;
         goto cleanup;
@@ -169,8 +165,7 @@ static int screenshot_display(const char *filename)
      */
     st = SDL_SetRenderTarget(ren, ren_tex);
 
-    if (st != 0)
-    {
+    if (st != 0) {
         SDL_Log("Failed setting render target: %s\n", SDL_GetError());
         err++;
         goto cleanup;
@@ -180,8 +175,7 @@ static int screenshot_display(const char *filename)
     SDL_RenderClear(ren);
     st = SDL_RenderCopy(ren, tex, NULL, NULL);
 
-    if (st != 0)
-    {
+    if (st != 0) {
         SDL_Log("Failed copying texture data: %s\n", SDL_GetError());
         err++;
         goto cleanup;
@@ -190,8 +184,7 @@ static int screenshot_display(const char *filename)
     /* Create buffer to hold texture data and load it */
     pixels = malloc(w * h * SDL_BYTESPERPIXEL(format));
 
-    if (!pixels)
-    {
+    if (!pixels) {
         SDL_Log("Failed allocating memory\n");
         err++;
         goto cleanup;
@@ -199,8 +192,7 @@ static int screenshot_display(const char *filename)
 
     st = SDL_RenderReadPixels(ren, NULL, format, pixels,
                               w * SDL_BYTESPERPIXEL(format));
-    if (st != 0)
-    {
+    if (st != 0) {
         SDL_Log("Failed reading pixel data: %s\n", SDL_GetError());
         err++;
         goto cleanup;
@@ -211,8 +203,7 @@ static int screenshot_display(const char *filename)
                                               SDL_BITSPERPIXEL(format),
                                               w * SDL_BYTESPERPIXEL(format),
                                               format);
-    if (!surf)
-    {
+    if (!surf) {
         SDL_Log("Failed creating new surface: %s\n", SDL_GetError());
         err++;
         goto cleanup;
@@ -221,8 +212,7 @@ static int screenshot_display(const char *filename)
     /* Save result to an image */
     st = SDL_SaveBMP(surf, filename);
 
-    if (st != 0)
-    {
+    if (st != 0) {
         SDL_Log("Failed saving image: %s\n", SDL_GetError());
         err++;
         goto cleanup;
@@ -248,46 +238,38 @@ static bool set_brightness(uint8_t brightness)
      * Color modulation is not always supported by the renderer;
      * it will return -1 if color modulation is not supported.
      */
-    int colMod = SDL_SetTextureColorMod(displayTexture,
-                                        brightness,
-                                        brightness,
-                                        brightness) == 0;
+    int colMod = SDL_SetTextureColorMod(displayTexture, brightness, brightness,
+                                        brightness);
 
     SDL_RenderCopy(renderer, displayTexture, NULL, NULL);
     SDL_RenderPresent(renderer);
 
-    return colMod;
+    return colMod == 0;
 }
-
-
 
 void sdlEngine_init()
 {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
-    {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         printf("SDL video init error!!\n");
         exit(1);
     }
 
     // Register SDL custom events to handle screenshot requests and backlight
     SDL_Screenshot_Event = SDL_RegisterEvents(2);
-    SDL_Backlight_Event = SDL_Screenshot_Event+1;
+    SDL_Backlight_Event = SDL_Screenshot_Event + 1;
 
     chan_init(&fb_sync);
 
-    window = SDL_CreateWindow("OpenRTX",
-                              SDL_WINDOWPOS_UNDEFINED,
-                              SDL_WINDOWPOS_UNDEFINED,
-                              CONFIG_SCREEN_WIDTH * 3, CONFIG_SCREEN_HEIGHT * 3,
-                              SDL_WINDOW_SHOWN );
+    window = SDL_CreateWindow("OpenRTX", SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED, CONFIG_SCREEN_WIDTH * 3,
+                              CONFIG_SCREEN_HEIGHT * 3, SDL_WINDOW_SHOWN);
 
     renderer = SDL_CreateRenderer(window, -1, 0);
-    SDL_RenderSetLogicalSize(renderer, CONFIG_SCREEN_WIDTH, CONFIG_SCREEN_HEIGHT);
-    displayTexture = SDL_CreateTexture(renderer,
-                                       PIXEL_FORMAT,
-                                       SDL_TEXTUREACCESS_STREAMING,
-                                       CONFIG_SCREEN_WIDTH,
-                                       CONFIG_SCREEN_HEIGHT);
+    SDL_RenderSetLogicalSize(renderer, CONFIG_SCREEN_WIDTH,
+                             CONFIG_SCREEN_HEIGHT);
+    displayTexture =
+        SDL_CreateTexture(renderer, PIXEL_FORMAT, SDL_TEXTUREACCESS_STREAMING,
+                          CONFIG_SCREEN_WIDTH, CONFIG_SCREEN_HEIGHT);
     SDL_RenderClear(renderer);
 
     // Setting brightness also triggers a render
@@ -303,55 +285,45 @@ void sdlEngine_run()
 
     SDL_Event ev = { 0 };
 
-    while (!emulator_state.powerOff)
-    {
+    while (!emulator_state.powerOff) {
         keyboard_t key = 0;
 
-        if (SDL_PollEvent(&ev) == 1)
-        {
-            switch (ev.type)
-            {
+        if (SDL_PollEvent(&ev) == 1) {
+            switch (ev.type) {
                 case SDL_QUIT:
                     emulator_state.powerOff = true;
                     break;
 
                 case SDL_KEYDOWN:
-                    if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-                    {
+                    if (sdk_key_code_to_key(ev.key.keysym.sym, &key)) {
                         sdl_keys |= key;
                     }
                     break;
 
                 case SDL_KEYUP:
-                    if (sdk_key_code_to_key(ev.key.keysym.sym, &key))
-                    {
+                    if (sdk_key_code_to_key(ev.key.keysym.sym, &key)) {
                         sdl_keys ^= key;
                     }
                     break;
             }
 
-            if (ev.type == SDL_Screenshot_Event)
-            {
+            if (ev.type == SDL_Screenshot_Event) {
                 char *filename = (char *)ev.user.data1;
                 screenshot_display(filename);
                 free(ev.user.data1);
-            }
-            else if (ev.type == SDL_Backlight_Event)
-            {
-                set_brightness(*((uint8_t*)ev.user.data1));
+            } else if (ev.type == SDL_Backlight_Event) {
+                set_brightness(*((uint8_t *)ev.user.data1));
                 free(ev.user.data1);
             }
         }
 
         // we update the window only if there is a something ready to render
-        if (chan_can_send(&fb_sync))
-        {
+        if (chan_can_send(&fb_sync)) {
             PIXEL_SIZE *pixels;
             int pitch = 0;
 
-            if (SDL_LockTexture(displayTexture, NULL,
-                                (void **) &pixels, &pitch) < 0)
-            {
+            if (SDL_LockTexture(displayTexture, NULL, (void **)&pixels, &pitch)
+                < 0) {
                 SDL_Log("SDL_lock failed: %s", SDL_GetError());
             }
 
