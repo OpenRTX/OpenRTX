@@ -52,4 +52,19 @@
 #define KBD_ROW(n) GPIOC, (KBD_ROW_SHIFT + (n))
 #define KBD_COL(n) GPIOC, (KBD_COL_SHIFT + (n))
 
-#endif /* HD2_PINMAP_H */
+/* GPIOB analog-FM audio-path pins (driven via the atomic gpio_hrc7000 API, by
+ * pin number). Live-verified 2026-06-11. */
+#define SPKR_AMP_PIN 4     /* PTB4  speaker-amp mute, active-LOW (LOW = on) */
+#define AUDIO_ROUTE_PIN 10 /* PTB10 RX-audio route, LOW = routed */
+#define SPKR_GAIN_PIN \
+    17 /* PTB17 speaker-amp analog PATH SELECT (NOT a plain gain):
+                            * HIGH = AT1846S analog demod (drive HIGH for analog-FM RX
+                            * -- the root-cause of the faint-FM-RX saga, LOW = ~inaudible);
+                            * LOW  = codec-DAC lineout (MCU beep / voice-prompt playback,
+                            * where HIGH would leave the codec DAC silent). */
+
+/* GPIOB analog-FM TX board pins (driven by pin number via gpio_hrc7000). */
+#define BAND_SEL_PIN 19 /* PTB19 VHF/UHF band select: HIGH >= 300 MHz */
+#define MIC_PATH_PIN 3  /* PTB3  TX mic-path gate: HIGH while keyed */
+
+#endif                  /* HD2_PINMAP_H */

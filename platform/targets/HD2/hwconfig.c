@@ -19,6 +19,12 @@
 static pthread_mutex_t adc1Mutex;
 ADC_HRC7000_DEVICE_DEFINE(adc1, &adc1Mutex, ADC_COUNTS_TO_UV(3300000, 10))
 
+/* Radio-bus I2C1 DesignWare master (base 0x14070000) -- the AT1846S transceiver.
+ * Pads PTA7/PTA8 are muxed to I2C1 by platform_init's IO_DIPLEX0 baseline; the
+ * mutex is taken via i2c_acquire()/i2c_release() by the AT1846S driver. */
+static pthread_mutex_t i2c1Mutex = PTHREAD_MUTEX_INITIALIZER;
+I2C_HRC7000_DEVICE_DEFINE(i2c1, I2C1, &i2c1Mutex)
+
 /* Internal I2C2 DesignWare master (base 0x14080000) -- the RTC's dedicated bus.
  * The mutex is taken via i2c_acquire()/i2c_release() by the RTC driver. */
 static pthread_mutex_t i2c2Mutex = PTHREAD_MUTEX_INITIALIZER;

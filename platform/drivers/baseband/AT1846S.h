@@ -85,6 +85,12 @@ public:
      *
      * @param freq: VCO frequency.
      */
+#if defined(PLATFORM_HD2)
+    /* The HD2's AT1846SD needs a vendor-specific tune sequence (band-select
+     * register 0x05 + a reg-0x30 0x4006/0x4046 double-write); it is defined
+     * out-of-line in AT1846S_HD2.cpp. */
+    void setFrequency(const freq_t freq);
+#else
     void setFrequency(const freq_t freq)
     {
         // AT1846S datasheet specifies a frequency step of 1/16th of kHz per bit.
@@ -101,6 +107,7 @@ public:
 
         reloadConfig();
     }
+#endif
 
     /**
      * Set the transmission and reception bandwidth.
@@ -345,6 +352,21 @@ public:
         maskSetRegister(0x30, 0x0080, 0x0000);
     }
 
+    /**
+     * Write one register via I2C interface.
+     *
+     * @param reg: address of the register to be written.
+     * @param value: value to be written to the register.
+     */
+    void i2c_writeReg16(const uint8_t reg, const uint16_t value);
+
+    /**
+     * Read one register via I2C interface.
+     *
+     * @param reg: address of the register to be read.
+     */
+    uint16_t i2c_readReg16(const uint8_t reg);
+
 private:
 
     /**
@@ -389,21 +411,6 @@ private:
      * Initialise the I2C interface.
      */
     void i2c_init();
-
-    /**
-     * Write one register via I2C interface.
-     *
-     * @param reg: address of the register to be written.
-     * @param value: value to be written to the register.
-     */
-    void i2c_writeReg16(const uint8_t reg, const uint16_t value);
-
-    /**
-     * Read one register via I2C interface.
-     *
-     * @param reg: address of the register to be read.
-     */
-    uint16_t i2c_readReg16(const uint8_t reg);
 
     /**
      * This function returns the value to be written into the AT1846S CTCSS

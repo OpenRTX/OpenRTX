@@ -9,6 +9,7 @@
  */
 
 #include "interfaces/platform.h"
+#include "interfaces/audio.h"
 #include "peripherals/gpio.h"
 #include "peripherals/rtc.h"
 #include "drivers/ADC/adcHrc7000.h"
@@ -45,6 +46,11 @@ void platform_init()
     GPIOB->DR |= 0x00506414u; /* preserves the PTB13 power latch */
 
     adcHrc7000_init(&adc1);   /* on-chip ADC (battery on ADC_VBAT_CH) */
+
+    /* Bring up the HR_C7000 codec + board audio GPIO at platform_init, before
+     * the rtx thread / radio_init, like every other OpenRTX target. */
+    audio_init();
+
     rtc_init();
 }
 

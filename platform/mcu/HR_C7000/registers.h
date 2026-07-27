@@ -11,8 +11,10 @@
  * (gaps for registers this port does not use are RESERVED padding), and cast onto
  * the peripheral base address via the accessor macros at the bottom -- the CMSIS
  * convention. The named registers and their offsets are taken from the HR_C7000
- * vendor user guide (system-control chapter 4, peripherals chapter 5); the wider
- * modem / codec / RF register set is intentionally omitted from this port. Base
+ * vendor user guide (system-control chapter 4, peripherals chapter 5). The
+ * analog-FM subset SOCSYS needs (audio routing, codec gate, CPU DAC, FM
+ * modulator / PTT) is included for the radio driver; the DMR / M17 modem
+ * register set is not. Base
  * addresses, pin-mux masks and "magic" configuration words are hardware facts
  * recovered by on-device reverse engineering of the vendor V2.1.3 firmware; they
  * are not guessed.
@@ -21,6 +23,8 @@
 #ifndef HRC7000_REGISTERS_H
 #define HRC7000_REGISTERS_H
 
+#include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /* -------------------------------------------------------------------------
@@ -47,7 +51,87 @@ typedef struct {
     volatile uint32_t IO_DIPLEX0;    /* 0x34 PTA pad mux (i2c1/uart2/audio) */
     volatile uint32_t IO_DIPLEX1;    /* 0x38 PTA pad mux (spi0 pins) */
     volatile uint32_t IO_DIPLEX2;    /* 0x3c PTC pad mux */
+    /* --- analog-FM audio / codec / modulator subset (manual 4.6, ch.9/11) --- */
+    uint32_t RESERVED1[12]; /* 0x40 - 0x6c */
+    volatile uint32_t
+        BB_DAC_CTRL; /* 0x70 baseband RF-mod / RX-bias DAC (datasheet §8.1) -- NOT the codec DAC */
+    volatile uint32_t
+        BB_ADC_CTRL; /* 0x74 baseband demod (I/Q) ADC front-end (datasheet §8.2) -- NOT the codec ADC */
+    uint32_t RESERVED2[2]; /* 0x78 - 0x7c */
+    volatile uint32_t
+        AUDIO_CONTROL; /* 0x80 baseband audio source mux (§4.6.5.3: tx_voice_source[0], fm_play_ctrl[6], ring_play_ctrl[7]) */
+    volatile uint32_t
+        AUDIO_BUFFER_CLR; /* 0x84 vocoder decode/encode buffer clear (§4.6.5.4, write-1-self-clear) */
+    volatile uint32_t
+        LINEOUT_CTRL; /* 0x88 [0]line2out_en [1]line1out_en [31]standby(RO) */
+    uint32_t RESERVED3[29]; /* 0x8c - 0xfc */
+    volatile uint32_t
+        WORK_MODE; /* 0x100 work_mode (FM-analog 0x6e; bit7 = FM modulator) */
+    volatile uint32_t
+        RF_MODE;   /* 0x104 baseband RF-interface mode (FM 0x034c9060) */
+    uint32_t RESERVED4[2];        /* 0x108 - 0x10c */
+    volatile uint32_t RF_CONTROL; /* 0x110 tx_pre_on / rf_pre_on_tx */
+    volatile uint32_t
+        RF_MOD_BIAS;       /* 0x114 two-point MOD1/MOD2 amplitude (deviation) */
+    uint32_t RESERVED5[2]; /* 0x118 - 0x11c */
+    volatile uint32_t
+        THRESHOLD_VALUE;   /* 0x120 RX sync-detection thresholds (§9.2.2.9) */
+    uint32_t RESERVED6[17];       /* 0x124 - 0x164 */
+    volatile uint32_t SLOT_GUARD; /* 0x168 TDMA slot guard */
+    uint32_t RESERVED7[17];       /* 0x16c - 0x1ac */
+    volatile uint32_t RX_IF_FREQ; /* 0x1b0 RX IF frequency word */
+    volatile uint32_t RX_AGC;     /* 0x1b4 RX AGC configuration */
+    uint32_t RESERVED8[120];      /* 0x1b8 - 0x394 */
+    volatile uint32_t MODEM_IRQ;  /* 0x398 modem RX IRQ latch (idle 0x4000);
+                                     unused in this FM-only build (RX-capture/future) */
+    volatile uint32_t
+        SYS_INTERP_MASK; /* 0x39c modem/Layer-2 interrupt mask (§4.6.5.10, FM vendor 0x1007f) */
+    volatile uint32_t MODEM_IRQ_ACK; /* 0x3a0 write the latch value back to ACK;
+                                        unused in this FM-only build (RX-capture/future) */
+    uint32_t RESERVED9[23];          /* 0x3a4 - 0x3fc */
+    volatile uint32_t
+        LAYER2_CONTROL;  /* 0x400 DMR L2 [7]txen [6]rxen TDMA slot-sync;
+                            unused in this FM-only build (map completeness) */
+    uint32_t RESERVED10; /* 0x404 */
+    volatile uint32_t
+        LAYER2_TXRX_CTRL; /* 0x408 DMR L2 tx/rx next-slot enable (TDMA slot-sync);
+                             unused in this FM-only build (map completeness) */
+    uint32_t RESERVED11[85]; /* 0x40c - 0x55c */
+    volatile uint32_t
+        FM_PTT; /* 0x560 bit0=1 keys the modem FM-TX engine (ch.11) */
 } SOCSYS_TypeDef;
+
+/* Offset guards: a wrong offset here is a silent hardware bug, so pin the
+ * FM-subset registers to their documented addresses at compile time. */
+static_assert(offsetof(SOCSYS_TypeDef, IO_DIPLEX2) == 0x3c,
+              "SOCSYS IO_DIPLEX2");
+static_assert(offsetof(SOCSYS_TypeDef, BB_DAC_CTRL) == 0x70,
+              "SOCSYS BB_DAC_CTRL");
+static_assert(offsetof(SOCSYS_TypeDef, AUDIO_CONTROL) == 0x80,
+              "SOCSYS AUDIO_CONTROL");
+static_assert(offsetof(SOCSYS_TypeDef, LINEOUT_CTRL) == 0x88,
+              "SOCSYS LINEOUT_CTRL");
+static_assert(offsetof(SOCSYS_TypeDef, WORK_MODE) == 0x100, "SOCSYS WORK_MODE");
+static_assert(offsetof(SOCSYS_TypeDef, RF_MODE) == 0x104, "SOCSYS RF_MODE");
+static_assert(offsetof(SOCSYS_TypeDef, THRESHOLD_VALUE) == 0x120,
+              "SOCSYS THRESHOLD_VALUE");
+static_assert(offsetof(SOCSYS_TypeDef, SLOT_GUARD) == 0x168,
+              "SOCSYS SLOT_GUARD");
+static_assert(offsetof(SOCSYS_TypeDef, RX_IF_FREQ) == 0x1b0,
+              "SOCSYS RX_IF_FREQ");
+static_assert(offsetof(SOCSYS_TypeDef, MODEM_IRQ) == 0x398, "SOCSYS MODEM_IRQ");
+static_assert(offsetof(SOCSYS_TypeDef, MODEM_IRQ_ACK) == 0x3a0,
+              "SOCSYS MODEM_IRQ_ACK");
+static_assert(offsetof(SOCSYS_TypeDef, LAYER2_CONTROL) == 0x400,
+              "SOCSYS LAYER2_CONTROL");
+static_assert(offsetof(SOCSYS_TypeDef, LAYER2_TXRX_CTRL) == 0x408,
+              "SOCSYS LAYER2_TXRX_CTRL");
+static_assert(offsetof(SOCSYS_TypeDef, FM_PTT) == 0x560, "SOCSYS FM_PTT");
+
+/* work_mode / interrupt-mask value macros (analog FM). */
+#define WORK_MODE_FM_MOD 0x80u /* work_mode bit7: FM analog modulator mode */
+#define SYS_INTERP_MASK_FM_VENDOR \
+    0x0001007fu /* vendor FM modem/Layer-2 interrupt-mask value */
 
 /* HD2 board PTC pad-mux values (HD2_DIPLEX2_*) live in targets/HD2/pinmap.h. */
 
@@ -74,7 +158,8 @@ typedef struct {
                                    * the SOCSYS pad-mux (see gpio_setAltFuncB) */
 } GPIO_TypeDef;
 
-/* HD2 board GPIOB pin bits (LED/PTT/PWR/GPS) live in targets/HD2/pinmap.h. */
+/* HD2 board GPIOB pin bits (LED/PTT/PWR/GPS + analog-FM audio-path pins) live
+ * in targets/HD2/pinmap.h. */
 
 /* -------------------------------------------------------------------------
  *  LCD -- HR_C7000 hardware i8080 controller (base 0x12000000, manual 5.3)
@@ -218,6 +303,28 @@ typedef struct {
 #define UART_LSR_DR 0x01u     /* LSR bit 0: RX data ready */
 
 /* -------------------------------------------------------------------------
+ *  CPU DAC (base 0x140f0000, manual 5.10). Three 12-bit channels; PD bits are
+ *  active-HIGH power-DOWN (reset = all channels down). The analog-FM path uses
+ *  DATA_C as the AF-receive bias and DATA_B as the TX APC power-ramp target.
+ * ------------------------------------------------------------------------- */
+typedef struct {
+    volatile uint32_t PD_CTRL;    /* 0x00 [2:0] C/B/A power (1 = down) */
+    volatile uint32_t PD_MODE_EN; /* 0x04 power-mode enable */
+    volatile uint32_t DATA_A;     /* 0x08 channel A data */
+    volatile uint32_t DATA_B;     /* 0x0c channel B data (TX APC ramp) */
+    volatile uint32_t DATA_C;     /* 0x10 channel C data (AF-receive bias) */
+} DAC_TypeDef;
+
+/* -------------------------------------------------------------------------
+ *  Codec AFE control block (base 0x16000900, BYTE-addressed). The codec config
+ *  interface is a byte-wide register file poked at sparse offsets (0xc0-0xef),
+ *  not word registers, so it is accessed via a byte accessor rather than a
+ *  struct. Offsets/roles verified live against a vendor unit playing FM.
+ * ------------------------------------------------------------------------- */
+#define CODEC_BASE 0x16000900u
+#define CODEC_BYTE(off) (*(volatile uint8_t *)(CODEC_BASE + (off)))
+
+/* -------------------------------------------------------------------------
  *  Peripheral instances -- cast the base address onto the register struct.
  * ------------------------------------------------------------------------- */
 #define SOCSYS ((SOCSYS_TypeDef *)0x11000000u)
@@ -226,8 +333,10 @@ typedef struct {
 #define GPIOC ((GPIO_TypeDef *)0x14110000u)
 #define LCD_HW ((LCD_TypeDef *)0x12000000u)
 #define PWM_CH0 ((PWM_Channel_TypeDef *)0x140c0000u)
-#define I2C2 ((I2C_TypeDef *)0x14080000u)
+#define I2C1 ((I2C_TypeDef *)0x14070000u) /* radio bus: AT1846S transceiver */
+#define I2C2 ((I2C_TypeDef *)0x14080000u) /* internal bus: RTC */
 #define ADC_HW ((ADC_TypeDef *)0x140d0000u)
+#define DAC_HW ((DAC_TypeDef *)0x140f0000u)
 #define UART2 ((UART_TypeDef *)0x14050000u) /* GPS module port */
 
 #endif                                      /* HRC7000_REGISTERS_H */

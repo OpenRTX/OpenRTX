@@ -43,6 +43,7 @@ enum AdcChannels {
  * too; platform.c externs it locally to avoid a hwconfig.h <-> platform.h
  * include cycle (interfaces/platform.h already includes this file). */
 extern const struct Adc adc1;
+extern const struct i2cDevice i2c1; /* radio bus (AT1846S) */
 extern const struct i2cDevice i2c2; /* internal RTC bus */
 
 #ifdef __cplusplus

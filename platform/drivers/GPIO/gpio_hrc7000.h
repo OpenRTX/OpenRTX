@@ -37,6 +37,28 @@ extern "C" {
  */
 void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode);
 
+/*
+ * The DW_apb_gpio has no atomic bit-set/clear register, so setPin/clearPin are
+ * read-modify-write on the shared port DR.  In the threaded build a port (esp.
+ * GPIOB: LEDs + PTT + power-hold + the radio/audio pins) is poked from several
+ * threads, and a plain |=/&= can lose an update if a context switch lands
+ * between the load and the store -- worst case the lost bit is PTB13 power-hold.
+ * Single core, so masking interrupts around the RMW makes it atomic.  Uses the
+ * CK803S PSR (cr<0,0>) save + `psrclr ie` idiom (same as targets/HD2/main.c);
+ * restoring the saved PSR is nesting-safe.
+ */
+static inline uint32_t gpio_irqSave(void)
+{
+    uint32_t psr;
+    __asm__ volatile("mfcr %0, cr<0, 0>\n\tpsrclr ie" : "=r"(psr) : : "memory");
+    return psr;
+}
+
+static inline void gpio_irqRestore(uint32_t psr)
+{
+    __asm__ volatile("mtcr %0, cr<0, 0>" : : "r"(psr) : "memory");
+}
+
 /**
  * Set gpio pin to high logic level.
  *
@@ -45,7 +67,9 @@ void gpio_setMode(const void *port, const uint8_t pin, const uint16_t mode);
  */
 static inline void gpio_setPin(const void *port, const uint8_t pin)
 {
+    uint32_t psr = gpio_irqSave();
     ((GPIO_TypeDef *)port)->DR |= (1u << pin);
+    gpio_irqRestore(psr);
 }
 
 /**
@@ -56,7 +80,9 @@ static inline void gpio_setPin(const void *port, const uint8_t pin)
  */
 static inline void gpio_clearPin(const void *port, const uint8_t pin)
 {
+    uint32_t psr = gpio_irqSave();
     ((GPIO_TypeDef *)port)->DR &= ~(1u << pin);
+    gpio_irqRestore(psr);
 }
 
 /**
