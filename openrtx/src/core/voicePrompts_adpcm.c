@@ -19,7 +19,9 @@
  * Data: an ADPCM container ('VPA1') embedded by core/voicePromptData_adpcm.S
  * (provides _vpadata_start / _vpadata_end), built from the stock
  * voiceprompts.vpc by scripts/vpc_to_adpcm.py.  Any clip absent from the
- * container plays as silence (graceful degradation).
+ * container plays as silence (graceful degradation).  Clips are stored at 4 kHz
+ * (so the full vocabulary fits app flash) and upsampled 2x to the codec DAC's
+ * fixed 8 kHz output stream in vpFillHalf().
  *
  * Architecture: single-threaded, like the stock player.  vp_play() opens the
  * stream; vp_tick() (the UI main_thread) decodes one 160-sample half per call,
@@ -49,6 +51,9 @@
 #define VPA_MAGIC 0x31415056u /* 'VPA1' little-endian */
 #define STREAM_HALF 160u      /* samples per circular half (20 ms) */
 #define STREAM_SAMPLES (STREAM_HALF * 2u)
+/* vpFillHalf() emits output samples in pairs (2x upsample), so a half must
+ * hold a whole number of pairs. */
+_Static_assert((STREAM_HALF % 2u) == 0u, "STREAM_HALF must be even");
 #define LEADIN_SILENCE_MS 60u /* mask the amp turn-on transient */
 
 /* --- embedded ADPCM container (core/voicePromptData_adpcm.S) --- */
@@ -101,6 +106,7 @@ static uint32_t vpNibbles = 0;       /* samples in current clip            */
 static uint32_t vpNib = 0;           /* next sample within current clip    */
 static adpcm_ima_state vpIma;
 static unsigned vpLeadin = 0;        /* remaining lead-in silence halves   */
+static int32_t vpPrev = 0;           /* last decoded 4 kHz sample (upsample) */
 
 /* Output ring -- one owner (the UI thread, via vp_tick), so a single static
  * buffer is safe.  Two 160-sample halves (20 ms each).  Shared by voice-prompt
@@ -283,10 +289,14 @@ static bool vpLoadCurrentClip()
 }
 
 /* Fill one 160-sample half, drawing seamlessly across clips in the sequence.
+ * Clips are stored at 4 kHz; the output stream is 8 kHz, so each decoded sample
+ * yields two output samples via 2x linear interpolation (the midpoint between
+ * the previous and current sample, then the current sample) -- smoother than a
+ * zero-order hold, halving the upsampling images.  STREAM_HALF is even.
  * Returns false when the whole sequence has been emitted. */
 static bool vpFillHalf(stream_sample_t *dst)
 {
-    for (unsigned i = 0; i < STREAM_HALF; i++) {
+    for (unsigned i = 0; i < STREAM_HALF; i += 2) {
         while (vpNib >= vpNibbles) {    /* current clip exhausted */
             vpPos++;
             if (!vpLoadCurrentClip()) { /* sequence done -> pad rest */
@@ -295,15 +305,20 @@ static bool vpFillHalf(stream_sample_t *dst)
                 return false;
             }
         }
+        int32_t s;
         if (vpClip == NULL) { /* silence clip */
-            dst[i] = 0;
+            s = 0;
             vpNib++;
-            continue;
+        } else {
+            uint8_t byte = vpClip[vpNib >> 1];
+            uint8_t code = (vpNib & 1) ? (byte >> 4) : (byte & 0xf);
+            s = adpcm_ima_decode(&vpIma, code);
+            vpNib++;
         }
-        uint8_t byte = vpClip[vpNib >> 1];
-        uint8_t code = (vpNib & 1) ? (byte >> 4) : (byte & 0xf);
-        dst[i] = adpcm_ima_decode(&vpIma, code);
-        vpNib++;
+        dst[i] =
+            (stream_sample_t)((vpPrev + s) / 2); /* interpolated midpoint */
+        dst[i + 1] = (stream_sample_t)s;
+        vpPrev = s;
     }
     return true;
 }
@@ -486,6 +501,7 @@ void vp_play()
     }
 
     vpPos = 0;
+    vpPrev = 0;                                /* reset upsample history */
     vpLeadin = (LEADIN_SILENCE_MS / 20u) + 1u; /* mask amp turn-on pop */
     vpLoadCurrentClip();
     voicePromptActive = true;
