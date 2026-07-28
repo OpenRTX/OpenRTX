@@ -14,6 +14,18 @@
 #include "drivers/baseband/AT1846S.h"
 #endif
 
+/*
+ * Weak default for the hardware RF-squelch hook (radio.h).  Targets whose
+ * transceiver exposes an on-chip carrier/squelch comparator override this with
+ * a strong definition to report that decision; the default reports "no hardware
+ * squelch", so update() falls back to thresholding radio_getRssi().
+ */
+extern "C" __attribute__((weak)) bool radio_checkRxRfSquelch(bool *open)
+{
+    (void) open;
+    return false;
+}
+
 /**
  * \internal
  * On MD-UV3x0 radios the volume knob does not regulate the amplitude of the
@@ -78,15 +90,25 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     // RX logic
     if(status->opStatus == RX)
     {
-        // RF squelch mechanism
-        // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
-        rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
-        rssi_t rssi    = rtx_getRssi();
+        // RF squelch mechanism.  Prefer the target's hardware carrier/squelch
+        // comparator if it has one (steadier than thresholding the RSSI);
+        // otherwise turn the squelch level (0 to 15) into an RSSI threshold.
+        bool hwSqlOpen;
+        if(radio_checkRxRfSquelch(&hwSqlOpen))
+        {
+            rfSqlOpen = hwSqlOpen;
+        }
+        else
+        {
+            // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
+            rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
+            rssi_t rssi    = rtx_getRssi();
 
-        // Provide a bit of hysteresis, only change state if the RSSI has
-        // moved more than 1dBm on either side of the current squelch setting.
-        if((rfSqlOpen == false) && (rssi > (squelch + 1))) rfSqlOpen = true;
-        if((rfSqlOpen == true)  && (rssi < (squelch - 1))) rfSqlOpen = false;
+            // Provide a bit of hysteresis, only change state if the RSSI has
+            // moved more than 1dBm on either side of the current squelch.
+            if((rfSqlOpen == false) && (rssi > (squelch + 1))) rfSqlOpen = true;
+            if((rfSqlOpen == true)  && (rssi < (squelch - 1))) rfSqlOpen = false;
+        }
 
         // Local flags for current RF and tone squelch status
         bool rfSql   = ((status->rxToneEn == 0) && (rfSqlOpen == true));

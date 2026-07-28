@@ -25,6 +25,7 @@ path = [
     "meta/**/*",
     ".vscode/**/*",
     "voiceprompts.vpc",
+    "voiceprompts.vpa",
     "osx.txt",
     "tests/unit/assets/**/*",
     "README.md",

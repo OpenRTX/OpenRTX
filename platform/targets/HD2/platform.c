@@ -9,6 +9,7 @@
  */
 
 #include "interfaces/platform.h"
+#include "interfaces/audio.h"
 #include "peripherals/gpio.h"
 #include "peripherals/rtc.h"
 #include "drivers/ADC/adcHrc7000.h"
@@ -45,6 +46,11 @@ void platform_init()
     GPIOB->DR |= 0x00506414u; /* preserves the PTB13 power latch */
 
     adcHrc7000_init(&adc1);   /* on-chip ADC (battery on ADC_VBAT_CH) */
+
+    /* Bring up the HR_C7000 codec + board audio GPIO at platform_init, before
+     * the rtx thread / radio_init, like every other OpenRTX target. */
+    audio_init();
+
     rtc_init();
 }
 
@@ -123,10 +129,17 @@ int8_t platform_getChSelector()
 {
     return 0;
 }
+/* Beep / keytone.  On the HD2 the beep is generated as a PCM tone through the
+ * codec-DAC output stream by the voice-prompt player (core/voicePrompts_adpcm.c,
+ * beep_tick): a hardware PWM tone only sounds while a PCM stream is already
+ * clocking the codec DAC, so it cannot stand alone on this target.  These
+ * platform hooks are therefore no-ops here -- the stock codec2 player would
+ * drive them, but the HD2 build links the ADPCM player, which does not. */
 void platform_beepStart(uint16_t freq)
 {
     (void)freq;
 }
+
 void platform_beepStop()
 {
 }
