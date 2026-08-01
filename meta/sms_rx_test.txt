@@ -1,0 +1,5 @@
+nop SMS loopback RX: start in M17 RX mode and wait for incoming SMS decoded from baseband
+nop Requires: NVM already has M17 opmode selected, /tmp/baseband.raw is the resampled TX output
+sleep 8000
+screenshot sms_rx_done.bmp
+quit

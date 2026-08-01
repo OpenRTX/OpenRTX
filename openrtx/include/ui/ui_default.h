@@ -15,6 +15,9 @@
 #include "core/event.h"
 #include "hwconfig.h"
 #include "core/ui.h"
+#ifdef CONFIG_M17_SMS
+#include "core/packet_io.h"
+#endif
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -52,7 +55,15 @@ enum uiScreen
     SETTINGS_FM,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+#ifdef CONFIG_MESSAGES
+    MESSAGES_LIST,
+    MESSAGES_DETAIL,
+#ifdef CONFIG_M17_SMS
+    MESSAGES_COMPOSE,
+#endif
+    SETTINGS_MESSAGES,
+#endif
 };
 
 enum SetRxTx
@@ -70,6 +81,9 @@ enum menuItems
     M_CONTACTS,
 #ifdef CONFIG_GPS
     M_GPS,
+#endif
+#ifdef CONFIG_MESSAGES
+    M_MESSAGES,
 #endif
     M_SETTINGS,
     M_INFO,
@@ -90,6 +104,9 @@ enum settingsItems
     S_M17,
 #endif
     S_FM,
+#ifdef CONFIG_MESSAGES
+    S_MESSAGES,
+#endif
     S_ACCESSIBILITY,
     S_RESET2DEFAULTS,
 };
@@ -151,6 +168,14 @@ enum settingsFMItems
     CTCSS_Enabled
 };
 
+#ifdef CONFIG_MESSAGES
+enum settingsMessagesItems
+{
+    SM_NOTIFICATION = 0,
+    SM_TONE,
+};
+#endif
+
 /**
  * Struct containing a set of positions and sizes that get
  * calculated for the selected display size.
@@ -210,7 +235,7 @@ typedef struct ui_state_t
     bool input_locked;
     // Variables used for VFO input
     uint8_t input_number;
-    uint8_t input_position;
+    uint16_t input_position;
     uint8_t input_set;
     long long last_keypress;
     freq_t new_rx_frequency;
@@ -234,6 +259,32 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+#ifdef CONFIG_MESSAGES
+    // Sequence number of the message currently highlighted in
+    // MESSAGES_LIST, pinned the same way as messages_detail_seq below: a
+    // keypress can be processed many UI-loop ticks after the frame the
+    // user saw, and a new message arriving in between shifts every later
+    // entry's index (newest-first sort), which would otherwise make
+    // ENTER act on the wrong row. 0 means "not yet pinned" (screen just
+    // entered); UINT32_MAX means the virtual "New Message" row.
+    uint32_t messages_list_seq;
+    // Sequence number of the message pinned in MESSAGES_DETAIL. Using the
+    // sequence (rather than a snapshot index) means the detail view keeps
+    // showing the same message across a snapshot rebuild even if its
+    // position shifts; see messages_find_by_sequence().
+    uint32_t messages_detail_seq;
+    // Body scroll offset (pixels) and its current maximum in MESSAGES_DETAIL.
+    int16_t detail_scroll;
+    int16_t detail_scroll_max;
+#ifdef CONFIG_M17_SMS
+    char compose_recipient[10];
+    char compose_body[PKT_BODY_MAX_LEN];
+    uint8_t compose_focus;
+    bool compose_editing;
+    bool compose_body_editing;
+    bool compose_is_reply;
+#endif
+#endif
 }
 ui_state_t;
 
@@ -247,6 +298,9 @@ extern const char *settings_gps_items[];
 extern const char *settings_radio_items[];
 extern const char *settings_m17_items[];
 extern const char *settings_fm_items[];
+#ifdef CONFIG_MESSAGES
+extern const char *settings_messages_items[];
+#endif
 extern const char * settings_accessibility_items[];
 extern const char *backup_restore_items[];
 extern const char *info_items[];
@@ -258,6 +312,9 @@ extern const uint8_t settings_gps_num;
 extern const uint8_t settings_radio_num;
 extern const uint8_t settings_m17_num;
 extern const uint8_t settings_fm_num;
+#ifdef CONFIG_MESSAGES
+extern const uint8_t settings_messages_num;
+#endif
 extern const uint8_t settings_accessibility_num;
 extern const uint8_t backup_restore_num;
 extern const uint8_t info_num;

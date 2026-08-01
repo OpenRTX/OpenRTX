@@ -8,6 +8,7 @@
 #define SETTINGS_H
 
 #include "hwconfig.h"
+#include "core/notification.h"
 #include <stdbool.h>
 
 typedef enum
@@ -51,6 +52,8 @@ typedef struct
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
     bool    gpsSetTime;           // Use GPS to ajust RTC time
     char    M17_meta_text[53];    // M17 Meta Text to send
+    uint8_t notification_type;    // Message notification type (enum notification_type)
+    uint8_t msg_notification_tone; // Message notification tone index (enum msg_notification_tone)
 }
 __attribute__((packed)) settings_t;
 
@@ -79,6 +82,8 @@ static const settings_t default_settings =
     false,                        // Display battery icon
     false,                        // Update RTC with GPS
     "OpenRTX",                    // Default M17 meta text
+    NOTIFY_TONE,                  // Message notification: tone on by default
+    MSG_TONE_NOKIA,               // Message notification tone: Nokia
 };
 
 #endif /* SETTINGS_H */

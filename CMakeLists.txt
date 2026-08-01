@@ -102,6 +102,11 @@ target_sources(app
     openrtx/src/core/voicePromptUtils.c
     openrtx/src/core/voicePromptData.S
     openrtx/src/core/nvmem_access.c
+    openrtx/src/core/messages.cpp
+    openrtx/src/core/m17_sms.cpp
+    openrtx/src/core/packet_io.c
+    openrtx/src/core/rtttl.c
+    openrtx/src/core/notification.cpp
     openrtx/src/rtx/rtx.cpp
     openrtx/src/rtx/OpMode_FM.cpp
     openrtx/src/rtx/OpMode_M17.cpp
@@ -121,6 +126,7 @@ target_sources(app
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c
     openrtx/src/ui/default/ui_menu.c
+    openrtx/src/ui/default/ui_messages.c
     openrtx/src/ui/default/ui_strings.c
 
     subprojects/codec2/src/dump.c

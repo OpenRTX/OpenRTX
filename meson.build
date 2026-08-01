@@ -56,6 +56,11 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/voicePromptUtils.c',
                'openrtx/src/core/voicePromptData.S',
                'openrtx/src/core/nvmem_access.c',
+               'openrtx/src/core/messages.cpp',
+               'openrtx/src/core/m17_sms.cpp',
+               'openrtx/src/core/packet_io.c',
+               'openrtx/src/core/rtttl.c',
+               'openrtx/src/core/notification.cpp',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -81,6 +86,7 @@ openrtx_inc = ['openrtx/include', 'platform']
 ui_src_default = ['openrtx/src/ui/default/ui.c',
                   'openrtx/src/ui/default/ui_main.c',
                   'openrtx/src/ui/default/ui_menu.c',
+                  'openrtx/src/ui/default/ui_messages.c',
                   'openrtx/src/ui/default/ui_strings.c']
 
 ui_src_module17 = ['openrtx/src/ui/module17/ui.c',
@@ -1191,6 +1197,30 @@ rtx_tx_disable_test = executable('rtx_tx_disable_test',
                                   sources : unit_test_src + ['tests/unit/rtx_tx_disable.cpp'],
                                   kwargs  : unit_test_opts)
 
+# CONFIG_MESSAGES and CONFIG_MSG_SNAPSHOT_SIZE now come from the linux
+# target's hwconfig.h (see platform/targets/linux/hwconfig.h), the same as
+# any other target — no test-specific override needed.
+messages_test = executable('messages_test',
+                            sources : unit_test_src + [
+                                'openrtx/src/core/messages.cpp',
+                                'tests/unit/messages_test.cpp',
+                            ],
+                            kwargs  : unit_test_opts)
+
+packet_io_test = executable('packet_io_test',
+                             sources : unit_test_src + [
+                                 'openrtx/src/core/packet_io.c',
+                                 'tests/unit/packet_io_test.cpp',
+                             ],
+                             kwargs  : unit_test_opts)
+
+rtttl_test = executable('rtttl_test',
+                         sources : unit_test_src + [
+                             'openrtx/src/core/rtttl.c',
+                             'tests/unit/rtttl_test.cpp',
+                         ],
+                         kwargs  : unit_test_opts)
+
 m17_packet_disassembly_test = executable('m17_packet_disassembly_test',
                                          sources : unit_test_src + ['tests/unit/M17_packet_disassembly.cpp'],
                                          kwargs  : unit_test_opts)
@@ -1221,7 +1251,31 @@ test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('RTX TX Disable Test', rtx_tx_disable_test)
+test('Messages Registry Test', messages_test)
+test('Packet IO Test', packet_io_test)
+test('RTTTL Parser Test', rtttl_test)
 test('M17 Packet Disassembly Test', m17_packet_disassembly_test)
 test('M17 Packet Framing Test', m17_packet_framing_test)
 test('M17 SMS Packet Test', m17_sms_packet_test)
 test('M17 Packet OpMode Test', m17_packet_opmode_test)
+
+m17_sms_source_test = executable('m17_sms_source_test',
+                                  sources : ['openrtx/src/core/m17_sms.cpp',
+                                             'openrtx/src/core/packet_io.c',
+                                             'openrtx/src/protocols/M17/SmsPacket.cpp',
+                                             'tests/unit/m17_sms_loopback_stubs.cpp',
+                                             'tests/unit/m17_sms_source_test.cpp'],
+                                  kwargs  : unit_test_opts)
+
+test('M17 SMS Source Test', m17_sms_source_test)
+
+m17_sms_loopback_test = executable('m17_sms_loopback_test',
+                                    sources : ['openrtx/src/core/m17_sms.cpp',
+                                               'openrtx/src/core/packet_io.c',
+                                               'openrtx/src/core/datetime.c',
+                                               'openrtx/src/protocols/M17/SmsPacket.cpp',
+                                               'tests/unit/m17_sms_loopback_stubs.cpp',
+                                               'tests/unit/m17_sms_loopback_test.cpp'],
+                                    kwargs  : unit_test_opts)
+
+test('M17 SMS Loopback Test', m17_sms_loopback_test)

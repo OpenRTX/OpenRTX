@@ -21,6 +21,14 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
+#include "core/messages.h"
+#include "core/notification.h"
+
+#include "core/packet_io.h"
+
+#ifdef CONFIG_M17_SMS
+#include "core/m17_sms.h"
+#endif
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -61,9 +69,25 @@ void *ui_threadFunc(void *arg)
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
         ui_updateFSM(&sync_rtx);            // Update UI FSM
         ui_saveState();                     // Save local state copy
+#ifdef CONFIG_MESSAGES
+        enum notification_type notif_type =
+            (enum notification_type)state.settings.notification_type;
+        uint8_t notif_tone = state.settings.msg_notification_tone;
+#endif
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
         vp_tick();                           // continue playing voice prompts in progress if any.
+
+#ifdef CONFIG_MESSAGES
+        // Refresh the message inbox snapshot; if new unread entries
+        // arrived, trigger the configured notification tone.
+        size_t new_unread = messages_tick();
+        if (new_unread > 0)
+        {
+            notification_play_message_tone(notif_type, notif_tone);
+        }
+        notification_tick();                 // Advance notification tone sequencer.
+#endif
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
@@ -169,9 +193,16 @@ void *rtx_threadFunc(void *arg)
 
     rtx_init(&rtx_mutex);
 
+#ifdef CONFIG_M17_SMS
+    m17_sms_init();
+#endif
+
     while(state.devStatus == RUNNING)
     {
         rtx_task();
+#ifdef CONFIG_M17_SMS
+        m17_sms_task_rtx();
+#endif
     }
 
     rtx_terminate();
@@ -186,6 +217,11 @@ void create_threads()
 {
     // Create RTX state mutex
     pthread_mutex_init(&rtx_mutex, NULL);
+
+#ifdef CONFIG_MESSAGES
+    // Initialise packet I/O queues before either thread can use them.
+    packet_io_init();
+#endif
 
     // Create rtx radio thread
     pthread_attr_t rtx_attr;

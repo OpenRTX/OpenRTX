@@ -11,6 +11,8 @@
 #include "core/event.h"
 #include "core/state.h"
 #include "core/battery.h"
+#include "core/messages.h"
+#include "core/notification.h"
 #include "hwconfig.h"
 #include "interfaces/platform.h"
 #include "interfaces/nvmem.h"
@@ -28,6 +30,10 @@ const size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
 void state_init()
 {
     pthread_mutex_init(&state_mutex, NULL);
+
+#ifdef CONFIG_MESSAGES
+    messages_init();
+#endif
 
     /*
      * Try loading settings from nonvolatile memory and default to sane values
@@ -67,6 +73,24 @@ void state_init()
     if (state.settings.brightness > 100) {
         state.settings.brightness = 100;
     }
+
+    /*
+     * Sanitize the message notification fields. These were added after the
+     * settings_t layout was first shipped: on targets that validate stored
+     * settings with a CRC (Mod17, CS7000), nvm_readSettings() already fails
+     * and default_settings is used wholesale. On targets that do not (e.g.
+     * plain flash-block storage), a pre-upgrade settings blob is shorter
+     * than the current struct and these trailing fields read whatever
+     * adjacent flash/memory held, so they must be range-checked here rather
+     * than trusted.
+     */
+    if (state.settings.notification_type > NOTIFY_TONE_VIBE) {
+        state.settings.notification_type = default_settings.notification_type;
+    }
+    if (state.settings.msg_notification_tone >= MSG_TONE_COUNT) {
+        state.settings.msg_notification_tone =
+            default_settings.msg_notification_tone;
+    }
 }
 
 void state_terminate()
@@ -77,6 +101,11 @@ void state_terminate()
     }
 
     nvm_writeSettingsAndVfo(&state.settings, &state.channel);
+
+#ifdef CONFIG_MESSAGES
+    messages_terminate();
+#endif
+
     pthread_mutex_destroy(&state_mutex);
 }
 

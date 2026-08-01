@@ -1,0 +1,36 @@
+nop
+sleep 2000
+nop open_menu
+key enter
+sleep 200
+nop navigate_to_messages
+key down down down down
+sleep 200
+nop enter_messages_list
+key enter
+sleep 200
+screenshot messages_list.bmp
+nop start_new_compose
+key down down down
+sleep 200
+key enter
+sleep 200
+screenshot compose.bmp
+nop activate_body_edit
+key enter
+sleep 100
+nop type_a
+key 2
+sleep 200
+nop confirm_char
+key enter
+sleep 100
+nop focus_send
+key down
+sleep 100
+screenshot compose_at_send.bmp
+nop press_send
+key enter
+sleep 3000
+screenshot sent.bmp
+quit

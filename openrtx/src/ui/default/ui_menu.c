@@ -17,6 +17,7 @@
 #include "core/memory_profiling.h"
 #include "ui/ui_strings.h"
 #include "core/voicePromptUtils.h"
+#include "core/notification.h"
 
 #ifdef PLATFORM_TTWRPLUS
 #include "drivers/baseband/SA8x8.h"
@@ -1037,6 +1038,51 @@ void _ui_drawSettingsFM(ui_state_t* ui_state)
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getFMEntryName,
                           _ui_getFMValueName);
 }
+
+#ifdef CONFIG_MESSAGES
+int _ui_getSettingsMessagesEntryName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_messages_num)
+        return -1;
+
+    sniprintf(buf, max_len, "%s", settings_messages_items[index]);
+    return 0;
+}
+
+int _ui_getSettingsMessagesValueName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_messages_num)
+        return -1;
+
+    switch (index) {
+        case SM_NOTIFICATION:
+            sniprintf(buf, max_len, "%s",
+                     notification_type_name(
+                         (enum notification_type)last_state.settings.notification_type));
+            break;
+
+        case SM_TONE:
+            sniprintf(buf, max_len, "%s",
+                     msg_notification_tone_name(
+                         last_state.settings.msg_notification_tone));
+            break;
+    }
+
+    return 0;
+}
+
+void _ui_drawSettingsMessages(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Messages" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
+              currentLanguage->messages);
+    // Print Messages settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                          _ui_getSettingsMessagesEntryName,
+                          _ui_getSettingsMessagesValueName);
+}
+#endif
 
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
