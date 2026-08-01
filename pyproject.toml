@@ -18,3 +18,23 @@ dependencies = [
     "setuptools>=68.0.0",
     "urllib3>=2.6.3",
 ]
+
+[tool.ruff]
+line-length = 120
+extend-exclude = [
+    # Data-heavy / third-party scripts whose hand-laid byte tables and
+    # existing style would be harmed by reformatting.
+    "scripts/bin2sgl.py",
+    "scripts/gd-77_firmware_loader.py",
+    "scripts/dfu-convert.py",
+    "scripts/uf2conv.py",
+    "scripts/cs7000_wrap.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.1",
+]
