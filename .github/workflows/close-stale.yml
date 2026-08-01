@@ -15,6 +15,6 @@ jobs:
           close-pr-message: 'This PR was closed due to continued inactivity.'
           close-issue-label: Stale-Closed
           close-pr-label: Stale-Closed
-          exempt-issue-labels: bug,issue,'In progress'
+          exempt-issue-labels: bug,issue,In progress
           days-before-stale: 60
           days-before-close: 15
