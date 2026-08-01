@@ -104,9 +104,7 @@ def main() -> int:
         print(f"error: no fields parsed from {source_path}", file=sys.stderr)
         return 2
 
-    other_files = sorted(
-        p for p in UI_DIR.glob("*Strings.h") if p.name != SOURCE_FILE
-    )
+    other_files = sorted(p for p in UI_DIR.glob("*Strings.h") if p.name != SOURCE_FILE)
     if not other_files:
         print(f"error: no translation string tables found alongside {SOURCE_FILE}", file=sys.stderr)
         return 2
@@ -125,13 +123,15 @@ def main() -> int:
         if missing:
             failed = True
             print(f"{path.name}: MISSING {len(missing)} field(s) present in stringsTable_t ({STRUCT_FILE}):")
-            print(f"  (these will be NULL const char* at runtime -- crash risk when displayed/spoken):")
+            print("  (these will be NULL const char* at runtime -- crash risk when displayed/spoken):")
             for f in missing:
                 print(f"  - {f}")
 
         if extra:
             failed = True
-            print(f"{path.name}: has {len(extra)} field(s) not present in stringsTable_t ({STRUCT_FILE}) (stale/renamed):")
+            print(
+                f"{path.name}: has {len(extra)} field(s) not present in stringsTable_t ({STRUCT_FILE}) (stale/renamed):"
+            )
             for f in extra:
                 print(f"  - {f}")
 
@@ -151,7 +151,7 @@ def main() -> int:
         if missing:
             failed = True
             print(f"{path.name}: MISSING {len(missing)} field(s) present in {SOURCE_FILE}")
-            print(f"  (these will be NULL const char* at runtime -- crash risk when displayed/spoken):")
+            print("  (these will be NULL const char* at runtime -- crash risk when displayed/spoken):")
             for f in missing:
                 print(f"  - {f}")
 

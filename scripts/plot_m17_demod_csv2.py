@@ -3,13 +3,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
 
+from sys import argv
+
 import pandas as pd
 from matplotlib import pyplot as plt
-from sys import argv
 
 plt.rcParams["figure.autolayout"] = True
 df = pd.read_csv(argv[1])
-#df = df.head(n=10000)
+# df = df.head(n=10000)
 print("Contents in csv file:\n", df)
 plt.plot(df.index, df.RRCSignal)
 plt.plot(df.index, df.SyncDetect)

@@ -24,11 +24,12 @@
 # 4. Refer to the `symbols/symbols.h` file to find the enum that corresponds with your new symbol
 # 5. Utilize the `gfx_printSymbol()` method with your enum to access your symbol
 
-import cairosvg
 import io
-from PIL import Image
-import numpy
 import os
+
+import cairosvg
+import numpy
+from PIL import Image
 
 absolute_path = os.path.dirname(__file__)
 
@@ -45,9 +46,7 @@ def svgToBytes(filename, height):
     # Make memory buffer
     mem = io.BytesIO()
     # Convert SVG to PNG in memory
-    cairosvg.svg2png(
-        url=filename, write_to=mem, parent_height=height, parent_width=height
-    )
+    cairosvg.svg2png(url=filename, write_to=mem, parent_height=height, parent_width=height)
     # Convert PNG to Numpy array
     img = Image.open(mem)
     # Split the channels, get just the alpha since that's what we need
@@ -58,9 +57,10 @@ def svgToBytes(filename, height):
         alpha.show()
     return numpy.array(alpha)
 
+
 # REUSE-IgnoreStart
 first_ascii = 32  # Start at ascii d32 which is " " per https://www.rapidtables.com/code/text/ascii-table.html
-dont_edit_banner  = "/*\n"
+dont_edit_banner = "/*\n"
 dont_edit_banner += " * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors\n"
 dont_edit_banner += " * \n"
 dont_edit_banner += " * SPDX-License-Identifier: GPL-3.0-or-later\n"
@@ -69,11 +69,10 @@ dont_edit_banner += "\n"
 dont_edit_banner += "// This is a generated file, please do not edit it! Use generate_symbols.py\n"
 # REUSE-IgnoreEnd
 
+
 class FontDefinition:
     scalar = 1.6  # this number is used to roughly convert from pt to px
-    yadvance_scalar = (
-        7 / 3
-    )  # this number is applied to the width to scale up the yadvance; this is naively linear
+    yadvance_scalar = 7 / 3  # this number is applied to the width to scale up the yadvance; this is naively linear
 
     def __init__(self, name, size):
         # Prepopulate with a space character
@@ -100,24 +99,12 @@ class FontDefinition:
 
     def __str__(self):
         out = dont_edit_banner
-        out += "static const uint8_t {}{}pt7bBitmaps[] PROGMEM = {{\n".format(
-            self.name, self.size
-        )
+        out += "static const uint8_t {}{}pt7bBitmaps[] PROGMEM = {{\n".format(self.name, self.size)
         for i, bitmap in enumerate(self.bitmaps):
-            out += (
-                (", ".join("0x{:02x}".format(x) for x in bitmap))
-                + ", //"
-                + self.glyphNames[i]
-                + "\n"
-            )
+            out += (", ".join("0x{:02x}".format(x) for x in bitmap)) + ", //" + self.glyphNames[i] + "\n"
         out += "};\n"
         out += "\n"
-        out += (
-            "static const GFXglyph {}{}pt7bGlyphs[] PROGMEM = {{".format(
-                self.name, self.size
-            )
-            + "\n"
-        )
+        out += "static const GFXglyph {}{}pt7bGlyphs[] PROGMEM = {{".format(self.name, self.size) + "\n"
         out += "  //Index,  W, H,xAdv,dX, dY\n"
         offset = 0
         for glyphNumber, glyphName in enumerate(self.glyphNames):
@@ -132,10 +119,7 @@ class FontDefinition:
             )
             offset += len(self.bitmaps[glyphNumber])
         out += "};\n"
-        out += (
-            "static const GFXfont {}{}pt7b PROGMEM = {{".format(self.name, self.size)
-            + "\n"
-        )
+        out += "static const GFXfont {}{}pt7b PROGMEM = {{".format(self.name, self.size) + "\n"
         out += "(uint8_t  *){}{}pt7bBitmaps,".format(self.name, self.size) + "\n"
         out += "(GFXglyph *){}{}pt7bGlyphs,".format(self.name, self.size) + "\n"
         out += "//ASCII start, ASCII stop,y Advance \n"
@@ -161,11 +145,13 @@ for size in sizes:
         f.write(str(font))
 
 # Generate the enum for convenience
-with open(os.path.join(absolute_path, "../openrtx/include/fonts/symbols/symbols.h".format(size)), "w") as f:
+with open(os.path.join(absolute_path, "../openrtx/include/fonts/symbols/symbols.h"), "w") as f:
     out = dont_edit_banner
     out += "typedef enum {\n"
     symbols.insert(0, "SPACE")
     for symbolNumber, symbolName in enumerate(symbols):
-        out += "    SYMBOL_{} = {},\n".format(symbolName.split(".")[0].replace("-", "_").upper(), symbolNumber + first_ascii)
+        out += "    SYMBOL_{} = {},\n".format(
+            symbolName.split(".")[0].replace("-", "_").upper(), symbolNumber + first_ascii
+        )
     out += "} symbol_t;\n"
     f.write(out)
