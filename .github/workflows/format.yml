@@ -20,3 +20,18 @@ jobs:
         run: ./scripts/clang_format.sh --check
       - name: REUSE Compliance Check (confirm copyright and licenses)
         uses: fsfe/reuse-action@v6
+  python-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Set up Python
+        run: uv python install
+      - name: Setup packages
+        run: uv sync --locked
+      - name: Check Python formatting
+        run: uv run ruff format --check .
+      - name: Lint Python
+        run: uv run ruff check .
