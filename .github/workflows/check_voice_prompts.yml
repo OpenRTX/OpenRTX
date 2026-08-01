@@ -1,0 +1,45 @@
+name: "Check if voice prompts need to be regenerated"
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'openrtx/include/ui/ui_strings.h'
+      - 'openrtx/src/ui/default/ui_strings.c'
+      - 'openrtx/include/core/voicePrompts.h'
+      - 'scripts/generate_voice_prompts.py'
+      - 'scripts/voice_overrides.json'
+      - 'voiceprompts.vpc'
+  pull_request:
+    paths:
+      - 'openrtx/include/ui/ui_strings.h'
+      - 'openrtx/src/ui/default/ui_strings.c'
+      - 'openrtx/include/core/voicePrompts.h'
+      - 'scripts/generate_voice_prompts.py'
+      - 'scripts/voice_overrides.json'
+      - 'voiceprompts.vpc'
+
+jobs:
+  check-voice-prompts:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ffmpeg libcodec2-dev codec2
+          pip3 install --upgrade pip
+          pip3 install -r requirements.txt
+      - name: Cache Kokoro model files
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/kokoro-tts
+          key: kokoro-model-v1.0
+      - name: Check voice prompts are up to date
+        run: python3 ./scripts/generate_voice_prompts.py --check --voice am_michael
