@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "ui/ui_strings.h"
-#include "ui/SpanishStrings.h"
 
 const stringsTable_t englishStrings = {
     .languageName = "English",
@@ -96,9 +95,7 @@ const stringsTable_t englishStrings = {
     .metaText = "Meta Txt",
 };
 
-const stringsTable_t languages[NUM_LANGUAGES] = {englishStrings,
-                                                 spanishStrings};
-const stringsTable_t *currentLanguage = &languages[0];
+const stringsTable_t *currentLanguage = &englishStrings;
 
 int GetEnglishStringTableOffset(const char *text)
 {
