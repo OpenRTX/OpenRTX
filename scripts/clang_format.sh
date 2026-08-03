@@ -87,8 +87,6 @@ openrtx/include/rtx/OpMode.hpp
 openrtx/include/rtx/OpMode_FM.hpp
 openrtx/include/rtx/OpMode_M17.hpp
 openrtx/include/rtx/rtx.h
-openrtx/include/ui/EnglishStrings.h
-openrtx/include/ui/SpanishStrings.h
 openrtx/include/ui/ui_default.h
 openrtx/include/ui/ui_mod17.h
 openrtx/include/ui/ui_strings.h
