@@ -243,6 +243,18 @@ void radio_enableTx()
         at1846s.enableTone(17500);
     }
 
+#ifdef CONFIG_FM_INBAND_TONES
+    // Transmit the currently-pressed DTMF digit through the HR_C6000, which is
+    // the FM modulator on this radio. This replaces the mic audio with the
+    // tone; releasing the key (dtmf_code == DTMF_CODE_NONE) re-runs this path
+    // without the tone, so startAnalogTx() above restores the mic.
+    if(config->opMode == OPMODE_FM)
+    {
+        C6000.sendDtmfKey(config->dtmf_code, config->txFrequency,
+                          config->bandwidth == BW_12_5);
+    }
+#endif // CONFIG_FM_INBAND_TONES
+
     radioStatus = TX;
 }
 

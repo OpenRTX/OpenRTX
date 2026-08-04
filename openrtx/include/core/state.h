@@ -41,6 +41,7 @@ typedef struct {
     uint16_t bank;
     uint8_t rtxStatus;
     bool tone_enabled;
+    uint8_t dtmf_code; /* FM DTMF digit being pressed, or DTMF_CODE_NONE */
 
     bool emergency;
     settings_t settings;

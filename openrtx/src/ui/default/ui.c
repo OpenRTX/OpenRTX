@@ -1476,6 +1476,34 @@ void ui_updateFSM(bool *sync_rtx)
             *sync_rtx = true;
         }
 
+#ifdef CONFIG_FM_INBAND_TONES
+        // Hot-keypad FM DTMF: while transmitting in FM, holding a digit / * / #
+        // key generates the matching DTMF tone (muting the mic); releasing it
+        // restores the mic. The tone itself is driven by the FM opMode. While a
+        // digit is keyed the keypad is dedicated to DTMF, so the event is
+        // consumed here and does not also drive VFO/memory input.
+        if(txOngoing && (state.channel.mode == OPMODE_FM))
+        {
+            uint16_t dtmfKeys = msg.keys & KBD_CHAR_MASK;
+            uint8_t  prev     = state.dtmf_code;
+            uint8_t  dtmf     = dtmfKeys ? __builtin_ctz(dtmfKeys)
+                                         : DTMF_CODE_NONE;
+            if(dtmf != prev)
+            {
+                state.dtmf_code = dtmf;
+                *sync_rtx = true;
+            }
+            if((dtmf != DTMF_CODE_NONE) || (prev != DTMF_CODE_NONE))
+                return;
+        }
+        else if(state.dtmf_code != DTMF_CODE_NONE)
+        {
+            // Left FM or stopped transmitting with a digit still marked pressed.
+            state.dtmf_code = DTMF_CODE_NONE;
+            *sync_rtx = true;
+        }
+#endif // CONFIG_FM_INBAND_TONES
+
         int priorUIScreen = state.ui_screen;
         switch(state.ui_screen)
         {
