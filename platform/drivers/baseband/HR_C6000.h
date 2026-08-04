@@ -76,7 +76,47 @@ public:
      */
     void sendTone(const uint32_t freq, const uint8_t deviation);
 
+    /**
+     * Program the HR_C6000 built-in DTMF generator's eight tone slots with the
+     * standard DTMF frequencies, which sendDtmf() then selects digits from.
+     * sendDtmfKey() keeps the table programmed on its own, so drivers using it
+     * have no need to call this.
+     */
+    void initDtmf();
+
+    /**
+     * Transmit a DTMF digit using the HR_C6000 built-in DTMF generator. While
+     * active the tone replaces the microphone audio in the FM modulation, so
+     * this both keys the DTMF digit on air and mutes the mic; the mic is
+     * restored the next time the analog transmitter is (re)started.
+     *
+     * @param code: DTMF digit code (0-9 = digits, 0xE = '*', 0xF = '#',
+     *              0xA-0xD = 'A'-'D').
+     * @param deviation: tone deviation.
+     */
+    void sendDtmf(const uint8_t code, const uint8_t deviation);
+
+    /**
+     * Transmit the DTMF digit corresponding to a keypad key. Takes care of the
+     * keypad-to-chip digit mapping, of the tone deviation, which depends on
+     * transmit band and channel bandwidth, and of programming the tone table.
+     *
+     * @param key: keypad code, 0-9 for the digits, 10 for '*' and 11 for '#'.
+     *             Any other value is ignored.
+     * @param txFrequency: transmit frequency, in Hz.
+     * @param narrowBand: true when the channel bandwidth is 12.5kHz.
+     */
+    void sendDtmfKey(const uint8_t key, const freq_t txFrequency,
+                     const bool narrowBand);
+
 private:
+
+    /**
+     * True when the DTMF tone table holds the standard frequencies. Cleared by
+     * anything that borrows one of the tone slots for another purpose, so that
+     * the next DTMF digit knows it has to program the table again.
+     */
+    bool dtmfTableValid = false;
 
     /**
      * Write a register with 16-bit address.

@@ -6,6 +6,7 @@
 
 #include "core/utils.h"
 #include "drivers/baseband/HR_C6000.h"
+#include "radioUtils.h"
 
 /*
  * Table of HR_C6000 CTCSS tones, used for reverse lookup of tone index to be
@@ -76,4 +77,67 @@ void HR_C6000::sendTone(const uint32_t freq, const uint8_t deviation)
     writeCfgRegister(0xAD, 0x11);
     writeCfgRegister(0x60, 0x00);         // Disable FM transmission
     writeCfgRegister(0x60, 0x80);         // Enable FM transmission, start sending the tone
+}
+
+void HR_C6000::initDtmf()
+{
+    // The HR_C6000 has a built-in DTMF generator: eight oscillator slots
+    // (0x11A..0x129) hold the eight standard DTMF frequencies, and the digit
+    // code selects which low+high pair the chip mixes. The slots live in the
+    // auxiliary register bank, not in the main configuration one.
+    static const uint16_t dtmfFreq[8] =
+        { 697, 770, 852, 941, 1209, 1336, 1477, 1633 };
+    for(uint8_t i = 0; i < 8; i++)
+    {
+        uint32_t tone = ((uint32_t)dtmfFreq[i] * 65536) / 32000;
+        uint16_t addr = 0x11A + (i * 2);
+        writeReg16(C6000_SpiOpModes::AUX, addr + 1, (tone >> 8) & 0xFF);
+        writeReg16(C6000_SpiOpModes::AUX, addr,     (tone & 0xFF));
+    }
+
+    dtmfTableValid = true;
+}
+
+void HR_C6000::sendDtmf(const uint8_t code, const uint8_t deviation)
+{
+    // Assumes initDtmf() has already programmed the tone table. Selects the
+    // digit's low+high pair from that table and keys it on air.
+    writeCfgRegister(0xA1, 0x82);          // Enable DTMF mode
+    writeCfgRegister(0xA0, deviation);     // Set DTMF tone deviation
+    writeCfgRegister(0xA4, 0xFA);          // Tone time (large -> continuous)
+    writeCfgRegister(0xA3, 0x19);          // Tone gap (unused for a single code)
+
+    // The high nibble of 0xD1 holds undocumented FM-DTMF bits set elsewhere;
+    // preserve them and only set the code count (low nibble) to one.
+    uint8_t codeCount = (readCfgRegister(0xD1) & 0xF0) | 0x01;
+    writeCfgRegister(0xD1, codeCount);
+    writeCfgRegister(0xAF, code << 4);     // First code goes in the high nibble
+    writeCfgRegister(0x60, 0x00);          // Disable FM transmission
+    writeCfgRegister(0x60, 0x80);          // Enable FM transmission, start sending
+}
+
+void HR_C6000::sendDtmfKey(const uint8_t key, const freq_t txFrequency,
+                           const bool narrowBand)
+{
+    // Keypad code to HR_C6000 digit code: the digits map to themselves, while
+    // '*' and '#' are the last two entries of the chip's code space.
+    static const uint8_t codeMap[12] =
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xE /* * */, 0xF /* # */ };
+
+    if(key >= 12)
+        return;
+
+    // Program the tone table when it is not already good: this is the case on
+    // the first digit, and after sendTone() has borrowed one of the slots.
+    if(dtmfTableValid == false)
+        initDtmf();
+
+    // Deviation coefficients for the DTMF generator, per band and bandwidth.
+    uint8_t deviation;
+    if(getBandFromFrequency(txFrequency) == BND_VHF)
+        deviation = narrowBand ? 0x3A : 0x75;
+    else
+        deviation = narrowBand ? 0x12 : 0x24;
+
+    sendDtmf(codeMap[key], deviation);
 }
