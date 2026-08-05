@@ -14,9 +14,10 @@
 
 enum FuncMode
 {
-    DAC_OFF    = 0,
-    DAC_BEEP   = 1,
-    DAC_STREAM = 2
+    DAC_OFF      = 0,
+    DAC_BEEP     = 1,
+    DAC_STREAM   = 2,
+    DAC_DUALTONE = 3
 };
 
 /*
@@ -42,6 +43,8 @@ static bool syncPoint = false;
 static bool stopReq   = false;
 static size_t readPos;
 static size_t beepIncr;
+static size_t readPos2;     // Second oscillator, dual tone mode only
+static size_t beepIncr2;    // Second oscillator, dual tone mode only
 static struct streamCtx *stream;
 static pthread_mutex_t  mutex;
 static pthread_cond_t   wakeup_cond;
@@ -93,6 +96,29 @@ void Cx000dac_task()
         {
             readPos += beepIncr;
             data[i] = sineTable[(readPos >> 16) & 0x3F];
+        }
+
+        c6000->sendAudio((uint8_t *) data);
+        return;
+    }
+
+    // Dual tone mode: same as beep, but summing two oscillators. Each one is
+    // halved before summing, so the result has the same peak amplitude as a
+    // single beep and cannot clip. The sine table is stored big endian, as the
+    // DAC wants it, so samples are swapped to native endianness to be summed
+    // and swapped back afterwards.
+    if(funcMode == DAC_DUALTONE)
+    {
+        uint16_t data[DAC_FIFO_SIZE];
+        for(size_t i = 0; i < DAC_FIFO_SIZE; i += 1)
+        {
+            readPos  += beepIncr;
+            readPos2 += beepIncr2;
+
+            int16_t s1 = (int16_t) __builtin_bswap16(sineTable[(readPos  >> 16) & 0x3F]);
+            int16_t s2 = (int16_t) __builtin_bswap16(sineTable[(readPos2 >> 16) & 0x3F]);
+
+            data[i] = __builtin_bswap16((uint16_t)((s1 / 2) + (s2 / 2)));
         }
 
         c6000->sendAudio((uint8_t *) data);
@@ -158,10 +184,30 @@ int Cx000dac_startBeep(const uint16_t freq)
     return 0;
 }
 
+int Cx000dac_startDualTone(const uint16_t freq1, const uint16_t freq2)
+{
+    if((freq1 < TONE_BASE_FREQ) || (freq2 < TONE_BASE_FREQ))
+        return -EINVAL;
+
+    if(funcMode != DAC_OFF)
+        return -EBUSY;
+
+    beepIncr  = (freq1 << 16) / TONE_BASE_FREQ;
+    beepIncr2 = (freq2 << 16) / TONE_BASE_FREQ;
+    readPos   = 0;
+    readPos2  = 0;
+    funcMode  = DAC_DUALTONE;
+
+    // Set the "OpenMusic" bit
+    c6000->writeCfgRegister(0x06, 0x22);
+
+    return 0;
+}
+
 void Cx000dac_stopBeep()
 {
-    // Stop only beeps, streams have an higher priority
-    if(funcMode != DAC_BEEP)
+    // Stop only beeps and tones, streams have an higher priority
+    if((funcMode != DAC_BEEP) && (funcMode != DAC_DUALTONE))
         return;
 
     // Clear the "OpenMusic" bit

@@ -32,7 +32,18 @@ extern const struct audioDriver Cx000_dac_audio_driver;
 int Cx000dac_startBeep(const uint16_t freq);
 
 /**
- * Stop an ongoing "beep" tone.
+ * Start generation of a two-tone sound from DAC output, for example a DTMF
+ * digit. The two tones are mixed at equal amplitude and the result has the
+ * same peak level as a single "beep" tone.
+ *
+ * @param freq1: first tone frequency in Hz.
+ * @param freq2: second tone frequency in Hz.
+ * @return zero on success, a negative error code otherwise.
+ */
+int Cx000dac_startDualTone(const uint16_t freq1, const uint16_t freq2);
+
+/**
+ * Stop an ongoing "beep" or dual tone sound.
  */
 void Cx000dac_stopBeep();
 
