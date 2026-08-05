@@ -216,7 +216,14 @@ void radio_enableTx()
     // beginning of each transmission. This problem is particularly evident in
     // M17 mode because it causes the truncation of the preamble sequence.
     //
-    sleepFor(0, 50);
+    // Skipped when this is a mid-transmission re-key (DTMF digit or tone
+    // burst changes): the gap only exists at TX start, and the delay holds
+    // up the rtx thread with the microphone already restored while the
+    // sidetone is still sounding, long enough for the mic to pick it up and
+    // send a short ghost digit on air.
+    //
+    if(radioStatus != TX)
+        sleepFor(0, 50);
 
     at1846s.setFuncMode(AT1846S_FuncMode::TX);
 

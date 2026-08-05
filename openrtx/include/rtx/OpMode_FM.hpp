@@ -8,6 +8,7 @@
 #define OPMODE_FM_H
 
 #include "core/audio_path.h"
+#include "hwconfig.h"
 #include "OpMode.hpp"
 
 /**
@@ -82,6 +83,20 @@ private:
     bool   enterRx;     ///< Flag for RX management.
     pathId rxAudioPath; ///< Audio path ID for RX
     pathId txAudioPath; ///< Audio path ID for TX
+
+    #ifdef CONFIG_FM_INBAND_TONES
+    /**
+     * Play the DTMF digit being transmitted on the speaker, so that the
+     * operator hears what is going on air, and stop the sidetone once the
+     * digit is released or transmission ends.
+     *
+     * @param code: DTMF digit being transmitted, or DTMF_CODE_NONE.
+     */
+    void updateDtmfSidetone(const uint8_t code);
+
+    uint8_t dtmfSidetone;     ///< DTMF digit currently played as sidetone.
+    pathId  dtmfAudioPath;    ///< Audio path ID for the DTMF sidetone.
+    #endif
 };
 
 #endif /* OPMODE_FM_H */
