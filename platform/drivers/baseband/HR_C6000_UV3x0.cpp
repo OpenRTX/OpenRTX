@@ -179,7 +179,11 @@ void HR_Cx000< M >::startAnalogTx(const TxAudioSource source, const FmConfig cfg
      * "Linein1" input, while signal coming from the tone generator is connected
      *  to "Mic_p".
      */
-    uint8_t audioCfg = 0x81;
+    // LineOut2 is kept enabled, as fmMode() and stopAnalogTx() do: dropping it
+    // for the duration of the transmission silences everything the codec plays,
+    // including the DAC. Nothing is audible during TX anyway unless an audio
+    // path to the speaker is open, so leaving it on changes nothing by itself.
+    uint8_t audioCfg = 0x89;
     if(source == TxAudioSource::MIC)     audioCfg |= 0x40;
     if(source == TxAudioSource::LINE_IN) audioCfg |= 0x02;
 
