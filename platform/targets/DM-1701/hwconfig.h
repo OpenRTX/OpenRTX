@@ -47,6 +47,9 @@ extern const struct Adc adc1;
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Device supports in-band FM tones (DTMF and tone burst) via the HR_C6000 */
+#define CONFIG_FM_INBAND_TONES
+
 /* Microphone audio input */
 #define CONFIG_MIC_GAIN 32
 #define CONFIG_MIC_OVERSAMPLE 8
