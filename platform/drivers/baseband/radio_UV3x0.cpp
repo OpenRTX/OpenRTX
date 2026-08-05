@@ -247,7 +247,10 @@ void radio_enableTx()
 
     if (config->toneEn)
     {
-        at1846s.enableTone(17500);
+        // The HR_C6000 is the FM modulator on this radio, so the tone burst has
+        // to be generated there: switching the AT1846S modulation source to its
+        // own tone generator mutes the microphone but produces no deviation.
+        C6000.sendTone(1750, 0x1E);
     }
 
 #ifdef CONFIG_FM_INBAND_TONES
