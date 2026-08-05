@@ -59,24 +59,22 @@ void HR_C6000::sendTone(const uint32_t freq, const uint8_t deviation)
 {
     uint32_t tone = (freq * 65536) / 32000;
 
-    // Set  DTMF tone osc 1 to frequency of the required tone
-    writeReg16(C6000_SpiOpModes::CONFIG, 0x11A, (tone & 0xFF));
-    writeReg16(C6000_SpiOpModes::CONFIG, 0x11B, (tone >> 8) & 0xFF);
+    // A single tone is produced by retuning both of the oscillators that DTMF
+    // digit '1' mixes (697 Hz and 1209 Hz) to the requested frequency and then
+    // keying that digit: the two oscillators beat at the same frequency, so
+    // only one tone reaches the modulator. The oscillator slots live in the
+    // auxiliary register bank, see initDtmf().
+    writeReg16(C6000_SpiOpModes::AUX, 0x11B, (tone >> 8) & 0xFF);
+    writeReg16(C6000_SpiOpModes::AUX, 0x11A, (tone & 0xFF));
+    writeReg16(C6000_SpiOpModes::AUX, 0x123, (tone >> 8) & 0xFF);
+    writeReg16(C6000_SpiOpModes::AUX, 0x122, (tone & 0xFF));
 
-    // Set  DTMF tone osc 2 to frequency of the required tone
-    writeReg16(C6000_SpiOpModes::CONFIG, 0x122, (tone & 0xFF));
-    writeReg16(C6000_SpiOpModes::CONFIG, 0x123, (tone >> 8) & 0xFF);
+    // The 697 Hz and 1209 Hz slots are left detuned, so the tone table has to
+    // be programmed again before the next DTMF digit. sendDtmfKey() picks this
+    // up on its own.
+    dtmfTableValid = false;
 
-    writeCfgRegister(0xA1, 0x02);         // Enable DTMF
-    writeCfgRegister(0xA0, deviation);    // Set DTMF tone deviation
-    writeCfgRegister(0xA4, 0xFF);         // Set the tone time to maximum
-    writeCfgRegister(0xA3, 0x00);         // Set the tone gap to zero
-    writeCfgRegister(0xD1, 0x06);         // Set the number of codes to six
-    writeCfgRegister(0xAF, 0x11);         // Set the same code to be sent six times (2 codes per register)
-    writeCfgRegister(0xAE, 0x11);
-    writeCfgRegister(0xAD, 0x11);
-    writeCfgRegister(0x60, 0x00);         // Disable FM transmission
-    writeCfgRegister(0x60, 0x80);         // Enable FM transmission, start sending the tone
+    sendDtmf(0x01, deviation);
 }
 
 void HR_C6000::initDtmf()
