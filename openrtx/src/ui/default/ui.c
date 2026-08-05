@@ -1470,8 +1470,24 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif // PLA%FORM_TTWRPLUS
 
-        if(state.tone_enabled && !(msg.keys & KEY_HASH))
+        // Hot-keypad repeater tone burst: while transmitting in FM, holding F1
+        // keys the 1750Hz tone (muting the mic); releasing it restores the mic.
+        // The event is consumed so that F1 does not also trigger its usual
+        // voice announcement, which has no place mid-transmission anyway.
+        if(txOngoing && (state.channel.mode == OPMODE_FM))
         {
+            bool toneKey = (msg.keys & KEY_F1) != 0;
+            if(toneKey != state.tone_enabled)
+            {
+                state.tone_enabled = toneKey;
+                *sync_rtx = true;
+            }
+            if(toneKey)
+                return;
+        }
+        else if(state.tone_enabled)
+        {
+            // Left FM or stopped transmitting with the tone still keyed.
             state.tone_enabled = false;
             *sync_rtx = true;
         }
@@ -1518,9 +1534,9 @@ void ui_updateFSM(bool *sync_rtx)
                 }
 
                 // Break out of the FSM if the keypad is locked but allow the
-                // use of the hash key in FM mode for the 1750Hz tone.
+                // use of the F1 key in FM mode for the 1750Hz tone.
                 bool skipLock =  (state.channel.mode == OPMODE_FM)
-                              && (msg.keys == KEY_HASH);
+                              && (msg.keys == KEY_F1);
 
                 if ((ui_state.input_locked == true) && (skipLock == false))
                     break;
@@ -1601,15 +1617,7 @@ void ui_updateFSM(bool *sync_rtx)
                             vp_announceM17Info(NULL,  ui_state.edit_mode,
                                                queueFlags);
                         }
-                        else
                         #endif
-                        {
-                            if(!state.tone_enabled)
-                            {
-                                state.tone_enabled = true;
-                                *sync_rtx = true;
-                            }
-                        }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
@@ -1795,14 +1803,6 @@ void ui_updateFSM(bool *sync_rtx)
                             // Reset text input variables
                             _ui_textInputReset(ui_state.new_callsign,
                                     sizeof(ui_state.new_callsign));
-                        }
-                        else
-                        {
-                            if(!state.tone_enabled)
-                            {
-                                state.tone_enabled = true;
-                                *sync_rtx = true;
-                            }
                         }
                     }
                     else if(msg.keys & KEY_F1)
