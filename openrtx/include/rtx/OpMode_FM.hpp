@@ -86,16 +86,19 @@ private:
 
     #ifdef CONFIG_FM_INBAND_TONES
     /**
-     * Play the DTMF digit being transmitted on the speaker, so that the
-     * operator hears what is going on air, and stop the sidetone once the
-     * digit is released or transmission ends.
+     * Play whatever tone is being transmitted on the speaker, so that the
+     * operator hears what is going on air, and stop it once the key is
+     * released or transmission ends. Neither the DTMF digits nor the tone
+     * burst are otherwise audible locally: both are generated inside the
+     * HR_C6000 and reach the modulator only.
      *
-     * @param code: DTMF digit being transmitted, or DTMF_CODE_NONE.
+     * @param dtmfCode: DTMF digit being transmitted, or DTMF_CODE_NONE.
+     * @param toneBurst: true while the repeater tone burst is transmitted.
      */
-    void updateDtmfSidetone(const uint8_t code);
+    void updateTxSidetone(const uint8_t dtmfCode, const bool toneBurst);
 
-    uint8_t dtmfSidetone;     ///< DTMF digit currently played as sidetone.
-    pathId  dtmfAudioPath;    ///< Audio path ID for the DTMF sidetone.
+    uint8_t txSidetone;        ///< Tone currently played as sidetone.
+    pathId  sidetoneAudioPath; ///< Audio path ID for the sidetone.
     #endif
 };
 

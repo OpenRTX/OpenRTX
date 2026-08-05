@@ -38,6 +38,19 @@ static const uint16_t dtmfTonePairs[12][2] =
     {941, 1209},    // *
     {941, 1477}     // #
 };
+
+/**
+ * \internal
+ * Sidetone identifier for the repeater tone burst, taking the first value past
+ * the DTMF keypad codes so that both share one "currently playing" state.
+ */
+static const uint8_t SIDETONE_TONE_BURST = 12;
+
+/**
+ * \internal
+ * Frequency of the repeater tone burst, in Hz.
+ */
+static const uint16_t TONE_BURST_FREQ = 1750;
 #endif
 
 /**
@@ -65,47 +78,62 @@ void _setVolume()
 
 OpMode_FM::OpMode_FM() : rfSqlOpen(false), sqlOpen(false), enterRx(true)
 #ifdef CONFIG_FM_INBAND_TONES
-                       , dtmfSidetone(DTMF_CODE_NONE), dtmfAudioPath(0)
+                       , txSidetone(DTMF_CODE_NONE), sidetoneAudioPath(0)
 #endif
 {
 }
 
 #ifdef CONFIG_FM_INBAND_TONES
-void OpMode_FM::updateDtmfSidetone(const uint8_t code)
+void OpMode_FM::updateTxSidetone(const uint8_t dtmfCode, const bool toneBurst)
 {
-    if(code == dtmfSidetone)
+    // A digit and the tone burst are on separate keys and can be held at once.
+    // The digit wins, matching the order the radio driver keys them in.
+    uint8_t wanted = DTMF_CODE_NONE;
+    if(dtmfCode < 12)
+        wanted = dtmfCode;
+    else if(toneBurst)
+        wanted = SIDETONE_TONE_BURST;
+
+    if(wanted == txSidetone)
         return;
 
     // Any change tears down the current sidetone first: this both stops a
-    // released digit and lets a new digit start from a clean state when the
+    // released key and lets a new digit start from a clean state when the
     // operator slides from one key to another without releasing.
-    if(dtmfSidetone != DTMF_CODE_NONE)
+    if(txSidetone != DTMF_CODE_NONE)
     {
         Cx000dac_stopBeep();
-        audioPath_release(dtmfAudioPath);
-        dtmfAudioPath = 0;
+        audioPath_release(sidetoneAudioPath);
+        sidetoneAudioPath = 0;
     }
 
-    dtmfSidetone = DTMF_CODE_NONE;
+    txSidetone = DTMF_CODE_NONE;
 
-    if(code >= 12)
+    if(wanted == DTMF_CODE_NONE)
         return;
 
     // The speaker is not connected to anything while transmitting, so the
     // path has to be opened explicitly. PRIO_BEEP keeps the sidetone from
     // stealing the speaker from voice prompts.
-    dtmfAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_BEEP);
-    if(dtmfAudioPath <= 0)
+    sidetoneAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_BEEP);
+    if(sidetoneAudioPath <= 0)
         return;
 
-    if(Cx000dac_startDualTone(dtmfTonePairs[code][0], dtmfTonePairs[code][1]) < 0)
+    int ret;
+    if(wanted == SIDETONE_TONE_BURST)
+        ret = Cx000dac_startBeep(TONE_BURST_FREQ);
+    else
+        ret = Cx000dac_startDualTone(dtmfTonePairs[wanted][0],
+                                     dtmfTonePairs[wanted][1]);
+
+    if(ret < 0)
     {
-        audioPath_release(dtmfAudioPath);
-        dtmfAudioPath = 0;
+        audioPath_release(sidetoneAudioPath);
+        sidetoneAudioPath = 0;
         return;
     }
 
-    dtmfSidetone = code;
+    txSidetone = wanted;
 }
 #endif
 
@@ -127,7 +155,7 @@ void OpMode_FM::disable()
     platform_ledOff(GREEN);
     platform_ledOff(RED);
     #ifdef CONFIG_FM_INBAND_TONES
-    updateDtmfSidetone(DTMF_CODE_NONE);
+    updateTxSidetone(DTMF_CODE_NONE, false);
     #endif
     audioPath_release(rxAudioPath);
     audioPath_release(txAudioPath);
@@ -199,16 +227,17 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     }
 
     #ifdef CONFIG_FM_INBAND_TONES
-    // Echo the digit being transmitted on the speaker. Only while actually
-    // transmitting: outside of TX no digit reaches the air.
-    updateDtmfSidetone((status->opStatus == TX) ? status->dtmf_code
-                                                : DTMF_CODE_NONE);
+    // Echo what is being transmitted on the speaker. Only while actually
+    // transmitting: outside of TX neither tone reaches the air.
+    bool txing = (status->opStatus == TX);
+    updateTxSidetone(txing ? status->dtmf_code : DTMF_CODE_NONE,
+                     txing && (status->toneEn != 0));
     #endif
 
     if(!platform_getPttStatus() && (status->opStatus == TX))
     {
         #ifdef CONFIG_FM_INBAND_TONES
-        updateDtmfSidetone(DTMF_CODE_NONE);
+        updateTxSidetone(DTMF_CODE_NONE, false);
         #endif
         audioPath_release(txAudioPath);
         radio_disableRtx();
