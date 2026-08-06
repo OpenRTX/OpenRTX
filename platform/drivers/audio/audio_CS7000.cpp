@@ -202,11 +202,15 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
                                   const enum AudioSink   p2Sink)
 
 {
-    if(p1Source == p2Source)
-        return false;
-
     if(p1Sink == p2Sink)
         return false;
+
+    // SOURCE_MCU is not one physical source: each sink is fed by its own
+    // device (the HR_C6000 DAC for the speaker, the STM32 DAC for the RTX
+    // stage), so two MCU paths towards different sinks can coexist. This is
+    // used to echo the transmitted in-band tones on the speaker.
+    if(p1Source == p2Source)
+        return (p1Source == SOURCE_MCU);
 
     return true;
 }
