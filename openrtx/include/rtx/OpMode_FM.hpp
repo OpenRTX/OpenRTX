@@ -8,6 +8,7 @@
 #define OPMODE_FM_H
 
 #include "core/audio_path.h"
+#include "core/audio_stream.h"
 #include "hwconfig.h"
 #include "OpMode.hpp"
 
@@ -86,19 +87,26 @@ private:
 
     #ifdef CONFIG_FM_INBAND_TONES
     /**
-     * Play whatever tone is being transmitted on the speaker, so that the
-     * operator hears what is going on air, and stop it once the key is
-     * released or transmission ends. Neither the DTMF digits nor the tone
-     * burst are otherwise audible locally: both are generated inside the
-     * HR_C6000 and reach the modulator only.
+     * Key or release the in-band tones: DTMF digits and the repeater tone
+     * burst. How the tone is produced depends on the platform: with
+     * CONFIG_FM_TONES_STREAM it is synthesized and streamed to the SINK_RTX
+     * device, whence it modulates the transmitter through the radio's line
+     * input and the hardware echoes it on the speaker as a sidetone.
+     * Otherwise the radio driver keys the tone with the baseband tone
+     * generator and this function only plays the matching sidetone on the
+     * speaker.
      *
      * @param dtmfCode: DTMF digit being transmitted, or DTMF_CODE_NONE.
      * @param toneBurst: true while the repeater tone burst is transmitted.
      */
-    void updateTxSidetone(const uint8_t dtmfCode, const bool toneBurst);
+    void updateTxTones(const uint8_t dtmfCode, const bool toneBurst);
 
-    uint8_t txSidetone;        ///< Tone currently played as sidetone.
-    pathId  sidetoneAudioPath; ///< Audio path ID for the sidetone.
+    uint8_t  txTone;            ///< Tone currently keyed.
+    pathId   sidetoneAudioPath; ///< Audio path ID powering the speaker.
+    #ifdef CONFIG_FM_TONES_STREAM
+    pathId   toneRtxPath;       ///< Audio path ID for the tone stream.
+    streamId toneStream;        ///< Stream ID of the ongoing tone.
+    #endif
     #endif
 };
 
