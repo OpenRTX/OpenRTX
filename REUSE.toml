@@ -21,7 +21,6 @@ precedence = "override"
 # This section is for OpenRTX sources that cannot have comments in them, like `json` files
 [[annotations]]
 path = [
-    "requirements.txt",
     "meta/**/*",
     ".vscode/**/*",
     "voiceprompts.vpc",
@@ -41,6 +40,8 @@ path = [
     "subprojects/XPowersLib.wrap",
     "scripts/uf2families.json",
     "scripts/generate_symbols.py",
+    ".python-version",
+    "uv.lock",
 ]
 SPDX-License-Identifier = "GPL-3.0-or-later"
 SPDX-FileCopyrightText = "OpenRTX Contributors"

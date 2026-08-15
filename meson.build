@@ -1007,6 +1007,10 @@ targets = [
   },
 ]
 
+# Python helper scripts are run through `uv run` so they execute inside the
+# uv-managed environment (where their dependencies, e.g. intelhex/cairosvg,
+# live) rather than the system interpreter.
+uv          = find_program('uv')
 radio_tool  = find_program('radio_tool')
 bin2sgl     = find_program('scripts/bin2sgl.py',               required:false, disabler:true)
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
@@ -1058,7 +1062,7 @@ foreach t : targets
       uf2 = custom_target(name+'_uf2',
                           input   : bin,
                           output  : name+'.uf2',
-                          command : [uf2conv,
+                          command : [uv, 'run', uf2conv.full_path(),
                                     'zephyr/zephyr.bin',
                                     '-c',
                                     '-f', 'ESP32S3',
@@ -1068,7 +1072,7 @@ foreach t : targets
       custom_target(name+'_flash',
                     input   : uf2,
                     output  : name+'_flash',
-                    command : [uf2conv, '-D', '@INPUT@'])
+                    command : [uv, 'run', uf2conv.full_path(), '-D', '@INPUT@'])
 
   else
 
@@ -1093,7 +1097,7 @@ foreach t : targets
         wrap = custom_target(name+'_wrap',
                               output  : name+'_bin.sgl',
                               input   : bin,
-                              command : [bin2sgl,
+                              command : [uv, 'run', bin2sgl.full_path(),
                                         '--in', '@INPUT@',
                                         '--out', '@OUTPUT@',
                                         '--mode', t['wrap']])
@@ -1101,7 +1105,7 @@ foreach t : targets
         custom_target(name+'_flash',
                       input   : wrap,
                       output  : name+'_flash',
-                      command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']])
+                      command : [uv, 'run', gd77_loader.full_path(), '-f', '@INPUT@', '-m', t['wrap']])
 
       # Module17 uses dfu-tool for flashing
       elif name == 'openrtx_mod17'
@@ -1120,12 +1124,12 @@ foreach t : targets
         custom_target(name+'_dfu',
                       output  : name+'_dfu',
                       input   : bin,
-                      command : [dfu_convert, '-b', t['load_addr']+':@INPUT@', '@OUTPUT@'])
+                      command : [uv, 'run', dfu_convert.full_path(), '-b', t['load_addr']+':@INPUT@', '@OUTPUT@'])
 
         custom_target(name+'_wrap',
                       output  : name+'_wrap',
                       input   : bin,
-                      command : [cs7000_wrap, '@INPUT@', '@OUTPUT@'])
+                      command : [uv, 'run', cs7000_wrap.full_path(), '@INPUT@', '@OUTPUT@'])
 
         custom_target(name+'_flash',
                       input   : bin,
