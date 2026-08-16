@@ -69,7 +69,6 @@ const stringsTable_t spanishStrings =
     .gpsSettings       = "Ajustes de GPS",
     .m17settings       = "Ajustes de M17",
     .callsign          = "Licencia",
-    .metaText          = "Meta Txt",
     .resetToDefaults   = "Reseatear a fábrica",
     .toReset           = "Para resetear:",
     .pressEnterTwice   = "Apretar Enter 2 veces",
@@ -95,5 +94,6 @@ const stringsTable_t spanishStrings =
     .radio             = "Radio",
     .CAN               = "CAN",
     .canRxCheck        = "CAN RX Check",
+    .metaText          = "Meta Txt",
 };
 #endif  // SPANISHSTRINGS_H
