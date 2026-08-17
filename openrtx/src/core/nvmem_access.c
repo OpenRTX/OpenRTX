@@ -37,6 +37,14 @@ int nvm_getPart(const uint32_t idx, const uint32_t part,
     return 0;
 }
 
+const struct nvmInfo *nvm_getDevInfo(const uint32_t index)
+{
+    if (index >= nvmTab.nbAreas)
+        return NULL;
+
+    return nvmTab.areas[index].dev->info;
+}
+
 int nvm_read(const uint32_t idx, const uint32_t part, uint32_t offset,
              void *data, size_t len)
 {

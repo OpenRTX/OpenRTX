@@ -38,6 +38,15 @@ int nvm_getPart(const uint32_t idx, const uint32_t part,
                 struct nvmPartition *pInfo);
 
 /**
+ * Obtain the information of the device managing a nonvolatile memory area.
+ *
+ * @param index: index of the nonvolatile memory area.
+ * @return a pointer to the device info or NULL if the indexed memory area
+ * does not exist.
+ */
+const struct nvmInfo *nvm_getDevInfo(const uint32_t index);
+
+/**
  * Perform a byte-aligned read operation on a nonvolatile memory.
  * This function allows to read data from an NVM device starting at a given
  * offset from the beginning of the device.
