@@ -89,6 +89,15 @@ int nvm_write(const uint32_t idx, const uint32_t part, uint32_t offset,
 int nvm_erase(const uint32_t idx, const uint32_t part, uint32_t offset,
               size_t size);
 
+/**
+ * Erase a nonvolatile memory partition.
+ *
+ * @param idx: index of the nonvolatile memory area.
+ * @param part: partition number.
+ * @return zero on success, a negative error code otherwise.
+ */
+int nvm_erasePartition(const uint32_t idx, const uint32_t part);
+
 #ifdef __cplusplus
 }
 #endif
