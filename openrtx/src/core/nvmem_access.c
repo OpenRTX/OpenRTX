@@ -107,3 +107,18 @@ int nvm_erase(const uint32_t idx, const uint32_t part, uint32_t offset,
 
     return nvm_devErase(nvm->dev, nvm->baseAddr + offset, size);
 }
+
+int nvm_erasePartition(const uint32_t idx, const uint32_t part)
+{
+    const struct nvmDescriptor *nvm;
+    struct nvmPartition np;
+    int ret;
+
+    ret = nvm_getPart(idx, part, &np);
+    if (ret < 0)
+        return ret;
+
+    nvm = &nvmTab.areas[idx];
+
+    return nvm_devErase(nvm->dev, nvm->baseAddr + np.offset, np.size);
+}
