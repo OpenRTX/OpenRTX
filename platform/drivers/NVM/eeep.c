@@ -18,6 +18,7 @@
 #define EEEP_PAGE_ACTIVE      (0x000000FF)
 #define EEEP_PAGE_INACTIVE    (0x00000000)
 #define EEEP_PAGE_HDR_SIZE    sizeof(uint32_t)
+#define EEEP_MAX_ENTRIES      (8)
 
 enum RecordStatus
 {
@@ -136,7 +137,7 @@ static int swapBlock(struct eeepData *priv)
 
     // Search for all the active entries
     // TODO: use dynamic memory allocation
-    struct eeepEntry entryList[8] = {0};
+    struct eeepEntry entryList[EEEP_MAX_ENTRIES] = {0};
     uint32_t address = priv->readAddr;
     uint8_t numEntries = 0;
 
@@ -164,6 +165,9 @@ static int swapBlock(struct eeepData *priv)
             // Record not found, append it to the list
             if(pos == numEntries)
             {
+                if(numEntries >= EEEP_MAX_ENTRIES)
+                    return -ENOSPC;
+
                 entryList[pos].virtAddr = rec.virtAddr;
                 entryList[pos].physAddr = address;
                 numEntries += 1;
