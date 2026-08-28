@@ -143,7 +143,7 @@ ssize_t xmodem_sendData(size_t size, int (*callback)(uint8_t *, size_t))
             padSize = 1024 - blockSize;
         }
 
-        uint8_t *ptr = dataBuf + padSize + 1;
+        uint8_t *ptr = dataBuf + blockSize;
         memset(ptr, 0x1A, padSize);
 
         // Send packet and wait for ACK, resend on NACK.
