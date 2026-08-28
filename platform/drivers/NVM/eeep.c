@@ -242,7 +242,7 @@ static int eeep_read(const struct nvmDevice *dev, uint32_t offset, void *data,
         len = rec.size;
 
     memAddr += sizeof(struct eeepRecord);
-    ret = nvm_devRead(priv->nvm, memAddr, data, rec.size);
+    ret = nvm_devRead(priv->nvm, memAddr, data, len);
 
     return ret;
 }
