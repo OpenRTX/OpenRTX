@@ -1470,11 +1470,55 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif // PLA%FORM_TTWRPLUS
 
-        if(state.tone_enabled && !(msg.keys & KEY_HASH))
+        // Hot-keypad repeater tone burst: while transmitting in FM, holding F1
+        // keys the 1750Hz tone (muting the mic); releasing it restores the mic.
+        // The event is consumed so that F1 does not also trigger its usual
+        // voice announcement, which has no place mid-transmission anyway.
+        if(txOngoing && (state.channel.mode == OPMODE_FM))
         {
+            bool toneKey = (msg.keys & KEY_F1) != 0;
+            if(toneKey != state.tone_enabled)
+            {
+                state.tone_enabled = toneKey;
+                *sync_rtx = true;
+            }
+            if(toneKey)
+                return;
+        }
+        else if(state.tone_enabled)
+        {
+            // Left FM or stopped transmitting with the tone still keyed.
             state.tone_enabled = false;
             *sync_rtx = true;
         }
+
+#ifdef CONFIG_FM_INBAND_TONES
+        // Hot-keypad FM DTMF: while transmitting in FM, holding a digit / * / #
+        // key generates the matching DTMF tone (muting the mic); releasing it
+        // restores the mic. The tone itself is driven by the FM opMode. While a
+        // digit is keyed the keypad is dedicated to DTMF, so the event is
+        // consumed here and does not also drive VFO/memory input.
+        if(txOngoing && (state.channel.mode == OPMODE_FM))
+        {
+            uint16_t dtmfKeys = msg.keys & KBD_CHAR_MASK;
+            uint8_t  prev     = state.dtmf_code;
+            uint8_t  dtmf     = dtmfKeys ? __builtin_ctz(dtmfKeys)
+                                         : DTMF_CODE_NONE;
+            if(dtmf != prev)
+            {
+                state.dtmf_code = dtmf;
+                *sync_rtx = true;
+            }
+            if((dtmf != DTMF_CODE_NONE) || (prev != DTMF_CODE_NONE))
+                return;
+        }
+        else if(state.dtmf_code != DTMF_CODE_NONE)
+        {
+            // Left FM or stopped transmitting with a digit still marked pressed.
+            state.dtmf_code = DTMF_CODE_NONE;
+            *sync_rtx = true;
+        }
+#endif // CONFIG_FM_INBAND_TONES
 
         int priorUIScreen = state.ui_screen;
         switch(state.ui_screen)
@@ -1490,9 +1534,9 @@ void ui_updateFSM(bool *sync_rtx)
                 }
 
                 // Break out of the FSM if the keypad is locked but allow the
-                // use of the hash key in FM mode for the 1750Hz tone.
+                // use of the F1 key in FM mode for the 1750Hz tone.
                 bool skipLock =  (state.channel.mode == OPMODE_FM)
-                              && (msg.keys == KEY_HASH);
+                              && (msg.keys == KEY_F1);
 
                 if ((ui_state.input_locked == true) && (skipLock == false))
                     break;
@@ -1573,15 +1617,7 @@ void ui_updateFSM(bool *sync_rtx)
                             vp_announceM17Info(NULL,  ui_state.edit_mode,
                                                queueFlags);
                         }
-                        else
                         #endif
-                        {
-                            if(!state.tone_enabled)
-                            {
-                                state.tone_enabled = true;
-                                *sync_rtx = true;
-                            }
-                        }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)
                     {
@@ -1767,14 +1803,6 @@ void ui_updateFSM(bool *sync_rtx)
                             // Reset text input variables
                             _ui_textInputReset(ui_state.new_callsign,
                                     sizeof(ui_state.new_callsign));
-                        }
-                        else
-                        {
-                            if(!state.tone_enabled)
-                            {
-                                state.tone_enabled = true;
-                                *sync_rtx = true;
-                            }
                         }
                     }
                     else if(msg.keys & KEY_F1)

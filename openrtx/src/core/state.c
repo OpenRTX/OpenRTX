@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "core/event.h"
 #include "core/state.h"
+#include "rtx/rtx.h"
 #include "core/battery.h"
 #include "hwconfig.h"
 #include "interfaces/platform.h"
@@ -61,6 +62,7 @@ void state_init()
     state.rtxStatus = RTX_OFF;
     state.emergency = false;
     state.txDisable = false;
+    state.dtmf_code = DTMF_CODE_NONE;
     state.step_index = 4; // Default frequency step 12.5kHz
 
     // Force brightness field to be in range 0 - 100

@@ -58,6 +58,13 @@ extern const struct gpsDevice gps;
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Device supports in-band FM tones (DTMF and tone burst). On this radio they
+ * are synthesized by the MCU and streamed to the SINK_RTX device, feeding the
+ * baseband line input: the HR_C6000 internal generator cannot be used, its
+ * DAC playback never reaches the line output while transmitting. */
+#define CONFIG_FM_INBAND_TONES
+#define CONFIG_FM_TONES_STREAM
+
 /* Device has a GPS chip */
 #define CONFIG_GPS
 #define CONFIG_GPS_STM32_USART6

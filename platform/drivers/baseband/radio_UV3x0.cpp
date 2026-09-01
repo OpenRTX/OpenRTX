@@ -216,7 +216,14 @@ void radio_enableTx()
     // beginning of each transmission. This problem is particularly evident in
     // M17 mode because it causes the truncation of the preamble sequence.
     //
-    sleepFor(0, 50);
+    // Skipped when this is a mid-transmission re-key (DTMF digit or tone
+    // burst changes): the gap only exists at TX start, and the delay holds
+    // up the rtx thread with the microphone already restored while the
+    // sidetone is still sounding, long enough for the mic to pick it up and
+    // send a short ghost digit on air.
+    //
+    if(radioStatus != TX)
+        sleepFor(0, 50);
 
     at1846s.setFuncMode(AT1846S_FuncMode::TX);
 
@@ -240,8 +247,23 @@ void radio_enableTx()
 
     if (config->toneEn)
     {
-        at1846s.enableTone(17500);
+        // The HR_C6000 is the FM modulator on this radio, so the tone burst has
+        // to be generated there: switching the AT1846S modulation source to its
+        // own tone generator mutes the microphone but produces no deviation.
+        C6000.sendTone(1750, 0x1E);
     }
+
+#ifdef CONFIG_FM_INBAND_TONES
+    // Transmit the currently-pressed DTMF digit through the HR_C6000, which is
+    // the FM modulator on this radio. This replaces the mic audio with the
+    // tone; releasing the key (dtmf_code == DTMF_CODE_NONE) re-runs this path
+    // without the tone, so startAnalogTx() above restores the mic.
+    if(config->opMode == OPMODE_FM)
+    {
+        C6000.sendDtmfKey(config->dtmf_code, config->txFrequency,
+                          config->bandwidth == BW_12_5);
+    }
+#endif // CONFIG_FM_INBAND_TONES
 
     radioStatus = TX;
 }

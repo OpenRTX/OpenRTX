@@ -16,6 +16,12 @@
 extern "C" {
 #endif
 
+/**
+ * Sentinel for rtxStatus_t::dtmf_code / state_t::dtmf_code meaning "no DTMF
+ * digit is currently pressed".
+ */
+#define DTMF_CODE_NONE 0xFF
+
 typedef struct
 {
     uint8_t opMode;         /**< Operating mode (FM, DMR, ...) */
@@ -39,6 +45,8 @@ typedef struct
              txTone   : 15; /**< TX CTC/DCS tone               */
 
     bool     toneEn;
+
+    uint8_t  dtmf_code;     /**< FM DTMF digit to transmit, or DTMF_CODE_NONE */
 
     uint8_t  can      : 4,  /**< M17 Channel Access Number     */
              canRxEn  : 1,  /**< M17 Check CAN on RX           */

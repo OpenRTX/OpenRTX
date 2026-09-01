@@ -329,14 +329,26 @@ void radio_enableTx()
             // a new transmission.
             if(config->txToneEn)
                 C6000.setTxCtcss(config->txTone, 0x20);
-            else if(config->toneEn)
-                C6000.sendTone(1750, 0x1E);
             else
                 C6000.disableTones();
 
             FmConfig cfg = (config->bandwidth == BW_12_5) ? FmConfig::BW_12p5kHz
                                                           : FmConfig::BW_25kHz;
-            C6000.startAnalogTx(TxAudioSource::MIC, cfg | FmConfig::PREEMPH_EN);
+            TxAudioSource source = TxAudioSource::MIC;
+
+            #ifdef CONFIG_FM_INBAND_TONES
+            // While a DTMF digit or the tone burst is keyed, the modulation
+            // source is a tone streamed to the SINK_RTX device, entering the
+            // baseband through the line input. Pre-emphasis stays on, like
+            // for voice: the tones then leave with the same spectrum the
+            // HR_C6000 tone generator produces on the other radios, and come
+            // out flat after the receiver's de-emphasis.
+            if((config->toneEn == true) ||
+               (config->dtmf_code != DTMF_CODE_NONE))
+                source = TxAudioSource::LINE_IN;
+            #endif
+
+            C6000.startAnalogTx(source, cfg | FmConfig::PREEMPH_EN);
         }
             break;
 

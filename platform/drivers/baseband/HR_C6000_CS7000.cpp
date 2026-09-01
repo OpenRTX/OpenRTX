@@ -196,7 +196,10 @@ void HR_Cx000< M >::fmMode()
 template< class M >
 void HR_Cx000< M >::startAnalogTx(const TxAudioSource source, const FmConfig cfg)
 {
-    uint8_t audioCfg = 0x81;
+    // LineOut2 is kept enabled, as fmMode() and stopAnalogTx() do: dropping it
+    // for the duration of the transmission silences everything the codec plays,
+    // including the DAC that drives the speaker on this radio.
+    uint8_t audioCfg = 0x89;
     if(source == TxAudioSource::MIC)     audioCfg |= 0x02;
     if(source == TxAudioSource::LINE_IN) audioCfg |= 0x40;
 
