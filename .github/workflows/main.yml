@@ -8,9 +8,13 @@ env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
 
-# Cancel superseded runs of the same PR, keep all runs on branches
+# Cancel superseded runs of the same PR, keep all runs on branches. The event
+# name is part of the group key because a push to a same-repo pull request
+# branch starts both a push run and a pull_request run: in a shared group,
+# whichever queued first would be cancelled as superseded, and losing the
+# pull_request run means the PR build comment is never updated for that commit.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
