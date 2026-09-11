@@ -132,6 +132,7 @@ jobs:
             mv build_cm4/openrtx_gd77_bin.sgl openrtx_gd77_${{ env.BRANCH_NAME }}.sgl &&
             mv build_linux/openrtx_linux openrtx_linux_${{ env.BRANCH_NAME }} &&
             mv build_cm4/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
+            mv build_cm4/openrtx_md9600_wrap openrtx_md9600_${{ env.BRANCH_NAME }}.bin &&
             mv build_cm4/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
             mv build_cm4/openrtx_rt4d_bin openrtx_rt4d_${{ env.BRANCH_NAME }}.bin &&
             mv build_cm4/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
@@ -148,6 +149,8 @@ jobs:
             ${{github.workspace}}/openrtx_gd77_${{ env.BRANCH_NAME }}.sgl
             ${{github.workspace}}/openrtx_linux_${{ env.BRANCH_NAME }}
             ${{github.workspace}}/openrtx_md3x0_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_md9600_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_rt4d_${{ env.BRANCH_NAME }}.bin
           if-no-files-found: error
