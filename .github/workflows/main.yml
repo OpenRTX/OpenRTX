@@ -91,6 +91,13 @@ jobs:
           name: zephyr-release-bins
           path: |
             app/build/openrtx_*.uf2
+      - name: Upload T-TWR Plus firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-ttwrplus
+          path: |
+            app/build/openrtx_*.uf2
+          if-no-files-found: error
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
@@ -159,4 +166,71 @@ jobs:
             ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_rt4d_${{ env.BRANCH_NAME }}.bin
+          if-no-files-found: error
+      # One artifact per radio, so the pull request comment can offer a
+      # direct download per device. release-bins above is kept as-is for
+      # anyone with an existing link to the whole set.
+      - name: Upload MD-3x0 / MD-380 / MD-390 / RT3 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-md3x0
+          path: ${{github.workspace}}/openrtx_md3x0_${{ env.BRANCH_NAME }}.bin
+          if-no-files-found: error
+      - name: Upload MD-UV3x0 / RT3s firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-mduv3x0
+          path: ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
+          if-no-files-found: error
+      - name: Upload MD-9600 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-md9600
+          path: ${{github.workspace}}/openrtx_md9600_${{ env.BRANCH_NAME }}.bin
+          if-no-files-found: error
+      - name: Upload GD-77 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-gd77
+          path: ${{github.workspace}}/openrtx_gd77_${{ env.BRANCH_NAME }}.sgl
+          if-no-files-found: error
+      - name: Upload DM-1801 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-dm1801
+          path: ${{github.workspace}}/openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl
+          if-no-files-found: error
+      - name: Upload DM-1701 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-dm1701
+          path: ${{github.workspace}}/openrtx_dm1701_${{ env.BRANCH_NAME }}.bin
+          if-no-files-found: error
+      - name: Upload CS7000 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-cs7000
+          path: |
+            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu
+          if-no-files-found: error
+      - name: Upload CS7000-Plus firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-cs7000p
+          path: |
+            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin
+            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu
+          if-no-files-found: error
+      - name: Upload RT-4D firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-rt4d
+          path: ${{github.workspace}}/openrtx_rt4d_${{ env.BRANCH_NAME }}.bin
+          if-no-files-found: error
+      - name: Upload Module 17 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-mod17
+          path: ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
           if-no-files-found: error
