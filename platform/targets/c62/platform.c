@@ -16,6 +16,8 @@
 #include <zephyr/kernel.h>
 #include <interfaces/audio.h>
 #include "drivers/SPI/spi_zephyr.h"
+#include "controller.h"
+#include "dsp.h"
 
 static const hwInfo_t hwInfo = {
     .name = "c62",
@@ -30,8 +32,38 @@ static const hwInfo_t hwInfo = {
 
 // ADC
 #define ADC_RAW_CHARGING_THRESHOLD 2100
+#define BAT_DET_SETTLE_MS 10 // Measured: settles to 1 LSB in 5 ms
 static int32_t adc_vref = 0;
 static bool is_battery_charging = false;
+
+PINCTRL_DT_DEFINE(DT_NODELABEL(adc0));
+PINCTRL_DT_DEFINE(DT_CHOSEN(zephyr_console));
+
+/**
+ * Re-apply what the DSP firmware overwrites when it starts and sets up audio:
+ * the battery ADC pins, which also read the power knob, and the console pins
+ * and UART settings. Then wait for the battery reading to settle.
+ */
+static void restore_dsp_overwrites(void)
+{
+    const struct device *console = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+    struct uart_config config;
+
+    int adc = pinctrl_apply_state(PINCTRL_DT_DEV_CONFIG_GET(DT_NODELABEL(adc0)),
+                                  PINCTRL_STATE_DEFAULT);
+    int pins = pinctrl_apply_state(
+        PINCTRL_DT_DEV_CONFIG_GET(DT_CHOSEN(zephyr_console)),
+        PINCTRL_STATE_DEFAULT);
+    /* The driver keeps its configuration, which the DSP leaves alone */
+    int uart = uart_config_get(console, &config);
+    if (uart == 0)
+        uart = uart_configure(console, &config);
+    if ((adc != 0) || (pins != 0) || (uart != 0))
+        printk("Restore after DSP start failed: adc=%d pins=%d uart=%d\n", adc,
+               pins, uart);
+
+    sleepFor(0, BAT_DET_SETTLE_MS);
+}
 
 static int battery_init(void)
 {
@@ -39,16 +71,6 @@ static int battery_init(void)
         printk("ADC device not ready\n");
         return -1;
     }
-
-    /* Apply pin configuration for ADC pins
-       because it is overwritten by DSP firmware execution,
-       we need to re-apply it here */
-    struct adc_csk6_cfg {
-        uint8_t pin;
-        const struct pinctrl_dev_config *pcfg;
-    };
-    const struct adc_csk6_cfg *config = adc_dev->config;
-    pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
 
     // Configure ADC channel
     struct adc_channel_cfg channel_cfg = {
@@ -104,8 +126,22 @@ void platform_init_csk6()
     spiZephyr_init(c62_bk4819.spi);
     bk4819_init(&c62_bk4819);
 
-    /* Initialise audio */
-    audio_init();
+    /*
+     * Start the DSP only now, after the BK4819 microphone input has settled.
+     * It changes pins while it starts and sets up audio: restore them after
+     * audio_init(). Nothing reads the battery ADC before then.
+     */
+    int ret = lsf_dsp_init();
+    if (ret == 0)
+        ret = lsf_controller_init();
+
+    /* Initialise audio, which runs on the DSP */
+    if (ret == 0)
+        audio_init();
+
+    restore_dsp_overwrites();
+    if (ret != 0)
+        printk("DSP start failed, no audio: %d\n", ret);
 }
 
 void platform_terminate()
