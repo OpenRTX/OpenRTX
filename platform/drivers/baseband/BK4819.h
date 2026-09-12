@@ -4,21 +4,27 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef __BK4819_H__
-#define __BK4819_H__
+#ifndef BK4819_H
+#define BK4819_H
 
 #include <stdint.h>
-#include <zephyr/device.h>
-#include <zephyr/logging/log.h>
+#include <stdbool.h>
+#include "peripherals/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef BIT
+#define BIT(n) (1U << (n))
+#endif
+
+#ifndef BITV
+#define BITV(x, y) ((x) << (y))
+#endif
+
 #define BK4819_REG_READ 0x80
 #define BK4819_REG_WRITE 0x00
-
-#define BITV(x, y) ((x) << (y))
 
 #define BK4819_REG30_VCO_CALIBRATION BIT(15)
 #define BK4819_REG30_REVERSE1_ENABLE BIT(14)
@@ -147,191 +153,198 @@ typedef enum {
 } bk4819_reg_t;
 
 typedef enum {
-    BK4819_INT_FSKTF = BIT(15),   // FSK TX Finished Interrupt
-    BK4819_INT_FSKFFAE = BIT(14), // FSK FIFO Almost Empty interrupt
-    BK4819_INT_FSKRXF = BIT(13),  // FSK RX Finished interrupt
-    BK4819_INT_FSKFFAF = BIT(12), // FSK FIFO Almost Full interrupt
-    BK4819_INT_DTMFTF = BIT(11),  // DTMF/5 TONE Found interrupt
-    BK4819_INT_CTDSTF = BIT(10),  // CTCSS/CDCSS Tail Found interrupt
-    BK4819_INT_CDCSF = BIT(9),    // CDCSS Found interrupt
-    BK4819_INT_CDCSL = BIT(8),    // CDCSS Lost interrupt
-    BK4819_INT_CTSSF = BIT(7),    // CTCSS Found interrupt
-    BK4819_INT_CTCSL = BIT(6),    // CTCSS Lost interrupt
-    BK4819_INT_VOXF = BIT(5),     // VOX Found interrupt
-    BK4819_INT_VOXL = BIT(4),     // VOX Lost interrupt
-    BK4819_INT_SECF = BIT(3),     // Squelch Found interrupt
-    BK4819_INT_SECL = BIT(2),     // Squelch Lost interrupt
-    BK4819_INT_FSKRS = BIT(1)     // FSK RX Sync interrupt
+    BK4819_INT_FSKTF = BIT(15),
+    BK4819_INT_FSKFFAE = BIT(14),
+    BK4819_INT_FSKRXF = BIT(13),
+    BK4819_INT_FSKFFAF = BIT(12),
+    BK4819_INT_DTMFTF = BIT(11),
+    BK4819_INT_CTDSTF = BIT(10),
+    BK4819_INT_CDCSF = BIT(9),
+    BK4819_INT_CDCSL = BIT(8),
+    BK4819_INT_CTSSF = BIT(7),
+    BK4819_INT_CTCSL = BIT(6),
+    BK4819_INT_VOXF = BIT(5),
+    BK4819_INT_VOXL = BIT(4),
+    BK4819_INT_SECF = BIT(3),
+    BK4819_INT_SECL = BIT(2),
+    BK4819_INT_FSKRS = BIT(1)
 } bk4819_int_t;
 
 typedef enum {
-    BK4819_FLAG_DTMF_REV = BITV(0x8, 11), // DTMF/5 Tone code received
-    BK4819_FLAG_FSK_RX_SNF = BIT(7),      // FSK RX Sync Negative has been found
-    BK4819_FLAG_FSK_RX_SPF = BIT(6),      // FSK RX Sync Positive has been found
-    BK4819_FLAG_FSK_RX_CRC = BIT(4),      // FSK RX CRC indicator
-    BK4819_FLAG_CDCSS_PCR = BIT(14),      // CDCSS positive code received
-    BK4819_FLAG_CDCSS_PNR = BIT(15),      //  CDCSS negative code received
+    BK4819_FLAG_DTMF_REV = BITV(0x8, 11),
+    BK4819_FLAG_FSK_RX_SNF = BIT(7),
+    BK4819_FLAG_FSK_RX_SPF = BIT(6),
+    BK4819_FLAG_FSK_RX_CRC = BIT(4),
+    BK4819_FLAG_CDCSS_PCR = BIT(14),
+    BK4819_FLAG_CDCSS_PNR = BIT(15),
 } bk4819_flag_t;
 
-typedef enum { BK4819_RDATA_ } bk4819_rdata_t;
+/**
+ * BK4819 device data.
+ *
+ * The three pins implement the bit-banged serial interface towards the
+ * chip: clock, bidirectional data and chip select (active low).
+ */
+struct BK4819 {
+    struct gpioPin sck; ///< Serial clock
+    struct gpioPin sda; ///< Serial data, bidirectional
+    struct gpioPin scn; ///< Chip select, active low
+};
 
-// typedef enum
-// {
-//     bk4819_CTCSS_PHASE_120 = 0X01,
-//     bk4819_CTCSS_PHASE_180 = 0X02,
-//     bk4819_CTCSS_PHASE_240 = 0X03,
-// } bk4819_CTCSS_PHASE;
-
-// typedef enum
-// {
-//     bk4819_RX_ACG_GAIN_PAG =
-// } bk4819_RX_ACG_GAIN;
-
-uint16_t ReadRegister(unsigned char reg);
-void WriteRegister(bk4819_reg_t reg, uint16_t data);
+uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg);
+void BK4819_writeReg(const struct BK4819 *dev, bk4819_reg_t reg, uint16_t data);
 
 /**
  * @brief Get interrupt
  *
+ * @param dev: pointer to device data.
  * @param interrupt Interrupt type
  * @return uint8_t 0:SET 1:RESET
  */
-uint8_t bk4819_int_get(bk4819_int_t interrupt);
+uint8_t bk4819_int_get(const struct BK4819 *dev, bk4819_int_t interrupt);
 
 /**
  * @brief Enable interrupt
  *
+ * @param dev: pointer to device data.
  * @param interrupt
  */
-void bk4819_int_enable(bk4819_int_t interrupt);
+void bk4819_int_enable(const struct BK4819 *dev, bk4819_int_t interrupt);
 
 /**
  * @brief Disable interrupt
  *
+ * @param dev: pointer to device data.
  * @param interrupt
  */
-void bk4819_int_disable(bk4819_int_t interrupt);
+void bk4819_int_disable(const struct BK4819 *dev, bk4819_int_t interrupt);
 
-void bk4819_init(void);
+/**
+ * Initialise the BK4819 chip.
+ *
+ * @param dev: pointer to device data.
+ */
+void bk4819_init(const struct BK4819 *dev);
 
 /**
  * @brief Set frequency
  *
+ * @param dev: pointer to device data.
  * @param freq
  */
-void bk4819_set_freq(uint32_t frq);
-
-/**
- * @brief Set TX power
- *
- * @param power TX power in mW
- * @param freq Frequency
- * @param calData Calibration data
- */
-//void bk4819_setTxPower(uint32_t power, uint32_t freq, PowerCalibrationTables calData);
-
-/**
- * @brief Get band from frequency
- * 
- * @return uint32_t 
- */
-uint8_t getBandFromFreq(uint32_t freq);
+void bk4819_set_freq(const struct BK4819 *dev, uint32_t frq);
 
 /**
  * @brief Turn on RX
  *
+ * @param dev: pointer to device data.
  */
-void bk4819_rx_on(void);
+void bk4819_rx_on(const struct BK4819 *dev);
 
 /**
  * @brief Set modulation
  *
+ * @param dev: pointer to device data.
  * @param is_FM 0:AM 1:FM
  */
-void bk4819_set_modulation(bool is_FM);
+void bk4819_set_modulation(const struct BK4819 *dev, bool is_FM);
 
 /**
  * @brief Turn on TX
  *
+ * @param dev: pointer to device data.
  */
-void bk4819_tx_on(void);
+void bk4819_tx_on(const struct BK4819 *dev);
 
 /**
  * @brief Disable Rx and Tx
- * 
+ *
+ * @param dev: pointer to device data.
  */
-void bk4819_rtx_off(void);
+void bk4819_rtx_off(const struct BK4819 *dev);
 
 /**
  * @brief Disable all and enable CTCSS1
  *
+ * @param dev: pointer to device data.
  * @param frequency
  */
-void bk4819_enable_tx_ctcss(uint16_t frequency);
+void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency);
 
 /**
  * @brief Enable Rx CTCSS.
  *
+ * @param dev: pointer to device data.
  * @param frequency
  */
-void bk4819_enable_rx_ctcss(uint16_t frequency);
+void bk4819_enable_rx_ctcss(const struct BK4819 *dev, uint16_t frequency);
 
 /**
  * @brief Disable all and enable CTCSS2
  *
+ * @param dev: pointer to device data.
  * @param frequency
  */
-void bk4819_enable_ctcss2(uint16_t frequency);
+void bk4819_enable_ctcss2(const struct BK4819 *dev, uint16_t frequency);
 
 /**
  * @brief Disable all and enable CDCSS
  *
+ * @param dev: pointer to device data.
  * @param code_type 0:positive code   1:negative code
  * @param bit_sel 0: 23bit          1:24bit
  * @param cdcss_code cdcss code
  */
-void bk4819_enable_tx_cdcss(uint8_t code_type, uint8_t bit_sel,
-                            uint32_t cdcss_code);
+void bk4819_enable_tx_cdcss(const struct BK4819 *dev, uint8_t code_type,
+                            uint8_t bit_sel, uint32_t cdcss_code);
 
 /**
  * @brief Disable CTCSS/CDCSS
  *
+ * @param dev: pointer to device data.
  */
-void bk4819_disable_ctdcss(void);
+void bk4819_disable_ctdcss(const struct BK4819 *dev);
 
 /**
  * @brief Get CTCSS
  *
+ * @param dev: pointer to device data.
  * @return uint8_t
  */
-uint16_t bk4819_get_ctcss(void);
+uint16_t bk4819_get_ctcss(const struct BK4819 *dev);
 
 /**
  * @brief Set filter bandwidth (0:12.5KHz 1:25KHz)
+ *
+ * @param dev: pointer to device data.
  */
-void bk4819_SetFilterBandwidth(uint8_t bandwidth);
+void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth);
 
 /**
  * @brief Enable VOX
  *
+ * @param dev: pointer to device data.
  * @param delay_time VOX = 0 detection delay, ~ 128 ms
  * @param interval_time VOX detection interval time
  * @param threshold_on  Voice amplitude threshold for VOX on
  * @param threshold_off Voice amplitude threshold for VOX off
  */
-void bk4819_enable_vox(uint8_t delay_time, uint8_t interval_time,
-                       uint16_t threshold_on, uint16_t threshold_off);
+void bk4819_enable_vox(const struct BK4819 *dev, uint8_t delay_time,
+                       uint8_t interval_time, uint16_t threshold_on,
+                       uint16_t threshold_off);
 
 /**
  * @brief Get VOX indicator
- * 
- * @return uint8_t 
+ *
+ * @param dev: pointer to device data.
+ * @return uint8_t
  */
-uint8_t bk4819_get_vox(void);
+uint8_t bk4819_get_vox(const struct BK4819 *dev);
 
 /**
  * @brief Set squelch threshold
  *
+ * @param dev: pointer to device data.
  * @param RTSO RSSI threshold for Squelch=1, 0.5dB/step
  * @param RTSC RSSI threshold for Squelch =0, 0.5dB/step
  * @param ETSO Ex-noise threshold for Squelch =1
@@ -339,51 +352,92 @@ uint8_t bk4819_get_vox(void);
  * @param GTSO Glitch threshold for Squelch =1
  * @param GTSC Glitch threshold for Squelch =0
  */
-void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC,
-                        uint8_t GTSO, uint8_t GTSC);
+void bk4819_set_Squelch(const struct BK4819 *dev, uint8_t RTSO, uint8_t RTSC,
+                        uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
-void BK4819_SetAF(uint8_t AF);
+/**
+ * Set AF output mode.
+ *
+ * @param dev: pointer to device data.
+ * @param AF AF mode.
+ */
+void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF);
 
 /**
  * @brief Get RSSI value 0.5dB/step
  *
+ * @param dev: pointer to device data.
  * @return uint8_t
  */
-int16_t bk4819_get_rssi(void);
+int16_t bk4819_get_rssi(const struct BK4819 *dev);
+
+/**
+ * @brief Get microphone input level.
+ *
+ * @param dev: pointer to device data.
+ * @return microphone level.
+ */
+uint16_t bk4819_get_mic_level(const struct BK4819 *dev);
 
 /**
  * @brief Scna frequency
- * 
+ *
+ * @param dev: pointer to device data.
  * @param scna_time BK4819_SCAN_FRE_TIME_2  0.2s
-                    BK4819_SCAN_FRE_TIME_4  0.4s
-                    BK4819_SCAN_FRE_TIME_8  0.8s
-                    BK4819_SCAN_FRE_TIME_16 1.6s 
+ *                     BK4819_SCAN_FRE_TIME_4  0.4s
+ *                     BK4819_SCAN_FRE_TIME_8  0.8s
+ *                     BK4819_SCAN_FRE_TIME_16 1.6s
  */
-void bk4819_enable_freq_scan(uint8_t scna_time);
+void bk4819_enable_freq_scan(const struct BK4819 *dev, uint8_t scna_time);
 
 /**
- * @brief Disable scanning frequcny 
- * 
+ * @brief Disable scanning frequcny
+ *
+ * @param dev: pointer to device data.
  */
-void bk4819_disable_freq_scan(void);
+void bk4819_disable_freq_scan(const struct BK4819 *dev);
 
 /**
  * @brief Get scanning freqency flag
- * 
- * @return uint8_t 
+ *
+ * @param dev: pointer to device data.
+ * @return uint8_t
  */
-uint8_t bk4819_get_scan_freq_flag(void);
+uint8_t bk4819_get_scan_freq_flag(const struct BK4819 *dev);
 
 /**
  * @brief Get frequency
- * 
- * @return uint32_t 
+ *
+ * @param dev: pointer to device data.
+ * @return uint32_t
  */
-uint32_t bk4819_get_scan_freq(void);
+uint32_t bk4819_get_scan_freq(const struct BK4819 *dev);
 
-void bk4819_gpio_pin_set(uint8_t Pin, bool bSet);
+/**
+ * Toggle a BK4819 GPIO pin.
+ *
+ * @param dev: pointer to device data.
+ * @param Pin GPIO pin number.
+ * @param bSet true to set, false to clear.
+ */
+void bk4819_gpio_pin_set(const struct BK4819 *dev, uint8_t Pin, bool bSet);
 
-void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch);
+/**
+ * Start the beeper.
+ *
+ * @param dev: pointer to device data.
+ * @param Frequency beep frequency.
+ * @param bTuningGainSwitch tuning gain switch.
+ */
+void BK4819_BeepStart(const struct BK4819 *dev, uint16_t Frequency,
+                      bool bTuningGainSwitch);
+
+/**
+ * Stop the beeper.
+ *
+ * @param dev: pointer to device data.
+ */
+void BK4819_BeepStop(const struct BK4819 *dev);
 
 enum BK4819_GPIO_PIN_t {
     BK4819_GPIO0_PIN28_RX_ENABLE = 0,
@@ -702,8 +756,8 @@ enum {
     BK4819_REG_70_ENABLE_TONE2 = (1U << BK4819_REG_70_SHIFT_ENABLE_TONE2),
 };
 
-#endif
-
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* BK4819_H */

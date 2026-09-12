@@ -157,22 +157,6 @@
 			label = "Row 4";
 		};
 	};
-	
-    bk4819_radio: bk4819 {
-        compatible = "beken,bk4819";
-        status = "okay";
-        sclk-gpios = <&gpioa 13 GPIO_ACTIVE_HIGH>;
-        sdata-gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
-        scn-gpios = <&gpioa 8 GPIO_ACTIVE_LOW>;
-    };
-
-	bk1080_radio: bk1080 {
-        compatible = "beken,bk1080";
-        status = "okay";
-        i2c-clk-gpios = <&gpioa 5 GPIO_ACTIVE_HIGH>;
-        i2c-data-gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
-        power-gpios = <&gpiob 2 GPIO_ACTIVE_LOW>;
-    };
 };
 
 &gpioa {
