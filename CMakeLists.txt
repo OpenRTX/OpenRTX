@@ -26,6 +26,17 @@ if (${BOARD} STREQUAL "ttwrplus")
     set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/ESP32S3/zephyr.conf)
 endif()
 
+if (${BOARD} STREQUAL "c62")
+    set(ARCH arm)
+    set(Zephyr-sdk_DIR $ENV{ZEPHYR_16_SDK_INSTALL_DIR}/cmake/)
+    set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/CSK6011B/zephyr.conf)
+
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/freertos_shims)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/af)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/lsf)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/urpc)
+endif()
+
 #
 # Create the board_root folder and the proper folder tree for the targets
 #
