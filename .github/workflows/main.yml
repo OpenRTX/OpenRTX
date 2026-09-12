@@ -26,8 +26,14 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      # gcovr is a standalone CLI rather than an import dependency, so install
+      # it as a uv tool. `--color never` keeps ANSI codes out of the path.
       - name: Install Python tools
-        run: pip install "gcovr>=7.2"
+        run: |
+          uv tool install "gcovr>=7.2"
+          uv --color never tool dir --bin >> "$GITHUB_PATH"
       - name: setup meson
         run: |
           cd ${{github.workspace}}
