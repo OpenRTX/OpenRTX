@@ -1,0 +1,40 @@
+# Copyright (c) 2023 LISTENAI
+# SPDX-License-Identifier: Apache-2.0
+
+description: LSF VAD Service
+
+include: lsf-service.yaml
+
+compatible: "lsf,vad-service"
+
+properties:
+  channel:
+    type: int
+    description: |
+      Bitmap of audio input channel that will be used by VAD.
+    default: 0x3
+    enum:
+      - 0x1
+      - 0x3
+
+  amp-l:
+    type: int
+    description: |
+      The lower amplitude threshold.
+    default: 1638
+
+  amp-h:
+    type: int
+    description: |
+      The higher amplitude threshold.
+    default: 2949
+
+  minlen-trans-neg:
+    type: int
+    default: 3
+
+  minlen:
+    type: int
+    description: |
+      Duration of the minimum length of the voice activity, per 10ms.
+    default: 3

@@ -1,0 +1,42 @@
+# Copyright (c) 2023 LISTENAI
+# SPDX-License-Identifier: Apache-2.0
+
+menu "LSF Services"
+
+DT_COMPAT_LSF_AUDIO_SERVICE := lsf,audio-service
+
+config LSF_AUDIO_SERVICE
+	bool "LSF Audio Service"
+	default $(dt_compat_enabled,$(DT_COMPAT_LSF_AUDIO_SERVICE))
+
+DT_COMPAT_LSF_THINKER_SERVICE := lsf,thinker-service
+
+config LSF_THINKER_SERVICE
+	bool "LSF Thinker Service"
+	default $(dt_compat_enabled,$(DT_COMPAT_LSF_THINKER_SERVICE))
+
+DT_COMPAT_LSF_WASM_SERVICE := lsf,wasm-service
+
+config LSF_WASM_SERVICE
+	bool "LSF WASM Service"
+	default $(dt_compat_enabled,$(DT_COMPAT_LSF_WASM_SERVICE))
+
+if LSF_WASM_SERVICE
+
+DT_CHOSEN_LSF_DSP_WASM_APP := lsf,dsp-wasm-app
+
+config LSF_WASM_SERVICE_LOAD_APP_ON_BOOT
+	bool "Load WASM app on boot"
+	default y
+	depends on $(dt_chosen_enabled,$(DT_CHOSEN_LSF_DSP_WASM_APP))
+
+endif # LSF_WASM_SERVICE
+
+DT_COMPAT_LSF_VAD_SERVICE := lsf,vad-service
+
+config LSF_VAD_SERVICE
+	bool "LSF VAD Service"
+	default $(dt_compat_enabled,$(DT_COMPAT_LSF_VAD_SERVICE))
+	depends on LSF_AUDIO_SERVICE
+
+endmenu
