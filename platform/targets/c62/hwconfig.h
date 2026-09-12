@@ -41,6 +41,7 @@ extern const struct gpio_dt_spec button_ptt;
 extern const struct gpio_dt_spec led_white;
 extern const struct gpio_dt_spec led_green;
 extern const struct gpio_dt_spec led_keyboard;
+extern const struct pwm_dt_spec pwm_lcd_backlight;
 extern const struct device *adc_dev;
 
 #ifdef __cplusplus
