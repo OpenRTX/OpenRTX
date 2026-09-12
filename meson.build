@@ -866,6 +866,15 @@ ttwrplus_opts = {
   'link_args'          : [],
 }
 
+c62_opts = {
+  'sources'            : ['CMakeLists.txt'],
+  'include_directories': [],
+  'dependencies'       : [codec2_dep],
+  'c_args'             : [],
+  'cpp_args'           : [],
+  'link_args'          : [],
+}
+
 cs7000_opts = {
   'sources'            : cs7000_src,
   'include_directories': cs7000_inc,
@@ -982,6 +991,13 @@ targets = [
     'cpu'      : 'lx7'
   },
   {
+    'name'     : 'c62',
+    'opts'     : c62_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
     'name'     : 'cs7000',
     'opts'     : cs7000_opts,
     'flashable': true,
@@ -1070,6 +1086,19 @@ foreach t : targets
                     output  : name+'_flash',
                     command : [uf2conv, '-D', '@INPUT@'])
 
+  # C62 is a Zephyr target, we compile it using west and package it in uf2 format
+  elif name == 'openrtx_c62'
+      c62_modules = custom_target('c62_west_update',
+                                  output  : 'c62_west_update.stamp',
+                                  command : ['sh', '-c', 'west update --group-filter +c62 && touch @OUTPUT@'])
+
+      bin = custom_target(name,
+                          input   : [txt, c62_modules],
+                          output  : name+'_bin',
+                          command : [west,
+                                    'build',
+                                    '-b', 'c62',
+                                    '-d', '.', '..'])
   else
 
     target_opts = t['opts']
