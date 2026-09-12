@@ -47,6 +47,8 @@ extern "C" {
 extern const struct BK4819 c62_bk4819;
 extern const struct BK1080 c62_bk1080;
 
+extern const struct gpio_dt_spec speaker_enable;
+extern const struct gpio_dt_spec dtmf_enable;
 extern const struct gpio_dt_spec button_ptt;
 extern const struct gpio_dt_spec led_white;
 extern const struct gpio_dt_spec led_green;
