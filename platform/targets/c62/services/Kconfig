@@ -1,0 +1,12 @@
+# Copyright (c) 2023 LISTENAI
+# SPDX-License-Identifier: Apache-2.0
+
+menu "LSF Services"
+
+DT_COMPAT_LSF_AUDIO_SERVICE := lsf,audio-service
+
+config LSF_AUDIO_SERVICE
+	bool "LSF Audio Service"
+	default $(dt_compat_enabled,$(DT_COMPAT_LSF_AUDIO_SERVICE))
+
+endmenu
