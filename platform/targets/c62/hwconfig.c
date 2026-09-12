@@ -46,6 +46,10 @@ I2C_BITBANG_DEVICE_DEFINE(c62_bk1080_i2c, c62_bk1080_i2cCfg, NULL)
 const struct BK1080 c62_bk1080 = { .i2c = &c62_bk1080_i2c,
                                    .pwr = { &GpioB, 2 } };
 
+const struct gpio_dt_spec speaker_enable =
+    GPIO_DT_SPEC_GET(DT_PATH(gpio_controls, speaker_enable), gpios);
+const struct gpio_dt_spec dtmf_enable =
+    GPIO_DT_SPEC_GET(DT_PATH(gpio_controls, dtmf_enable), gpios);
 const struct gpio_dt_spec button_ptt =
     GPIO_DT_SPEC_GET_OR(DT_NODELABEL(button_ptt), gpios, { 0 });
 const struct gpio_dt_spec led_white = GPIO_DT_SPEC_GET(DT_ALIAS(ledwhite),
