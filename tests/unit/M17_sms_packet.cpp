@@ -161,67 +161,57 @@ TEST_CASE("SMS format: reference vector matches known-good frame",
 }
 
 // ===========================================================================
-// Parse tests (sms_parse_packet)
+// Text accessor tests (sms_packet_text)
 // ===========================================================================
 
-TEST_CASE("SMS parse: null data returns false", "[m17][smspacket]")
-{
-    char msg[32];
-    REQUIRE(sms_parse_packet(nullptr, 10, msg, sizeof(msg)) == false);
-}
-
-TEST_CASE("SMS parse: null message buffer returns false", "[m17][smspacket]")
-{
-    const uint8_t data[] = { 0x05, 'H', 'i', 0x00 };
-    REQUIRE(sms_parse_packet(data, sizeof(data), nullptr, 0) == false);
-}
-
-TEST_CASE("SMS parse: too short returns false", "[m17][smspacket]")
-{
-    const uint8_t data[] = { 0x05 };
-    char msg[32];
-    REQUIRE(sms_parse_packet(data, 1, msg, sizeof(msg)) == false);
-}
-
-TEST_CASE("SMS parse: wrong protocol ID returns false", "[m17][smspacket]")
-{
-    const uint8_t data[] = { 0x04, 'H', 'i', 0x00 };
-    char msg[32];
-    REQUIRE(sms_parse_packet(data, sizeof(data), msg, sizeof(msg)) == false);
-}
-
-TEST_CASE("SMS parse: extracts message text", "[m17][smspacket]")
-{
-    const uint8_t data[] = { 0x05, 'H', 'e', 'l', 'l', 'o', 0x00 };
-    char msg[32];
-    bool ok = sms_parse_packet(data, sizeof(data), msg, sizeof(msg));
-    REQUIRE(ok == true);
-    REQUIRE(strcmp(msg, "Hello") == 0);
-}
-
-TEST_CASE("SMS parse: works without trailing NUL in payload",
+TEST_CASE("SMS text: rejects null, short and foreign payloads",
           "[m17][smspacket]")
 {
-    const uint8_t data[] = { 0x05, 'H', 'i' };
-    char msg[32];
-    bool ok = sms_parse_packet(data, sizeof(data), msg, sizeof(msg));
-    REQUIRE(ok == true);
-    REQUIRE(strcmp(msg, "Hi") == 0);
+    const uint8_t data[] = { 0x05, 'H', 'i', 0x00 };
+    const uint8_t foreign[] = { 0x04, 'H', 'i', 0x00 };
+    size_t len = 0;
+
+    REQUIRE(sms_packet_text(nullptr, sizeof(data), &len) == nullptr);
+    REQUIRE(sms_packet_text(data, sizeof(data), nullptr) == nullptr);
+    REQUIRE(sms_packet_text(data, 1, &len) == nullptr);
+    REQUIRE(sms_packet_text(foreign, sizeof(foreign), &len) == nullptr);
 }
 
-TEST_CASE("SMS parse: truncates to msgSize - 1", "[m17][smspacket]")
+TEST_CASE("SMS text: points into the payload and strips the trailing NUL",
+          "[m17][smspacket]")
 {
-    const uint8_t data[] = { 0x05, 'A', 'B', 'C', 'D', 0x00 };
-    char msg[4]; // room for 3 chars + NUL
-    bool ok = sms_parse_packet(data, sizeof(data), msg, sizeof(msg));
-    REQUIRE(ok == true);
-    REQUIRE(msg[3] == '\0');
-    REQUIRE(strlen(msg) == 3);
+    const uint8_t data[] = { 0x05, 'H', 'e', 'l', 'l', 'o', 0x00 };
+    size_t len = 0;
+
+    const char *text = sms_packet_text(data, sizeof(data), &len);
+    REQUIRE(text == reinterpret_cast<const char *>(&data[1]));
+    REQUIRE(len == 5);
+    REQUIRE(memcmp(text, "Hello", 5) == 0);
 }
 
-// ---------- Round-trip: format then parse ----------
+TEST_CASE("SMS text: works without trailing NUL in payload", "[m17][smspacket]")
+{
+    const uint8_t data[] = { 0x05, 'H', 'i' };
+    size_t len = 0;
 
-TEST_CASE("SMS round-trip: format then parse recovers original message",
+    const char *text = sms_packet_text(data, sizeof(data), &len);
+    REQUIRE(text != nullptr);
+    REQUIRE(len == 2);
+}
+
+TEST_CASE("SMS text: an empty message yields zero length", "[m17][smspacket]")
+{
+    const uint8_t data[] = { 0x05, 0x00 };
+    size_t len = 99;
+
+    const char *text = sms_packet_text(data, sizeof(data), &len);
+    REQUIRE(text != nullptr);
+    REQUIRE(len == 0);
+}
+
+// ---------- Round-trip: format then read back ----------
+
+TEST_CASE("SMS round-trip: format then read back the original message",
           "[m17][smspacket]")
 {
     const char *original = "Hello, OpenRTX!";
@@ -232,16 +222,17 @@ TEST_CASE("SMS round-trip: format then parse recovers original message",
     size_t appLen = sms_format_packet(original, origLen, buf, sizeof(buf));
     REQUIRE(appLen == 1 + origLen + 1);
 
-    // Parse
-    char recovered[64];
-    bool ok = sms_parse_packet(buf, appLen, recovered, sizeof(recovered));
-    REQUIRE(ok == true);
-    REQUIRE(strcmp(recovered, original) == 0);
+    // Read back
+    size_t textLen = 0;
+    const char *text = sms_packet_text(buf, appLen, &textLen);
+    REQUIRE(text != nullptr);
+    REQUIRE(textLen == origLen);
+    REQUIRE(memcmp(text, original, origLen) == 0);
 }
 
 // ---------- Full pipeline: format -> frame -> deframe -> parse ----------
 
-TEST_CASE("SMS pipeline: format/frame/deframe/parse round-trip recovers message",
+TEST_CASE("SMS pipeline: format/frame/deframe round-trip recovers message",
           "[m17][smspacket]")
 {
     const char *original = "Testing 1 2 3";
@@ -269,10 +260,11 @@ TEST_CASE("SMS pipeline: format/frame/deframe/parse round-trip recovers message"
     }
     REQUIRE(result == DeframerResult::COMPLETE);
 
-    // Parse
-    char recovered[64];
-    bool ok = sms_parse_packet(deframer.data(), deframer.length(), recovered,
-                               sizeof(recovered));
-    REQUIRE(ok == true);
-    REQUIRE(strcmp(recovered, original) == 0);
+    // Read back
+    size_t textLen = 0;
+    const char *text = sms_packet_text(deframer.data(), deframer.length(),
+                                       &textLen);
+    REQUIRE(text != nullptr);
+    REQUIRE(textLen == origLen);
+    REQUIRE(memcmp(text, original, origLen) == 0);
 }

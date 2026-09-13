@@ -35,21 +35,20 @@ size_t sms_format_packet(const char *message, size_t msgLen, uint8_t *buffer,
                          size_t bufferSize);
 
 /**
- * Parse an SMS packet payload extracted by PacketDeframer.
+ * Locate the message text inside an SMS packet payload, without copying it.
  *
- * Checks that the first byte is the M17 SMS protocol ID (0x05) and copies
- * the NUL-terminated message text that follows into the caller-supplied
- * buffer.
+ * Checks that the first byte is the M17 SMS protocol ID (0x05) and returns a
+ * pointer to the text that follows, stripping the trailing NUL if present.
+ * The text is not NUL-terminated in place: use textLen.
  *
  * @param data:    Pointer to the reassembled M17 packet data (from
  *                 PacketDeframer::data()).
  * @param len:     Length of the data in bytes (from PacketDeframer::length()).
- * @param message: Buffer to receive the NUL-terminated message text.
- * @param msgSize: Size of the message buffer in bytes.
- * @return         true if data is a valid SMS packet and extraction succeeded.
+ * @param textLen: Receives the length of the message text in bytes.
+ * @return         Pointer to the message text inside data, or nullptr if data
+ *                 is not a valid SMS packet.
  */
-bool sms_parse_packet(const uint8_t *data, size_t len, char *message,
-                      size_t msgSize);
+const char *sms_packet_text(const uint8_t *data, size_t len, size_t *textLen);
 
 } // namespace M17
 

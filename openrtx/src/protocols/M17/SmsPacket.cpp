@@ -33,31 +33,25 @@ size_t sms_format_packet(const char *message, size_t msgLen, uint8_t *buffer,
     return appDataLen;
 }
 
-bool sms_parse_packet(const uint8_t *data, size_t len, char *message,
-                      size_t msgSize)
+const char *sms_packet_text(const uint8_t *data, size_t len, size_t *textLen)
 {
-    if (data == nullptr || len < 2 || message == nullptr || msgSize == 0)
-        return false;
+    if (data == nullptr || len < 2 || textLen == nullptr)
+        return nullptr;
 
     /* Check M17 SMS protocol ID byte */
     if (data[0] != 0x05)
-        return false;
+        return nullptr;
 
     /* Message text follows the protocol ID byte */
-    const char *src = reinterpret_cast<const char *>(&data[1]);
-    size_t srcLen = len - 1;
+    const char *text = reinterpret_cast<const char *>(&data[1]);
+    size_t length = len - 1;
 
     /* Strip trailing NUL if present */
-    if (srcLen > 0 && src[srcLen - 1] == '\0')
-        srcLen--;
+    if (length > 0 && text[length - 1] == '\0')
+        length--;
 
-    if (srcLen >= msgSize)
-        srcLen = msgSize - 1;
-
-    memcpy(message, src, srcLen);
-    message[srcLen] = '\0';
-
-    return true;
+    *textLen = length;
+    return text;
 }
 
 } // namespace M17
