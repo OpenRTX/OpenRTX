@@ -70,4 +70,10 @@ extern const struct gpsDevice gps;
 }
 #endif
 
+/* Message inbox and M17 SMS. */
+#define CONFIG_MESSAGES
+#define CONFIG_MESSAGES_MAX_ENTRIES 64
+#define CONFIG_MESSAGES_POOL_BYTES 6400
+#define CONFIG_M17_SMS
+
 #endif /* HWCONFIG_H */
