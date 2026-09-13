@@ -23,6 +23,7 @@
 #include "core/voicePrompts.h"
 #include "core/messages.h"
 #include "core/m17_sms.h"
+#include "core/beeps.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -76,7 +77,8 @@ void *ui_threadFunc(void *arg)
         vp_tick();                           // continue playing voice prompts in progress if any.
 
         #if defined(CONFIG_MESSAGES)
-        messages_task(state.channel.mode);
+        if(messages_task(state.channel.mode) > 0)
+            vp_beep(BEEP_NEW_MESSAGE, LONG_BEEP);
         #endif
 
         // If synchronization needed take mutex and update RTX configuration

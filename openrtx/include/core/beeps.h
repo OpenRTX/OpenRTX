@@ -21,6 +21,7 @@ extern "C" {
 #define BEEP_FUNCTION_LATCH_ON 800
 #define BEEP_FUNCTION_LATCH_OFF 400
 #define BEEP_KEY_GENERIC 750
+#define BEEP_NEW_MESSAGE 1200
 extern const uint16_t BOOT_MELODY[];
 
 #ifdef __cplusplus
