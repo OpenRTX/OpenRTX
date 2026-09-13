@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include "core/messages.h"
+#include "core/message_dispatcher.h"
 #include "core/utils.h"
 
 _Static_assert(CONFIG_MESSAGES_MAX_ENTRIES > 0,
@@ -189,4 +190,35 @@ int messages_delete(size_t idx)
 
     removeEntry(numEntries - idx - 1);
     return 0;
+}
+
+bool messages_can_compose(uint8_t mode)
+{
+    return message_dispatcher_source(mode) != NULL;
+}
+
+int messages_send(const struct message *msg)
+{
+    if (msg == NULL)
+        return -EINVAL;
+
+    if (message_dispatcher_source(msg->mode) == NULL)
+        return -ENOENT;
+
+    struct message entry = *msg;
+    entry.direction = MSG_DIR_TX;
+    entry.status = MSG_STATUS_SENDING;
+    entry.unread = 0;
+
+    int ret = messages_store(&entry, NULL);
+    if (ret != 0)
+        return ret;
+
+    /* The entry just stored is the newest one. */
+    struct message *stored = &entries[numEntries - 1];
+    ret = message_dispatcher_send(stored);
+    if (ret != 0)
+        stored->status = MSG_STATUS_FAILED;
+
+    return ret;
 }

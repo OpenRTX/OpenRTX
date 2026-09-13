@@ -176,6 +176,29 @@ int messages_mark_read(size_t idx, bool read);
  */
 int messages_delete(size_t idx);
 
+/**
+ * Check whether messages can be composed and sent in an operating mode,
+ * that is, whether a protocol source is registered for it.
+ *
+ * @param mode: operating mode, enum opmode.
+ * @return true if messages can be sent in that mode.
+ */
+bool messages_can_compose(uint8_t mode);
+
+/**
+ * Send a message: store it as an outgoing entry and hand it to the protocol
+ * source registered for its operating mode. The entry is created with
+ * MSG_STATUS_SENDING and updated to MSG_STATUS_SENT or MSG_STATUS_FAILED once
+ * the transmission completes; if the message cannot be handed over at all the
+ * entry is left as MSG_STATUS_FAILED.
+ *
+ * @param msg: template with mode, sender, recipient and body filled in.
+ * @return zero on success, -ENOENT if no source is registered for the mode,
+ *         -EBUSY if a transmission is already in progress, or another
+ *         negative error code from messages_store() or the source.
+ */
+int messages_send(const struct message *msg);
+
 #ifdef __cplusplus
 }
 #endif
