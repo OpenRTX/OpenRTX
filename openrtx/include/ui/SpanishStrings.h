@@ -95,5 +95,12 @@ const stringsTable_t spanishStrings =
     .CAN               = "CAN",
     .canRxCheck        = "CAN RX Check",
     .metaText          = "Meta Txt",
+    .messages          = "Mensajes",
+    .noMessages        = "Sin mensajes",
+    .newMessage        = "Nuevo mensaje",
+    .reply             = "Responder",
+    .send              = "Enviar",
+    .to                = "Para",
+    .message           = "Mensaje",
 };
 #endif  // SPANISHSTRINGS_H
