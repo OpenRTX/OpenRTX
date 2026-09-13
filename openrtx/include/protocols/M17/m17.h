@@ -21,6 +21,13 @@
 #define M17_PKT_HEADER offsetof(struct m17Packet, payload)
 
 /**
+ * M17 broadcast destination callsign, as transmitted on the air. This is
+ * the protocol literal (see BROADCAST_CALL in Callsign.cpp), distinct from
+ * any localized string displayed for it.
+ */
+#define M17_BROADCAST_CALLSIGN "ALL"
+
+/**
  * M17 packet buffer with embedded src/dst callsigns.
  *
  * The caller populates src, dst, and payload, then passes a pointer
