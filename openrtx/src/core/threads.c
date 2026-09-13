@@ -22,6 +22,7 @@
 #include "core/gps.h"
 #include "core/voicePrompts.h"
 #include "core/messages.h"
+#include "core/m17_sms.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -44,6 +45,10 @@ void *ui_threadFunc(void *arg)
 
     #if defined(CONFIG_MESSAGES)
     messages_init();
+    #endif
+
+    #if defined(CONFIG_M17_SMS)
+    messages_registerSource(&m17_sms_ops);
     #endif
 
     // Load initial state and update the UI
