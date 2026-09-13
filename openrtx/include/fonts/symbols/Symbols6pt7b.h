@@ -15,6 +15,7 @@ static const uint8_t Symbols6pt7bBitmaps[] PROGMEM = {
 0x00, 0x03, 0x03, 0x30, 0xb4, 0x5e, 0x97, 0xa2, 0xd0, 0xcc, 0x0c, 0x00, 0x00, //crosshairs-gps.svg
 0x00, 0x03, 0x03, 0x30, 0x84, 0x40, 0x90, 0x22, 0x10, 0xcc, 0x0c, 0x00, 0x00, //crosshairs.svg
 0x0c, 0x04, 0x81, 0x20, 0xfc, 0x3f, 0x0f, 0xc3, 0x30, 0xfc, 0x3f, 0x00, 0x00, //lock.svg
+0x00, 0x00, 0x07, 0xf9, 0x86, 0x4c, 0x90, 0x24, 0x09, 0x02, 0x00, 0x00, 0x00, //mail.svg
 0x00, 0x0f, 0xc3, 0xf0, 0xfc, 0x3f, 0x0f, 0xc3, 0xf0, 0x00, 0x7f, 0x83, 0x00, //network.svg
 0x00, 0x07, 0x80, 0xc0, 0xfc, 0x00, 0x03, 0x01, 0xe0, 0x48, 0x12, 0x00, 0x00, //transmission-tower.svg
 0x00, 0x07, 0x86, 0x19, 0x02, 0x40, 0x8b, 0x41, 0xe0, 0x30, 0x00, 0x00, 0x00, //wifi-strength-1.svg
@@ -34,15 +35,16 @@ static const GFXglyph Symbols6pt7bGlyphs[] PROGMEM = {
 { 66, 10, 10, 6, 0, -8},   // "&" crosshairs-gps.svg
 { 79, 10, 10, 6, 0, -8},   // "'" crosshairs.svg
 { 92, 10, 10, 6, 0, -8},   // "(" lock.svg
-{ 105, 10, 10, 6, 0, -8},   // ")" network.svg
-{ 118, 10, 10, 6, 0, -8},   // "*" transmission-tower.svg
-{ 131, 10, 10, 6, 0, -8},   // "+" wifi-strength-1.svg
-{ 144, 10, 10, 6, 0, -8},   // "," wifi-strength-2.svg
-{ 157, 10, 10, 6, 0, -8},   // "-" wifi-strength-3.svg
-{ 170, 10, 10, 6, 0, -8},   // "." wifi-strength-4.svg
+{ 105, 10, 10, 6, 0, -8},   // ")" mail.svg
+{ 118, 10, 10, 6, 0, -8},   // "*" network.svg
+{ 131, 10, 10, 6, 0, -8},   // "+" transmission-tower.svg
+{ 144, 10, 10, 6, 0, -8},   // "," wifi-strength-1.svg
+{ 157, 10, 10, 6, 0, -8},   // "-" wifi-strength-2.svg
+{ 170, 10, 10, 6, 0, -8},   // "." wifi-strength-3.svg
+{ 183, 10, 10, 6, 0, -8},   // "/" wifi-strength-4.svg
 };
 static const GFXfont Symbols6pt7b PROGMEM = {
 (uint8_t  *)Symbols6pt7bBitmaps,
 (GFXglyph *)Symbols6pt7bGlyphs,
 //ASCII start, ASCII stop,y Advance 
-  32, 46, 22 };
+  32, 47, 22 };
