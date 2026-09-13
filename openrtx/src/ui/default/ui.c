@@ -65,6 +65,7 @@
 #include "hwconfig.h"
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
+#include "core/messages.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -104,6 +105,16 @@ extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
+/* UI messages functions, their implementation is in "ui_messages.c" */
+#ifdef CONFIG_MESSAGES
+extern void _ui_drawMessagesList(ui_state_t *ui_state);
+extern void _ui_drawMessagesDetail(ui_state_t *ui_state);
+extern void _ui_drawMessagesCompose(ui_state_t *ui_state);
+extern void _ui_fsmMessagesList(ui_state_t *ui_state, kbd_msg_t msg);
+extern void _ui_fsmMessagesDetail(ui_state_t *ui_state, kbd_msg_t msg);
+extern void _ui_fsmMessagesCompose(ui_state_t *ui_state, kbd_msg_t msg);
+extern void _ui_endCompose(ui_state_t *ui_state);
+#endif
 // TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
 {
@@ -112,6 +123,9 @@ const char *menu_items[] =
     "Contacts",
 #ifdef CONFIG_GPS
     "GPS",
+#endif
+#ifdef CONFIG_MESSAGES
+    "Messages",
 #endif
     "Settings",
     "Info",
@@ -1112,7 +1126,7 @@ static void _ui_menuBack(uint8_t prev_state)
     }
 }
 
-static void _ui_textInputReset(char *buf, size_t bufSize)
+void _ui_textInputReset(char *buf, size_t bufSize)
 {
     ui_state.input_number = 0;
     ui_state.input_position = 0;
@@ -1122,7 +1136,7 @@ static void _ui_textInputReset(char *buf, size_t bufSize)
     buf[0] = '_';
 }
 
-static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
+void _ui_textInputKeypad(char *buf, uint16_t max_len, kbd_msg_t msg,
                          bool callsign)
 {
     long long now = getTick();
@@ -1175,12 +1189,12 @@ static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
     ui_state.last_keypress = now;
 }
 
-static void _ui_textInputConfirm(char *buf)
+void _ui_textInputConfirm(char *buf)
 {
     buf[ui_state.input_position + 1] = '\0';
 }
 
-static void _ui_textInputDel(char *buf)
+void _ui_textInputDel(char *buf)
 {
     // announce the char about to be backspaced.
     // Note this assumes editing callsign.
@@ -1404,6 +1418,12 @@ void ui_updateFSM(bool *sync_rtx)
 #if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
+#ifdef CONFIG_MESSAGES
+        /* Leaving compose for the low-battery screen must release the compose
+         * draft, keeping it allocated only while ui_screen == MESSAGES_COMPOSE. */
+        if (state.ui_screen == MESSAGES_COMPOSE)
+            _ui_endCompose(&ui_state);
+#endif
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload)
         {
@@ -1833,6 +1853,11 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef CONFIG_GPS
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
+                            break;
+#endif
+#ifdef CONFIG_MESSAGES
+                        case M_MESSAGES:
+                            state.ui_screen = MESSAGES_LIST;
                             break;
 #endif
                         case M_SETTINGS:
@@ -2582,6 +2607,18 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+#ifdef CONFIG_MESSAGES
+            // Messages inbox list, detail view and compose form
+            case MESSAGES_LIST:
+                _ui_fsmMessagesList(&ui_state, msg);
+                break;
+            case MESSAGES_DETAIL:
+                _ui_fsmMessagesDetail(&ui_state, msg);
+                break;
+            case MESSAGES_COMPOSE:
+                _ui_fsmMessagesCompose(&ui_state, msg);
+                break;
+#endif
         }
 
         // Enable Tx only if in MAIN_VFO or MAIN_MEM states
@@ -2754,6 +2791,20 @@ bool ui_updateGUI()
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
             break;
+#ifdef CONFIG_MESSAGES
+        // Messages inbox list view
+        case MESSAGES_LIST:
+            _ui_drawMessagesList(&ui_state);
+            break;
+        // Messages detail view
+        case MESSAGES_DETAIL:
+            _ui_drawMessagesDetail(&ui_state);
+            break;
+        // Messages compose screen
+        case MESSAGES_COMPOSE:
+            _ui_drawMessagesCompose(&ui_state);
+            break;
+#endif
     }
 
     // If MACRO menu is active draw it
