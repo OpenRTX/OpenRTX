@@ -47,6 +47,9 @@ public:
      * Disable the operating mode. This function stops the DMA transfers
      * between the baseband, microphone and speakers. It also ensures that
      * the radio, the audio amplifier and the microphone are in OFF state.
+     * Packet descriptors still pending are handed back to their owner with
+     * PKT_STATUS_ERROR, as are any submitted while the mode is disabled when
+     * it is next enabled.
      *
      * Application must ensure this function is being called when exiting the
      * current operating mode.
@@ -133,6 +136,14 @@ private:
      * current RTX status.
      */
     void txPacketState(rtxStatus_t *const status);
+
+    /**
+     * Hand back every pending packet descriptor with PKT_STATUS_ERROR and
+     * res set to -ECANCELED. Called on both enable() and disable(), so that
+     * the mode owns descriptors only while it is enabled: one submitted to a
+     * disabled mode is never completed, it is returned on the next enable().
+     */
+    void abortPackets();
 
     // GPS update interval in superframes. Each superframe is 6 LICH frames
     // (~240 ms), so 25 superframes ≈ 6 seconds.
