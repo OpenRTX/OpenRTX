@@ -21,6 +21,7 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
+#include "core/messages.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -40,6 +41,10 @@ void *ui_threadFunc(void *arg)
     rtxStatus_t rtx_cfg = { 0 };
     bool        sync_rtx = true;
     long long   time     = 0;
+
+    #if defined(CONFIG_MESSAGES)
+    messages_init();
+    #endif
 
     // Load initial state and update the UI
     ui_saveState();
@@ -64,6 +69,10 @@ void *ui_threadFunc(void *arg)
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
         vp_tick();                           // continue playing voice prompts in progress if any.
+
+        #if defined(CONFIG_MESSAGES)
+        messages_task(state.channel.mode);
+        #endif
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
@@ -111,6 +120,10 @@ void *ui_threadFunc(void *arg)
 
     ui_terminate();
     gfx_terminate();
+
+    #if defined(CONFIG_MESSAGES)
+    messages_terminate();
+    #endif
 
     return NULL;
 }
