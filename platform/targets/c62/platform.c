@@ -17,7 +17,7 @@
 #include <interfaces/audio.h>
 #include <math.h>
 
-static hwInfo_t hwInfo = {
+static const hwInfo_t hwInfo = {
     .name = "c62",
     .hw_version = 0,
     .uhf_band = 1,
