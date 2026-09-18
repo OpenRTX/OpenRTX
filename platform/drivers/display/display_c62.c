@@ -101,13 +101,6 @@ void display_render(void *fb)
     display_write(displayDev, 0, 0, &displayBufDesc, shadowBuffer);
 }
 
-void display_setContrast(uint8_t contrast)
-{
-    // ST7735R doesn't have a direct contrast control
-    // Could implement via gamma correction if needed
-    (void)contrast;
-}
-
 void display_setBacklightLevel(uint8_t level)
 {
     if (level > 100)
