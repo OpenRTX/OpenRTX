@@ -17,7 +17,7 @@ manifest:
     - name: zephyr
       url-base: https://github.com/zephyrproject-rtos
     - name: c62-dependencies
-      url-base: https://github.com/OE3ANC
+      url-base: https://github.com/OpenRTX
 
   projects:
     - name: zephyr
