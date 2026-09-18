@@ -344,6 +344,14 @@ void audio_init()
 
     printk("Initializing audio subsystem\n");
 
+    // Configure speaker enable (don't set it as output if you want to use SWD debugging!)
+    gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT);
+
+    gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT);
+
+    // DT_EN (Audio routing control for BK4819): 0 = DSP left channel output to AMP, 1 = DTMF from BK4819 to AMP
+    gpio_pin_set_dt(&dtmf_enable, 0); // DSP left channel output to amplifier
+
     // Initialize mutex
     k_mutex_init(&s_audio_mutex);
 

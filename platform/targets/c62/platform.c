@@ -52,14 +52,6 @@ void platform_init_csk6()
     gpio_pin_configure_dt(&led_green, GPIO_OUTPUT_INACTIVE);
     gpio_pin_configure_dt(&led_keyboard, GPIO_OUTPUT_INACTIVE);
 
-    // Configure speaker enable (don't set it as output if you want to use SWD debugging!)
-    gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT);
-
-    gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT);
-
-    // DT_EN (Audio routing control for BK4819): 0 = DSP left channel output to AMP, 1 = DTMF from BK4819 to AMP
-    gpio_pin_set_dt(&dtmf_enable, 0); // DSP left channel output to amplifier
-
     // Enable keyboard backlight
     gpio_pin_set_dt(&led_keyboard, 1);
 
