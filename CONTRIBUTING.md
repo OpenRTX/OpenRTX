@@ -16,7 +16,7 @@ The fastest way to get a development environment is to leverage VS Code and the 
 
 ## Style Conventions
 
-Contributions to this project should follow the conventions set in the linux kernel. This project is still adopting this standard (see https://github.com/OpenRTX/OpenRTX/issues/346), and so you'll find existing code may not be compliant. Use the `scripts/clang_format.sh` script to ensure your contributions follow the intended style conventions, and be sure to add your fully formatted files to the script while the adoption is still in progress.
+Contributions to this project should follow the conventions set in the linux kernel. This project is still adopting this standard (see https://github.com/OpenRTX/OpenRTX/issues/346), and so you'll find existing code may not be compliant. Use `scripts/clang_format.sh --check` to ensure your contributions follow the intended style conventions. New files must be fully formatted.
 
 ## Code Organization
 
@@ -56,6 +56,18 @@ Within protocol code, care should be given to structure it according to the OSI 
 
 More details about the individual components can be found on the [developer pages](https://openrtx.org/#/software).
 
+## Design Expectations
+
+Beyond layout, reviewers look for a few recurring things:
+
+- **Pay for what you use (and nothing more).** Targets only have tens of kB of RAM and size-optimized flash. Features, along with their state, should be gated behind `CONFIG_*` macros (named for the general capability, with sensible defaults). Also, allocate buffers only while a feature is active and lay out structs to avoid padding.
+- **Reuse before you build, and hoist what is general.** Look for an existing helper, driver interface or abstraction before writing a new one. If something you wrote is broadly useful, move it to a shared location so the next contributor finds it.
+- **Generalize the primitive, not the feature, but don't build for speculative needs.** Solve today's case in a way that isn't tied to one caller, and leave the rest for when it's needed.
+- **Respect the threading model.** The rtx thread owns the radio: other code communicates through the shared status and `sync_rtx`, never by calling the radio API directly. Keep critical sections small, never block the rtx thread, and never bypass safety mechanisms such as `txDisable`.
+- **Hardware facts belong in the target.** Target-specific values live in `hwconfig` and `pinmap`. Drivers are named after the chip they drive so other radios can share them; defaults cannot assume one band or model.
+- **Initialize explicitly.** Peripherals and modules are set up by a deliberate init call, never lazily on first use.
+- **Prefer plain, small C.** Use plain `struct`/`enum` rather than typedefs, `static` for anything file-local, `const` driver instances, `moduleName_functionName` naming, and Doxygen comments in the header for every public function.
+
 ## Testing
 
 Changes made to this project need to be verified either manually, using automation, or preferrably a combination of both. PRs should include documentation of the testing that took place so that reviewers understand how you've managed the quality of your changes. Automated tests are run using CI, as are builds confirming each target compiles properly.
@@ -66,7 +78,15 @@ Automated tests can be run locally using meson. For example: `meson setup build 
 
 OpenRTX uses Git for source code management. Each commit should represent a distinct change, and as such often PRs will contain multiple commits. It isn't OK, though, for a commit to contain broken or incomplete changes. Keep your branch's revision history tidy using strategies like squashing.
 
-Also, changes that take days of effort or thousands of lines of code should be considered a yellow flag. Consider how the change could be split up into smaller, incremental changes. That way, maintainers can provide feedback more quickly and contributors have less risk of rework.
+Also, changes that take days of effort or thousands of lines of code should be considered a red flag. Consider how the change could be split up into smaller, incremental changes. That way, maintainers can provide feedback more quickly and contributors have less risk of rework. And open a GitHub issue with your idea if it trends this way -- it's faster to align on the front end than chase a merge afterwards.
+
+A few habits keep review fast and history useful:
+
+- Prefix commit summaries with the module they touch (`ui:`, `m17:`, `core:`, `rtx:`, `drivers:`, ...); if you think you need multiple modules listed, that's a good sign that it should be split into separate commits.
+- Formatting-only changes go in their own commit. Never mix reformatting with logic.
+- Every commit must build and pass tests on its own so the branch bisects. While a review is open, address feedback with `fixup!` commits so reviewers can see what changed; once review settles, autosquash and force-push so the merged history has no trace of the rework.
+- Unrelated improvements you discover along the way belong in a separate PR.
+- Sign off every commit (`git commit -s`, DCO), and attribute co-authors when necessary.
 
 ## Pull Request Process
 
