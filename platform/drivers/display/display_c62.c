@@ -5,11 +5,13 @@
  */
 
 #include <zephyr/drivers/display.h>
+#include <zephyr/drivers/pwm.h>
 #include <interfaces/display.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <hwconfig.h>
 #include <string.h>
+#include <math.h>
 
 #include <zephyr/logging/log.h>
 
@@ -108,5 +110,24 @@ void display_setContrast(uint8_t contrast)
 
 void display_setBacklightLevel(uint8_t level)
 {
-    platform_set_display_brightness(level);
+    if (level > 100)
+        level = 100;
+
+    // Calculate duty cycle (1000us period = 1kHz) on pin A02
+    uint32_t period_us = 1000; // 1kHz PWM frequency
+    uint32_t adjusted_brightness_percent = 0;
+
+    if (level > 0) {
+        // Apply non-linear mapping for better low-end brightness control
+        adjusted_brightness_percent = roundf(level * level / 105.0) + 5;
+    }
+
+    uint32_t pulse_us = (period_us * adjusted_brightness_percent) / 100;
+
+    int ret = pwm_set_dt(&pwm_lcd_backlight, PWM_USEC(period_us),
+                         PWM_USEC(pulse_us));
+
+    if (ret < 0) {
+        LOG_ERR("Failed to set display PWM: %d", ret);
+    }
 }
