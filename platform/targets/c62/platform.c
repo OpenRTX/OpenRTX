@@ -15,7 +15,6 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include <interfaces/audio.h>
-#include <math.h>
 
 static const hwInfo_t hwInfo = {
     .name = "c62",
@@ -43,34 +42,6 @@ struct adc_sequence sequence = {
 };
 
 static int battery_init(void);
-
-/**
- * Set display brightness using PWM on pin A02
- * PWM Period: 1000us (1kHz), adjustable duty cycle for brightness
- * 
- * @param brightness_percent: 0-100 (0 = off, 100 = full brightness)
- */
-void platform_set_display_brightness(uint8_t brightness_percent)
-{
-    // Calculate duty cycle (1000us period = 1kHz)
-    uint32_t period_us = 1000; // 1kHz PWM frequency
-    uint32_t adjusted_brightness_percent = 0;
-
-    if (brightness_percent > 0) {
-        // Apply non-linear mapping for better low-end brightness control
-        adjusted_brightness_percent =
-            roundf(brightness_percent * brightness_percent / 105.0) + 5;
-    }
-
-    uint32_t pulse_us = (period_us * adjusted_brightness_percent) / 100;
-
-    int ret = pwm_set_dt(&pwm_lcd_backlight, PWM_USEC(period_us),
-                         PWM_USEC(pulse_us));
-
-    if (ret < 0) {
-        printk("Failed to set display PWM: %d\n", ret);
-    }
-}
 
 /**
  * Set TX power using PWM on pin A03
