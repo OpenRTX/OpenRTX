@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <interfaces/audio.h>
+#include <hwconfig.h>
 
 #define SAMPLE_RATE (16000) // Sample rate in Hz
 
@@ -52,9 +53,6 @@ typedef struct {
 #define C62_AUDIO_CHANNEL_TX CHANNEL_OUT_FRONT_RIGHT
 
 #define AUDIO_INPUT_CHANNEL_COUNT 2
-
-static const struct gpio_dt_spec speaker_enable =
-    GPIO_DT_SPEC_GET(DT_PATH(gpio_controls, speaker_enable), gpios);
 
 // Live audio streaming state
 typedef struct {

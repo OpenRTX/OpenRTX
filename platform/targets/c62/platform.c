@@ -17,28 +17,6 @@
 #include <interfaces/audio.h>
 #include <math.h>
 
-// Reference the GPIO nodes
-static const struct gpio_dt_spec speaker_enable =
-    GPIO_DT_SPEC_GET(DT_PATH(gpio_controls, speaker_enable), gpios);
-static const struct gpio_dt_spec dtmf_enable =
-    GPIO_DT_SPEC_GET(DT_PATH(gpio_controls, dtmf_enable), gpios);
-static const struct gpio_dt_spec button_ptt =
-    GPIO_DT_SPEC_GET_OR(DT_NODELABEL(button_ptt), gpios, { 0 });
-
-static const struct gpio_dt_spec led_white =
-    GPIO_DT_SPEC_GET(DT_ALIAS(ledwhite), gpios);
-static const struct gpio_dt_spec led_green =
-    GPIO_DT_SPEC_GET(DT_ALIAS(ledgreen), gpios);
-static const struct gpio_dt_spec led_keyboard =
-    GPIO_DT_SPEC_GET(DT_NODELABEL(ledkeyboard), gpios);
-
-static const struct pwm_dt_spec pwm_lcd_backlight =
-    PWM_DT_SPEC_GET(DT_NODELABEL(pwm_lcd_backlight));
-static const struct pwm_dt_spec pwm_rf_apc =
-    PWM_DT_SPEC_GET(DT_NODELABEL(pwm_rf_apc));
-
-const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
-
 static hwInfo_t hwInfo = {
     .name = "c62",
     .hw_version = 0,
