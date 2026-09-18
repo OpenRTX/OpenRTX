@@ -17,9 +17,31 @@
 #include "drivers/baseband/BK4819.h"
 #include "radioUtils.h"
 
-/* platform function to control APC */
-extern "C" {
-void platform_set_tx_power(uint8_t power_percent);
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/kernel.h>
+
+/**
+ * Set TX power using PWM on pin A03
+ * PWM Period: 1000us (1kHz), adjustable duty cycle for power level
+ *
+ * @param power_percent: 0-100 (0 = min power, 100 = max power)
+ */
+static void set_tx_power(uint8_t power_percent)
+{
+    //TODO: Check if this works... May need to adjust mapping of
+    // power_percent to duty cycle based on actual power output
+    // vs duty cycle curve of the PA, and also consider frequency
+    // dependence of PA efficiency
+
+    // Calculate duty cycle (1000us period = 1kHz)
+    uint32_t period_us = 1000; // 1kHz PWM frequency
+    uint32_t pulse_us = (period_us * power_percent) / 100;
+
+    int ret = pwm_set_dt(&pwm_rf_apc, PWM_USEC(period_us), PWM_USEC(pulse_us));
+
+    if (ret < 0) {
+        printk("Failed to set TX power PWM: %d\n", ret);
+    }
 }
 
 static const rtxStatus_t
@@ -230,7 +252,7 @@ void radio_enableTx()
 
     // depending on power level set PWM duty cycle for APC voltage control
     // Maybe need table for this instead of crude linear mapping, and also consider frequency dependence of PA efficiency
-    platform_set_tx_power(std::min(
+    set_tx_power(std::min(
         config->txPower * 100 / 5000,
         100U)); // crude linear mapping of power to duty cycle, max at 5W
 
