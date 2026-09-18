@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+#
+# Retevis C62 board-specific configuration.
+#
+# Only options strictly related to the C62 hardware belong here.
+# SoC-level options for the ListenAI CSK6011B chip live in
+# platform/mcu/CSK6011B/zephyr.conf.
+#
+
+CONFIG_BOARD_C62=y
+
+# C62 LCD (Sitronix ST7735R over SPI)
+CONFIG_DISPLAY=y
+CONFIG_ST7735R=y
+
+# C62 LSF service controller, see Kconfig.board
+CONFIG_LSF_SERVICE_CONTROLLER=y

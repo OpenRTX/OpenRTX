@@ -1,0 +1,8 @@
+# Copyright (c) 2023 LISTENAI
+# SPDX-License-Identifier: Apache-2.0
+
+description: LSF Thinker Service
+
+include: lsf-service.yaml
+
+compatible: "lsf,thinker-service"
