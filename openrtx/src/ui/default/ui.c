@@ -2348,13 +2348,13 @@ void ui_updateFSM(bool *sync_rtx)
                             }
                             break;
                         case M17_METATEXT:
-                            // Handle text input for M17 message text
+                            // Handle text input for the M17 meta text
                             if(msg.keys & KEY_ENTER)
                             {
-                                _ui_textInputConfirm(ui_state.new_message);
+                                _ui_textInputConfirm(ui_state.new_meta_text);
                                 // Save selected message and disable input mode
-                                strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
-                                ui_state.edit_message = false;
+                                strncpy(state.settings.M17_meta_text, ui_state.new_meta_text, 52);
+                                ui_state.edit_meta_text = false;
                                 ui_state.edit_mode = false;
                                 vp_announceBuffer(&currentLanguage->metaText,
                                                   false, true, state.settings.M17_meta_text);
@@ -2362,7 +2362,7 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(msg.keys & KEY_ESC)
                             {
                                 // Discard selected message and disable input mode
-                                ui_state.edit_message = false;
+                                ui_state.edit_meta_text = false;
                                 ui_state.edit_mode = false;
                                 vp_announceBuffer(&currentLanguage->metaText,
                                                   false, true, state.settings.M17_meta_text);
@@ -2370,16 +2370,16 @@ void ui_updateFSM(bool *sync_rtx)
                             else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
                                      msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
                             {
-                                _ui_textInputDel(ui_state.new_message);
+                                _ui_textInputDel(ui_state.new_meta_text);
                             }
                             else if(input_isCharPressed(msg))
                             {
-                                _ui_textInputKeypad(ui_state.new_message, 52, msg, false);
+                                _ui_textInputKeypad(ui_state.new_meta_text, 52, msg, false);
                             }
                             else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
                             {
                                 vp_announceBuffer(&currentLanguage->metaText,
-                                                  true, true, ui_state.new_message);
+                                                  true, true, ui_state.new_meta_text);
                                 f1Handled=true;
                             }
                             break;
@@ -2427,11 +2427,11 @@ void ui_updateFSM(bool *sync_rtx)
                         if(ui_state.menu_selected == M17_METATEXT)
                         {
                             //   ui_state.edit_mode = false;
-                            ui_state.edit_message = true;
-                            _ui_textInputReset(ui_state.new_message,
-                                    sizeof(ui_state.new_message));
+                            ui_state.edit_meta_text = true;
+                            _ui_textInputReset(ui_state.new_meta_text,
+                                    sizeof(ui_state.new_meta_text));
                             vp_announceBuffer(&currentLanguage->metaText,
-                                            true, true, ui_state.new_message);
+                                            true, true, ui_state.new_meta_text);
                         }
                     }
                     else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)

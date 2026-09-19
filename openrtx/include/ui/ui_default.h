@@ -219,8 +219,8 @@ typedef struct ui_state_t
     char new_tx_freq_buf[14];
     size_t m17_meta_text_scroll_position;
     long long m17_meta_text_last_scroll_tick;
-    char new_message[53];
-    bool edit_message;
+    char new_meta_text[53];
+    bool edit_meta_text;
 #ifdef CONFIG_RTC
     // Variables used for Time & Date input
     datetime_t new_timedate;
