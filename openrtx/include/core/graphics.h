@@ -236,6 +236,30 @@ uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
                          uint16_t max_x, size_t char_count);
 
 /**
+ * Compute how far a block of text has to be shifted up so that the line
+ * holding @p cursor_pos stays visible inside a window @p visible_h pixels
+ * tall.  Intended for text fields that are edited in place and may be longer
+ * than the box they are drawn in: subtract the returned value from the y
+ * coordinate handed to gfx_printBufferClipped and the character being edited
+ * is always on screen.
+ *
+ * Wrap decisions are those of gfx_measureText, so @p start_x and @p max_x
+ * must match the values passed to gfx_printBufferClipped and the text has to
+ * be drawn with TEXT_ALIGN_LEFT for the two to agree.
+ *
+ * @param size: text font size.
+ * @param buf: NUL-terminated string.
+ * @param cursor_pos: index of the character to keep visible.
+ * @param start_x: left-edge x position (matches gfx_printBufferClipped start).
+ * @param max_x: right-edge pixel limit used for word-wrap.
+ * @param visible_h: height in pixels of the visible window.
+ * @return pixels to shift the text up by; zero when it already fits.
+ */
+int16_t gfx_scrollOffsetForCursor(fontSize_t size, const char *buf,
+                                  size_t cursor_pos, uint16_t start_x,
+                                  uint16_t max_x, int16_t visible_h);
+
+/**
  * Measures the pixel width of a single line of text.
  *
  * @param size: text font size.

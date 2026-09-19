@@ -483,6 +483,21 @@ uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
     return cur_y;
 }
 
+int16_t gfx_scrollOffsetForCursor(fontSize_t size, const char *buf,
+                                  size_t cursor_pos, uint16_t start_x,
+                                  uint16_t max_x, int16_t visible_h)
+{
+    /* Measuring cursor_pos + 1 characters yields the y extent of the line the
+     * cursor sits on, so guard the increment against wrapping. */
+    size_t count = (cursor_pos == SIZE_MAX) ? SIZE_MAX : cursor_pos + 1;
+    uint16_t cursor_y = gfx_measureText(size, buf, start_x, max_x, count);
+
+    if ((int16_t)cursor_y > visible_h)
+        return (int16_t)cursor_y - visible_h;
+
+    return 0;
+}
+
 point_t gfx_printBufferClipped(point_t start, fontSize_t size,
                                textAlign_t alignment, color_t color,
                                const char *buf, uint16_t max_x,

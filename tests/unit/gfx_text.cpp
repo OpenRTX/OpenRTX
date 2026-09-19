@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <climits>
+#include <cstring>
 
 extern "C" {
 #include "core/graphics.h"
@@ -321,4 +322,152 @@ TEST_CASE("gfx_printBufferClipped TEXT_ALIGN_RIGHT resets per line",
                                "Hello\nHi", (uint16_t)WIDE, 0, 127);
     /* Max line width is alignment-independent. */
     REQUIRE(sz_right.x == sz_left.x);
+}
+
+/* -----------------------------------------------------------------------
+ * gfx_scrollOffsetForCursor
+ *
+ * TomThumb advances every glyph by the same amount, so with start_x 0 and
+ * max_x set to six advances exactly six characters fit on a line and the
+ * expected geometry below is exact rather than approximate.
+ * ----------------------------------------------------------------------- */
+
+static constexpr uint16_t TT_X_ADVANCE = 4;
+static constexpr uint16_t SIX_COLS = TT_X_ADVANCE * 6;
+static constexpr int16_t TWO_LINES = (int16_t)(TT_Y_ADVANCE * 2);
+
+/* 52 characters: the longest meta text the M17 specification allows. */
+static const char META52[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+static int16_t metaOffset(size_t cursor_pos, int16_t visible_h)
+{
+    return gfx_scrollOffsetForCursor(FONT_SIZE_5PT, META52, cursor_pos, 0,
+                                     SIX_COLS, visible_h);
+}
+
+TEST_CASE("gfx_scrollOffsetForCursor does not scroll text that fits",
+          "[gfx][scroll]")
+{
+    REQUIRE(gfx_scrollOffsetForCursor(FONT_SIZE_5PT, "ABC", 2, 0, SIX_COLS,
+                                      TWO_LINES)
+            == 0);
+}
+
+TEST_CASE("gfx_scrollOffsetForCursor does not scroll while the cursor is "
+          "inside the window",
+          "[gfx][scroll]")
+{
+    /* Six characters per line, two lines visible: the first twelve
+     * characters need no scrolling. */
+    for (size_t pos = 0; pos < 12; pos++) {
+        INFO("cursor position " << pos);
+        REQUIRE(metaOffset(pos, TWO_LINES) == 0);
+    }
+}
+
+TEST_CASE("gfx_scrollOffsetForCursor scrolls by the amount the cursor "
+          "overflows the window",
+          "[gfx][scroll]")
+{
+    /* Character 12 starts the third line, one line below a two-line
+     * window; character 18 starts the fourth, two lines below. */
+    REQUIRE(metaOffset(12, TWO_LINES) == (int16_t)TT_Y_ADVANCE);
+    REQUIRE(metaOffset(18, TWO_LINES) == (int16_t)(TT_Y_ADVANCE * 2));
+}
+
+TEST_CASE("gfx_scrollOffsetForCursor never scrolls backwards as the cursor "
+          "advances",
+          "[gfx][scroll]")
+{
+    int16_t previous = 0;
+
+    for (size_t pos = 0; pos < sizeof(META52) - 1; pos++) {
+        int16_t offset = metaOffset(pos, TWO_LINES);
+        INFO("cursor position " << pos);
+        REQUIRE(offset >= previous);
+        previous = offset;
+    }
+}
+
+TEST_CASE("gfx_scrollOffsetForCursor keeps every position of a 52 character "
+          "meta text visible",
+          "[gfx][scroll]")
+{
+    /*
+     * The property the meta text field depends on: whatever the cursor
+     * position, the line holding it must fall inside the window once the
+     * returned offset is applied.  Before the scroll helper the field was
+     * drawn at a fixed offset, so everything past the last visible line was
+     * simply not shown.
+     */
+    for (size_t pos = 0; pos < sizeof(META52) - 1; pos++) {
+        uint16_t cursor_y = gfx_measureText(FONT_SIZE_5PT, META52, 0, SIX_COLS,
+                                            pos + 1);
+        int16_t visible_y = (int16_t)cursor_y - metaOffset(pos, TWO_LINES);
+
+        INFO("cursor position " << pos);
+        REQUIRE(visible_y > 0);
+        REQUIRE(visible_y <= TWO_LINES);
+    }
+}
+
+TEST_CASE("gfx_scrollOffsetForCursor edge cases", "[gfx][scroll]")
+{
+    SECTION("empty string never scrolls")
+    {
+        REQUIRE(gfx_scrollOffsetForCursor(FONT_SIZE_5PT, "", 0, 0, SIX_COLS,
+                                          TWO_LINES)
+                == 0);
+    }
+
+    SECTION("cursor past the end of the string measures the whole string")
+    {
+        REQUIRE(metaOffset(sizeof(META52) * 2, TWO_LINES)
+                == metaOffset(sizeof(META52) - 2, TWO_LINES));
+    }
+
+    SECTION("window shorter than one line still scrolls")
+    {
+        REQUIRE(gfx_scrollOffsetForCursor(FONT_SIZE_5PT, "A", 0, 0, SIX_COLS, 1)
+                > 0);
+    }
+
+    SECTION("SIZE_MAX cursor position does not wrap to zero")
+    {
+        REQUIRE(gfx_scrollOffsetForCursor(FONT_SIZE_5PT, META52, SIZE_MAX, 0,
+                                          SIX_COLS, TWO_LINES)
+                > 0);
+    }
+}
+
+TEST_CASE("gfx_printBufferClipped lays out the whole string, however long",
+          "[gfx][scroll]")
+{
+    /*
+     * What the meta text field relies on: the buffer entry points lay out
+     * every character they are given and have no length limit of their own,
+     * unlike the printf-style entry points which format into a shared
+     * fixed-size buffer first.  Six characters fit on a line here, so a 200
+     * character string takes 29 more line breaks than a 30 character one; were
+     * the long string being cut short the two heights would converge.
+     */
+    color_t white = { 255, 255, 255, 255 };
+    char longtext[201];
+    char shorttext[31];
+
+    memset(longtext, 'A', sizeof(longtext) - 1);
+    longtext[sizeof(longtext) - 1] = '\0';
+    memset(shorttext, 'A', sizeof(shorttext) - 1);
+    shorttext[sizeof(shorttext) - 1] = '\0';
+
+    point_t start = { 0, (int16_t)TT_Y_ADVANCE };
+    point_t sz_long = gfx_printBufferClipped(start, FONT_SIZE_5PT,
+                                             TEXT_ALIGN_LEFT, white, longtext,
+                                             SIX_COLS, 0, INT16_MAX);
+    point_t sz_short = gfx_printBufferClipped(start, FONT_SIZE_5PT,
+                                              TEXT_ALIGN_LEFT, white, shorttext,
+                                              SIX_COLS, 0, INT16_MAX);
+
+    REQUIRE((sz_long.y - sz_short.y) == (int16_t)(29 * TT_Y_ADVANCE));
 }
