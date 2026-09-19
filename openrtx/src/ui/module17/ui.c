@@ -432,13 +432,13 @@ static void _ui_menuBack(uint8_t prev_state)
     }
 }
 
-static void _ui_textInputReset(char *buf)
+static void _ui_textInputReset(char *buf, size_t bufSize)
 {
     ui_state.input_number = 0;
     ui_state.input_position = 0;
     ui_state.input_set = 0;
     ui_state.last_keypress = 0;
-    memset(buf, 0, 9);
+    memset(buf, 0, bufSize);
 }
 
 static void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
@@ -742,12 +742,14 @@ void ui_updateFSM(bool *sync_rtx)
                             // Enable callsign input
                             case M_CALLSIGN:
                                 ui_state.edit_mode = true;
-                                _ui_textInputReset(ui_state.new_callsign);
+                                _ui_textInputReset(ui_state.new_callsign,
+                                        sizeof(ui_state.new_callsign));
                                 break;
                             // Enable meta text input
                             case M_METATEXT:
                                 ui_state.edit_meta_text = true;
-                                _ui_textInputReset(ui_state.new_meta_text);
+                                _ui_textInputReset(ui_state.new_meta_text,
+                                        sizeof(ui_state.new_meta_text));
                                 break;
                             default:
                                 state.ui_screen = SETTINGS_M17;
