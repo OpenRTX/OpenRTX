@@ -426,9 +426,9 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
             // limit display to 8 characters
             if (strlen(last_state.settings.M17_meta_text) > 7)
             {
-                char tmp[9];
+                char tmp[8];
                 memcpy(tmp, last_state.settings.M17_meta_text, 7);
-                tmp[8] = 0;
+                tmp[7] = 0;
                 // append asterisk to indicate more characters than displayed
                 sniprintf(buf, max_len, "%s*", tmp);
             }
