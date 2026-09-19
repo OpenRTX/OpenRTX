@@ -521,21 +521,21 @@ void ui_updateFSM(bool *sync_rtx)
                     else
                         _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
-                else if(ui_state.edit_message)
+                else if(ui_state.edit_meta_text)
                 {
                     if(msg.keys & KEY_ENTER)
                     {
-                        _ui_textInputConfirm(ui_state.new_message);
+                        _ui_textInputConfirm(ui_state.new_meta_text);
                         // Save selected message and disable input mode
-                        strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
-                        ui_state.edit_message = false;
+                        strncpy(state.settings.M17_meta_text, ui_state.new_meta_text, 52);
+                        ui_state.edit_meta_text = false;
                         *sync_rtx = true;
                     }
                     else if(msg.keys & KEY_ESC)
                         // Discard selected message and disable input mode
-                        ui_state.edit_message = false;
+                        ui_state.edit_meta_text = false;
                     else
-                        _ui_textInputArrows(ui_state.new_message, 52, msg);
+                        _ui_textInputArrows(ui_state.new_meta_text, 52, msg);
                 }
                 else
                 {
@@ -688,21 +688,21 @@ void ui_updateFSM(bool *sync_rtx)
                     else
                         _ui_textInputArrows(ui_state.new_callsign, 9, msg);
                 }
-                else if(ui_state.edit_message)
+                else if(ui_state.edit_meta_text)
                 {
                     if(msg.keys & KEY_ENTER)
                     {
-                        _ui_textInputConfirm(ui_state.new_message);
+                        _ui_textInputConfirm(ui_state.new_meta_text);
                         // Save selected message and disable input mode
-                        strncpy(state.settings.M17_meta_text, ui_state.new_message, 52);
-                        ui_state.edit_message = false;
+                        strncpy(state.settings.M17_meta_text, ui_state.new_meta_text, 52);
+                        ui_state.edit_meta_text = false;
                         ui_state.edit_mode = false;
                     }
                     else if(msg.keys & KEY_ESC)
                         // Discard selected message and disable input mode
-                        ui_state.edit_message = false;
+                        ui_state.edit_meta_text = false;
                     else
-                        _ui_textInputArrows(ui_state.new_message, 52, msg);
+                        _ui_textInputArrows(ui_state.new_meta_text, 52, msg);
                 }
                 else
                 {
@@ -746,8 +746,8 @@ void ui_updateFSM(bool *sync_rtx)
                                 break;
                             // Enable meta text input
                             case M_METATEXT:
-                                ui_state.edit_message = true;
-                                _ui_textInputReset(ui_state.new_message);
+                                ui_state.edit_meta_text = true;
+                                _ui_textInputReset(ui_state.new_meta_text);
                                 break;
                             default:
                                 state.ui_screen = SETTINGS_M17;

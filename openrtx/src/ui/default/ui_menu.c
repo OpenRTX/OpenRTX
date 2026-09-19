@@ -1003,7 +1003,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
     }
     else
-    if((ui_state->edit_message) && (ui_state->menu_selected == M17_METATEXT))
+    if((ui_state->edit_meta_text) && (ui_state->menu_selected == M17_METATEXT))
     {
         uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
         uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
@@ -1014,10 +1014,10 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                     layout.horizontal_pad, layout.menu_font,
                     TEXT_ALIGN_LEFT, color_white, currentLanguage->metaText);
         gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
-        // Print M17 message being typed
+        // Print M17 meta text being typed
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                         layout.horizontal_pad, layout.message_font,
-                        TEXT_ALIGN_CENTER, color_white, ui_state->new_message);
+                        TEXT_ALIGN_CENTER, color_white, ui_state->new_meta_text);
     }
     else
     {

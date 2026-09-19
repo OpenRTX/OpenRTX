@@ -578,16 +578,16 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                   color_white, "Accept");
     }
     else
-    if((ui_state->edit_message) && (ui_state->menu_selected == M_METATEXT))
+    if((ui_state->edit_meta_text) && (ui_state->menu_selected == M_METATEXT))
     {
         gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                     layout.horizontal_pad, layout.menu_font,
                     TEXT_ALIGN_LEFT, color_white, "Meta Txt:");
 
-        // Print M17 message being typed
+        // Print M17 meta text being typed
         gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                       layout.horizontal_pad, layout.message_font,
-                      TEXT_ALIGN_CENTER, color_white, ui_state->new_message);
+                      TEXT_ALIGN_CENTER, color_white, ui_state->new_meta_text);
         // Print Button Info
         gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
                   color_white, "Cancel");
