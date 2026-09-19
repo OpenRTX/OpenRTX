@@ -1005,6 +1005,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     else
     if((ui_state->edit_meta_text) && (ui_state->menu_selected == M17_METATEXT))
     {
+        const uint8_t BOX_PAD = 2;
         uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
         uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
         point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
@@ -1014,10 +1015,27 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                     layout.horizontal_pad, layout.menu_font,
                     TEXT_ALIGN_LEFT, color_white, currentLanguage->metaText);
         gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
-        // Print M17 meta text being typed
-        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
-                        layout.horizontal_pad, layout.message_font,
-                        TEXT_ALIGN_CENTER, color_white, ui_state->new_meta_text);
+
+        // Print the M17 meta text being typed inside the box, shifted up so
+        // that the character being edited stays visible once the text grows
+        // past the bottom of the box. Left alignment is required: the scroll
+        // offset is computed from the same wrap decisions gfx_measureText()
+        // makes, and those only match the rendered layout for left-aligned
+        // text.
+        uint8_t font_h    = gfx_getFontHeight(layout.message_font);
+        int16_t text_x    = rect_origin.x + BOX_PAD;
+        uint16_t max_x    = rect_origin.x + rect_width - BOX_PAD;
+        int16_t clip_top  = rect_origin.y + 1;
+        int16_t clip_bot  = rect_origin.y + rect_height - 1;
+        int16_t scroll    = gfx_scrollOffsetForCursor(layout.message_font,
+                                ui_state->new_meta_text,
+                                ui_state->input_position, text_x, max_x,
+                                clip_bot - clip_top);
+        point_t text_start = {text_x, clip_top + font_h - scroll};
+
+        gfx_printBufferClipped(text_start, layout.message_font, TEXT_ALIGN_LEFT,
+                               color_white, ui_state->new_meta_text, max_x,
+                               clip_top, clip_bot);
     }
     else
     {
