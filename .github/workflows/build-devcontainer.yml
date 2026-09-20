@@ -1,11 +1,9 @@
 name: "Build devcontainer"
 on:
+  # This image is the layer cache for the "Build and test" workflow. The base
+  # image is pinned by digest in the Dockerfile, so the cache only needs
+  # refreshing when the devcontainer inputs change.
   workflow_dispatch:
-  # Rebuild weekly: this image is the layer cache for the "Build and test"
-  # workflow and goes stale whenever the ubuntu:24.04 base image is updated
-  # upstream, forcing every CI run to rebuild the full toolchain.
-  schedule:
-    - cron: '30 4 * * 1'
   push:
     branches:
       - master
