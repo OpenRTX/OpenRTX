@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # The devcontainer base image is pinned by digest so the CI layer cache
+  # stays valid; let Dependabot propose the bumps.
+  - package-ecosystem: docker
+    directory: /.devcontainer
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 1
