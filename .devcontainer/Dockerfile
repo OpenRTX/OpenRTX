@@ -1,4 +1,9 @@
-FROM ubuntu:24.04
+# Pinned by digest: the "Build and test" workflow rebuilds this Dockerfile on
+# every run using ghcr.io/openrtx/openrtx-devcontainer as a layer cache, and a
+# floating tag invalidates that cache (and forces a ~30 min toolchain rebuild
+# from flaky GNU mirrors) every time the base image is republished. Bump the
+# digest deliberately; expect one full rebuild when you do.
+FROM ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3
 
 LABEL org.opencontainers.image.source=https://github.com/OpenRTX/OpenRTX
 
