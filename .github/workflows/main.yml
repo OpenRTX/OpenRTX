@@ -181,70 +181,45 @@ jobs:
             ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
             ${{github.workspace}}/openrtx_rt4d_${{ env.BRANCH_NAME }}.bin
           if-no-files-found: error
-      # One artifact per radio, so the pull request comment can offer a
-      # direct download per device. release-bins above is kept as-is for
-      # anyone with an existing link to the whole set.
-      - name: Upload MD-3x0 / MD-380 / MD-390 / RT3 firmware
+  # One artifact per radio, so the pull request comment can offer a direct
+  # download per device. The release-bins artifact from `build` is kept as-is
+  # for anyone with an existing link to the whole set.
+  #
+  # This repackages what `build` produced rather than building each radio on
+  # its own: a matrix only varies jobs, and nearly all of a build job is
+  # devcontainer setup (~3 min warm, ~30 min when the image cache is cold)
+  # against about a minute of actual compiling for every target together.
+  upload-firmware:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        radio:
+          - cs7000
+          - cs7000p
+          - dm1701
+          - dm1801
+          - gd77
+          - md3x0
+          - md9600
+          - mduv3x0
+          - mod17
+          - rt4d
+    steps:
+      - name: Download the built firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: release-bins
+          path: firmware
+      # Every radio has a distinct openrtx_<radio>_ prefix, so this picks out
+      # exactly that radio's files (both the .bin and the .dfu for the CS7000s)
+      # without needing the branch name. openrtx_cs7000_ does not match the
+      # CS7000 Plus, whose files are openrtx_cs7000p_.
+      - name: Upload the firmware for this radio
         uses: actions/upload-artifact@v4
         with:
-          name: openrtx-md3x0
-          path: ${{github.workspace}}/openrtx_md3x0_${{ env.BRANCH_NAME }}.bin
-          if-no-files-found: error
-      - name: Upload MD-UV3x0 / RT3s firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-mduv3x0
-          path: ${{github.workspace}}/openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin
-          if-no-files-found: error
-      - name: Upload MD-9600 firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-md9600
-          path: ${{github.workspace}}/openrtx_md9600_${{ env.BRANCH_NAME }}.bin
-          if-no-files-found: error
-      - name: Upload GD-77 firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-gd77
-          path: ${{github.workspace}}/openrtx_gd77_${{ env.BRANCH_NAME }}.sgl
-          if-no-files-found: error
-      - name: Upload DM-1801 firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-dm1801
-          path: ${{github.workspace}}/openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl
-          if-no-files-found: error
-      - name: Upload DM-1701 firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-dm1701
-          path: ${{github.workspace}}/openrtx_dm1701_${{ env.BRANCH_NAME }}.bin
-          if-no-files-found: error
-      - name: Upload CS7000 firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-cs7000
-          path: |
-            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.bin
-            ${{github.workspace}}/openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu
-          if-no-files-found: error
-      - name: Upload CS7000-Plus firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-cs7000p
-          path: |
-            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin
-            ${{github.workspace}}/openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu
-          if-no-files-found: error
-      - name: Upload RT-4D firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-rt4d
-          path: ${{github.workspace}}/openrtx_rt4d_${{ env.BRANCH_NAME }}.bin
-          if-no-files-found: error
-      - name: Upload Module 17 firmware
-        uses: actions/upload-artifact@v4
-        with:
-          name: openrtx-mod17
-          path: ${{github.workspace}}/openrtx_mod17_${{ env.BRANCH_NAME }}.bin
+          name: openrtx-${{ matrix.radio }}
+          path: firmware/openrtx_${{ matrix.radio }}_*
           if-no-files-found: error
