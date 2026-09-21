@@ -136,23 +136,33 @@ jobs:
             meson compile -C build_cm7 openrtx_cs7000p_wrap &&
             meson compile -C build_cm7 openrtx_cs7000p_dfu &&
             meson compile -C build_cm4 openrtx_rt4d_bin &&
-            chmod -R 777 * &&
-            ls build_cm7/ &&
-            ls build_cm4/ &&
-            ls build_linux/ &&
-            mv build_cm7/openrtx_cs7000p_wrap openrtx_cs7000p_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm7/openrtx_cs7000p_dfu openrtx_cs7000p_${{ env.BRANCH_NAME }}.dfu &&
-            mv build_cm4/openrtx_cs7000_bin openrtx_cs7000_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm4/openrtx_cs7000_dfu openrtx_cs7000_${{ env.BRANCH_NAME }}.dfu &&
-            mv build_cm4/openrtx_dm1701_wrap openrtx_dm1701_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm4/openrtx_dm1801_bin.sgl openrtx_dm1801_${{ env.BRANCH_NAME }}.sgl &&
-            mv build_cm4/openrtx_gd77_bin.sgl openrtx_gd77_${{ env.BRANCH_NAME }}.sgl &&
-            mv build_linux/openrtx_linux openrtx_linux_${{ env.BRANCH_NAME }} &&
-            mv build_cm4/openrtx_md3x0_wrap openrtx_md3x0_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm4/openrtx_md9600_wrap openrtx_md9600_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm4/openrtx_mduv3x0_wrap openrtx_mduv3x0_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm4/openrtx_rt4d_bin openrtx_rt4d_${{ env.BRANCH_NAME }}.bin &&
-            mv build_cm4/openrtx_mod17_bin openrtx_mod17_${{ env.BRANCH_NAME }}.bin
+            chmod -R a+rX build_linux build_cm4 build_cm7
+      # The build runs as root in the container, so the binaries land in the
+      # bind-mounted workspace owned by root. Copying rather than moving (as
+      # this did before) needs only read access, which the default umask
+      # already grants; the chmod above keeps that true under a stricter one.
+      # Moving is what required the old chmod -R 777: renaming out of a
+      # root-owned directory needs write permission on the directory itself.
+      - name: Collect firmware
+        run: |
+          while read -r src dst; do
+            [ -n "$src" ] || continue
+            cp "$src" "$dst"
+          done <<EOF
+          build_cm7/openrtx_cs7000p_wrap    openrtx_cs7000p_${BRANCH_NAME}.bin
+          build_cm7/openrtx_cs7000p_dfu     openrtx_cs7000p_${BRANCH_NAME}.dfu
+          build_cm4/openrtx_cs7000_bin      openrtx_cs7000_${BRANCH_NAME}.bin
+          build_cm4/openrtx_cs7000_dfu      openrtx_cs7000_${BRANCH_NAME}.dfu
+          build_cm4/openrtx_dm1701_wrap     openrtx_dm1701_${BRANCH_NAME}.bin
+          build_cm4/openrtx_dm1801_bin.sgl  openrtx_dm1801_${BRANCH_NAME}.sgl
+          build_cm4/openrtx_gd77_bin.sgl    openrtx_gd77_${BRANCH_NAME}.sgl
+          build_linux/openrtx_linux         openrtx_linux_${BRANCH_NAME}
+          build_cm4/openrtx_md3x0_wrap      openrtx_md3x0_${BRANCH_NAME}.bin
+          build_cm4/openrtx_md9600_wrap     openrtx_md9600_${BRANCH_NAME}.bin
+          build_cm4/openrtx_mduv3x0_wrap    openrtx_mduv3x0_${BRANCH_NAME}.bin
+          build_cm4/openrtx_mod17_bin       openrtx_mod17_${BRANCH_NAME}.bin
+          build_cm4/openrtx_rt4d_bin        openrtx_rt4d_${BRANCH_NAME}.bin
+          EOF
       - uses: actions/upload-artifact@v4
         with:
           name: release-bins
