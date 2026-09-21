@@ -26,6 +26,11 @@ from typing import Dict, List, Tuple
 
 from kokoro_onnx import Kokoro
 
+# Style-vector blend: the two British voices carry the accent, the American
+# third steadies the vowel glides that otherwise make isolated letters
+# (E, R, N, P) hard to tell apart after codec2.
+DEFAULT_VOICE = "bm_lewis:0.34+bm_fable:0.33+am_michael:0.33"
+
 
 class VoicePromptGenerator:
     """Generate voice prompts for OpenRTX from source headers."""
@@ -258,17 +263,38 @@ class VoicePromptGenerator:
         
         return onnx_path, voices_path
 
+    @staticmethod
+    def resolve_voice(kokoro: Kokoro, voice_name: str):
+        """
+        Turn a voice spec into a Kokoro style vector.
+
+        A plain name ('bm_lewis') is returned as-is. A blend
+        ('bm_lewis:0.5+bm_fable:0.5') is the weighted sum of the named
+        style vectors.
+        """
+        if '+' not in voice_name and ':' not in voice_name:
+            return voice_name
+
+        blend = None
+        for part in voice_name.split('+'):
+            name, _, weight = part.partition(':')
+            style = kokoro.get_voice_style(name) * float(weight or 1.0)
+            blend = style if blend is None else blend + style
+
+        return blend
+
     def generate_tts(self, text: str, output_wav: Path,
-                     kokoro: Kokoro, voice_name: str = "am_michael",
+                     kokoro: Kokoro, voice_name: str = DEFAULT_VOICE,
                      lang_code: str = "en-gb", speed: float = 1.0):
         """
         Generate TTS audio using the Kokoro Python API.
 
         Args:
-            text: Text to speak
+            text: Text to speak, or an IPA phoneme string enclosed in
+                  slashes ('/ˈiːː/') to bypass the grapheme-to-phoneme step
             output_wav: Output WAV file path
             kokoro: Loaded Kokoro instance
-            voice_name: Kokoro voice name (e.g. 'am_michael')
+            voice_name: Kokoro voice name or blend, see resolve_voice()
             lang_code: Language code for Kokoro
             speed: Speech speed multiplier (1.0 = normal)
         """
@@ -282,12 +308,17 @@ class VoicePromptGenerator:
             sf.write(str(output_wav), samples, sample_rate)
             return
         
+        is_phonemes = len(text) > 2 and text[0] == '/' and text[-1] == '/'
+        if is_phonemes:
+            text = text[1:-1]
+
         # Generate audio using Kokoro (returns 24kHz samples)
         samples, sample_rate = kokoro.create(
             text,
-            voice=voice_name,
+            voice=self.resolve_voice(kokoro, voice_name),
             speed=speed,
-            lang=lang_code
+            lang=lang_code,
+            is_phonemes=is_phonemes
         )
         
         # Write WAV file using soundfile
@@ -512,7 +543,7 @@ class VoicePromptGenerator:
         return c2_file
 
     def generate_all(self, output_vpc: Path, temp_dir: Path = None,
-                    voice_name: str = "am_michael",
+                    voice_name: str = DEFAULT_VOICE,
                     model_dir: Path = None,
                     gain_db: float = 0.0, tempo: float = 1.3,
                     keep_temp: bool = False):
@@ -522,7 +553,7 @@ class VoicePromptGenerator:
         Args:
             output_vpc: Output VPC file path
             temp_dir: Temporary directory for intermediate files
-            voice_name: Kokoro voice name (e.g. 'am_michael')
+            voice_name: Kokoro voice name or blend (see resolve_voice)
             model_dir: Directory containing Kokoro model files
             gain_db: Volume adjustment in dB
             tempo: Speech speed multiplier (passed to Kokoro)
@@ -649,8 +680,9 @@ Examples:
   # Generate with default settings
   %(prog)s
 
-  # Generate with custom voice name
-  %(prog)s --voice am_michael
+  # Generate with a single voice, or a weighted blend of voices
+  %(prog)s --voice bm_george
+  %(prog)s --voice bm_lewis:0.5+bm_fable:0.5
 
   # Keep temporary files for debugging
   %(prog)s --keep-temp
@@ -659,7 +691,7 @@ Examples:
   %(prog)s --no-overrides
 
   # Verify committed VPC is still up-to-date (CI mode)
-  %(prog)s --check --voice am_michael --tempo 1.3
+  %(prog)s --check --tempo 1.3
         """
     )
     
@@ -685,8 +717,9 @@ Examples:
     
     parser.add_argument(
         '--voice',
-        default='am_michael',
-        help='Kokoro voice name (default: am_michael)'
+        default=DEFAULT_VOICE,
+        help='Kokoro voice name, or blend as name:weight+name:weight '
+             f'(default: {DEFAULT_VOICE})'
     )
     
     parser.add_argument(
