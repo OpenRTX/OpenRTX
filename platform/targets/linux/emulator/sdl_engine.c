@@ -271,7 +271,13 @@ void sdlEngine_init()
                               SDL_WINDOWPOS_UNDEFINED, CONFIG_SCREEN_WIDTH * 3,
                               CONFIG_SCREEN_HEIGHT * 3, SDL_WINDOW_SHOWN);
 
+#ifdef __EMSCRIPTEN__
+    // main() runs on a worker (PROXY_TO_PTHREAD) which has no WebGL context, so
+    // use the software renderer, which presents through the proxied 2D canvas.
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+#else
     renderer = SDL_CreateRenderer(window, -1, 0);
+#endif
     SDL_RenderSetLogicalSize(renderer, CONFIG_SCREEN_WIDTH,
                              CONFIG_SCREEN_HEIGHT);
     displayTexture =
@@ -295,6 +301,11 @@ void sdlEngine_run()
     while (!emulator_state.powerOff) {
         keyboard_t key = 0;
 
+#ifdef __EMSCRIPTEN__
+        // Yield so the browser can deliver the DOM events proxied to this
+        // worker; without it SDL never sees a keypress.
+        SDL_Delay(1);
+#endif
         if (SDL_PollEvent(&ev) == 1) {
             switch (ev.type) {
                 case SDL_QUIT:

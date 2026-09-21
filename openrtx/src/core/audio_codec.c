@@ -8,8 +8,9 @@
 #include "core/audio_codec.h"
 #include <pthread.h>
 #include "core/threads.h"
-// codec2 system library has a weird include prefix
-#if defined(PLATFORM_LINUX)
+// codec2 system library has a weird include prefix; the emscripten build uses
+// the bundled subproject like the embedded targets do.
+#if defined(PLATFORM_LINUX) && !defined(__EMSCRIPTEN__)
 #include <codec2/codec2.h>
 #else
 #include "codec2.h"

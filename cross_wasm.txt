@@ -1,0 +1,18 @@
+# Meson cross file for the WebAssembly (Emscripten) build of the Linux emulator.
+#
+#     meson setup build_wasm --cross-file cross_wasm.txt
+#     ninja -C build_wasm wasm
+#     emrun build_wasm/openrtx_wasm.html
+
+[binaries]
+c      = 'emcc'
+cpp    = 'em++'
+ar     = 'emar'
+ranlib = 'emranlib'
+strip  = 'emstrip'
+
+[host_machine]
+system     = 'emscripten'
+cpu_family = 'wasm32'
+cpu        = 'wasm32'
+endian     = 'little'
