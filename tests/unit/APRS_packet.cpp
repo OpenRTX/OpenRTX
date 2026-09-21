@@ -226,3 +226,146 @@ TEST_CASE("APRS packet lists can be concatenated", "[aprs][packet]")
 
     aprsPktList_release(list3);
 }
+
+/* ------------------------------------------------------------------------ *
+ * Frame construction.
+ *
+ * The builder is checked two ways. Round-tripping through the parser above
+ * proves the two agree with each other, which is what the radio's own RX and
+ * TX paths need. Agreeing with each other is not the same as agreeing with
+ * the rest of the world, so the byte-for-byte vector below comes from
+ * scripts/aprs_gen_baseband.py — an independent implementation written
+ * against the AX.25 specification, and the one whose output the RX e2e test
+ * feeds to the demodulator.
+ *
+ * aprsFrameBuild() produces a frame WITHOUT the frame check sequence (the
+ * modulator appends it on transmit), while aprsPktFromFrame() expects the FCS
+ * to be present, so the round-trip appends crc_hdlc() before parsing.
+ * ------------------------------------------------------------------------ */
+
+/** Build a frame, append its FCS, and parse it back — the caller frees. */
+static struct aprsPacket *buildAndParse(const char *dst, const char *src,
+                                        const char *path, const char *info)
+{
+    uint8_t frame[APRS_PACLEN];
+    size_t len = aprsFrameBuild(frame, sizeof(frame), dst, src, path, info,
+                                strlen(info));
+    if (len == 0)
+        return NULL;
+
+    uint16_t crc = crc_hdlc(frame, len);
+    frame[len] = crc & 0xFF;
+    frame[len + 1] = (crc >> 8) & 0xFF;
+
+    return aprsPktFromFrame(frame, len + 2);
+}
+
+TEST_CASE("APRS address text parses back into an address", "[aprs][packet]")
+{
+    struct aprsAddress addr;
+
+    REQUIRE(aprsAddrFromStr("W1AW", &addr) == true);
+    REQUIRE(std::string(addr.addr) == std::string("W1AW"));
+    REQUIRE(addr.ssid == 0);
+
+    REQUIRE(aprsAddrFromStr("N0CALL-15", &addr) == true);
+    REQUIRE(std::string(addr.addr) == std::string("N0CALL"));
+    REQUIRE(addr.ssid == 15);
+
+    /* lower case is folded up so a typed recipient still works */
+    REQUIRE(aprsAddrFromStr("n0call-7", &addr) == true);
+    REQUIRE(std::string(addr.addr) == std::string("N0CALL"));
+    REQUIRE(addr.ssid == 7);
+
+    /* malformed text is rejected */
+    REQUIRE(aprsAddrFromStr("", &addr) == false);
+    REQUIRE(aprsAddrFromStr("-7", &addr) == false);
+    REQUIRE(aprsAddrFromStr("N0CALL-", &addr) == false);
+    REQUIRE(aprsAddrFromStr("N0CALL-16", &addr) == false);
+    REQUIRE(aprsAddrFromStr("N0CALL-x", &addr) == false);
+    REQUIRE(aprsAddrFromStr("TOOLONGCALL", &addr) == false);
+    REQUIRE(aprsAddrFromStr("WITH SPACE", &addr) == false);
+    REQUIRE(aprsAddrFromStr(NULL, &addr) == false);
+    REQUIRE(aprsAddrFromStr("W1AW", NULL) == false);
+}
+
+TEST_CASE("APRS frame builder round-trips through the parser", "[aprs][packet]")
+{
+    struct aprsPacket *pkt = buildAndParse(APRS_TOCALL, "N0CALL-7",
+                                           APRS_DEFAULT_PATH, ":W1AW     :hi");
+    REQUIRE(pkt != NULL);
+
+    REQUIRE(pkt->addressesLen == 4);
+    REQUIRE(std::string(pkt->addresses[0].addr) == std::string(APRS_TOCALL));
+    REQUIRE(std::string(pkt->addresses[1].addr) == std::string("N0CALL"));
+    REQUIRE(pkt->addresses[1].ssid == 7);
+    REQUIRE(std::string(pkt->addresses[2].addr) == std::string("WIDE1"));
+    REQUIRE(pkt->addresses[2].ssid == 1);
+    REQUIRE(std::string(pkt->addresses[3].addr) == std::string("WIDE2"));
+    REQUIRE(pkt->addresses[3].ssid == 1);
+    REQUIRE(std::string(pkt->info) == std::string(":W1AW     :hi"));
+
+    free(pkt);
+}
+
+TEST_CASE("APRS frame builder handles an absent path", "[aprs][packet]")
+{
+    struct aprsPacket *pkt = buildAndParse(APRS_TOCALL, "N0CALL", NULL,
+                                           ">heard direct");
+    REQUIRE(pkt != NULL);
+    REQUIRE(pkt->addressesLen == 2);
+    REQUIRE(std::string(pkt->info) == std::string(">heard direct"));
+    free(pkt);
+
+    pkt = buildAndParse(APRS_TOCALL, "N0CALL", "", ">heard direct");
+    REQUIRE(pkt != NULL);
+    REQUIRE(pkt->addressesLen == 2);
+    free(pkt);
+}
+
+TEST_CASE("APRS frame builder matches an independent encoder", "[aprs][packet]")
+{
+    /* scripts/aprs_gen_baseband.py, parse_tnc2() of
+     *   N0CALL-7>APORT1,WIDE1-1,WIDE2-1::W1AW     :hello
+     * which produces the frame without a frame check sequence. */
+    static const uint8_t expected[] = {
+        0x82, 0xa0, 0x9e, 0xa4, 0xa8, 0x62, 0xe0, 0x9c, 0x60, 0x86, 0x82, 0x98,
+        0x98, 0x6e, 0xae, 0x92, 0x88, 0x8a, 0x62, 0x40, 0x62, 0xae, 0x92, 0x88,
+        0x8a, 0x64, 0x40, 0x63, 0x03, 0xf0, 0x3a, 0x57, 0x31, 0x41, 0x57, 0x20,
+        0x20, 0x20, 0x20, 0x20, 0x3a, 0x68, 0x65, 0x6c, 0x6c, 0x6f
+    };
+
+    uint8_t frame[APRS_PACLEN];
+    const char info[] = ":W1AW     :hello";
+    size_t len = aprsFrameBuild(frame, sizeof(frame), APRS_TOCALL, "N0CALL-7",
+                                APRS_DEFAULT_PATH, info, strlen(info));
+
+    REQUIRE(len == sizeof(expected));
+    REQUIRE(memcmp(frame, expected, sizeof(expected)) == 0);
+}
+
+TEST_CASE("APRS frame builder rejects invalid arguments", "[aprs][packet]")
+{
+    uint8_t frame[APRS_PACLEN];
+    const char info[] = ">hi";
+
+    REQUIRE(aprsFrameBuild(NULL, sizeof(frame), APRS_TOCALL, "N0CALL", NULL,
+                           info, strlen(info))
+            == 0);
+    REQUIRE(aprsFrameBuild(frame, sizeof(frame), APRS_TOCALL, "N0CALL-99", NULL,
+                           info, strlen(info))
+            == 0);
+    REQUIRE(aprsFrameBuild(frame, sizeof(frame), APRS_TOCALL, "N0CALL",
+                           "WIDE1-1,", info, strlen(info))
+            == 0);
+    /* an empty info field would not parse back */
+    REQUIRE(aprsFrameBuild(frame, sizeof(frame), APRS_TOCALL, "N0CALL", NULL,
+                           info, 0)
+            == 0);
+    /* a frame that would not fit */
+    uint8_t big[APRS_PACLEN];
+    memset(big, 'x', sizeof(big));
+    REQUIRE(aprsFrameBuild(frame, sizeof(frame), APRS_TOCALL, "N0CALL",
+                           APRS_DEFAULT_PATH, (const char *)big, sizeof(big))
+            == 0);
+}

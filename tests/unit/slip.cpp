@@ -23,7 +23,8 @@ constexpr uint8_t ESC_ESC = 0xDD;
 TEST_CASE("slip_init initializes object", "[slip]")
 {
     std::array<uint8_t, 32> buffer{};
-    struct slip sl{};
+    struct slip sl {
+    };
 
     REQUIRE(slip_init(&sl, buffer.data(), buffer.size()) == 0);
 
@@ -35,7 +36,8 @@ TEST_CASE("slip_init initializes object", "[slip]")
 TEST_CASE("slip_reset clears state", "[slip]")
 {
     std::array<uint8_t, 32> buffer{};
-    struct slip sl{};
+    struct slip sl {
+    };
 
     REQUIRE(slip_init(&sl, buffer.data(), buffer.size()) == 0);
 
@@ -64,7 +66,8 @@ TEST_CASE("encode simple frame", "[slip]")
 {
     uint8_t payload[] = { 0x01, 0x02, 0x03 };
 
-    struct slip sl{};
+    struct slip sl {
+    };
     REQUIRE(slip_init(&sl, payload, sizeof(payload)) == 0);
 
     uint8_t encoded[16] = {};
@@ -84,7 +87,8 @@ TEST_CASE("encode escapes END and ESC", "[slip]")
 {
     uint8_t payload[] = { END, ESC };
 
-    struct slip sl{};
+    struct slip sl {
+    };
     REQUIRE(slip_init(&sl, payload, sizeof(payload)) == 0);
 
     uint8_t encoded[16] = {};
@@ -108,7 +112,8 @@ TEST_CASE("decode simple frame byte by byte", "[slip]")
 {
     uint8_t decoded[16] = {};
 
-    struct slip sl{};
+    struct slip sl {
+    };
     REQUIRE(slip_init(&sl, decoded, sizeof(decoded)) == 0);
 
     const uint8_t frame[] = { END, 0x11, 0x22, 0x33, END };
@@ -131,7 +136,8 @@ TEST_CASE("decode escaped characters", "[slip]")
 {
     uint8_t decoded[16] = {};
 
-    struct slip sl{};
+    struct slip sl {
+    };
     REQUIRE(slip_init(&sl, decoded, sizeof(decoded)) == 0);
 
     const uint8_t frame[] = { END, ESC, ESC_END, ESC, ESC_ESC, END };
@@ -151,7 +157,8 @@ TEST_CASE("decode complete frame buffer", "[slip]")
 {
     uint8_t decoded[16] = {};
 
-    struct slip sl{};
+    struct slip sl {
+    };
     REQUIRE(slip_init(&sl, decoded, sizeof(decoded)) == 0);
 
     const uint8_t frame[] = { END, 0xAA, 0xBB, END };
@@ -169,7 +176,8 @@ TEST_CASE("decoder reports buffer overflow", "[slip]")
 {
     uint8_t decoded[2] = {};
 
-    struct slip sl{};
+    struct slip sl {
+    };
     REQUIRE(slip_init(&sl, decoded, sizeof(decoded)) == 0);
 
     CHECK(slip_decodeByte(&sl, 0x01) == 0);
@@ -182,7 +190,8 @@ TEST_CASE("decoder rejects malformed escape sequence", "[slip]")
 {
     uint8_t decoded[16] = {};
 
-    struct slip sl{};
+    struct slip sl {
+    };
     REQUIRE(slip_init(&sl, decoded, sizeof(decoded)) == 0);
 
     REQUIRE(slip_decodeByte(&sl, ESC) == 0);
@@ -197,7 +206,8 @@ TEST_CASE("encode decode roundtrip", "[slip]")
     const uint8_t original[] = { 0x01, END, 0x02, ESC, 0x03, 0x04 };
 
     uint8_t encodeStorage[sizeof(original)];
-    struct slip encoder{};
+    struct slip encoder {
+    };
 
     REQUIRE(slip_init(&encoder, encodeStorage, sizeof(encodeStorage)) == 0);
 
@@ -210,7 +220,8 @@ TEST_CASE("encode decode roundtrip", "[slip]")
     REQUIRE(encodedLen > 0);
 
     uint8_t decoded[32] = {};
-    struct slip decoder{};
+    struct slip decoder {
+    };
 
     REQUIRE(slip_init(&decoder, decoded, sizeof(decoded)) == 0);
 
