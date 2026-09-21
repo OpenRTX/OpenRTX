@@ -207,6 +207,20 @@ void radio_enableTx()
             C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 
+        case OPMODE_APRS:
+            // AFSK is audio the MCU synthesises, so it reaches the modulator
+            // the same way M17's baseband does: through LINE_IN rather than
+            // the microphone. Without this the PA keys with nothing routed to
+            // it and transmits an unmodulated carrier.
+            //
+            // Pre-emphasis is on and bandwidth is fixed at 25 kHz, both
+            // settled by off-air measurement against a commercial radio: APRS
+            // is a wide-channel mode and a receiving TNC expects the twist a
+            // pre-emphasised mic path produces.
+            C6000.startAnalogTx(TxAudioSource::LINE_IN,
+                                FmConfig::BW_25kHz | FmConfig::PREEMPH_EN);
+            break;
+
         default:
             break;
     }
