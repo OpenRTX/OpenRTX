@@ -52,10 +52,7 @@ void OpMode_M17::enable()
     startRx = true;
     startTx = false;
     pktDeframer.reset();
-    currRxPkt = nullptr;
-    currTxPkt.store(nullptr, std::memory_order_relaxed);
-    pktTxStarted = false;
-    pktTxLastSent = false;
+    abortPackets();
 }
 
 void OpMode_M17::disable()
@@ -70,6 +67,7 @@ void OpMode_M17::disable()
     radio_disableRtx();
     modulator.terminate();
     demodulator.terminate();
+    abortPackets();
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -444,6 +442,36 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.sendFrame(m17Frame);
         modulator.stop();
     }
+}
+
+static void cancelPacket(struct pktDesc *pkt)
+{
+    pkt->res = -ECANCELED;
+    pkt->status = PKT_STATUS_ERROR;
+}
+
+void OpMode_M17::abortPackets()
+{
+    struct pktDesc *pkt;
+
+    if (currRxPkt != nullptr) {
+        cancelPacket(currRxPkt);
+        currRxPkt = nullptr;
+    }
+
+    int ret;
+    do {
+        ret = rxPktQueue.tryPop(pkt);
+        if (ret == 0)
+            cancelPacket(pkt);
+    } while (ret != -EAGAIN);
+
+    pkt = currTxPkt.exchange(nullptr, std::memory_order_acq_rel);
+    if (pkt != nullptr)
+        cancelPacket(pkt);
+
+    pktTxStarted = false;
+    pktTxLastSent = false;
 }
 
 int OpMode_M17::addPacketRx(struct pktDesc *packet)
