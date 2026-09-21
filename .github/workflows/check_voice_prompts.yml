@@ -43,4 +43,4 @@ jobs:
           path: ~/.cache/kokoro-tts
           key: kokoro-model-v1.0
       - name: Check voice prompts are up to date
-        run: python3 ./scripts/generate_voice_prompts.py --check --voice am_michael
+        run: python3 ./scripts/generate_voice_prompts.py --check
