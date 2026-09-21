@@ -1219,6 +1219,10 @@ aprs_modulator_test = executable('aprs_modulator_test',
                                  sources : unit_test_src
                                            + ['tests/unit/APRS_modulator.cpp'],
                                  kwargs  : unit_test_opts)
+aprs_opmode_test = executable('aprs_opmode_test',
+                              sources : unit_test_src
+                                        + ['tests/unit/APRS_opmode.cpp'],
+                              kwargs  : unit_test_opts)
 
 slip_test = executable('slip_test',
                       sources : unit_test_src + ['tests/unit/slip.cpp'],
@@ -1249,4 +1253,5 @@ test('M17 Packet OpMode Test', m17_packet_opmode_test)
 test('APRS Packet Test', aprs_packet_test)
 test('APRS Test', aprs_test)
 test('APRS Modulator Test', aprs_modulator_test)
+test('APRS OpMode Test', aprs_opmode_test)
 test('Slip Test', slip_test)
