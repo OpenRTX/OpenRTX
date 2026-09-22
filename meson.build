@@ -106,6 +106,13 @@ openrtx_inc += ['lib/minmea/include']
 openrtx_src += ['lib/QRCode/qrcode.c']
 openrtx_inc += ['lib/QRCode/include']
 
+# littlefs v2.11.3, a fail-safe filesystem for microcontrollers. Configured as
+# Miosix v3 configures its own copy: LFS_THREADSAFE on, nothing else.
+openrtx_src += ['lib/littlefs/lfs.c',
+                'lib/littlefs/lfs_util.c']
+openrtx_inc += ['lib/littlefs']
+openrtx_def += {'LFS_THREADSAFE': ''}
+
 # QDEC, a very simple, header only, quadrature decoding library
 openrtx_inc += ['lib/qdec/include']
 
