@@ -91,6 +91,34 @@ jobs:
           name: zephyr-release-bins
           path: |
             app/build/openrtx_*.uf2
+  build-wasm:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y git meson ninja-build
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 6.0.9
+          actions-cache-folder: emsdk-cache
+      - name: Compile WebAssembly
+        run: |
+          meson setup build_wasm --cross-file cross_wasm.txt
+          meson compile -C build_wasm wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm-bins
+          path: |
+            build_wasm/openrtx_wasm.html
+            build_wasm/openrtx_wasm.js
+            build_wasm/openrtx_wasm.wasm
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 120

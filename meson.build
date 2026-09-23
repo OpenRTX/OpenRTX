@@ -1007,7 +1007,13 @@ targets = [
   },
 ]
 
-radio_tool  = find_program('radio_tool')
+# radio_tool only wraps and flashes embedded images; its subproject fallback
+# cannot configure under the emscripten toolchain, so skip it there.
+if host_machine.system() == 'emscripten'
+  radio_tool = disabler()
+else
+  radio_tool = find_program('radio_tool')
+endif
 bin2sgl     = find_program('scripts/bin2sgl.py',               required:false, disabler:true)
 objcopy     = find_program('objcopy',                          required:false, disabler:true)
 gd77_loader = find_program('scripts/gd-77_firmware_loader.py', required:false, disabler:true)
@@ -1169,6 +1175,26 @@ endforeach
 cm4 = alias_target('cm4', cm4_targets)
 cm7 = alias_target('cm7', cm7_targets)
 linux = alias_target('linux', linux_targets)
+
+##
+## WebAssembly (Emscripten) build of the Linux emulator, only defined when
+## configured with cross_wasm.txt. Uses Emscripten's bundled SDL2 and pthreads;
+## -sPROXY_TO_PTHREAD moves main() to a worker so the blocking thread model of
+## the emulator keeps working while the browser main thread stays responsive.
+##
+if host_machine.system() == 'emscripten'
+  wasm_args = ['-sUSE_SDL=2', '-pthread']
+  wasm_opts = linux_opts + {
+    'dependencies': [codec2_dep],
+    'c_args'      : linux_c_args + wasm_args,
+    'cpp_args'    : linux_cpp_args + wasm_args,
+    'link_args'   : wasm_args + ['-sPROXY_TO_PTHREAD', '-sPTHREAD_POOL_SIZE=16',
+                                 '-sALLOW_MEMORY_GROWTH=1', '-sINITIAL_MEMORY=64MB'],
+    'name_suffix' : 'html',
+  }
+  wasm = executable('openrtx_wasm', main_src, kwargs: wasm_opts)
+  alias_target('wasm', wasm)
+endif
 
 ##
 ## ----------------------------------- Unit Tests ------------------------------

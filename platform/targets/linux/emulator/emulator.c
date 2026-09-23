@@ -11,8 +11,11 @@
 #include <string.h>
 #include "SDL2/SDL.h"
 
+// The browser has no terminal: the readline command shell is compiled out.
+#ifndef __EMSCRIPTEN__
 #include "readline/readline.h"
 #include "readline/history.h"
+#endif
 
 #include "emulator.h"
 #include "sdl_engine.h"
@@ -431,6 +434,7 @@ static int process_line(char *line)
     }
 }
 
+#ifndef __EMSCRIPTEN__
 void *startCLIMenu(void *arg)
 {
     (void)arg;
@@ -489,17 +493,20 @@ void *startCLIMenu(void *arg)
 
     return NULL;
 }
+#endif
 
 void emulator_start()
 {
     sdlEngine_init();
 
+#ifndef __EMSCRIPTEN__
     pthread_t cli_thread;
     int err = pthread_create(&cli_thread, NULL, startCLIMenu, NULL);
 
     if (err) {
         printf("An error occurred starting the emulator CLI thread: %d\n", err);
     }
+#endif
 }
 
 keyboard_t emulator_getKeys()
