@@ -38,7 +38,7 @@ const struct nvmPartition memPartitions[] =
         .size   = 16384     // 16kB
     },
     {
-        .offset = 0x1000C000,// Third partition, available memory
+        .offset = 0x100C000,// Third partition, available memory
         .size   = 0xFF4000
     }
 #else
