@@ -21,6 +21,25 @@ extern "C" {
 static const uint16_t input_longPressTimeout = 700;
 
 /**
+ * Time interval in milliseconds between two consecutive auto-repeat events
+ * generated while a key is kept pressed past the long-press threshold.
+ */
+static const uint16_t input_repeatInterval = 100;
+
+/**
+ * Default set of keys for which, once held past the long-press threshold,
+ * plain keypress events keep being generated at input_repeatInterval so
+ * that value-stepping menus (frequency, brightness, CTCSS tone, ...) keep
+ * advancing while the key is held down.
+ *
+ * Every other key keeps the single long-press-event behaviour, since
+ * several of them (KEY_MONI, KEY_F1, ...  trigger a distinct one-shot
+ * action on long press, or a discrete character input, and must not re-fire
+ * while held.
+ */
+#define INPUT_DEFAULT_REPEATABLE_KEYS (KEY_UP | KEY_DOWN)
+
+/**
  * Structure that represents a keyboard event payload
  * The maximum size of an event payload is 30 bits
  * For a keyboard event we use 1 bit to signal a short or long press
@@ -45,6 +64,21 @@ typedef union {
  * @return true if a keyboard event has been detected, false otherwise.
  */
 bool input_scanKeyboard(kbd_msg_t *msg);
+
+/**
+ * Changes, at runtime, the set of keys that support auto-repeat while held
+ * past the long-press threshold (see INPUT_DEFAULT_REPEATABLE_KEYS).
+ *
+ * This lets UI code temporarily enable auto-repeat for keys that only have
+ * a "value-stepping" meaning in some contexts (e.g. numeric keys used as
+ * macro shortcuts for brightness/CTCSS) without enabling it globally, which
+ * would break their normal, non-repeating meaning in other contexts (e.g.
+ * direct numeric entry).
+ *
+ * @param mask: bitmask (see enum key in interfaces/keyboard.h) of the keys
+ * that should auto-repeat while held.
+ */
+void input_setRepeatableKeys(keyboard_t mask);
 
 /**
  * This function returns true if at least one number is pressed on the

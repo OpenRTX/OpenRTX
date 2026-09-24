@@ -1419,6 +1419,7 @@ void ui_updateFSM(bool *sync_rtx)
     {
         macro_latched = false;
         macro_menu = false;
+        input_setRepeatableKeys(INPUT_DEFAULT_REPEATABLE_KEYS);
     }
 
     long long now = getTick();
@@ -1435,12 +1436,19 @@ void ui_updateFSM(bool *sync_rtx)
             return;
         // If MONI is pressed, activate MACRO functions
         bool moniPressed = msg.keys & KEY_MONI;
-        if(moniPressed || macro_latched)
-        {
+
+        // Let the brightness (7/8) and CTCSS (2/3) macro shortcuts keep
+        // advancing while their number key is held down, but only while
+        // the macro menu is actually active.
+        const int repeatable_macro_keys = INPUT_DEFAULT_REPEATABLE_KEYS | KEY_2
+                                        | KEY_3 | KEY_7 | KEY_8;
+        input_setRepeatableKeys((moniPressed || macro_latched) ?
+                                    repeatable_macro_keys :
+                                    INPUT_DEFAULT_REPEATABLE_KEYS);
+        if (moniPressed || macro_latched) {
             macro_menu = true;
 
-            if(state.settings.macroMenuLatch == 1)
-            {
+            if (state.settings.macroMenuLatch == 1) {
                 // long press moni on its own latches function.
                 if (moniPressed && msg.long_press && !macro_latched)
                 {
@@ -1456,9 +1464,7 @@ void ui_updateFSM(bool *sync_rtx)
 
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;
-        }
-        else
-        {
+        } else {
             macro_menu = false;
         }
 #if defined(PLATFORM_TTWRPLUS)
