@@ -1464,7 +1464,9 @@ void ui_updateFSM(bool *sync_rtx)
 
             _ui_fsm_menuMacro(msg, sync_rtx);
             return;
-        } else {
+        }
+        else
+        {
             macro_menu = false;
         }
 #if defined(PLATFORM_TTWRPLUS)
