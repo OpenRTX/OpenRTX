@@ -8,3 +8,9 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 1
+    # Digest bumps only; change Ubuntu releases by hand.
+    ignore:
+      - dependency-name: ubuntu
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
