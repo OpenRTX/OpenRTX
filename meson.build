@@ -1234,6 +1234,27 @@ gfx_text_test = executable('gfx_text_test',
                             sources : unit_test_src + ['tests/unit/gfx_text.cpp'],
                             kwargs  : unit_test_opts)
 
+# Baseband replay (tests/platform/M17Replay.hpp): a command line tool and a
+# unit test replaying a committed recording through the same class. The test
+# gets the asset directory as an absolute path so it does not depend on the
+# directory it is run from.
+m17_replay_src = ['tests/platform/M17Replay.cpp']
+m17_replay_inc = linux_inc + ['tests/platform']
+m17_replay_tool = executable('m17_replay_tool',
+                             sources             : unit_test_src + m17_replay_src + ['tests/platform/m17_replay_tool.cpp'],
+                             c_args              : linux_c_args,
+                             cpp_args            : linux_cpp_args,
+                             include_directories : m17_replay_inc,
+                             dependencies        : [sdl_dep, threads_dep, codec2_dep],
+                             link_args           : linux_l_args)
+
+m17_replay_test_opts = unit_test_opts + {'include_directories' : m17_replay_inc,
+                                         'cpp_args' : linux_cpp_args +
+      ['-DREPLAY_ASSET_DIR="' + meson.project_source_root() / 'tests/unit/assets' + '"']}
+m17_replay_test = executable('m17_replay_test',
+                             sources : unit_test_src + m17_replay_src + ['tests/unit/M17_replay.cpp'],
+                             kwargs  : m17_replay_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1247,3 +1268,4 @@ test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
+test('M17 Baseband Replay Test', m17_replay_test)

@@ -1,0 +1,249 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include <cstring>
+#include <string>
+
+#include "core/crc.h"
+#include "protocols/M17/LinkSetupFrame.hpp"
+#include "protocols/M17/StreamFrame.hpp"
+#include "M17Replay.hpp"
+
+using namespace M17;
+
+M17Replay::M17Replay(const bool invertPhase, const bool verbose)
+    : invertPhase(invertPhase)
+    , verbose(verbose)
+    , locked(false)
+    , haveStreamFn(false)
+    , lastStreamFn(0)
+    , packetLen(0)
+    , packetNext(0)
+    , count{}
+{
+    demod.init();
+}
+
+M17Replay::~M17Replay()
+{
+}
+
+bool M17Replay::replay(const char *path, const uint32_t sampleRate)
+{
+    if ((sampleRate != SAMPLE_RATE) && (sampleRate != 2 * SAMPLE_RATE))
+        return false;
+
+    FILE *file = std::fopen(path, "rb");
+    if (file == nullptr)
+        return false;
+
+    count = Counts{};
+    locked = false;
+    haveStreamFn = false;
+    packetLen = 0;
+    packetNext = 0;
+    decoder.reset();
+
+    const size_t step = sampleRate / SAMPLE_RATE;
+    int16_t block[BLOCK_SAMPLES];
+
+    for (size_t n = 0; readBlock(file, step, block); n++)
+        processBlock(block,
+                     static_cast<double>(n * BLOCK_SAMPLES) / SAMPLE_RATE);
+
+    std::fclose(file);
+    return true;
+}
+
+const M17Replay::Counts &M17Replay::counts() const
+{
+    return count;
+}
+
+bool M17Replay::readBlock(FILE *file, const size_t step, int16_t *block)
+{
+    int16_t in[2];
+
+    for (size_t i = 0; i < BLOCK_SAMPLES; i++) {
+        if (std::fread(in, sizeof(int16_t), step, file) != step)
+            return false;
+        block[i] = in[0];
+    }
+
+    return true;
+}
+
+void M17Replay::processBlock(const int16_t *block, const double time)
+{
+    bool frameReady = false;
+
+    for (size_t i = 0; i < BLOCK_SAMPLES; i++) {
+        if (demod.sample(block[i], invertPhase)) {
+            frame = demod.getFrame();
+            frameReady = true;
+        }
+    }
+
+    // Lock handling as in OpMode_M17::rxState(): the frame decoder is reset
+    // when a lock is acquired, and frames are consumed only while locked.
+    bool lock = demod.isLocked();
+    if (lock && !locked) {
+        decoder.reset();
+        packetLen = 0;
+        packetNext = 0;
+        haveStreamFn = false;
+        count.locks++;
+        if (verbose)
+            std::printf("%8.3f  lock\n", time);
+    }
+
+    if (!lock && locked && verbose)
+        std::printf("%8.3f  unlock\n", time);
+
+    locked = lock;
+    if (!frameReady || !locked)
+        return;
+
+    switch (decoder.decodeFrame(frame)) {
+        case FrameType::LINK_SETUP:
+            handleLinkSetup(time);
+            break;
+        case FrameType::STREAM:
+            handleStream(time);
+            break;
+        case FrameType::PACKET:
+            handlePacket(time);
+            break;
+        default:
+            break;
+    }
+}
+
+void M17Replay::handleLinkSetup(const double time)
+{
+    LinkSetupFrame lsf = decoder.getLsf();
+
+    if (!lsf.valid()) {
+        count.lsfInvalid++;
+        return;
+    }
+
+    count.lsfValid++;
+    if (verbose) {
+        Callsign src = lsf.getSource();
+        Callsign dst = lsf.getDestination();
+        std::printf("%8.3f  lsf %s -> %s\n", time,
+                    static_cast<const char *>(src),
+                    static_cast<const char *>(dst));
+    }
+}
+
+void M17Replay::handleStream(const double time)
+{
+    (void)time;
+    count.streamFrames++;
+
+    // Frame numbers count up modulo 0x8000 within one lock; a small forward
+    // gap means frames were lost while locked. A repeated or backward number
+    // is a frame the decoder zeroed for excess errors, noise, or a new
+    // stream, and is not counted.
+    StreamFrame sf = decoder.getStreamFrame();
+    uint16_t fn = sf.getFrameNumber() & 0x7FFF;
+
+    if (haveStreamFn) {
+        uint16_t gap = (fn - lastStreamFn - 1) & 0x7FFF;
+        if (gap < 0x4000)
+            count.streamMissed += gap;
+    }
+
+    haveStreamFn = true;
+    lastStreamFn = fn;
+
+    if (sf.isLastFrame()) {
+        count.streamEnds++;
+        haveStreamFn = false;
+    }
+}
+
+void M17Replay::handlePacket(const double time)
+{
+    if (!decoder.getLsf().valid())
+        return;
+
+    count.packetFrames++;
+    const PacketFrame &pf = decoder.getPacketFrame();
+    uint8_t counter = pf.getCounter();
+
+    if (!pf.isEof()) {
+        if ((counter != packetNext)
+            || (packetLen + PacketFrame::DATA_SIZE > packet.size())) {
+            count.packetsAborted++;
+            if (verbose)
+                printPacket(time, "aborted");
+            packetLen = 0;
+            packetNext = 0;
+            return;
+        }
+
+        std::memcpy(&packet[packetLen], pf.data(), PacketFrame::DATA_SIZE);
+        packetLen += PacketFrame::DATA_SIZE;
+        packetNext++;
+        return;
+    }
+
+    // Last frame: the counter holds the number of valid bytes.
+    if ((counter == 0) || (counter > PacketFrame::DATA_SIZE)
+        || (packetLen + counter > packet.size())) {
+        count.packetsAborted++;
+        if (verbose)
+            printPacket(time, "aborted");
+        packetLen = 0;
+        packetNext = 0;
+        return;
+    }
+
+    std::memcpy(&packet[packetLen], pf.data(), counter);
+    packetLen += counter;
+
+    bool crcOk = false;
+    if (packetLen >= 3) {
+        uint16_t computed = crc_m17(packet.data(), packetLen - 2);
+        uint16_t stored = (packet[packetLen - 2] << 8) | packet[packetLen - 1];
+        crcOk = (computed == stored);
+    }
+
+    if (crcOk)
+        count.packetsOk++;
+    else
+        count.packetsCrc++;
+
+    if (verbose)
+        printPacket(time, crcOk ? "ok" : "crc");
+
+    packetLen = 0;
+    packetNext = 0;
+}
+
+void M17Replay::printPacket(const double time, const char *outcome)
+{
+    // Payload byte 0 is the protocol identifier and the last two bytes are
+    // the CRC; SMS (0x05) carries NUL-terminated text between them, printed
+    // even on a bad CRC since it usually identifies the message.
+    std::string text;
+    if ((packetLen >= 3) && (packet[0] == 0x05)) {
+        text.assign(reinterpret_cast<const char *>(&packet[1]), packetLen - 3);
+        while (!text.empty() && text.back() == '\0')
+            text.pop_back();
+        for (char &c : text)
+            if (static_cast<unsigned char>(c) < 0x20)
+                c = '?';
+    }
+
+    std::printf("%8.3f  packet %-7s len=%3zu type=0x%02x %s%s%s\n", time,
+                outcome, packetLen, packetLen ? packet[0] : 0,
+                text.empty() ? "" : "\"", text.c_str(),
+                text.empty() ? "" : "\"");
+}
