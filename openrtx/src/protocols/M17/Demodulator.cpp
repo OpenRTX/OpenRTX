@@ -211,6 +211,11 @@ bool Demodulator::isLocked()
         || (demodState == DemodState::SYNC_UPDATE);
 }
 
+bool Demodulator::newFrameReady() const
+{
+    return newFrame;
+}
+
 void Demodulator::sample(int16_t rawSample, bool invertPhase)
 {
     // Apply DC removal filter

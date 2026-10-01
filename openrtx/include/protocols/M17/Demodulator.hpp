@@ -94,6 +94,13 @@ public:
      */
     bool isLocked();
 
+    /**
+     * Tell whether a frame has been demodulated since the last getFrame().
+     *
+     * @return true if a new frame is available.
+     */
+    bool newFrameReady() const;
+
 private:
 
     /**
