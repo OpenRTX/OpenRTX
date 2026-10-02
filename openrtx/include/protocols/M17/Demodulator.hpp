@@ -86,20 +86,15 @@ public:
      *
      * @param rawSample: signed 16-bit baseband sample.
      * @param invertPhase: invert the phase of the sample before decoding.
+     * @return true if a new frame has been fully decoded and not yet read
+     * with getFrame().
      */
-    void sample(int16_t rawSample, bool invertPhase = false);
+    bool sample(int16_t rawSample, bool invertPhase = false);
 
     /**
      * @return true if a demodulator is locked on an M17 stream.
      */
     bool isLocked();
-
-    /**
-     * Tell whether a frame has been demodulated since the last getFrame().
-     *
-     * @return true if a new frame is available.
-     */
-    bool newFrameReady() const;
 
 private:
 
