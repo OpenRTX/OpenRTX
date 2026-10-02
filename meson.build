@@ -1234,20 +1234,25 @@ gfx_text_test = executable('gfx_text_test',
                             sources : unit_test_src + ['tests/unit/gfx_text.cpp'],
                             kwargs  : unit_test_opts)
 
-# Baseband replay: a command line tool (tests/platform/m17_replay.cpp) and a
-# unit test replaying a committed recording through the same code.
+# Baseband replay (tests/platform/M17Replay.hpp): a command line tool and a
+# unit test replaying a committed recording through the same class. The test
+# gets the asset directory as an absolute path so it does not depend on the
+# directory it is run from.
+m17_replay_src = ['tests/platform/M17Replay.cpp']
+m17_replay_inc = linux_inc + ['tests/platform']
 m17_replay_tool = executable('m17_replay_tool',
-                             sources             : unit_test_src + ['tests/platform/m17_replay.cpp'],
+                             sources             : unit_test_src + m17_replay_src + ['tests/platform/m17_replay_tool.cpp'],
                              c_args              : linux_c_args,
                              cpp_args            : linux_cpp_args,
-                             include_directories : linux_inc,
+                             include_directories : m17_replay_inc,
                              dependencies        : [sdl_dep, threads_dep, codec2_dep],
                              link_args           : linux_l_args)
 
-m17_replay_test_opts = unit_test_opts + {'cpp_args' : linux_cpp_args +
+m17_replay_test_opts = unit_test_opts + {'include_directories' : m17_replay_inc,
+                                         'cpp_args' : linux_cpp_args +
       ['-DREPLAY_ASSET_DIR="' + meson.project_source_root() / 'tests/unit/assets' + '"']}
 m17_replay_test = executable('m17_replay_test',
-                             sources : unit_test_src + ['tests/unit/M17_replay.cpp'],
+                             sources : unit_test_src + m17_replay_src + ['tests/unit/M17_replay.cpp'],
                              kwargs  : m17_replay_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
