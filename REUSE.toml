@@ -151,3 +151,9 @@ SPDX-FileCopyrightText = "Roger VK3KYY"
 path = "lib/QRCode/**/*"
 SPDX-License-Identifier = "MIT"
 SPDX-FileCopyrightText = "Richard Moore"
+
+[[annotations]]
+path = "lib/littlefs/**/*"
+precedence = "aggregate"
+SPDX-License-Identifier = "BSD-3-Clause"
+SPDX-FileCopyrightText = "2022, The littlefs authors; 2017, Arm Limited"
