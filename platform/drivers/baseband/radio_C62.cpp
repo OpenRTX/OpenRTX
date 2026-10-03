@@ -1,0 +1,216 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include <interfaces/nvmem.h>
+
+#include <hwconfig.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/radio.h>
+#include <interfaces/delays.h>
+#include <core/utils.h>
+
+#include <algorithm>
+#include <string>
+
+#include "drivers/baseband/BK4819.h"
+#include "radioUtils.h"
+
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/kernel.h>
+
+/**
+ * Set TX power using PWM on pin A03
+ * PWM Period: 1000us (1kHz), adjustable duty cycle for power level
+ *
+ * @param power_percent: 0-100 (0 = min power, 100 = max power)
+ */
+static void set_tx_power(uint8_t power_percent)
+{
+    //TODO: Check if this works... May need to adjust mapping of
+    // power_percent to duty cycle based on actual power output
+    // vs duty cycle curve of the PA, and also consider frequency
+    // dependence of PA efficiency
+
+    // Calculate duty cycle (1000us period = 1kHz)
+    uint32_t period_us = 1000; // 1kHz PWM frequency
+    uint32_t pulse_us = (period_us * power_percent) / 100;
+
+    int ret = pwm_set_dt(&pwm_rf_apc, PWM_USEC(period_us), PWM_USEC(pulse_us));
+
+    if (ret < 0) {
+        printk("Failed to set TX power PWM: %d\n", ret);
+    }
+}
+
+static const rtxStatus_t
+    *config; // Pointer to data structure with radio configuration
+
+static enum opstatus radioStatus; // Current operating status
+
+/* The BK4819 GPIOs to control the C62 LNA and PA */
+enum {
+    GPIO_VHF_RX_LNA = 0,
+    GPIO_UHF_RX_LNA,
+    GPIO_VHF_TX_PA,
+    GPIO_UHF_TX_PA,
+    GPIO_ALC_TX_LED
+};
+
+void radio_init(const rtxStatus_t *rtxState)
+{
+    config = rtxState;
+    radioStatus = OFF;
+
+    BK4819_SetAF(&c62_bk4819, 0);
+
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_RX_LNA, OUTPUT_ACTIVE_LOW);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_RX_LNA, OUTPUT_ACTIVE_LOW);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_TX_PA, OUTPUT);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_TX_PA, OUTPUT);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_ALC_TX_LED, OUTPUT);
+}
+
+void radio_terminate()
+{
+}
+
+void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
+{
+    (void)vhfOffset;
+    (void)uhfOffset;
+}
+
+void radio_setOpmode(const enum opmode mode)
+{
+    (void)mode;
+}
+
+bool radio_checkRxDigitalSquelch()
+{
+    return bk4819_get_ctcss(&c62_bk4819);
+}
+
+void radio_enableAfOutput()
+{
+    bk4819_set_modulation(&c62_bk4819, true);
+    return;
+}
+
+void radio_disableAfOutput()
+{
+    BK4819_SetAF(&c62_bk4819, 0);
+}
+
+void radio_enableRx()
+{
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+
+    //Before enable RX path delay to allow hardware to settle
+    delayMs(5);
+
+    if (config->rxFrequency < 174000000) {
+        gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+    } else {
+        gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+    }
+
+    bk4819_set_freq(&c62_bk4819, config->rxFrequency);
+    bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
+
+    if (config->rxToneEn) {
+        bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
+    }
+
+    bk4819_rx_on(&c62_bk4819);
+    radioStatus = RX;
+}
+
+void radio_enableTx()
+{
+    if (config->txDisable == 1)
+        return;
+
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+
+    //Before enable TX path delay to allow hardware to settle
+    delayMs(5);
+
+    if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
+        return;
+
+    bk4819_set_freq(&c62_bk4819, config->txFrequency);
+
+    if (config->txToneEn) {
+        bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
+    }
+
+    if (config->txFrequency < 174000000) {
+        gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+    } else {
+        gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+    }
+
+    gpioDev_set(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+
+    // depending on power level set PWM duty cycle for APC voltage control
+    // Need table for this instead of quadratic mapping,
+    // and also consider frequency dependence of PA efficiency
+    // and battery voltage, but for now just use a crude quadratic mapping
+    uint8_t power_percent =
+        std::min(config->txPower * config->txPower * 100 / (5000 * 5000), 100U);
+    if (power_percent > 60)
+        power_percent = 60; // limit to 60% duty cycle for safety
+    set_tx_power(power_percent);
+
+    bk4819_tx_on(&c62_bk4819);
+    radioStatus = TX;
+}
+
+void radio_disableRtx()
+{
+    bk4819_disable_ctdcss(&c62_bk4819);
+
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+
+    bk4819_rtx_off(&c62_bk4819);
+    radioStatus = OFF;
+}
+
+void radio_updateConfiguration()
+{
+    /*
+     * Update VCO frequency and tuning parameters if current operating status
+     * is different from OFF.
+     * This is done by calling again the corresponding functions, which is safe
+     * to do and avoids code duplication.
+     */
+    if (radioStatus == RX)
+        radio_enableRx();
+    if (radioStatus == TX)
+        radio_enableTx();
+}
+
+rssi_t radio_getRssi()
+{
+    return bk4819_get_rssi(&c62_bk4819);
+}
+
+enum opstatus radio_getStatus()
+{
+    return radioStatus;
+}
