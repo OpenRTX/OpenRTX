@@ -18,6 +18,9 @@
 extern "C" {
 #endif
 
+#include "drivers/baseband/BK1080.h"
+#include "drivers/baseband/BK4819.h"
+
 /*
  * Display properties are encoded in the devicetree
  */
@@ -37,11 +40,20 @@ extern "C" {
 /* M17 deactivated for now as the feature will come with the next PR */
 //#define CONFIG_M17
 
+/**
+ * BK4819 and BK1080 device instances. Pin numbers must be kept in sync
+ * with the board devicetree (gpioa/gpiob nodes).
+ */
+extern const struct BK4819 c62_bk4819;
+extern const struct gpioDev c62_bk4819_gpio;
+extern const struct BK1080 c62_bk1080;
+
 extern const struct gpio_dt_spec button_ptt;
 extern const struct gpio_dt_spec led_white;
 extern const struct gpio_dt_spec led_green;
 extern const struct gpio_dt_spec led_keyboard;
 extern const struct pwm_dt_spec pwm_lcd_backlight;
+extern const struct pwm_dt_spec pwm_rf_apc;
 extern const struct device *adc_dev;
 
 #ifdef __cplusplus

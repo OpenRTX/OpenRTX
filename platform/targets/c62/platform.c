@@ -15,6 +15,7 @@
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/kernel.h>
 #include <interfaces/audio.h>
+#include "drivers/SPI/spi_zephyr.h"
 
 static const hwInfo_t hwInfo = {
     .name = "c62",
@@ -98,6 +99,10 @@ void platform_init_csk6()
 
     // Enable keyboard backlight
     gpio_pin_set_dt(&led_keyboard, 1);
+
+    /* Initialise BK4819 SPI bus and transceiver */
+    spiZephyr_init(c62_bk4819.spi);
+    bk4819_init(&c62_bk4819);
 
     /* Initialise audio */
     audio_init();
@@ -233,12 +238,12 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    BK4819_BeepStart(freq, true);
+    BK4819_BeepStart(&c62_bk4819, freq, true);
 }
 
 void platform_beepStop()
 {
-    BK4819_BeepStop();
+    BK4819_BeepStop(&c62_bk4819);
 }
 
 const hwInfo_t *platform_getHwInfo()
