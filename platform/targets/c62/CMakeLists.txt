@@ -14,15 +14,18 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/delays.c
 
     ${OPENRTX_ROOT}/platform/targets/c62/platform.c
+    ${OPENRTX_ROOT}/platform/targets/c62/hwconfig.c
 
+    ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK4819.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK1080.c
 
     ${OPENRTX_ROOT}/platform/drivers/stubs/nvmem_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
     ${OPENRTX_ROOT}/platform/drivers/display/display_c62.c
-    ${OPENRTX_ROOT}/platform/drivers/stubs/radio_stub.c
+    ${OPENRTX_ROOT}/platform/drivers/baseband/radio_C62.cpp
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_c62.c
+
     ${OPENRTX_ROOT}/platform/drivers/stubs/audio_stub.c
 )
 
