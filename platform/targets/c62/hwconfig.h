@@ -11,6 +11,9 @@
 
 #include <zephyr/device.h>
 
+#include "drivers/baseband/BK1080.h"
+#include "drivers/baseband/BK4819.h"
+
 /*
  * Display properties are encoded in the devicetree
  */
@@ -28,5 +31,12 @@
 #define CONFIG_BAT_NCELLS 2
 
 #define CONFIG_M17
+
+/**
+ * BK4819 and BK1080 device instances. Pin numbers must be kept in sync
+ * with the board devicetree (gpioa/gpiob nodes).
+ */
+extern const struct BK4819 c62_bk4819;
+extern const struct BK1080 c62_bk1080;
 
 #endif /* HWCONFIG_H */
