@@ -32,11 +32,21 @@ static const struct gpio_dt_spec col2 = GPIO_DT_SPEC_GET(COL2_NODE, gpios);
 static const struct gpio_dt_spec col3 = GPIO_DT_SPEC_GET(COL3_NODE, gpios);
 static const struct gpio_dt_spec col4 = GPIO_DT_SPEC_GET(COL4_NODE, gpios);
 static const struct gpio_dt_spec col5 = GPIO_DT_SPEC_GET(COL5_NODE, gpios);
+static const struct gpio_dt_spec *cols[] = { &row1, &row2, &row3, &row4 };
+static const struct gpio_dt_spec *rows[] = { &col1, &col2, &col3, &col4,
+                                             &col5 };
 
 #define SIDEKEY_NODE DT_NODELABEL(sidekey)
 
 static const struct gpio_dt_spec sidekey = GPIO_DT_SPEC_GET_OR(SIDEKEY_NODE,
                                                                gpios, { 0 });
+
+static const uint32_t keyMap[] = { KEY_ENTER, KEY_UP,   KEY_DOWN, KEY_ESC,
+                                   KEY_3,     KEY_4,    KEY_5,    KEY_6,
+                                   KEY_7,     KEY_8,    KEY_9,    KEY_STAR,
+                                   KEY_0,     KEY_HASH, 0,
+                                   0, // 14 and 15 are unused
+                                   KEY_F1,    KEY_F2,   KEY_1,    KEY_2 };
 
 void kbd_init()
 {
@@ -49,8 +59,6 @@ void kbd_terminate()
 keyboard_t kbd_getKeys()
 {
     uint32_t keys = 0;
-    const struct gpio_dt_spec *cols[] = { &row1, &row2, &row3, &row4 };
-    const struct gpio_dt_spec *rows[] = { &col1, &col2, &col3, &col4, &col5 };
 
     // Configure rows as outputs (initially low)
     for (int i = 0; i < 5; i++) {
@@ -86,13 +94,6 @@ keyboard_t kbd_getKeys()
 
     // Map raw keys to KEY_ enum values
     keyboard_t result = 0;
-
-    static const uint32_t keyMap[] = {
-        KEY_ENTER, KEY_UP,   KEY_DOWN, KEY_ESC, KEY_3, KEY_4,
-        KEY_5,     KEY_6,    KEY_7,    KEY_8,   KEY_9, KEY_STAR,
-        KEY_0,     KEY_HASH, 0,        0, // 14 and 15 are unused
-        KEY_MONI,  KEY_F2,   KEY_1,    KEY_2
-    };
 
     for (uint8_t i = 0; i < 20; i++) {
         if (keys & (1 << i) && i < sizeof(keyMap) / sizeof(keyMap[0])) {
