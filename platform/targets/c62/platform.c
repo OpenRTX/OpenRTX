@@ -187,8 +187,7 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    //return gpio_pin_get_dt(&button_ptt); // This may brick your radio! Verify what i did in radio_C62.cpp before running this!
-    return false;
+    return gpio_pin_get_dt(&button_ptt);
 }
 
 bool platform_pwrButtonStatus()

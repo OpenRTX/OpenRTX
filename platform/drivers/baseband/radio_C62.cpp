@@ -9,6 +9,7 @@
 #include <hwconfig.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
+#include <interfaces/delays.h>
 #include <core/utils.h>
 
 #include <algorithm>
@@ -187,6 +188,9 @@ void radio_checkVOX()
 void radio_setRxFilters(uint32_t freq)
 {
     if (freq < 174000000) {
+    //Before enable RX path delay to allow hardware to settle
+    delayMs(5);
+
         bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA,
                             true); // VHF RX LNA
     } else {
@@ -230,6 +234,9 @@ void radio_enableTx()
     bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED,
                         false); // ALC / TX LED
 
+    //Before enable TX path delay to allow hardware to settle
+    delayMs(5);
+
     if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
         return;
 
@@ -251,10 +258,14 @@ void radio_enableTx()
                         true); // ALC / TX LED
 
     // depending on power level set PWM duty cycle for APC voltage control
-    // Maybe need table for this instead of crude linear mapping, and also consider frequency dependence of PA efficiency
-    set_tx_power(std::min(
-        config->txPower * 100 / 5000,
-        100U)); // crude linear mapping of power to duty cycle, max at 5W
+    // Need table for this instead of quadratic mapping,
+    // and also consider frequency dependence of PA efficiency
+    // and battery voltage, but for now just use a crude quadratic mapping
+    uint8_t power_percent =
+        std::min(config->txPower * config->txPower * 100 / (5000 * 5000), 100U);
+    if (power_percent > 60)
+        power_percent = 60; // limit to 60% duty cycle for safety
+    set_tx_power(power_percent);
 
     bk4819_tx_on(&c62_bk4819);
     radioStatus = TX;
