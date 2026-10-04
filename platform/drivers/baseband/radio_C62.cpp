@@ -59,64 +59,6 @@ enum {
     GPIO_ALC_TX_LED
 };
 
-/**
- * Calculate DCS parity and compose
- */
-static uint32_t cdcss_compose(uint16_t cdcss_code)
-{
-    uint32_t data = 0;
-
-    data |= (((cdcss_code & 0x01) ^ ((cdcss_code >> 1) & 0x01)
-              ^ ((cdcss_code >> 2) & 0x01) ^ ((cdcss_code >> 3) & 0x01)
-              ^ ((cdcss_code >> 4) & 0x01) ^ ((cdcss_code >> 7) & 0x01))
-             << 12);
-    data |= (!(((cdcss_code >> 1) & 0x01) ^ ((cdcss_code >> 2) & 0x01)
-               ^ ((cdcss_code >> 3) & 0x01) ^ ((cdcss_code >> 4) & 0x01)
-               ^ ((cdcss_code >> 5) & 0x01) ^ ((cdcss_code >> 8) & 0x01))
-             << 13);
-    data |= (((cdcss_code & 0x01) ^ ((cdcss_code >> 1) & 0x01)
-              ^ ((cdcss_code >> 5) & 0x01) ^ ((cdcss_code >> 6) & 0x01)
-              ^ ((cdcss_code >> 8) & 0x01))
-             << 14);
-    data |= (!(((cdcss_code >> 1) & 0x01) ^ ((cdcss_code >> 2) & 0x01)
-               ^ ((cdcss_code >> 6) & 0x01) ^ ((cdcss_code >> 7) & 0x01)
-               ^ ((cdcss_code >> 8) & 0x01))
-             << 15);
-    data |= (!((cdcss_code & 0x01) ^ ((cdcss_code >> 1) & 0x01)
-               ^ ((cdcss_code >> 4) & 0x01) ^ ((cdcss_code >> 8) & 0x01))
-             << 16);
-    data |= (!(((cdcss_code >> 1) & 0x01) ^ ((cdcss_code >> 3) & 0x01)
-               ^ ((cdcss_code >> 4) & 0x01) ^ ((cdcss_code >> 5) & 0x01)
-               ^ ((cdcss_code >> 7) & 0x01))
-             << 17);
-    data |= (((cdcss_code & 0x01) ^ ((cdcss_code >> 2) & 0x01)
-              ^ ((cdcss_code >> 3) & 0x01) ^ ((cdcss_code >> 5) & 0x01)
-              ^ ((cdcss_code >> 6) & 0x01) ^ ((cdcss_code >> 7) & 0x01)
-              ^ ((cdcss_code >> 8) & 0x01))
-             << 18);
-    data |= ((((cdcss_code >> 1) & 0x01) ^ ((cdcss_code >> 3) & 0x01)
-              ^ ((cdcss_code >> 4) & 0x01) ^ ((cdcss_code >> 6) & 0x01)
-              ^ ((cdcss_code >> 7) & 0x01) ^ ((cdcss_code >> 8) & 0x01))
-             << 19);
-    data |= ((((cdcss_code >> 2) & 0x01) ^ ((cdcss_code >> 4) & 0x01)
-              ^ ((cdcss_code >> 5) & 0x01) ^ ((cdcss_code >> 7) & 0x01)
-              ^ ((cdcss_code >> 8) & 0x01))
-             << 20);
-    data |= (!(((cdcss_code >> 3) & 0x01) ^ ((cdcss_code >> 5) & 0x01)
-               ^ ((cdcss_code >> 6) & 0x01) ^ ((cdcss_code >> 8) & 0x01))
-             << 21);
-    data |= (!((cdcss_code & 0x01) ^ ((cdcss_code >> 1) & 0x01)
-               ^ ((cdcss_code >> 2) & 0x01) ^ ((cdcss_code >> 3) & 0x01)
-               ^ ((cdcss_code >> 6) & 0x01))
-             << 22);
-
-    data |= (0x04 << 9);
-
-    data |= cdcss_code;
-
-    return data;
-}
-
 void radio_init(const rtxStatus_t *rtxState)
 {
     config = rtxState;
@@ -138,11 +80,6 @@ void radio_init(const rtxStatus_t *rtxState)
 
 void radio_terminate()
 {
-}
-
-void radio_setBandwidth(const uint8_t bandwidth)
-{
-    bk4819_SetFilterBandwidth(&c62_bk4819, bandwidth);
 }
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
@@ -172,43 +109,27 @@ void radio_disableAfOutput()
     BK4819_SetAF(&c62_bk4819, 0);
 }
 
-void radio_checkVOX()
+void radio_enableRx()
 {
-    return;
-    radio_disableRtx();
-    if (bk4819_get_vox(&c62_bk4819)) {
-        if (radioStatus != TX)
-            radio_enableTx();
-    } else {
-        if (radioStatus != RX)
-            radio_enableRx();
-    }
-}
+    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA, false); // VHF RX LNA
+    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA, false); // UHF RX LNA
+    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_TX_PA, false);  // UHF TX PA
+    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_TX_PA, false);  // UHF TX PA
+    bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED, false); // ALC / TX LED
 
-void radio_setRxFilters(uint32_t freq)
-{
-    if (freq < 174000000) {
     //Before enable RX path delay to allow hardware to settle
     delayMs(5);
 
+    if (config->rxFrequency < 174000000) {
         bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA,
                             true); // VHF RX LNA
     } else {
         bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA,
                             true); // UHF RX LNA
     }
-}
 
-void radio_enableRx()
-{
-    bk4819_gpio_pin_set(&c62_bk4819, 0, false); // VHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, 1, false); // UHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, 2, false); // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, 3, false); // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, 4, false); // ALC / TX LED
-
-    radio_setRxFilters(config->rxFrequency);
     bk4819_set_freq(&c62_bk4819, config->rxFrequency);
+    bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
 
     if (config->rxToneEn) {
         bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
@@ -292,19 +213,16 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
-    // Set squelch
-    int squelch = -127 + (config->sqlLevel * 66) / 15;
-    bk4819_set_Squelch(&c62_bk4819, ((squelch + 160) * 2),
-                       ((squelch - 3 + 160) * 2), 0x5f, 0x5e, 0x20, 0x08);
-
-    // Set BK4819 PA Gain tuning according to TX power and frequency
-
-    bk4819_set_freq(&c62_bk4819, config->rxFrequency);
-
-    if (radioStatus == RX) {
-        radio_setRxFilters(config->rxFrequency);
-        radio_setBandwidth(config->bandwidth);
-    }
+    /*
+     * Update VCO frequency and tuning parameters if current operating status
+     * is different from OFF.
+     * This is done by calling again the corresponding functions, which is safe
+     * to do and avoids code duplication.
+     */
+    if (radioStatus == RX)
+        radio_enableRx();
+    if (radioStatus == TX)
+        radio_enableTx();
 }
 
 rssi_t radio_getRssi()
