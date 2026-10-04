@@ -19,7 +19,3 @@ endif()
 if(CONFIG_LSF_AUDIO_SERVICE AND CONFIG_CSK6_FLASH_STALL_SECOND_CORE)
 message(FATAL_ERROR "To use audio service, CONFIG_CSK6_FLASH_STALL_SECOND_CORE should be explicitly disabled (=n)")
 endif()
-
-zephyr_library_sources_ifdef(CONFIG_LSF_THINKER_SERVICE service_thinker.c)
-zephyr_library_sources_ifdef(CONFIG_LSF_WASM_SERVICE service_wasm.c)
-zephyr_library_sources_ifdef(CONFIG_LSF_VAD_SERVICE service_vad.c)

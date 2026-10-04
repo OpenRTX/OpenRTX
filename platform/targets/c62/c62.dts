@@ -50,24 +50,6 @@
 			reg = <0>;
 			status = "okay";
 		};
-
-		lsf_thinker: thinker-service@1 {
-			compatible = "lsf,thinker-service";
-			reg = <1>;
-			status = "disabled";
-		};
-
-		lsf_wasm: wasm-service@2 {
-			compatible = "lsf,wasm-service";
-			reg = <2>;
-			status = "disabled";
-		};
-
-		lsf_vad: wasm-service@3 {
-			compatible = "lsf,vad-service";
-			reg = <3>;
-			status = "disabled";
-		};
 	};
 	
 	leds {
