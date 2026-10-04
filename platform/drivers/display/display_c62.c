@@ -85,17 +85,15 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 
 void display_render(void *fb)
 {
-    uint8_t *frameBuffer = (uint8_t *)fb;
+    uint16_t *frameBuffer = (uint16_t *)fb;
+    uint16_t *shadowBuffer16 = (uint16_t *)shadowBuffer;
 
     // Process each 16-bit pixel
-    for (size_t i = 0; i < FB_SIZE; i += 2) {
+    for (size_t i = 0; i < FB_SIZE / sizeof(uint16_t); i++) {
         // Extract the 16-bit RGB565 value
-        uint16_t pixel = (frameBuffer[i] << 8) | frameBuffer[i + 1];
-
         // Store in shadow buffer with byte order swapped
         // This fixes endianness issues which can cause color problems
-        shadowBuffer[i + 1] = (pixel >> 8) & 0xFF;
-        shadowBuffer[i] = pixel & 0xFF;
+        shadowBuffer16[i] = __builtin_bswap16(frameBuffer[i]);
     }
 
     display_write(displayDev, 0, 0, &displayBufDesc, shadowBuffer);
