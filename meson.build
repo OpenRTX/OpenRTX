@@ -77,6 +77,7 @@ horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
              'openrtx/src/protocols/horse/ldpc_horse.c',
              'openrtx/src/protocols/horse/horse_crypto.c',
              'openrtx/src/protocols/horse/horse_keystore.c',
+             'openrtx/src/protocols/horse/horse_peers.c',
              'openrtx/src/protocols/horse/horse_provision.c',
              'openrtx/src/core/horse_codec.c',
              'openrtx/src/rtx/OpMode_Horse.cpp']
@@ -1274,6 +1275,10 @@ horse_info_test = executable('horse_info_test',
                              c_args : linux_c_args,
                              cpp_args : linux_cpp_args)
 
+horse_peers_test = executable('horse_peers_test',
+                              sources : unit_test_src + ['tests/unit/horse_peers.cpp'],
+                              kwargs : unit_test_opts)
+
 horse_keystore_test = executable('horse_keystore_test',
                                  sources : ['openrtx/src/protocols/horse/horse_keystore.c',
                                             'openrtx/src/protocols/horse/horse_crypto.c',
@@ -1347,6 +1352,7 @@ test('minmea conversion Test', minmea_conversion_test)
 test('Horse Frame Unit Test',  horse_frame_test)
 test('Horse Crypto Unit Test', horse_crypto_test)
 test('Horse Info Reset Test', horse_info_test)
+test('Horse Peers Test', horse_peers_test)
 test('Horse Keystore Test', horse_keystore_test)
 test('Horse Loopback Test', horse_loopback_test)
 test('UI Check Standby Test', ui_check_standby_test)

@@ -16,7 +16,7 @@
 #include "core/state.h"
 #include "protocols/horse/HorseConstants.hpp"
 #include "protocols/horse/horse_keystore.h"
-#include "interfaces/cps_io.h"
+#include "protocols/horse/horse_peers.h"
 #include "protocols/horse/horse_crypto.h"
 #include "rtx/rtx.h"
 #include <cstring>
@@ -26,32 +26,6 @@ static bool horse_is_sig_frame(uint16_t fn)
 {
     return fn >= horse::SIG_FRAME_BASE &&
            fn < (horse::SIG_FRAME_BASE + horse::SIG_FRAME_COUNT);
-}
-
-static bool horse_contact_has_x25519(const contact_t *contact)
-{
-    if (contact == NULL)
-        return false;
-
-    for (size_t i = 0; i < sizeof contact->info.horse.x25519_pk; i++)
-    {
-        if (contact->info.horse.x25519_pk[i] != 0)
-            return true;
-    }
-    return false;
-}
-
-static bool horse_contact_has_ed25519(const contact_t *contact)
-{
-    if (contact == NULL)
-        return false;
-
-    for (size_t i = 0; i < sizeof contact->info.horse.ed25519_pk; i++)
-    {
-        if (contact->info.horse.ed25519_pk[i] != 0)
-            return true;
-    }
-    return false;
 }
 
 #ifdef PLATFORM_MOD17
@@ -124,19 +98,18 @@ void OpMode_Horse::tryFinalizeRxSessionSig()
     if (rxSigChunks < SIG_FRAME_COUNT)
         return;
 
-    contact_t contact;
-    memset(&contact, 0, sizeof contact);
+    horse_peer_t peer;
+    memset(&peer, 0, sizeof peer);
     if (state.channel.horse.contact_index == 0 ||
-        cps_readContact(&contact, state.channel.horse.contact_index) != 0 ||
-        contact.mode != OPMODE_HORSE ||
-        !horse_contact_has_ed25519(&contact))
+        !horse_peer_read(state.channel.horse.contact_index, &peer) ||
+        !horse_peer_has_ed25519(&peer))
         return;
 
     uint8_t session_msg[HORSE_SESSION_MSG_BYTES];
     horse_crypto_build_session_message(rxLsfSrc.data(), rxLsfDst.data(),
                                        rxLsfEphPk, rxLsfFlags, rxLsfVersion,
                                        session_msg);
-    if (!horse_crypto_verify(contact.info.horse.ed25519_pk, session_msg,
+    if (!horse_crypto_verify(peer.ed25519_pk, session_msg,
                              sizeof session_msg, rxSessionSig))
         return;
 
@@ -499,11 +472,11 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
         uint8_t eph_pk[HORSE_X25519_PUBLICKEY_BYTES] = {0};
         uint8_t eph_sk[HORSE_X25519_SECRETKEY_BYTES] = {0};
         uint8_t flags = 0;
-        contact_t contact;
+        horse_peer_t peer;
         horse_identity_keys_t id;
-        memset(&contact, 0, sizeof contact);
+        memset(&peer, 0, sizeof peer);
         memset(&id, 0, sizeof id);
-        bool have_contact = false;
+        bool have_peer = false;
         bool want_encrypt = state.channel.horse.encrypt_en;
         bool want_sign = state.channel.horse.sign_en;
 
@@ -511,15 +484,14 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
             want_encrypt = true;
 
         if (state.channel.horse.contact_index != 0 &&
-            cps_readContact(&contact, state.channel.horse.contact_index) == 0 &&
-            contact.mode == OPMODE_HORSE)
-            have_contact = true;
+            horse_peer_read(state.channel.horse.contact_index, &peer))
+            have_peer = true;
 
         const bool have_id = horse_keystore_copy_identity(&id);
         if (!horse_tx_allowed(want_encrypt, want_sign, horse_crypto_available(),
                               have_id,
-                              have_contact && horse_contact_has_x25519(&contact),
-                              have_contact && horse_contact_has_ed25519(&contact)))
+                              have_peer && horse_peer_has_x25519(&peer),
+                              have_peer && horse_peer_has_ed25519(&peer)))
         {
             if (!horse_crypto_available())
                 status->horseError = HORSE_ERR_NO_CRYPTO;
@@ -536,7 +508,7 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
 
         if (!horse_crypto_x25519_keypair(eph_pk, eph_sk) ||
             !horse_crypto_derive_session_keys(eph_sk,
-                                              contact.info.horse.x25519_pk,
+                                              peer.x25519_pk,
                                               sessionKey, frameAuthKey))
         {
             status->horseError = HORSE_ERR_NO_KEYS;

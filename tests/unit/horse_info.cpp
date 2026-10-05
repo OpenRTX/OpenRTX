@@ -19,5 +19,10 @@ int main()
         std::printf("horse_info_test: reset left garbage\n");
         return -1;
     }
+    if (sizeof(contact_t) != 39)
+    {
+        std::printf("horse_info_test: contact_t size %zu\n", sizeof(contact_t));
+        return -1;
+    }
     return 0;
 }

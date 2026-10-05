@@ -207,8 +207,6 @@ __attribute__((packed)) m17Contact_t; // 6B
  *                         HORSE MODE                                         *
  ******************************************************************************/
 
-#include "protocols/horse/horse_crypto.h"
-
 /**
  * Data structure containing all and only the information for Horse channels.
  */
@@ -229,17 +227,6 @@ static inline void horse_info_reset(horseInfo_t *info)
         return;
     memset(info, 0, sizeof(*info));
 }
-
-/**
- * Data structure describing Horse-specific contact fields (callsign, public key).
- */
-typedef struct
-{
-    uint8_t address[6];
-    uint8_t x25519_pk[HORSE_X25519_PUBLICKEY_BYTES];
-    uint8_t ed25519_pk[HORSE_ED25519_PUBLICKEY_BYTES];
-}
-__attribute__((packed)) horseContact_t; // 70B
 
 
 /******************************************************************************
@@ -302,13 +289,12 @@ typedef struct
 
     union
     {
-        dmrContact_t   dmr;     //< DMR specific contact info
-        m17Contact_t  m17;     //< M17 specific contact info
-        horseContact_t horse;  //< Horse specific contact info
+        dmrContact_t  dmr;      //< DMR specific contact info
+        m17Contact_t  m17;      //< M17 specific contact info
     }
-    info; // up to 70B (horseContact_t)
+    info; // 6B
 }
-__attribute__((packed)) contact_t; // 103B
+__attribute__((packed)) contact_t; // 39B
 
 /**
  * Data structure describing a bank header.
