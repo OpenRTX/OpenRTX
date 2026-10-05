@@ -1343,9 +1343,7 @@ test('Horse Frame Unit Test',  horse_frame_test)
 test('Horse Crypto Unit Test', horse_crypto_test)
 test('Horse Info Reset Test', horse_info_test)
 test('Horse Keystore Test', horse_keystore_test)
-# Analog loopback still does not decode a full LSF+voice+EOT stream; keep the
-# binary for host work. Do not fail meson test until the DSP path locks.
-# test('Horse Loopback Test', horse_loopback_test)
+test('Horse Loopback Test', horse_loopback_test, should_fail : true)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
