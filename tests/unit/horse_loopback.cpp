@@ -212,13 +212,21 @@ static int test_layer_b_rrc_known_phase()
 }
 
 static int demod_stream(const std::vector<int16_t> &rx24, bool invert,
-                        std::vector<decoded_t> &out)
+                        std::vector<decoded_t> &out, bool skip_dc = true)
 {
     HorseDemodulator demod;
     HorseFrameDecoder decoder;
     demod.init();
     demod.resetImmediate();
-    demod.setSkipDcBlock(true);
+    /*
+     * Default skip_dc=true: dsp_dcBlockFilter left-shifts a negative
+     * int16_t (dsp.cpp:19), which is UB. The firmware still runs that
+     * filter. test_layer_dc_block() sets skip_dc=false. That path is
+     * registered in the unsanitized meson suite; under UBSan it aborts
+     * on the upstream shift (see UPSTREAM_ISSUE_dsp.md). Do not patch
+     * dsp.cpp in this fork.
+     */
+    demod.setSkipDcBlock(skip_dc);
     out.clear();
     for (int16_t s : rx24) {
         demod.feedSample(s, invert);
@@ -284,6 +292,44 @@ static int test_layer_c_demod_timing()
     }
     std::printf("layer c: demod timing recovered LSF+voice+EOT (%zu frames)\n",
                 got.size());
+    return 0;
+}
+
+static int test_layer_dc_block()
+{
+    HorseFrameEncoder enc;
+    std::vector<frame_t> frames(3);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    memset(melpe, 0x11, sizeof melpe);
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    enc.encodeVoiceFrame(melpe, tag, frames[1], false);
+    enc.encodeEotFrame(frames[2]);
+
+    std::vector<int16_t> bb48, rx24;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    to_24k(bb48, rx24);
+    std::vector<decoded_t> got;
+    demod_stream(rx24, false, got, false);
+
+    bool have_lsf = false, have_voice = false, have_eot = false;
+    for (const auto &d : got) {
+        if (d.type == HorseFrameType::LINK_SETUP)
+            have_lsf = true;
+        if (d.type == HorseFrameType::VOICE && d.fn < SIG_FRAME_BASE)
+            have_voice = true;
+        if (d.type == HorseFrameType::EOT)
+            have_eot = true;
+    }
+    if (!have_lsf || !have_voice || !have_eot) {
+        std::printf("dc-block: decoded %zu frames lsf=%d voice=%d eot=%d\n",
+                    got.size(), have_lsf, have_voice, have_eot);
+        return -1;
+    }
+    std::printf("dc-block: firmware DC path recovered LSF+voice+EOT\n");
     return 0;
 }
 
@@ -454,6 +500,8 @@ int main()
     if (test_layer_b_rrc_known_phase() != 0)
         return -1;
     if (test_layer_c_demod_timing() != 0)
+        return -1;
+    if (test_layer_dc_block() != 0)
         return -1;
     if (test_layer_d_full_tx() != 0)
         return -1;
