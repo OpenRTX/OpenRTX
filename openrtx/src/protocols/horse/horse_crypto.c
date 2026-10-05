@@ -30,8 +30,6 @@ static int horse_sodium_init(void)
     initialized = 1;
     return 0;
 }
-#else
-#include "core/crypto_utils.h"
 #endif
 
 static bool horse_crypto_tag_dir_fn_payload(const uint8_t *k_tag, uint8_t dir,
@@ -45,7 +43,8 @@ static bool horse_crypto_tag_dir_fn_payload(const uint8_t *k_tag, uint8_t dir,
     static uint8_t mac[64];
     uint16_t fn = frame_num & 0x7FFF;
 
-    if (k_tag == NULL || payload == NULL || tag_out == NULL || payload_len != 12)
+    if (k_tag == NULL || payload == NULL || tag_out == NULL
+        || payload_len != 12)
         return false;
     if (horse_sodium_init() != 0)
         return false;
@@ -69,16 +68,12 @@ static bool horse_crypto_tag_dir_fn_payload(const uint8_t *k_tag, uint8_t dir,
 #endif
 }
 
-void horse_crypto_voice_encrypt(
-    const uint8_t *k_enc,
-    const uint8_t *k_tag,
-    uint8_t dir,
-    uint16_t frame_num,
-    const uint8_t *nonce_96bit,
-    const uint8_t *plaintext,
-    size_t plaintext_len,
-    uint8_t *ciphertext_out,
-    uint8_t *tag_truncated_32bit)
+void horse_crypto_voice_encrypt(const uint8_t *k_enc, const uint8_t *k_tag,
+                                uint8_t dir, uint16_t frame_num,
+                                const uint8_t *nonce_96bit,
+                                const uint8_t *plaintext, size_t plaintext_len,
+                                uint8_t *ciphertext_out,
+                                uint8_t *tag_truncated_32bit)
 #ifdef HAVE_LIBSODIUM
 {
     if (k_enc == NULL || plaintext == NULL || ciphertext_out == NULL)
@@ -88,14 +83,10 @@ void horse_crypto_voice_encrypt(
         return;
 
     static uint8_t nonce[24];
-    crypto_generichash(nonce, sizeof nonce,
-                       nonce_96bit, 12,
+    crypto_generichash(nonce, sizeof nonce, nonce_96bit, 12,
                        (const unsigned char *)"HORSEV1", 7);
 
-    crypto_stream_xchacha20_xor(ciphertext_out,
-                                plaintext,
-                                plaintext_len,
-                                nonce,
+    crypto_stream_xchacha20_xor(ciphertext_out, plaintext, plaintext_len, nonce,
                                 k_enc);
 
     if (tag_truncated_32bit)
@@ -114,23 +105,20 @@ void horse_crypto_voice_encrypt(
 #endif
 }
 
-bool horse_crypto_voice_decrypt(
-    const uint8_t *k_enc,
-    const uint8_t *k_tag,
-    uint8_t dir,
-    uint16_t frame_num,
-    const uint8_t *nonce_96bit,
-    const uint8_t *ciphertext,
-    size_t ciphertext_len,
-    const uint8_t *tag_truncated_32bit,
-    uint8_t *plaintext_out)
+bool horse_crypto_voice_decrypt(const uint8_t *k_enc, const uint8_t *k_tag,
+                                uint8_t dir, uint16_t frame_num,
+                                const uint8_t *nonce_96bit,
+                                const uint8_t *ciphertext,
+                                size_t ciphertext_len,
+                                const uint8_t *tag_truncated_32bit,
+                                uint8_t *plaintext_out)
 {
 #ifdef HAVE_LIBSODIUM
     static uint8_t expected[HORSE_VOICE_TAG_BYTES];
     static uint8_t nonce[24];
 
-    if (k_enc == NULL || k_tag == NULL || ciphertext == NULL ||
-        plaintext_out == NULL || tag_truncated_32bit == NULL)
+    if (k_enc == NULL || k_tag == NULL || ciphertext == NULL
+        || plaintext_out == NULL || tag_truncated_32bit == NULL)
         return false;
 
     if (horse_sodium_init() != 0)
@@ -140,18 +128,15 @@ bool horse_crypto_voice_decrypt(
                                          ciphertext_len, expected))
         return false;
 
-    if (sodium_memcmp(expected, tag_truncated_32bit, HORSE_VOICE_TAG_BYTES) != 0)
+    if (sodium_memcmp(expected, tag_truncated_32bit, HORSE_VOICE_TAG_BYTES)
+        != 0)
         return false;
 
-    crypto_generichash(nonce, sizeof nonce,
-                       nonce_96bit, 12,
+    crypto_generichash(nonce, sizeof nonce, nonce_96bit, 12,
                        (const unsigned char *)"HORSEV1", 7);
 
-    crypto_stream_xchacha20_xor(plaintext_out,
-                                ciphertext,
-                                ciphertext_len,
-                                nonce,
-                                k_enc);
+    crypto_stream_xchacha20_xor(plaintext_out, ciphertext, ciphertext_len,
+                                nonce, k_enc);
     return true;
 #else
     (void)k_enc;
@@ -167,13 +152,9 @@ bool horse_crypto_voice_decrypt(
 #endif
 }
 
-bool horse_crypto_argon2id_derive(
-    const char *passphrase,
-    size_t passphrase_len,
-    const uint8_t *salt,
-    size_t salt_len,
-    uint8_t *key_out,
-    size_t key_len)
+bool horse_crypto_argon2id_derive(const char *passphrase, size_t passphrase_len,
+                                  const uint8_t *salt, size_t salt_len,
+                                  uint8_t *key_out, size_t key_len)
 {
     if (passphrase == NULL || salt == NULL || key_out == NULL || key_len == 0)
         return false;
@@ -187,13 +168,10 @@ bool horse_crypto_argon2id_derive(
      * salt_len parameter is ignored in this path.
      */
     (void)salt_len;
-    if (crypto_pwhash(key_out, key_len,
-                      passphrase, passphrase_len,
-                      salt,
-                      HORSE_ARGON2ID_OPSLIMIT,
-                      HORSE_ARGON2ID_MEMLIMIT,
-                      crypto_pwhash_ALG_ARGON2ID13) != 0)
-    {
+    if (crypto_pwhash(key_out, key_len, passphrase, passphrase_len, salt,
+                      HORSE_ARGON2ID_OPSLIMIT, HORSE_ARGON2ID_MEMLIMIT,
+                      crypto_pwhash_ALG_ARGON2ID13)
+        != 0) {
         return false;
     }
     return true;
@@ -232,18 +210,15 @@ bool horse_crypto_x25519_keypair(uint8_t *pk_out, uint8_t *sk_out)
 #endif
 }
 
-bool horse_crypto_derive_session_keys(const uint8_t *local_x25519_sk,
-                                      const uint8_t *remote_x25519_pk,
-                                      const uint8_t src[6],
-                                      const uint8_t dst[6],
-                                      const uint8_t eph_pk[32],
-                                      uint8_t flags,
-                                      uint8_t version,
-                                      uint8_t k_enc_out[HORSE_SESSION_KEY_BYTES],
-                                      uint8_t k_tag_out[HORSE_SESSION_KEY_BYTES])
+bool horse_crypto_derive_session_keys(
+    const uint8_t *local_x25519_sk, const uint8_t *remote_x25519_pk,
+    const uint8_t src[6], const uint8_t dst[6], const uint8_t eph_pk[32],
+    uint8_t flags, uint8_t version, uint8_t k_enc_out[HORSE_SESSION_KEY_BYTES],
+    uint8_t k_tag_out[HORSE_SESSION_KEY_BYTES])
 {
-    if (local_x25519_sk == NULL || remote_x25519_pk == NULL || src == NULL ||
-        dst == NULL || eph_pk == NULL || k_enc_out == NULL || k_tag_out == NULL)
+    if (local_x25519_sk == NULL || remote_x25519_pk == NULL || src == NULL
+        || dst == NULL || eph_pk == NULL || k_enc_out == NULL
+        || k_tag_out == NULL)
         return false;
 
 #ifdef HAVE_LIBSODIUM
@@ -263,11 +238,9 @@ bool horse_crypto_derive_session_keys(const uint8_t *local_x25519_sk,
     ikm[sizeof shared + 44] = flags;
     ikm[sizeof shared + 45] = version;
 
-    crypto_generichash(k_enc_out, HORSE_SESSION_KEY_BYTES,
-                       ikm, sizeof ikm,
+    crypto_generichash(k_enc_out, HORSE_SESSION_KEY_BYTES, ikm, sizeof ikm,
                        (const unsigned char *)"HORSE-KENC", 10);
-    crypto_generichash(k_tag_out, HORSE_SESSION_KEY_BYTES,
-                       ikm, sizeof ikm,
+    crypto_generichash(k_tag_out, HORSE_SESSION_KEY_BYTES, ikm, sizeof ikm,
                        (const unsigned char *)"HORSE-KTAG", 10);
     sodium_memzero(shared, sizeof shared);
     sodium_memzero(ikm, sizeof ikm);
@@ -289,7 +262,8 @@ bool horse_crypto_lsf_version_ok(uint8_t version)
     return version == HORSE_LSF_VERSION;
 }
 
-void horse_crypto_voice_nonce_from_fn(uint16_t frame_num, uint8_t nonce_96bit[12])
+void horse_crypto_voice_nonce_from_fn(uint16_t frame_num,
+                                      uint8_t nonce_96bit[12])
 {
     if (nonce_96bit == NULL)
         return;
@@ -300,20 +274,18 @@ void horse_crypto_voice_nonce_from_fn(uint16_t frame_num, uint8_t nonce_96bit[12
 }
 
 bool horse_crypto_encrypt_identity(const horse_identity_keys_t *identity,
-                                   const uint8_t *wrap_key,
-                                   size_t wrap_key_len,
-                                   uint8_t *blob_out,
-                                   size_t blob_cap,
+                                   const uint8_t *wrap_key, size_t wrap_key_len,
+                                   uint8_t *blob_out, size_t blob_cap,
                                    size_t *blob_len)
 {
-    if (identity == NULL || wrap_key == NULL || blob_out == NULL ||
-        blob_len == NULL)
+    if (identity == NULL || wrap_key == NULL || blob_out == NULL
+        || blob_len == NULL)
         return false;
 
 #ifdef HAVE_LIBSODIUM
-    const size_t need = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES +
-                        crypto_aead_xchacha20poly1305_ietf_ABYTES +
-                        sizeof(horse_identity_keys_t);
+    const size_t need = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES
+                      + crypto_aead_xchacha20poly1305_ietf_ABYTES
+                      + sizeof(horse_identity_keys_t);
 
     if (blob_cap < need)
         return false;
@@ -328,15 +300,9 @@ bool horse_crypto_encrypt_identity(const horse_identity_keys_t *identity,
 
     unsigned long long clen = 0;
     if (crypto_aead_xchacha20poly1305_ietf_encrypt(
-            blob_out + sizeof nonce,
-            &clen,
-            (const unsigned char *)identity,
-            sizeof(horse_identity_keys_t),
-            NULL,
-            0,
-            NULL,
-            nonce,
-            wrap_key) != 0)
+            blob_out + sizeof nonce, &clen, (const unsigned char *)identity,
+            sizeof(horse_identity_keys_t), NULL, 0, NULL, nonce, wrap_key)
+        != 0)
         return false;
 
     memcpy(blob_out, nonce, sizeof nonce);
@@ -350,18 +316,16 @@ bool horse_crypto_encrypt_identity(const horse_identity_keys_t *identity,
 #endif
 }
 
-bool horse_crypto_decrypt_identity(const uint8_t *blob,
-                                   size_t blob_len,
-                                   const uint8_t *wrap_key,
-                                   size_t wrap_key_len,
+bool horse_crypto_decrypt_identity(const uint8_t *blob, size_t blob_len,
+                                   const uint8_t *wrap_key, size_t wrap_key_len,
                                    horse_identity_keys_t *identity_out)
 {
     if (blob == NULL || wrap_key == NULL || identity_out == NULL)
         return false;
 
 #ifdef HAVE_LIBSODIUM
-    if (blob_len < crypto_aead_xchacha20poly1305_ietf_NPUBBYTES +
-                     crypto_aead_xchacha20poly1305_ietf_ABYTES)
+    if (blob_len < crypto_aead_xchacha20poly1305_ietf_NPUBBYTES
+                       + crypto_aead_xchacha20poly1305_ietf_ABYTES)
         return false;
 
     (void)wrap_key_len;
@@ -370,20 +334,15 @@ bool horse_crypto_decrypt_identity(const uint8_t *blob,
         return false;
 
     const unsigned char *nonce = blob;
-    const unsigned char *cipher = blob + crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
+    const unsigned char *cipher = blob
+                                + crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
     size_t cipher_len = blob_len - crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
     unsigned long long mlen = 0;
 
     if (crypto_aead_xchacha20poly1305_ietf_decrypt(
-            (unsigned char *)identity_out,
-            &mlen,
-            NULL,
-            cipher,
-            cipher_len,
-            NULL,
-            0,
-            nonce,
-            wrap_key) != 0)
+            (unsigned char *)identity_out, &mlen, NULL, cipher, cipher_len,
+            NULL, 0, nonce, wrap_key)
+        != 0)
         return false;
 
     return mlen == sizeof(horse_identity_keys_t);
@@ -405,8 +364,7 @@ bool horse_crypto_identity_fingerprint(const horse_identity_keys_t *identity,
     if (horse_sodium_init() != 0)
         return false;
 
-    crypto_generichash(fp_out, 32,
-                       (const unsigned char *)identity,
+    crypto_generichash(fp_out, 32, (const unsigned char *)identity,
                        sizeof(horse_identity_keys_t),
                        (const unsigned char *)"HORSE-IDFP", 10);
     return true;
@@ -417,12 +375,10 @@ bool horse_crypto_identity_fingerprint(const horse_identity_keys_t *identity,
 #endif
 }
 
-void horse_crypto_build_session_message(const uint8_t src[6],
-                                        const uint8_t dst[6],
-                                        const uint8_t eph_pk[32],
-                                        uint8_t flags,
-                                        uint8_t version,
-                                        uint8_t message_out[HORSE_SESSION_MSG_BYTES])
+void horse_crypto_build_session_message(
+    const uint8_t src[6], const uint8_t dst[6], const uint8_t eph_pk[32],
+    uint8_t flags, uint8_t version,
+    uint8_t message_out[HORSE_SESSION_MSG_BYTES])
 {
     if (message_out == NULL)
         return;
@@ -466,11 +422,8 @@ bool horse_crypto_voice_auth_verify(const uint8_t k_tag[32], uint8_t dir,
 #endif
 }
 
-bool horse_crypto_sign(
-    const uint8_t *ed25519_secretkey,
-    const uint8_t *message,
-    size_t message_len,
-    uint8_t *signature_out)
+bool horse_crypto_sign(const uint8_t *ed25519_secretkey, const uint8_t *message,
+                       size_t message_len, uint8_t *signature_out)
 {
     if (ed25519_secretkey == NULL || message == NULL || signature_out == NULL)
         return false;
@@ -479,10 +432,9 @@ bool horse_crypto_sign(
     if (horse_sodium_init() != 0)
         return false;
 
-    if (crypto_sign_detached(signature_out, NULL,
-                              message, message_len,
-                              ed25519_secretkey) != 0)
-    {
+    if (crypto_sign_detached(signature_out, NULL, message, message_len,
+                             ed25519_secretkey)
+        != 0) {
         return false;
     }
     return true;
@@ -493,11 +445,9 @@ bool horse_crypto_sign(
 #endif
 }
 
-bool horse_crypto_verify(
-    const uint8_t *ed25519_publickey,
-    const uint8_t *message,
-    size_t message_len,
-    const uint8_t *signature)
+bool horse_crypto_verify(const uint8_t *ed25519_publickey,
+                         const uint8_t *message, size_t message_len,
+                         const uint8_t *signature)
 {
     if (ed25519_publickey == NULL || message == NULL || signature == NULL)
         return false;
@@ -506,10 +456,9 @@ bool horse_crypto_verify(
     if (horse_sodium_init() != 0)
         return false;
 
-    if (crypto_sign_verify_detached(signature,
-                                     message, message_len,
-                                     ed25519_publickey) != 0)
-    {
+    if (crypto_sign_verify_detached(signature, message, message_len,
+                                    ed25519_publickey)
+        != 0) {
         return false;
     }
     return true;
