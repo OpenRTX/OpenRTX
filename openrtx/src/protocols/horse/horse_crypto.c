@@ -316,8 +316,8 @@ bool horse_crypto_argon2id_derive(
     if (crypto_pwhash(key_out, key_len,
                       passphrase, passphrase_len,
                       salt,
-                      crypto_pwhash_OPSLIMIT_MODERATE,
-                      crypto_pwhash_MEMLIMIT_MODERATE,
+                      HORSE_ARGON2ID_OPSLIMIT,
+                      HORSE_ARGON2ID_MEMLIMIT,
                       crypto_pwhash_ALG_ARGON2ID13) != 0)
     {
         return false;

@@ -7,7 +7,6 @@
 #include "protocols/horse/horse_provision.h"
 #include "protocols/horse/horse_keystore.h"
 #include "protocols/horse/horse_crypto.h"
-#include "core/state.h"
 #include <string.h>
 
 #ifdef PLATFORM_LINUX
@@ -96,7 +95,6 @@ static void prov_handle_identity(const uint8_t *payload, uint16_t len)
 
     const horse_identity_keys_t *identity =
         (const horse_identity_keys_t *)payload;
-    const char *pass = state.settings.horse_passphrase;
 
     if (identity->version != 1)
     {
@@ -109,9 +107,13 @@ static void prov_handle_identity(const uint8_t *payload, uint16_t len)
         prov_send(MSG_ERROR, "bad ed25519 sk", 14);
         return;
     }
-    size_t pass_len = strnlen(pass, sizeof state.settings.horse_passphrase);
+    if (!horse_keystore_has_passphrase())
+    {
+        prov_send(MSG_ERROR, "no passphrase", 13);
+        return;
+    }
 
-    if (!horse_keystore_store_plaintext(identity, pass, pass_len))
+    if (!horse_keystore_store_with_held(identity))
     {
         prov_send(MSG_ERROR, "store failed", 12);
         return;

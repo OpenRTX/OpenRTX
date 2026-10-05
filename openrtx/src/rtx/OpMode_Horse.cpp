@@ -190,8 +190,7 @@ void OpMode_Horse::enable()
     horse_crypto_memzero(rxSessionSig, sizeof rxSessionSig);
     horse_crypto_memzero(txSessionSig, sizeof txSessionSig);
 
-    const char *pass = state.settings.horse_passphrase;
-    horse_keystore_unlock(pass, strnlen(pass, sizeof state.settings.horse_passphrase));
+    (void)horse_keystore_unlock_held();
 #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     invertTxPhase = true;
     if (platform_getHwInfo()->vhf_band == 1)
@@ -235,6 +234,7 @@ void OpMode_Horse::disable()
     horse_crypto_memzero(frameAuthKey, sizeof frameAuthKey);
     horse_crypto_memzero(rxSessionSig, sizeof rxSessionSig);
     horse_crypto_memzero(txSessionSig, sizeof txSessionSig);
+    horse_keystore_lock();
 }
 
 void OpMode_Horse::update(rtxStatus_t* const status, const bool newCfg)

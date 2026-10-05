@@ -121,14 +121,21 @@ Horse uses modern cryptographic primitives with per‑session keys and optional 
   - On RX, frames are reassembled and verified against the contact's `ed25519_pk`.
 - **Identity storage and unlock:**
   - `horse_keystore.c` stores the provisioned identity encrypted at rest (Argon2id + XChaCha20‑Poly1305).
-  - `settings_t.horse_passphrase` unlocks the keystore at mode enable (`OpMode_Horse::enable()`).
+  - The passphrase is entered when Horse mode is enabled, held in RAM only,
+    and wiped together with the derived identity keys on mode exit. It is
+    not stored in `settings_t`.
   - Without a valid passphrase or libsodium backend, crypto operations fail closed.
 - **Passphrase‑based key derivation (Argon2id):**
   - API in `horse_crypto_argon2id_derive(...)`.
   - Implemented via libsodium `crypto_pwhash` Argon2id only. There is no PBKDF2
     path. Without libsodium the derive call returns false.
-  - Parameters are currently `OPSLIMIT_MODERATE` / `MEMLIMIT_MODERATE` (~256 MiB).
-    That will not fit STM32F405 SRAM; see `HORSE_DESIGN_CHANGES.md`.
+  - Parameters are `HORSE_ARGON2ID_OPSLIMIT = 2` and
+    `HORSE_ARGON2ID_MEMLIMIT = 16384` (16 KiB), stored in a versioned identity
+    blob header (`HORSE_KDF_VERSION = 1`). That memory cost is the largest
+    justified for 192 KiB SRAM (same size as `CODEC2_THREAD_STKSIZE`) and is
+    **unverified on MD-3x0**.
+  - These parameters give little resistance to offline guessing of a weak
+    passphrase from a flash dump.
 
 **Implementation status:**
 
@@ -276,8 +283,9 @@ python3 scripts/horse_provision.py provision M0ABC
 python3 scripts/horse_provision.py provision M0ABC --fifo /tmp/openrtx_horse_prov.fifo
 ```
 
-Set the radio passphrase in codeplug settings (`horse_passphrase`, max 32 characters)
-before transmitting or receiving encrypted/signed traffic.
+Enter the Horse passphrase on the keypad when Horse mode is enabled
+(max 32 characters). It is not saved in settings. On a flash dump, a
+weak passphrase can be guessed offline with little cost.
 
 ### `horse_keytool.py` – collecting Horse public keys from GnuPG
 

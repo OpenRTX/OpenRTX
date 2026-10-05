@@ -42,6 +42,11 @@ MSG_HELLO_ACK = 0x02
 MSG_SEND_IDENTITY = 0x03
 MSG_CONFIRM = 0x04
 MSG_ERROR = 0xFF
+# Must match horse_crypto.h
+HORSE_KDF_VERSION = 1
+HORSE_ARGON2ID_OPSLIMIT = 2
+HORSE_ARGON2ID_MEMLIMIT = 16384
+HORSE_IDENTITY_STORE_VERSION = 2
 
 
 def keyctl_add(keyring_type, description, payload):
@@ -296,6 +301,10 @@ def selftest():
     ident64["ed25519_sk"] = (seed + pk).hex()
     if pack_identity_binary(ident64) != packed:
         raise RuntimeError("64-byte sk pack mismatch")
+    if HORSE_KDF_VERSION != 1 or HORSE_IDENTITY_STORE_VERSION != 2:
+        raise RuntimeError("kdf header version")
+    if HORSE_ARGON2ID_OPSLIMIT != 2 or HORSE_ARGON2ID_MEMLIMIT != 16384:
+        raise RuntimeError("argon2id params drifted from firmware")
     json_bytes = json.dumps({"version": 1, "label": "t"}).encode("utf-8")
     if _decode_keyring_payload(json_bytes)["label"] != "t":
         raise RuntimeError("json keyring decode")

@@ -65,6 +65,9 @@
 #include "hwconfig.h"
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
+#ifdef CONFIG_HORSE
+#include "protocols/horse/horse_keystore.h"
+#endif
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -1021,7 +1024,24 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             #endif
 #ifdef CONFIG_HORSE
             if(state.channel.mode == OPMODE_HORSE)
+            {
                 horse_info_reset(&state.channel.horse);
+                ui_state.horse_pass_edit = true;
+                ui_state.edit_mode = true;
+                memset(ui_state.horse_pass_input, 0,
+                       sizeof ui_state.horse_pass_input);
+                ui_state.input_number = 0;
+                ui_state.input_position = 0;
+                ui_state.input_set = 0;
+                ui_state.last_keypress = 0;
+            }
+            else
+            {
+                ui_state.horse_pass_edit = false;
+                horse_keystore_lock();
+                horse_crypto_memzero(ui_state.horse_pass_input,
+                                     sizeof ui_state.horse_pass_input);
+            }
 #endif
             *sync_rtx = true;
             vp_announceRadioMode(state.channel.mode, queueFlags);
@@ -1521,6 +1541,40 @@ void ui_updateFSM(bool *sync_rtx)
 
                 if(ui_state.edit_mode)
                 {
+                    #ifdef CONFIG_HORSE
+                    if(state.channel.mode == OPMODE_HORSE &&
+                       ui_state.horse_pass_edit)
+                    {
+                        if(msg.keys & KEY_ENTER)
+                        {
+                            size_t n = strnlen(ui_state.horse_pass_input,
+                                               HORSE_PASSPHRASE_MAX);
+                            horse_keystore_hold_passphrase(
+                                ui_state.horse_pass_input, n);
+                            horse_keystore_unlock_held();
+                            horse_crypto_memzero(ui_state.horse_pass_input,
+                                                 sizeof ui_state.horse_pass_input);
+                            ui_state.horse_pass_edit = false;
+                            ui_state.edit_mode = false;
+                            *sync_rtx = true;
+                        }
+                        else if(msg.keys & KEY_ESC)
+                        {
+                            horse_crypto_memzero(ui_state.horse_pass_input,
+                                                 sizeof ui_state.horse_pass_input);
+                            ui_state.horse_pass_edit = false;
+                            ui_state.edit_mode = false;
+                        }
+                        else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
+                                msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                            _ui_textInputDel(ui_state.horse_pass_input);
+                        else if(input_isCharPressed(msg))
+                            _ui_textInputKeypad(ui_state.horse_pass_input,
+                                                HORSE_PASSPHRASE_MAX, msg,
+                                                false);
+                        break;
+                    }
+                    #endif
                     #ifdef CONFIG_M17
                     if(state.channel.mode == OPMODE_M17)
                     {

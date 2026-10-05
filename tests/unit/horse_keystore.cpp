@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #ifdef HAVE_LIBSODIUM
 #include <sodium.h>
@@ -90,7 +91,51 @@ int main()
         return -1;
     }
 
+    {
+        int fd = open("/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/.tmp/horse_ks/OpenRTX/horse_identity.bin",
+                      O_RDONLY);
+        unsigned char hdr[16];
+        uint32_t ops = 0, mem = 0;
+        if (fd < 0 || read(fd, hdr, sizeof hdr) != (ssize_t)sizeof hdr)
+        {
+            std::printf("horse_keystore_test: blob header read failed\n");
+            return -1;
+        }
+        close(fd);
+        memcpy(&ops, hdr + 8, 4);
+        memcpy(&mem, hdr + 12, 4);
+        if (hdr[4] != HORSE_IDENTITY_STORE_VERSION ||
+            hdr[5] != HORSE_KDF_VERSION ||
+            ops != HORSE_ARGON2ID_OPSLIMIT ||
+            mem != HORSE_ARGON2ID_MEMLIMIT)
+        {
+            std::printf("horse_keystore_test: blob header mismatch\n");
+            return -1;
+        }
+    }
+
+    if (!horse_keystore_hold_passphrase("test-pass", 9) ||
+        !horse_keystore_has_passphrase())
+    {
+        std::printf("horse_keystore_test: hold passphrase failed\n");
+        return -1;
+    }
     horse_identity_keys_t out;
+    memset(&out, 0, sizeof out);
+    horse_keystore_lock();
+    if (horse_keystore_has_passphrase() || horse_keystore_unlock_held() ||
+        horse_keystore_copy_identity(&out))
+    {
+        std::printf("horse_keystore_test: lock did not wipe passphrase/keys\n");
+        return -1;
+    }
+    if (!horse_keystore_hold_passphrase("test-pass", 9) ||
+        !horse_keystore_unlock_held())
+    {
+        std::printf("horse_keystore_test: unlock_held failed\n");
+        return -1;
+    }
+
     if (!horse_keystore_copy_identity(&out) ||
         memcmp(out.ed25519_pk, id.ed25519_pk, sizeof id.ed25519_pk) != 0)
     {

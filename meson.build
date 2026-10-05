@@ -1292,6 +1292,11 @@ horse_loopback_test = executable('horse_loopback_test',
 py3 = find_program('python3', required : true)
 test('Horse Provision Pack Test', py3,
      args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'])
+test('Horse settings.h matches upstream',
+     find_program('git'),
+     args : ['diff', '--exit-code', 'upstream/master', '--',
+             'openrtx/include/core/settings.h'],
+     workdir : meson.project_source_root())
 
 ui_check_standby_test = executable('ui_check_standby_test',
                                     sources : unit_test_src + ['tests/unit/ui_check_standby.cpp'],

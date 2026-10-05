@@ -30,6 +30,17 @@ extern "C" {
 #define HORSE_VOICE_TAG_BYTES    4
 #define HORSE_LSF_VERSION        1
 #define HORSE_SESSION_MSG_BYTES  46
+#define HORSE_PASSPHRASE_MAX     32
+#define HORSE_KDF_VERSION        1
+#define HORSE_KDF_SALT_BYTES     16
+#define HORSE_IDENTITY_STORE_VERSION 2
+/*
+ * Shared with horse_provision.py. 16384 B is the largest Argon2id memory
+ * cost justified for 192 KiB SRAM: equal to CODEC2_THREAD_STKSIZE, used
+ * at mode enable when the codec thread is idle. UNVERIFIED on MD-3x0.
+ */
+#define HORSE_ARGON2ID_OPSLIMIT  2u
+#define HORSE_ARGON2ID_MEMLIMIT  16384u
 /* Direction byte in the voice tag: 0 = PTT originator to listeners. */
 #define HORSE_VOICE_DIR_FORWARD  0
 
@@ -112,7 +123,8 @@ bool horse_crypto_voice_decrypt(
     const uint8_t *tag_truncated_32bit,
     uint8_t *plaintext_out);
 
-/* Derive key from passphrase (Argon2id via libsodium). Fails closed without it. */
+/* Derive key from passphrase (Argon2id via libsodium). Uses
+ * HORSE_ARGON2ID_OPSLIMIT / HORSE_ARGON2ID_MEMLIMIT. No PBKDF2 path. */
 bool horse_crypto_argon2id_derive(
     const char *passphrase,
     size_t passphrase_len,

@@ -23,8 +23,6 @@
 #endif
 
 #define HORSE_STORE_MAGIC 0x484B5354U /* "HKST" */
-#define HORSE_STORE_VERSION 1U
-#define HORSE_KDF_SALT_BYTES 16U
 
 #ifndef HORSE_IDENTITY_NVM_OFFSET
 #define HORSE_IDENTITY_NVM_OFFSET 0x00FE0000U
@@ -33,19 +31,33 @@
 typedef struct
 {
     uint32_t magic;
-    uint8_t version;
+    uint8_t store_version;
+    uint8_t kdf_version;
+    uint8_t reserved[2];
+    uint32_t opslimit;
+    uint32_t memlimit;
     uint8_t salt[HORSE_KDF_SALT_BYTES];
     uint16_t blob_len;
     uint8_t blob[256];
-} horse_identity_store_t;
+} __attribute__((packed)) horse_identity_store_t;
 
 static horse_identity_keys_t unlocked_identity;
 static bool identity_unlocked;
+static char held_passphrase[HORSE_PASSPHRASE_MAX + 1];
+static size_t held_passphrase_len;
+static bool have_passphrase;
 static pthread_mutex_t identity_mu = PTHREAD_MUTEX_INITIALIZER;
 
 static void horse_identity_wipe(horse_identity_keys_t *id)
 {
     horse_crypto_memzero(id, sizeof *id);
+}
+
+static void horse_passphrase_wipe_locked(void)
+{
+    horse_crypto_memzero(held_passphrase, sizeof held_passphrase);
+    held_passphrase_len = 0;
+    have_passphrase = false;
 }
 
 static int horse_linux_identity_path(char *path, size_t path_len)
@@ -148,6 +160,7 @@ void horse_keystore_init(void)
     pthread_mutex_lock(&identity_mu);
     identity_unlocked = false;
     horse_identity_wipe(&unlocked_identity);
+    horse_passphrase_wipe_locked();
     pthread_mutex_unlock(&identity_mu);
 }
 
@@ -188,7 +201,56 @@ void horse_keystore_lock(void)
     pthread_mutex_lock(&identity_mu);
     horse_identity_wipe(&unlocked_identity);
     identity_unlocked = false;
+    horse_passphrase_wipe_locked();
     pthread_mutex_unlock(&identity_mu);
+}
+
+bool horse_keystore_hold_passphrase(const char *passphrase, size_t passphrase_len)
+{
+    if (passphrase == NULL || passphrase_len == 0 ||
+        passphrase_len > HORSE_PASSPHRASE_MAX)
+        return false;
+
+    pthread_mutex_lock(&identity_mu);
+    horse_passphrase_wipe_locked();
+    memcpy(held_passphrase, passphrase, passphrase_len);
+    held_passphrase[passphrase_len] = '\0';
+    held_passphrase_len = passphrase_len;
+    have_passphrase = true;
+    pthread_mutex_unlock(&identity_mu);
+    return true;
+}
+
+bool horse_keystore_has_passphrase(void)
+{
+    bool have;
+
+    pthread_mutex_lock(&identity_mu);
+    have = have_passphrase;
+    pthread_mutex_unlock(&identity_mu);
+    return have;
+}
+
+bool horse_keystore_unlock_held(void)
+{
+    char pass[HORSE_PASSPHRASE_MAX + 1];
+    size_t n;
+    bool ok;
+
+    pthread_mutex_lock(&identity_mu);
+    if (!have_passphrase)
+    {
+        pthread_mutex_unlock(&identity_mu);
+        return false;
+    }
+    n = held_passphrase_len;
+    memcpy(pass, held_passphrase, n);
+    pass[n] = '\0';
+    pthread_mutex_unlock(&identity_mu);
+
+    ok = horse_keystore_unlock(pass, n);
+    horse_crypto_memzero(pass, sizeof pass);
+    return ok;
 }
 
 bool horse_keystore_unlock(const char *passphrase, size_t passphrase_len)
@@ -202,7 +264,11 @@ bool horse_keystore_unlock(const char *passphrase, size_t passphrase_len)
     if (horse_store_read(&store) != 0)
         return false;
 
-    if (store.magic != HORSE_STORE_MAGIC || store.version != HORSE_STORE_VERSION)
+    if (store.magic != HORSE_STORE_MAGIC ||
+        store.store_version != HORSE_IDENTITY_STORE_VERSION ||
+        store.kdf_version != HORSE_KDF_VERSION ||
+        store.opslimit != HORSE_ARGON2ID_OPSLIMIT ||
+        store.memlimit != HORSE_ARGON2ID_MEMLIMIT)
         return false;
 
     if (store.blob_len == 0 || store.blob_len > sizeof store.blob)
@@ -242,7 +308,10 @@ bool horse_keystore_store_plaintext(const horse_identity_keys_t *identity,
 
     memset(&store, 0, sizeof store);
     store.magic = HORSE_STORE_MAGIC;
-    store.version = HORSE_STORE_VERSION;
+    store.store_version = HORSE_IDENTITY_STORE_VERSION;
+    store.kdf_version = HORSE_KDF_VERSION;
+    store.opslimit = HORSE_ARGON2ID_OPSLIMIT;
+    store.memlimit = HORSE_ARGON2ID_MEMLIMIT;
 
 #ifdef HAVE_LIBSODIUM
     randombytes_buf(store.salt, sizeof store.salt);
@@ -273,6 +342,28 @@ bool horse_keystore_store_plaintext(const horse_identity_keys_t *identity,
     identity_unlocked = true;
     pthread_mutex_unlock(&identity_mu);
     return true;
+}
+
+bool horse_keystore_store_with_held(const horse_identity_keys_t *identity)
+{
+    char pass[HORSE_PASSPHRASE_MAX + 1];
+    size_t n;
+    bool ok;
+
+    pthread_mutex_lock(&identity_mu);
+    if (!have_passphrase)
+    {
+        pthread_mutex_unlock(&identity_mu);
+        return false;
+    }
+    n = held_passphrase_len;
+    memcpy(pass, held_passphrase, n);
+    pass[n] = '\0';
+    pthread_mutex_unlock(&identity_mu);
+
+    ok = horse_keystore_store_plaintext(identity, pass, n);
+    horse_crypto_memzero(pass, sizeof pass);
+    return ok;
 }
 
 bool horse_keystore_fingerprint(uint8_t fp_out[32])

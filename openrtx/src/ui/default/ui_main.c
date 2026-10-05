@@ -218,6 +218,14 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_HORSE:
         {
             rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+            if(ui_state->horse_pass_edit)
+            {
+                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                          color_white, "Horse pass");
+                gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
+                          color_white, "%s", ui_state->horse_pass_input);
+                break;
+            }
             if(rtxStatus.horseLsfOk)
             {
                 gfx_drawSymbol(layout.line2_pos, layout.line2_symbol_size, TEXT_ALIGN_LEFT,
