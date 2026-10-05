@@ -16,22 +16,16 @@ Impairment: the analog loopback of `horse_loopback.cpp` (gain 1.0,
 additive uniform-amplitude noise in ADC counts, `HorseModulator` then
 `HorseDemodulator` with `setSkipDcBlock(true)`).
 
-## Recommendation (closed for voice; LSF provisional)
+## Recommendation (normative for implementation)
 
-**Voice code for version 2: option C** (M17 convolution, puncture,
-interleaver, decorrelator). Polar CA-SCL list 4 is better on the host
-noise tables, but the MD-3x0 estimate from host `-O2` plus Valgrind
-`callgrind` instruction counts is **22--28 ms/frame** at 168 MHz
-(IPC 1.0--0.8), above the 15 ms gate (section 12). List 8 is worse.
-Path memory is down to SC size (`2N` int16 LLRs, 2568 B/path). LDPC
-stays unevaluated pending the table files in section 4.
+**Voice:** option C (M17 convolution, puncture, interleaver, decorrelator).
+Polar list-4 is closed for MD-3x0 (section 12, >15 ms Ir estimate).
 
-**LSF (proposal):** 3-frame M17-chunked opening LSF with `crc_m17`,
-plus 96-bit option-C spare fragments in every voice frame (section 7b).
-A fourth opening frame adds almost nothing; fragments recover audio
-when the opening payload is wiped but LSF sync still acquires.
+**LSF / late entry:** section 7b (A--E): three coded opening frames with
+CRC-16; cycle-10 spare fragments (LSF + signature); majority combine;
+voice-sync late entry; new sync words; version byte 2.
 
-No on-air change this round. Demodulator clock tracking is firmware.
+No compatibility path for version 1.
 
 ## 1. Version 1 facts checked against the code
 
@@ -204,43 +198,131 @@ demod, seed 1): polar block 166/200 at noise 11000 vs M17 3-chunk
 160/200 at 11000 (one extra success). Polar LSF RAM is still large;
 option C opening stays the cheap default now that polar voice is out.
 
-## 7b. LSF fragments in option-C spare bits (proposal)
+## 7b. LSF and signature fragments (normative for v2)
 
-Option C packs 34 punctured bytes (272 bits) then fills the remaining
-**96 bits** of the 368-bit slot by repeating the punctured stream.
-Those 96 bits are the spare.
+Option C packs 34 punctured bytes (272 bits) then has **96 spare bits**
+in the 368-bit slot. Version 2 uses those bits for a repeating
+fragment cycle instead of repeating the punctured stream.
 
-| Item | Choice |
-|------|--------|
-| Fragment size | 12 bytes (96 bits), uncoded in the spare |
-| LSF assembly | 48 bytes = 46-byte LSF + `crc_m17` (16 bits) |
-| Fragments to rebuild | 4 (`FN % 4` selects the 12-byte slice) |
-| Coding of fragment | none inside the spare; overall CRC16 rejects bad sets |
-| Opening | still 3 M17-coded LSF sync frames (chunk 0..2) |
-| Order | `FN % 4`; no extra header (FN is already in the voice info) |
+### A. Fragment cycle
 
-**Key derivation:** do not derive session keys or accept tags until a
-full 48-byte LSF passes `crc_m17`. Fragments and opening LSF produce
-the same IKM fields (`secret||src||dst||eph||flags||version`).
+| Mode | Cycle length | Contents |
+|------|-------------:|----------|
+| All modes | **10** frames | slots 0..3: LSF (48 B); slots 4..9: signature (64 B + 8 B zero pad) |
 
-**Tag check:** unchanged (`dir||FN16||payload` under `k_tag`). Voice
-decoded before LSF CRC is buffered or discarded; audio starts on the
-first frame after LSF is valid.
+Cycle length is **always 10**, including encrypt-only. Late joiners
+do not know the channel mode until the LSF CRC passes; a mode-dependent
+length would be circular. Encrypt-only transmitters fill slots 4..9
+with zeros. After LSF decode, if `LSF_FLAG_SIGNED` is clear, the
+receiver ignores slots 4..9. If the channel requires signing, audio
+waits until slots 4..9 rebuild the 64-byte signature and verification
+succeeds.
 
-**Frame-number rule:** unchanged. Fragment slot is `FN % 4`, so late
-entry after FN wrap still aligns.
+**Fragment size:** 12 bytes (96 bits), uncoded in the spare.
 
-**Signature frames:** FN in `SIG_FRAME_BASE..`; they also carry spare
-fragments. If the opening LSF is lost and fragments rebuild later,
-early signature chunks may already have passed; the receiver still
-needs all six SIG frames for a full signature. Late entry that misses
-SIG frames cannot verify the signature (same as today without late
-entry). Fragments do not replace SIG.
+**How FN identifies the slot:**
 
-**Acquire note:** Horse still acquires on LSF sync. The fragment study
-models "opening LSF lost" by zeroing LSF payloads while keeping LSF
-sync words so the demod locks; pure wipe of sync is still no-lock
-(no late entry).
+| Frame | FN range | Slot |
+|-------|----------|------|
+| Voice | `0 .. VOICE_FN_MAX` (0x6FFF) | `FN % 10` |
+| Signature | `SIG_FRAME_BASE .. +5` (0x7000..0x7005) | `4 + (FN - SIG_FRAME_BASE)` (slots 4..9) |
+| Opening LSF | (three LSF-sync frames, no FN) | not in the cycle |
+
+Voice FN 0..9 therefore carries one full cycle (LSF then signature).
+Signature frames refresh slots 4..9 once at the start of a signed TX.
+Later voice frames keep refreshing the whole cycle for late joiners.
+
+**Payload map:**
+
+- Slot `s` in 0..3: bytes `[12*s .. 12*s+11]` of the 48-byte block
+  `(46-byte LSF || crc_m17)`.
+- Slot `s` in 4..9: bytes `[12*(s-4) ..]` of the 64-byte signature;
+  slot 9 carries the last 4 signature bytes plus 8 zero pad bytes.
+
+**Time to full recovery (ideal, no erasures):**
+
+| Goal | Frames | Time (40 ms/frame) |
+|------|-------:|-------------------:|
+| LSF only (encrypt / unsigned) | 4 distinct slots 0..3 | 160 ms minimum; 400 ms if FN runs 0..9 |
+| LSF + signature (sign / both) | 10 distinct slots 0..9 | **400 ms** minimum |
+
+With erasures, majority combining (B) needs further repeats of each
+slot; a practical budget for acceptance tests is **20 voice frames
+(~800 ms)** after late-entry lock for LSF-only, and **30 frames
+(~1.2 s)** when a signature is required.
+
+### B. Fragment combining
+
+For each slot the receiver keeps a **bit-wise majority** over the last
+up to **three** hard copies (each copy is 96 bits from one frame).
+Ties count as 0. After every update of slots 0..3, assemble 48 bytes
+and accept the LSF only when `crc_m17` over the first 46 bytes matches
+the last two. After LSF accept, if signing is required, assemble 64
+bytes from slots 4..9 the same way and run the existing signature
+check.
+
+**Small code on fragments:** not worth the bits. The spare is only 96
+bits; an inner code would shrink the LSF/signature payload or lengthen
+the cycle. The outer `crc_m17` (LSF) and Ed25519 (signature) already
+reject bad assemblies. Majority over repeats is the redundancy.
+
+### C. Late-entry rules
+
+1. Demodulator may **acquire on a voice sync word** with no prior LSF
+   (Hamming-0 acquire, Hamming-2 track; same coast/clock rules).
+2. **No audio** until, in order: LSF rebuilt and CRC-ok; session keys
+   derived from the LSF fields; at least one voice/signature frame
+   **tag** verified under `k_tag`; and, if the channel requires
+   signing (`LSF_FLAG_SIGNED` or local policy), the **64-byte
+   signature verified**.
+3. **Frame numbers** must be **strictly increasing** from the first
+   frame accepted for crypto/audio (same FN rules as today, including
+   cap `VOICE_FN_MAX = 0x6FFF`). Frames at or behind the first accepted
+   FN are dropped.
+4. Opening three LSF-sync frames remain the fast path when present;
+   fragments are the late-entry / erased-opening path.
+
+### D. Version-1 signals and sync words
+
+Version 1 has no deployed users: **replace it**. Unknown LSF version
+bytes and version-1 frames produce **no audio** (fail closed).
+
+**Sync words change in version 2.** Reasons: (1) a v1 radio locking on
+a v2 LSF can pass `horse_crypto_lsf_version_ok` with probability
+1/256 on a random version byte and then derive garbage keys; (2) a v2
+radio must not acquire `{0x5A,0xA7}` / `{0x7E,0x9B}`; (3) new sync
+words make mutual silence certain without relying on the version byte
+alone. Exact byte values are chosen at implementation so each pair has
+Hamming distance >= 6 from the v1 words and from each other; EOT sync
+is reviewed the same way. `LSF_PROTOCOL_VERSION` / `HORSE_LSF_VERSION`
+become **2**.
+
+### E. DC-block off-by-one sample phase
+
+**Evidence:** forcing `samplingPoint += 1` immediately after LSF
+acquire zeroes voice on the firmware DC path (`setSkipDcBlock(false)`):
+voice sync Hamming distance becomes 4. The same forced step with DC
+skipped yields HD=1 and voice decodes. Cause: DC-block IIR still
+settling at the LSF/voice boundary plus an off-by-one sample phase.
+
+**Mitigation in tree (commit `69d97b54`):** `CLOCK_HOLD_FRAMES = 3`
+before any TED apply, then sync-gated majority ±1 tracking. That stops
+the failure mode that zeroed voice. Residual risk if software forces an
+SP jump during settle remains noted in `HORSE_AUDIT.md` as mitigated,
+not a separate open C-item, with this evidence. No further change is
+required before v2 coding unless a new test shows hold=3 is insufficient.
+
+### Interactions (unchanged security)
+
+**Key derivation:** only after LSF CRC. IKM stays
+`secret||src||dst||eph||flags||version` with version=2.
+
+**Tag:** `dir||FN16||payload` under `k_tag` on every frame; no
+cleartext fallback.
+
+**Signature frames:** payload still carries the six signature chunks
+at `SIG_FRAME_BASE`; spare bits concurrently refresh cycle slots 4..9
+for late joiners who missed the opening SIG burst.
 
 ### LSF success curves (200 trials, seed 1, real demod)
 
@@ -255,7 +337,8 @@ Opening only (`lsf_cmp` kind=0):
 
 Opening plus fragments (`lsf_frag`, erase_open=0). Success =
 opening CRC or fragment rebuild; `mean_start_fr` is frames from TX
-start until LSF valid (0 if opening worked):
+start until LSF valid (0 if opening worked). Study used cycle length 4
+(LSF-only); v2 implements cycle length 10 per A:
 
 | noise | nfr | open | frag_or_open | mean_start_fr |
 |------:|----:|-----:|-------------:|--------------:|
@@ -268,8 +351,7 @@ start until LSF valid (0 if opening worked):
 | 12000 | 3 | 141/200 | 159/200 | 3 |
 | 12000 | 4 | 143/200 | 162/200 | 3 |
 
-Opening payload erased, sync kept (`erase_open=1`). Audio start =
-`mean_start_fr` frames (40 ms each) after TX start:
+Opening payload erased, sync kept (`erase_open=1`):
 
 | noise | nfr | frag ok | mean_start_fr | start time |
 |------:|----:|--------:|--------------:|-----------:|
@@ -282,12 +364,14 @@ Opening payload erased, sync kept (`erase_open=1`). Audio start =
 | 12000 | 3 | 84/200 | 20 | ~800 ms |
 | 12000 | 4 | 88/200 | 21 | ~840 ms |
 
-**Recommended LSF design:** 3-frame M17 opening + continuous 12-byte
-`FN%4` fragments in the option-C spare. Drop the fourth opening frame.
-Acceptance for implementation: with fragments enabled, host analog
+**Recommended LSF design (implementation):** 3-frame M17 opening +
+cycle-10 spare fragments (A--D). Drop a fourth opening frame.
+
+**Acceptance (unchanged gate):** with fragments enabled, host analog
 loopback at noise 10000 reaches **>= 198/200** LSF-valid (opening or
-rebuild) within **20 voice frames** (~800 ms) after LSF sync acquire,
-and version-2 complete TX still meets section 16 item 1.
+rebuild) within the recovery budget in A, and version-2 complete TX
+meets section 16 item 1. Report figures whether or not the gate is
+met; do not lower the gate.
 
 ## 8. Voice FER: `HorseDemodulator` vs ideal frame timing
 

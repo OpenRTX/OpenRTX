@@ -345,6 +345,10 @@ Host analog loopback (`tests/unit/horse_loopback.cpp`) now covers:
 - Layer d: preamble, LSF, six signature frames, 300 voice frames, EOT.
 - Firmware DC-block path (`test_layer_dc_block`): passes in the unsanitized
   meson suite. Under UBSan it aborts on the known `dsp.cpp:19` shift.
+- **DC settle + SP jump (mitigated):** forcing `samplingPoint += 1` right
+  after LSF acquire made voice sync HD=4 with DC on (no voice); HD=1
+  with DC skipped. Mitigated by `CLOCK_HOLD_FRAMES=3` then bounded TED
+  (`69d97b54`). Not tracked as a separate open C-item.
 
 First failing layer before the demod fix was **c**. Commits:
 
