@@ -1401,7 +1401,7 @@ test('Horse Keystore Test', horse_keystore_test,
 test('Horse Host Interop Test', horse_host_interop_test,
      env : horse_test_env, timeout : 60)
 test('Horse Loopback Test', horse_loopback_test,
-     env : horse_test_env, timeout : 180)
+     env : horse_test_env, timeout : 300)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)

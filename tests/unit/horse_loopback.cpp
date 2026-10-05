@@ -44,6 +44,7 @@ struct impair_t {
     float dc;
     float rate_ppm;
     size_t drop_start;
+    unsigned seed;
 };
 
 struct decoded_t {
@@ -114,7 +115,7 @@ static void impair_48k(const int16_t *in, size_t n, const impair_t &p,
         start = n;
     double pos = static_cast<double>(start);
     double step = 1.0 + (p.rate_ppm / 1.0e6);
-    unsigned rng = 1u;
+    unsigned rng = p.seed != 0u ? p.seed : 1u;
     while (pos < static_cast<double>(n)) {
         size_t i = static_cast<size_t>(pos);
         float s = static_cast<float>(in[i]);
@@ -243,6 +244,8 @@ static int demod_stream(const std::vector<int16_t> &rx24, bool invert,
         d.sync0 = frame[0];
         d.sync1 = frame[1];
         d.type = decoder.decodeFrame(frame);
+        if (d.type == HorseFrameType::LINK_SETUP)
+            demod.noteValidTag();
         if (d.type == HorseFrameType::VOICE)
             decoder.getVoicePayload(frame, d.payload, d.tag, &d.fn);
         out.push_back(d);
@@ -365,7 +368,8 @@ struct false_lock_row_t {
 
 static false_lock_row_t
 count_false_locks(uint8_t hd, int32_t peak, size_t samples, unsigned seed,
-                  std::vector<int32_t> *lock_peaks = nullptr, float gain = 1.0f)
+                  std::vector<int32_t> *lock_peaks = nullptr, float gain = 1.0f,
+                  std::vector<int32_t> *diss = nullptr)
 {
     false_lock_row_t r{};
     r.hd = hd;
@@ -395,6 +399,12 @@ count_false_locks(uint8_t hd, int32_t peak, size_t samples, unsigned seed,
         frame_t frame;
         if (!demod.takeFrame(frame))
             continue;
+        uint8_t lsf_hd = static_cast<uint8_t>(
+            __builtin_popcount(frame[0] ^ LSF_SYNC_WORD[0])
+            + __builtin_popcount(frame[1] ^ LSF_SYNC_WORD[1]));
+        if (lsf_hd <= HAMMING_SYNC_MAX && diss != nullptr)
+            diss->push_back(
+                static_cast<int32_t>(decoder.lsfRepeatDisagreements(frame)));
         if (decoder.decodeFrame(frame) == HorseFrameType::LINK_SETUP)
             r.lsf_locks++;
     }
@@ -402,20 +412,16 @@ count_false_locks(uint8_t hd, int32_t peak, size_t samples, unsigned seed,
     return r;
 }
 
-static void print_peak_stats(const char *label, std::vector<int32_t> peaks)
+static void print_pctiles(const char *label, std::vector<int32_t> v)
 {
-    if (peaks.empty()) {
-        std::printf("corr-peak %s: n=0\n", label);
+    if (v.empty()) {
+        std::printf("%s: n=0\n", label);
         return;
     }
-    std::sort(peaks.begin(), peaks.end());
-    int64_t sum = 0;
-    for (int32_t x : peaks)
-        sum += x;
-    std::printf("corr-peak %s: n=%zu min=%d p50=%d max=%d mean=%.0f\n", label,
-                peaks.size(), peaks.front(), peaks[peaks.size() / 2],
-                peaks.back(),
-                static_cast<double>(sum) / static_cast<double>(peaks.size()));
+    std::sort(v.begin(), v.end());
+    size_t p5 = (v.size() * 5u) / 100u;
+    std::printf("%s: n=%zu min=%d p5=%d p50=%d max=%d\n", label, v.size(),
+                v.front(), v[p5], v[v.size() / 2], v.back());
 }
 
 static void collect_lock_peaks(const std::vector<int16_t> &rx24,
@@ -472,7 +478,7 @@ static int test_corr_peak_distributions()
             collect_lock_peaks(rx24, real_peaks);
         char lab[80];
         std::snprintf(lab, sizeof lab, "real LSF gain=%.2f (ncc Q12)", g);
-        print_peak_stats(lab, real_peaks);
+        print_pctiles(lab, real_peaks);
         for (int32_t x : real_peaks)
             if (x < min_real)
                 min_real = x;
@@ -481,7 +487,7 @@ static int test_corr_peak_distributions()
         count_false_locks(0, 0, noise_s, 7u, &noise_peaks, g);
         std::snprintf(lab, sizeof lab,
                       "false lock gain=%.2f Hamming0 (ncc Q12)", g);
-        print_peak_stats(lab, noise_peaks);
+        print_pctiles(lab, noise_peaks);
         for (int32_t x : noise_peaks) {
             any_false = true;
             if (x > max_false)
@@ -861,6 +867,178 @@ static int count_good_frames(const impair_t &p, bool demod_invert)
     return (lsf ? 1 : 0) + (voice ? 1 : 0) + (eot ? 1 : 0);
 }
 
+static int collect_real_lsf_trial(const std::vector<int16_t> &rx24,
+                                  const uint8_t *melpe, int32_t *ncc, int *good,
+                                  int32_t *diss)
+{
+    HorseDemodulator demod;
+    HorseFrameDecoder decoder;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setCorrPeakMin(0);
+    int32_t got = -1;
+    bool have_lsf = false;
+    bool have_voice = false;
+    bool have_eot = false;
+    for (int16_t s : rx24) {
+        bool was = demod.isLocked();
+        demod.feedSample(s, false);
+        if (!was && demod.isLocked())
+            got = demod.lastLockCorrAbs();
+        frame_t frame;
+        if (!demod.takeFrame(frame))
+            continue;
+        HorseFrameType t = decoder.decodeFrame(frame);
+        if (t == HorseFrameType::LINK_SETUP && frame[0] == LSF_SYNC_WORD[0]
+            && frame[1] == LSF_SYNC_WORD[1]) {
+            have_lsf = true;
+            demod.noteValidTag();
+            if (diss != nullptr)
+                *diss =
+                    static_cast<int32_t>(decoder.lsfRepeatDisagreements(frame));
+        }
+        if (t == HorseFrameType::VOICE) {
+            uint8_t payload[12];
+            uint8_t vtag[4];
+            uint16_t fn = 0;
+            decoder.getVoicePayload(frame, payload, vtag, &fn);
+            if (fn < SIG_FRAME_BASE && memcmp(payload, melpe, 12) == 0)
+                have_voice = true;
+        }
+        if (t == HorseFrameType::EOT && frame[0] == EOT_SYNC_WORD[0]
+            && frame[1] == EOT_SYNC_WORD[1])
+            have_eot = true;
+    }
+    demod.terminate();
+    *good = (have_lsf ? 1 : 0) + (have_voice ? 1 : 0) + (have_eot ? 1 : 0);
+    if (!have_lsf || got < 0)
+        return -1;
+    *ncc = got;
+    return 0;
+}
+
+static int test_ncc_under_noise()
+{
+    HorseFrameEncoder enc;
+    std::vector<frame_t> frames(3);
+    call_t src = { { 2, 2, 2, 2, 2, 2 } };
+    call_t dst = { { 3, 3, 3, 3, 3, 3 } };
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 0 };
+    memset(melpe, 0x44, sizeof melpe);
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    enc.encodeVoiceFrame(melpe, tag, frames[1], false);
+    enc.encodeEotFrame(frames[2]);
+    std::vector<int16_t> bb48;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+
+    {
+        HorseFrameEncoder kenc;
+        frame_t keyed{};
+        uint8_t eph[32];
+        memset(eph, 0x22, sizeof eph);
+        kenc.encodeLsf(src, dst, eph, LSF_FLAG_ENCRYPTED | LSF_FLAG_SIGNED,
+                       keyed);
+        HorseFrameDecoder kd;
+        std::printf("keyed LSF (eph 0x22) clean repeat-pair diss=%u "
+                    "(LSF is uncoded; limit=%u)\n",
+                    kd.lsfRepeatDisagreements(keyed), LSF_REPEAT_DISAGREE_MAX);
+    }
+
+    const float sigmas[] = { 2000.0f, 5000.0f, 10000.0f, 12500.0f, 15000.0f };
+    const unsigned n_try = 200u;
+    std::printf("ncc/diss under noise (gain=1, collect floor 0):\n");
+    std::printf("  kind  sigma   n  min   p5  p50  max  good3/200\n");
+
+    for (float sig : sigmas) {
+        std::vector<int32_t> nccs;
+        std::vector<int32_t> disss;
+        std::vector<int32_t> diss_ok;
+        unsigned good3 = 0;
+        for (unsigned t = 0; t < n_try; t++) {
+            impair_t p{};
+            p.gain = 1.0f;
+            p.noise = sig;
+            p.seed = 1000u + t * 17u + static_cast<unsigned>(sig);
+            std::vector<int16_t> imp48;
+            std::vector<int16_t> rx24;
+            impair_48k(bb48.data(), bb48.size(), p, imp48);
+            to_24k(imp48, rx24);
+            int32_t ncc = 0;
+            int good = 0;
+            int32_t diss = 0;
+            if (collect_real_lsf_trial(rx24, melpe, &ncc, &good, &diss) == 0) {
+                nccs.push_back(ncc);
+                disss.push_back(diss);
+            }
+            if (good >= 3) {
+                good3++;
+                diss_ok.push_back(diss);
+            }
+        }
+        if (nccs.empty()) {
+            std::printf("ncc   %5.0f    0     -    -    -    -  %3u/200\n", sig,
+                        good3);
+            std::printf("diss  %5.0f    0     -    -    -    -\n", sig);
+            continue;
+        }
+        std::sort(nccs.begin(), nccs.end());
+        std::sort(disss.begin(), disss.end());
+        size_t p5n = (nccs.size() * 5u) / 100u;
+        size_t p5d = (disss.size() * 5u) / 100u;
+        std::printf("ncc   %5.0f  %3zu  %4d %4d %4d %4d  %3u/200\n", sig,
+                    nccs.size(), nccs.front(), nccs[p5n], nccs[nccs.size() / 2],
+                    nccs.back(), good3);
+        std::printf("diss  %5.0f  %3zu  %4d %4d %4d %4d\n", sig, disss.size(),
+                    disss.front(), disss[p5d], disss[disss.size() / 2],
+                    disss.back());
+        if (!diss_ok.empty()) {
+            std::sort(diss_ok.begin(), diss_ok.end());
+            std::printf("diss3 %5.0f  %3zu  %4d %4d %4d %4d (payload OK)\n",
+                        sig, diss_ok.size(), diss_ok.front(),
+                        diss_ok[(diss_ok.size() * 5u) / 100u],
+                        diss_ok[diss_ok.size() / 2], diss_ok.back());
+        }
+    }
+
+    impair_t base{};
+    base.gain = 1.0f;
+    base.noise = 12500.0f;
+    int at_12500 = count_good_frames(base, false);
+    base.noise = 13000.0f;
+    int at_13000 = count_good_frames(base, false);
+    std::printf("noise baseline at CORR_PEAK_MIN=%d: 12500=%d/3 13000=%d/3 "
+                "(pre-threshold: 12500 pass, 13000 fail)\n",
+                CORR_PEAK_MIN, at_12500, at_13000);
+
+    const bool long_noise = std::getenv("HORSE_FALSE_LOCK_LONG") != nullptr;
+    const size_t noise_s = long_noise ? (24000u * 600u) : (24000u * 10u);
+    std::vector<int32_t> false_ncc;
+    std::vector<int32_t> false_diss;
+    false_lock_row_t fl = count_false_locks(0, 0, noise_s, 7u, &false_ncc, 1.0f,
+                                            &false_diss);
+    print_pctiles(long_noise ? "false lock Hamming0 gain=1 ncc Q12 (10 min)" :
+                               "false lock Hamming0 gain=1 ncc Q12 (10 s)",
+                  false_ncc);
+    print_pctiles(long_noise ?
+                      "false lock Hamming0 gain=1 repeat-2 diss (10 min)" :
+                      "false lock Hamming0 gain=1 repeat-2 diss (10 s)",
+                  false_diss);
+    double minutes = static_cast<double>(fl.samples) / 24000.0 / 60.0;
+    size_t kept = 0;
+    for (int32_t d : false_diss)
+        if (d <= static_cast<int32_t>(LSF_REPEAT_DISAGREE_MAX))
+            kept++;
+    std::printf("false LSF/min over %.1f min: before diss-check %.2f "
+                "(n=%zu) after (diss<=%u) %.2f (n=%zu); demod/min %.2f\n",
+                minutes, false_diss.size() / minutes, false_diss.size(),
+                LSF_REPEAT_DISAGREE_MAX, kept / minutes, kept,
+                fl.demod_locks / minutes);
+    return 0;
+}
+
 static int test_impairments()
 {
     impair_t base{};
@@ -917,6 +1095,19 @@ static int test_impairments()
                 "CORR_PEAK_MIN=%d\n",
                 noise_fail, ppm_fail, inv_auto, inv_flag, dc_good, gain_good,
                 gain05, gain20, trunc_good, CORR_PEAK_MIN);
+    if (gain20 < 3)
+        std::printf("impair: gain 2.0 fails because the samples clip\n");
+    if (noise_fail >= 0.0f && noise_fail < 13000.0f) {
+        std::printf(
+            "impair: noise floor regressed (fail at %.0f, want >=13000)\n",
+            noise_fail);
+        return -1;
+    }
+    if (ppm_fail >= 0.0f && ppm_fail < 300.0f) {
+        std::printf("impair: ppm floor regressed (fail at %.0f, want >=300)\n",
+                    ppm_fail);
+        return -1;
+    }
     return 0;
 }
 
@@ -945,6 +1136,8 @@ int main()
     if (test_layer_d_full_tx() != 0)
         return -1;
     if (test_impairments() != 0)
+        return -1;
+    if (test_ncc_under_noise() != 0)
         return -1;
     if (test_three_mode_loopback() != 0)
         return -1;
