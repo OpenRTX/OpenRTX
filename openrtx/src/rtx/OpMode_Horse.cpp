@@ -151,11 +151,13 @@ void OpMode_Horse::sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
         uint8_t nonce[12];
         uint8_t cipher[HORSE_CODEC_FRAME_BYTES];
         horse_crypto_voice_nonce_from_fn(fn, nonce);
-        horse_crypto_voice_encrypt(sessionKey, frameAuthKey, nonce, payload,
+        horse_crypto_voice_encrypt(sessionKey, frameAuthKey,
+                                   HORSE_VOICE_DIR_FORWARD, fn, nonce, payload,
                                    HORSE_CODEC_FRAME_BYTES, cipher, voiceTag);
         encoder.encodeVoiceFrame(cipher, voiceTag, outFrame, isLast);
     } else if (sessionValid) {
-        horse_crypto_voice_auth_tag(frameAuthKey, fn, payload, voiceTag);
+        horse_crypto_voice_auth_tag(frameAuthKey, HORSE_VOICE_DIR_FORWARD, fn,
+                                    payload, voiceTag);
         encoder.encodeVoiceFrame(payload, voiceTag, outFrame, isLast);
     } else
         encoder.encodeVoiceFrame(payload, voiceTag, outFrame, isLast);
@@ -406,6 +408,7 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                     uint8_t plain[HORSE_CODEC_FRAME_BYTES];
                     horse_crypto_voice_nonce_from_fn(fn, nonce);
                     if (!horse_crypto_voice_decrypt(sessionKey, frameAuthKey,
+                                                    HORSE_VOICE_DIR_FORWARD, fn,
                                                     nonce, melpe,
                                                     HORSE_CODEC_FRAME_BYTES,
                                                     tag, plain))
@@ -415,8 +418,9 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                 }
                 else if (sessionValid)
                 {
-                    if (!horse_crypto_voice_auth_verify(frameAuthKey, fn, melpe,
-                                                        tag))
+                    if (!horse_crypto_voice_auth_verify(frameAuthKey,
+                                                        HORSE_VOICE_DIR_FORWARD,
+                                                        fn, melpe, tag))
                         drop_voice = true;
                 }
                 else

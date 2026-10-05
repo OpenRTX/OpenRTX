@@ -21,10 +21,10 @@ static int test_voice_encrypt_decrypt_roundtrip()
 {
     uint8_t session_key[HORSE_SESSION_KEY_BYTES];
     uint8_t nonce_96bit[12];
-    uint8_t plaintext[96];
-    uint8_t ciphertext[96];
+    uint8_t plaintext[12];
+    uint8_t ciphertext[12];
     uint8_t tag[HORSE_VOICE_TAG_BYTES];
-    uint8_t decrypted[96];
+    uint8_t decrypted[12];
 
     /* Initialize test vectors. */
     for (size_t i = 0; i < sizeof session_key; i++)
@@ -35,7 +35,7 @@ static int test_voice_encrypt_decrypt_roundtrip()
         plaintext[i] = (uint8_t)(i * 3);
 
     /* Encrypt. */
-    horse_crypto_voice_encrypt(session_key, session_key, nonce_96bit, plaintext,
+    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, plaintext,
                                sizeof plaintext, ciphertext, tag);
 
     /* Verify ciphertext changed. */
@@ -61,7 +61,7 @@ static int test_voice_encrypt_decrypt_roundtrip()
     }
 
     /* Decrypt. */
-    if (!horse_crypto_voice_decrypt(session_key, session_key, nonce_96bit, ciphertext,
+    if (!horse_crypto_voice_decrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, ciphertext,
                                      sizeof ciphertext, tag, decrypted))
     {
         std::printf("horse_crypto_test: decrypt failed\n");
@@ -82,10 +82,10 @@ static int test_voice_decrypt_bad_tag()
 {
     uint8_t session_key[HORSE_SESSION_KEY_BYTES];
     uint8_t nonce_96bit[12];
-    uint8_t plaintext[96];
-    uint8_t ciphertext[96];
+    uint8_t plaintext[12];
+    uint8_t ciphertext[12];
     uint8_t tag[HORSE_VOICE_TAG_BYTES];
-    uint8_t decrypted[96];
+    uint8_t decrypted[12];
 
     for (size_t i = 0; i < sizeof session_key; i++)
         session_key[i] = (uint8_t)i;
@@ -94,14 +94,14 @@ static int test_voice_decrypt_bad_tag()
     for (size_t i = 0; i < sizeof plaintext; i++)
         plaintext[i] = (uint8_t)(i * 5);
 
-    horse_crypto_voice_encrypt(session_key, session_key, nonce_96bit, plaintext,
+    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, plaintext,
                                sizeof plaintext, ciphertext, tag);
 
     /* Corrupt tag. */
     tag[0] ^= 0xFF;
 
     /* Decrypt should fail. */
-    if (horse_crypto_voice_decrypt(session_key, session_key, nonce_96bit, ciphertext,
+    if (horse_crypto_voice_decrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, ciphertext,
                                     sizeof ciphertext, tag, decrypted))
     {
         std::printf("horse_crypto_test: decrypt accepted corrupted tag\n");
@@ -115,10 +115,10 @@ static int test_voice_decrypt_bad_ciphertext()
 {
     uint8_t session_key[HORSE_SESSION_KEY_BYTES];
     uint8_t nonce_96bit[12];
-    uint8_t plaintext[96];
-    uint8_t ciphertext[96];
+    uint8_t plaintext[12];
+    uint8_t ciphertext[12];
     uint8_t tag[HORSE_VOICE_TAG_BYTES];
-    uint8_t decrypted[96];
+    uint8_t decrypted[12];
 
     for (size_t i = 0; i < sizeof session_key; i++)
         session_key[i] = (uint8_t)(i + 0x30);
@@ -127,14 +127,14 @@ static int test_voice_decrypt_bad_ciphertext()
     for (size_t i = 0; i < sizeof plaintext; i++)
         plaintext[i] = (uint8_t)(i * 7);
 
-    horse_crypto_voice_encrypt(session_key, session_key, nonce_96bit, plaintext,
+    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, plaintext,
                                sizeof plaintext, ciphertext, tag);
 
     /* Corrupt ciphertext. */
     ciphertext[10] ^= 0x55;
 
     /* Decrypt should fail (MAC verification should catch this). */
-    if (horse_crypto_voice_decrypt(session_key, session_key, nonce_96bit, ciphertext,
+    if (horse_crypto_voice_decrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, ciphertext,
                                     sizeof ciphertext, tag, decrypted))
     {
         std::printf("horse_crypto_test: decrypt accepted corrupted ciphertext\n");
@@ -149,8 +149,8 @@ static int test_voice_nonce_independence()
     uint8_t session_key[HORSE_SESSION_KEY_BYTES];
     uint8_t nonce1[12] = {0};
     uint8_t nonce2[12] = {0};
-    uint8_t plaintext[96];
-    uint8_t ciphertext1[96], ciphertext2[96];
+    uint8_t plaintext[12];
+    uint8_t ciphertext1[12], ciphertext2[12];
     uint8_t tag1[HORSE_VOICE_TAG_BYTES], tag2[HORSE_VOICE_TAG_BYTES];
 
     nonce2[0] = 1; /* Different nonce. */
@@ -160,9 +160,9 @@ static int test_voice_nonce_independence()
     for (size_t i = 0; i < sizeof plaintext; i++)
         plaintext[i] = (uint8_t)(i * 11);
 
-    horse_crypto_voice_encrypt(session_key, session_key, nonce1, plaintext,
+    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce1, plaintext,
                                sizeof plaintext, ciphertext1, tag1);
-    horse_crypto_voice_encrypt(session_key, session_key, nonce2, plaintext,
+    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce2, plaintext,
                                sizeof plaintext, ciphertext2, tag2);
 
     /* Different nonces should produce different ciphertexts. */
@@ -308,9 +308,11 @@ static int test_signed_only_recording_cannot_forge_voice()
         return -1;
 
     memset(orig, 0x11, sizeof orig);
-    if (!horse_crypto_voice_auth_tag(k_tag, 0, orig, good_tag))
+    if (!horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 0, orig,
+                                    good_tag))
         return -1;
-    if (!horse_crypto_voice_auth_verify(k_tag, 0, orig, good_tag))
+    if (!horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0, orig,
+                                        good_tag))
         return -1;
 
     memset(forged, 0x22, sizeof forged);
@@ -318,9 +320,11 @@ static int test_signed_only_recording_cannot_forge_voice()
     uint8_t from_sig[32];
     crypto_generichash(from_sig, sizeof from_sig, signature, sizeof signature,
                        (const unsigned char *)"HORSE-FAUTH", 11);
-    if (!horse_crypto_voice_auth_tag(from_sig, 0, forged, attacker_tag))
+    if (!horse_crypto_voice_auth_tag(from_sig, HORSE_VOICE_DIR_FORWARD, 0,
+                                    forged, attacker_tag))
         return -1;
-    if (horse_crypto_voice_auth_verify(k_tag, 0, forged, attacker_tag))
+    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0, forged,
+                                       attacker_tag))
     {
         std::printf("horse_crypto_test: signature-derived tag forged voice\n");
         return -1;
@@ -329,7 +333,8 @@ static int test_signed_only_recording_cannot_forge_voice()
     uint8_t hvt[32];
     crypto_generichash(hvt, sizeof hvt, forged, sizeof forged,
                        (const unsigned char *)"HVOICETAG", 9);
-    if (horse_crypto_voice_auth_verify(k_tag, 0, forged, hvt))
+    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0, forged,
+                                       hvt))
     {
         std::printf("horse_crypto_test: HVOICETAG forged voice\n");
         return -1;
@@ -339,8 +344,10 @@ static int test_signed_only_recording_cannot_forge_voice()
     if (horse_crypto_derive_session_keys(bob_pk, eph_pk, pub_only, unused))
     {
         uint8_t t[4];
-        horse_crypto_voice_auth_tag(pub_only, 0, forged, t);
-        if (horse_crypto_voice_auth_verify(k_tag, 0, forged, t) &&
+        horse_crypto_voice_auth_tag(pub_only, HORSE_VOICE_DIR_FORWARD, 0, forged,
+                                    t);
+        if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0,
+                                           forged, t) &&
             memcmp(pub_only, k_tag, 32) != 0)
         {
             std::printf("horse_crypto_test: public-only ECDH forged voice\n");
@@ -354,6 +361,63 @@ static int test_signed_only_recording_cannot_forge_voice()
     (void)eph_pk;
 #else
     std::printf("horse_crypto_test: skipping forge test (no libsodium)\n");
+#endif
+    return 0;
+}
+
+static int test_tag_binds_dir_fn_payload()
+{
+#ifdef HAVE_LIBSODIUM
+    uint8_t k_tag[32];
+    uint8_t payload[12];
+    uint8_t tag[4], other[4];
+    size_t i;
+
+    for (i = 0; i < sizeof k_tag; i++)
+        k_tag[i] = (uint8_t)(i + 3);
+    memset(payload, 0x5A, sizeof payload);
+
+    if (!horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 7, payload,
+                                    tag))
+        return -1;
+    if (!horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 7,
+                                        payload, tag))
+        return -1;
+    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 8,
+                                       payload, tag))
+        return -1;
+    if (horse_crypto_voice_auth_verify(k_tag, 1, 7, payload, tag))
+        return -1;
+    payload[0] ^= 1;
+    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 7,
+                                       payload, tag))
+        return -1;
+    payload[0] ^= 1;
+
+    /* Last-frame bit is not part of the tag. */
+    if (!horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 7 | 0x8000,
+                                    payload, other))
+        return -1;
+    if (memcmp(tag, other, 4) != 0)
+        return -1;
+    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 7,
+                                       payload, NULL))
+        return -1;
+
+    uint8_t k_enc[32];
+    uint8_t nonce[12] = { 0 };
+    uint8_t ct[12], pt[12];
+    memcpy(k_enc, k_tag, 32);
+    horse_crypto_voice_encrypt(k_enc, k_tag, HORSE_VOICE_DIR_FORWARD, 3, nonce,
+                               payload, 12, ct, tag);
+    if (horse_crypto_voice_decrypt(k_enc, k_tag, HORSE_VOICE_DIR_FORWARD, 4,
+                                   nonce, ct, 12, tag, pt))
+        return -1;
+    if (!horse_crypto_voice_decrypt(k_enc, k_tag, HORSE_VOICE_DIR_FORWARD, 3,
+                                    nonce, ct, 12, tag, pt))
+        return -1;
+#else
+    std::printf("horse_crypto_test: skipping tag bind (no libsodium)\n");
 #endif
     return 0;
 }
@@ -423,6 +487,8 @@ int main()
     if (test_session_keys_and_signed_message() != 0)
         return -1;
     if (test_signed_only_recording_cannot_forge_voice() != 0)
+        return -1;
+    if (test_tag_binds_dir_fn_payload() != 0)
         return -1;
     if (test_tx_rx_policy() != 0)
         return -1;

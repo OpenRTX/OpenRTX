@@ -160,9 +160,46 @@ bool horse_crypto_ecies_decrypt_session_key(
 #endif
 }
 
+static bool horse_crypto_tag_dir_fn_payload(const uint8_t *k_tag, uint8_t dir,
+                                            uint16_t frame_num,
+                                            const uint8_t *payload,
+                                            size_t payload_len,
+                                            uint8_t tag_out[4])
+{
+#ifdef HAVE_LIBSODIUM
+    uint8_t msg[3 + 12];
+    uint8_t mac[crypto_generichash_BYTES];
+    uint16_t fn = frame_num & 0x7FFF;
+
+    if (k_tag == NULL || payload == NULL || tag_out == NULL || payload_len != 12)
+        return false;
+    if (horse_sodium_init() != 0)
+        return false;
+
+    msg[0] = dir;
+    msg[1] = (uint8_t)((fn >> 8) & 0xFF);
+    msg[2] = (uint8_t)(fn & 0xFF);
+    memcpy(msg + 3, payload, 12);
+    crypto_generichash(mac, sizeof mac, msg, sizeof msg, k_tag,
+                       HORSE_SESSION_KEY_BYTES);
+    memcpy(tag_out, mac, HORSE_VOICE_TAG_BYTES);
+    return true;
+#else
+    (void)k_tag;
+    (void)dir;
+    (void)frame_num;
+    (void)payload;
+    (void)payload_len;
+    (void)tag_out;
+    return false;
+#endif
+}
+
 void horse_crypto_voice_encrypt(
     const uint8_t *k_enc,
     const uint8_t *k_tag,
+    uint8_t dir,
+    uint16_t frame_num,
     const uint8_t *nonce_96bit,
     const uint8_t *plaintext,
     size_t plaintext_len,
@@ -187,18 +224,15 @@ void horse_crypto_voice_encrypt(
                                 nonce,
                                 k_enc);
 
-    if (tag_truncated_32bit && k_tag != NULL)
-    {
-        uint8_t mac[crypto_generichash_BYTES];
-        crypto_generichash(mac, sizeof mac,
-                           ciphertext_out, plaintext_len,
-                           k_tag, HORSE_SESSION_KEY_BYTES);
-        memcpy(tag_truncated_32bit, mac, HORSE_VOICE_TAG_BYTES);
-    }
+    if (tag_truncated_32bit)
+        horse_crypto_tag_dir_fn_payload(k_tag, dir, frame_num, ciphertext_out,
+                                        plaintext_len, tag_truncated_32bit);
 #else
 {
     (void)k_enc;
     (void)k_tag;
+    (void)dir;
+    (void)frame_num;
     (void)nonce_96bit;
     (void)plaintext_len;
     (void)ciphertext_out;
@@ -209,6 +243,8 @@ void horse_crypto_voice_encrypt(
 bool horse_crypto_voice_decrypt(
     const uint8_t *k_enc,
     const uint8_t *k_tag,
+    uint8_t dir,
+    uint16_t frame_num,
     const uint8_t *nonce_96bit,
     const uint8_t *ciphertext,
     size_t ciphertext_len,
@@ -216,6 +252,8 @@ bool horse_crypto_voice_decrypt(
     uint8_t *plaintext_out)
 {
 #ifdef HAVE_LIBSODIUM
+    uint8_t expected[HORSE_VOICE_TAG_BYTES];
+
     if (k_enc == NULL || k_tag == NULL || ciphertext == NULL ||
         plaintext_out == NULL || tag_truncated_32bit == NULL)
         return false;
@@ -223,12 +261,11 @@ bool horse_crypto_voice_decrypt(
     if (horse_sodium_init() != 0)
         return false;
 
-    uint8_t mac[crypto_generichash_BYTES];
-    crypto_generichash(mac, sizeof mac,
-                       ciphertext, ciphertext_len,
-                       k_tag, HORSE_SESSION_KEY_BYTES);
+    if (!horse_crypto_tag_dir_fn_payload(k_tag, dir, frame_num, ciphertext,
+                                         ciphertext_len, expected))
+        return false;
 
-    if (sodium_memcmp(mac, tag_truncated_32bit, HORSE_VOICE_TAG_BYTES) != 0)
+    if (sodium_memcmp(expected, tag_truncated_32bit, HORSE_VOICE_TAG_BYTES) != 0)
         return false;
 
     uint8_t nonce[crypto_stream_xchacha20_NONCEBYTES];
@@ -245,6 +282,8 @@ bool horse_crypto_voice_decrypt(
 #else
     (void)k_enc;
     (void)k_tag;
+    (void)dir;
+    (void)frame_num;
     (void)nonce_96bit;
     (void)ciphertext;
     (void)ciphertext_len;
@@ -506,65 +545,30 @@ void horse_crypto_build_session_message(const uint8_t src[6],
     message_out[45] = version;
 }
 
-static void horse_crypto_voice_auth_message(uint16_t frame_num,
-                                            const uint8_t *melpe96bits,
-                                            uint8_t message_out[14])
-{
-    message_out[0] = (uint8_t)((frame_num >> 8) & 0xFF);
-    message_out[1] = (uint8_t)(frame_num & 0xFF);
-    if (melpe96bits != NULL)
-        memcpy(message_out + 2, melpe96bits, 12);
-    else
-        memset(message_out + 2, 0, 12);
-}
-
-bool horse_crypto_voice_auth_tag(const uint8_t auth_key[32],
-                                 uint16_t frame_num,
-                                 const uint8_t *melpe96bits,
+bool horse_crypto_voice_auth_tag(const uint8_t k_tag[32], uint8_t dir,
+                                 uint16_t frame_num, const uint8_t *payload12,
                                  uint8_t tag_out[4])
 {
-    if (auth_key == NULL || tag_out == NULL)
-        return false;
-
-#ifdef HAVE_LIBSODIUM
-    uint8_t message[14];
-    uint8_t mac[crypto_generichash_BYTES];
-
-    if (horse_sodium_init() != 0)
-        return false;
-
-    horse_crypto_voice_auth_message(frame_num, melpe96bits, message);
-    crypto_generichash(mac, sizeof mac, message, sizeof message,
-                       auth_key, 32);
-    memcpy(tag_out, mac, HORSE_VOICE_TAG_BYTES);
-    return true;
-#else
-    (void)frame_num;
-    (void)melpe96bits;
-    (void)tag_out;
-    return false;
-#endif
+    return horse_crypto_tag_dir_fn_payload(k_tag, dir, frame_num, payload12, 12,
+                                           tag_out);
 }
 
-bool horse_crypto_voice_auth_verify(const uint8_t auth_key[32],
+bool horse_crypto_voice_auth_verify(const uint8_t k_tag[32], uint8_t dir,
                                     uint16_t frame_num,
-                                    const uint8_t *melpe96bits,
+                                    const uint8_t *payload12,
                                     const uint8_t tag[4])
 {
-    if (auth_key == NULL || melpe96bits == NULL || tag == NULL)
-        return false;
-
-#ifdef HAVE_LIBSODIUM
     uint8_t expected[HORSE_VOICE_TAG_BYTES];
 
-    if (!horse_crypto_voice_auth_tag(auth_key, frame_num, melpe96bits, expected))
+    if (tag == NULL)
         return false;
-
+    if (!horse_crypto_tag_dir_fn_payload(k_tag, dir, frame_num, payload12, 12,
+                                         expected))
+        return false;
+#ifdef HAVE_LIBSODIUM
     return sodium_memcmp(expected, tag, HORSE_VOICE_TAG_BYTES) == 0;
 #else
-    (void)frame_num;
-    (void)melpe96bits;
-    (void)tag;
+    (void)expected;
     return false;
 #endif
 }

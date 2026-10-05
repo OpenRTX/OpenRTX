@@ -30,6 +30,8 @@ extern "C" {
 #define HORSE_VOICE_TAG_BYTES    4
 #define HORSE_LSF_VERSION        1
 #define HORSE_SESSION_MSG_BYTES  46
+/* Direction byte in the voice tag: 0 = PTT originator to listeners. */
+#define HORSE_VOICE_DIR_FORWARD  0
 
 /* Horse identity keys (libsodium-native sizes). */
 #define HORSE_ED25519_PUBLICKEY_BYTES  32
@@ -85,20 +87,25 @@ bool horse_crypto_ecies_decrypt_session_key(
     const uint8_t *recipient_x25519_seckey,
     uint8_t *session_key_out);
 
-/* Voice frame encrypt: XChaCha20 with k_enc, 32-bit BLAKE2b MAC with k_tag. */
+/* Voice frame encrypt: XChaCha20 with k_enc. Tag is keyed BLAKE2b with
+ * k_tag over dir || FN16 (no last-frame bit) || payload (ciphertext). */
 void horse_crypto_voice_encrypt(
     const uint8_t *k_enc,
     const uint8_t *k_tag,
+    uint8_t dir,
+    uint16_t frame_num,
     const uint8_t *nonce_96bit,
     const uint8_t *plaintext,
     size_t plaintext_len,
     uint8_t *ciphertext_out,
     uint8_t *tag_truncated_32bit);
 
-/* Voice frame decrypt with MAC verification. */
+/* Voice frame decrypt with constant-time tag check. Missing/wrong tag fails. */
 bool horse_crypto_voice_decrypt(
     const uint8_t *k_enc,
     const uint8_t *k_tag,
+    uint8_t dir,
+    uint16_t frame_num,
     const uint8_t *nonce_96bit,
     const uint8_t *ciphertext,
     size_t ciphertext_len,
@@ -161,15 +168,17 @@ void horse_crypto_build_session_message(const uint8_t src[6],
                                         uint8_t version,
                                         uint8_t message_out[HORSE_SESSION_MSG_BYTES]);
 
-/* Compute or verify a 32-bit voice authentication tag (cleartext voice). */
-bool horse_crypto_voice_auth_tag(const uint8_t auth_key[32],
+/* 32-bit tag over dir || FN (no last-frame bit) || 12-byte payload. */
+bool horse_crypto_voice_auth_tag(const uint8_t k_tag[32],
+                                 uint8_t dir,
                                  uint16_t frame_num,
-                                 const uint8_t *melpe96bits,
+                                 const uint8_t *payload12,
                                  uint8_t tag_out[4]);
 
-bool horse_crypto_voice_auth_verify(const uint8_t auth_key[32],
+bool horse_crypto_voice_auth_verify(const uint8_t k_tag[32],
+                                    uint8_t dir,
                                     uint16_t frame_num,
-                                    const uint8_t *melpe96bits,
+                                    const uint8_t *payload12,
                                     const uint8_t tag[4]);
 
 /* Sign data with Ed25519 (without encryption).
