@@ -208,7 +208,7 @@ void HorseDemodulator::reset()
 
 void HorseDemodulator::unlockedState()
 {
-    int32_t syncThresh = static_cast<int32_t>(corrThreshold * 33.0f);
+    int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
     int8_t syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
     if (syncStatus != 0)
         demodState = DemodState::SYNCED;

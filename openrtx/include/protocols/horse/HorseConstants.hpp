@@ -51,6 +51,13 @@ static constexpr size_t VOICE_TAG_BITS = 32;
 /* Max Hamming distance when matching a 16-bit sync word (two bytes). */
 static constexpr uint8_t HAMMING_SYNC_MAX = 2;
 
+/*
+ * Correlator peak must exceed corrThreshold * this scale. M17 uses 33 for
+ * all-outer Barker syncwords (energy 72). Horse LSF/EOT energy is 40 and
+ * voice is 48, so 33 * 40/72 ~= 18.
+ */
+static constexpr float CORR_SYNC_SCALE = 18.0f;
+
 } // namespace horse
 
 #endif // HORSE_CONSTANTS_H
