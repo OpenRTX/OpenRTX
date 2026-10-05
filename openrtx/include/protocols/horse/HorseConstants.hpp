@@ -35,6 +35,23 @@ static constexpr uint8_t LSF_FLAG_SIGNED = 0x02;
 static constexpr uint8_t LSF_PROTOCOL_VERSION = 1;
 static constexpr uint16_t SIG_FRAME_BASE = 0x7000;
 static constexpr uint16_t SIG_FRAME_COUNT = 6;
+/* Last legal voice FN. 0x7000-0x7FFF are signature frames only. */
+static constexpr uint16_t VOICE_FN_MAX = 0x6FFF;
+
+static inline bool voice_fn_in_session(uint16_t fn)
+{
+    return fn <= VOICE_FN_MAX;
+}
+
+/* Lost frames are allowed as a gap; repeats and backward FN are not. */
+static inline bool voice_fn_newer(bool have_prev, uint16_t prev, uint16_t next)
+{
+    if (!voice_fn_in_session(next))
+        return false;
+    if (!have_prev)
+        return true;
+    return next > prev;
+}
 static constexpr size_t SIG_CHUNK_BYTES = 12;
 static constexpr size_t SIG_BYTES = 64;
 
@@ -52,6 +69,12 @@ static constexpr size_t VOICE_TAG_BITS = 32;
 
 /* Max Hamming distance when matching a 16-bit sync word (two bytes). */
 static constexpr uint8_t HAMMING_SYNC_MAX = 2;
+/*
+ * Acquisition Hamming (LSF only). Noise-only baseband: 2 LSF false locks
+ * in 48000 samples at 24 kHz with this value (see horse_loopback). Late
+ * entry on voice/EOT is not supported.
+ */
+static constexpr uint8_t HAMMING_ACQUIRE_MAX = 1;
 
 /*
  * Correlator peak must exceed corrThreshold * this scale. M17 uses 33 for

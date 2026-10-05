@@ -239,6 +239,9 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 else if(rtxStatus.horseError == HORSE_ERR_NO_KEYS)
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse: no keys");
+                else if(rtxStatus.horseError == HORSE_ERR_CALL_LIMIT)
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "Horse: call limit");
                 else
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse #%s", dst);

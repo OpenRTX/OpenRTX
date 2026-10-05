@@ -89,7 +89,9 @@ OpMode_Horse::OpMode_Horse()
       signTx(false),
       signRx(false),
       txSigSent(false),
-      rxSigReady(false)
+      rxSigReady(false),
+      haveRxVoiceFn(false),
+      rxLastVoiceFn(0)
 {
 }
 
@@ -107,6 +109,8 @@ void OpMode_Horse::resetRxCrypto()
     rxSigChunks = 0;
     rxLsfFlags = 0;
     rxLsfVersion = 0;
+    haveRxVoiceFn = false;
+    rxLastVoiceFn = 0;
     horse_crypto_memzero(sessionKey, sizeof sessionKey);
     horse_crypto_memzero(frameAuthKey, sizeof frameAuthKey);
     horse_crypto_memzero(rxSessionSig, sizeof rxSessionSig);
@@ -426,6 +430,15 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                 else
                     drop_voice = true;
 
+                if (!drop_voice) {
+                    if (!voice_fn_newer(haveRxVoiceFn, rxLastVoiceFn, fn))
+                        drop_voice = true;
+                    else {
+                        haveRxVoiceFn = true;
+                        rxLastVoiceFn = fn;
+                    }
+                }
+
                 if (!drop_voice && rxAudioPath >= 0 && horse_codec_running())
                     horse_codec_pushFrame(melpe, false);
             }
@@ -600,13 +613,54 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
     }
 
     uint8_t melpeBuf[HORSE_CODEC_FRAME_BYTES];
+    uint16_t nextFn = encoder.currentVoiceFrameNumber();
+    if (nextFn > VOICE_FN_MAX)
+    {
+        encoder.encodeEotFrame(outFrame);
+        modulator.sendFrame(outFrame);
+        modulator.stop();
+        horse_codec_stop(txAudioPath);
+        audioPath_release(txAudioPath);
+        txAudioPath = -1;
+        sessionValid = false;
+        encryptTx = false;
+        signTx = false;
+        txSigSent = false;
+        horse_crypto_memzero(sessionKey, sizeof sessionKey);
+        horse_crypto_memzero(frameAuthKey, sizeof frameAuthKey);
+        horse_crypto_memzero(txSessionSig, sizeof txSessionSig);
+        status->horseError = HORSE_ERR_CALL_LIMIT;
+        status->opStatus = OFF;
+        return;
+    }
+    const bool last_legal = (nextFn == VOICE_FN_MAX);
 
     if (horse_codec_popFrame(melpeBuf, true) != 0)
         memset(melpeBuf, 0, sizeof(melpeBuf));
 
-    sendTxVoiceFrame(melpeBuf, false, outFrame);
+    sendTxVoiceFrame(melpeBuf, last_legal, outFrame);
     modulator.sendFrame(outFrame);
     sleepFor(0u, 40u);
+
+    if (last_legal)
+    {
+        encoder.encodeEotFrame(outFrame);
+        modulator.sendFrame(outFrame);
+        modulator.stop();
+        horse_codec_stop(txAudioPath);
+        audioPath_release(txAudioPath);
+        txAudioPath = -1;
+        sessionValid = false;
+        encryptTx = false;
+        signTx = false;
+        txSigSent = false;
+        horse_crypto_memzero(sessionKey, sizeof sessionKey);
+        horse_crypto_memzero(frameAuthKey, sizeof frameAuthKey);
+        horse_crypto_memzero(txSessionSig, sizeof txSessionSig);
+        status->horseError = HORSE_ERR_CALL_LIMIT;
+        status->opStatus = OFF;
+        return;
+    }
 
     if (!platform_getPttStatus())
     {

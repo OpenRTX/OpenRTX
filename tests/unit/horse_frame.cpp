@@ -211,6 +211,41 @@ static int test_sig_chunk_last_is_partial()
     return 0;
 }
 
+static int test_voice_fn_never_enters_sig_range()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12] = { 0 };
+    uint8_t tag[4] = { 0 };
+    frame_t frame;
+
+    if (!voice_fn_newer(false, 0, 0))
+        return -1;
+    if (voice_fn_newer(true, 5, 5) || voice_fn_newer(true, 5, 4))
+        return -1;
+    if (!voice_fn_newer(true, 5, 8))
+        return -1;
+    if (voice_fn_newer(true, 5, SIG_FRAME_BASE))
+        return -1;
+
+    enc.reset();
+    for (uint32_t i = 0; i < 4; i++) {
+        uint16_t fn = enc.encodeVoiceFrame(melpe, tag, frame, false);
+        dec.decodeFrame(frame);
+        uint16_t got = 0;
+        dec.getVoicePayload(frame, nullptr, nullptr, &got);
+        if (fn != i || got != i || !voice_fn_in_session(fn))
+            return -1;
+    }
+    enc.encodeVoiceFrameWithFn(melpe, tag, VOICE_FN_MAX, frame, false);
+    dec.decodeFrame(frame);
+    uint16_t got = 0;
+    dec.getVoicePayload(frame, nullptr, nullptr, &got);
+    if (got != VOICE_FN_MAX)
+        return -1;
+    return 0;
+}
+
 static int test_lsf_syncword_symbols()
 {
     const std::array<int8_t, 8> lsf = {+3, +3, -1, -1, -1, -1, +3, -3};
@@ -235,6 +270,7 @@ int main()
     if (test_voice_frame_number() != 0) return -1;
     if (test_sig_frames_roundtrip() != 0) return -1;
     if (test_sig_chunk_last_is_partial() != 0) return -1;
+    if (test_voice_fn_never_enters_sig_range() != 0) return -1;
     if (test_lsf_syncword_symbols() != 0) return -1;
     std::printf("horse_frame_test: all tests passed\n");
     return 0;

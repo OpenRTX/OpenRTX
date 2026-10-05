@@ -252,7 +252,7 @@ bool HorseDemodulator::acquireSync(const syncw_t &word)
         }
     }
 
-    if (bestHd != 0)
+    if (bestHd > HAMMING_ACQUIRE_MAX)
         return false;
 
     *demodFrame = bestFrame;
@@ -267,24 +267,15 @@ void HorseDemodulator::unlockedState()
 {
     int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
     const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
-    const auto voiceSym = syncwordSymbols(VOICE_SYNC_WORD);
-    const auto eotSym = syncwordSymbols(EOT_SYNC_WORD);
     int32_t cL = correlator.convolve(lsfSym);
-    int32_t cV = correlator.convolve(voiceSym);
-    int32_t cE = correlator.convolve(eotSym);
 
     if ((std::abs(cL) > syncThresh) && acquireSync(LSF_SYNC_WORD))
-        return;
-    if ((std::abs(cV) > syncThresh) && acquireSync(VOICE_SYNC_WORD))
-        return;
-    if ((std::abs(cE) > syncThresh) && acquireSync(EOT_SYNC_WORD))
         return;
 }
 
 void HorseDemodulator::syncedState()
 {
-    if (acquireSync(LSF_SYNC_WORD) || acquireSync(VOICE_SYNC_WORD)
-        || acquireSync(EOT_SYNC_WORD))
+    if (acquireSync(LSF_SYNC_WORD))
         return;
     demodState = DemodState::UNLOCKED;
 }

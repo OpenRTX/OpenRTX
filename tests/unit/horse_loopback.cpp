@@ -295,6 +295,61 @@ static int test_layer_c_demod_timing()
     return 0;
 }
 
+static int test_no_late_entry()
+{
+    HorseFrameEncoder enc;
+    std::vector<frame_t> frames(2);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    memset(melpe, 0x11, sizeof melpe);
+    enc.encodeVoiceFrame(melpe, tag, frames[0], false);
+    enc.encodeEotFrame(frames[1]);
+    std::vector<int16_t> bb48, rx24;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    to_24k(bb48, rx24);
+    std::vector<decoded_t> got;
+    demod_stream(rx24, false, got);
+    for (const auto &d : got) {
+        if (d.type == HorseFrameType::VOICE || d.type == HorseFrameType::EOT) {
+            std::printf("late-entry: locked without LSF type %u\n",
+                        static_cast<unsigned>(d.type));
+            return -1;
+        }
+    }
+    std::printf("late-entry: no lock without LSF\n");
+    return 0;
+}
+
+static int test_lsf_false_lock_noise()
+{
+    const size_t n = 48000; /* 2 s at 24 kHz */
+    unsigned rng = 1u;
+    HorseDemodulator demod;
+    HorseFrameDecoder decoder;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    size_t locks = 0;
+    for (size_t i = 0; i < n; i++) {
+        rng = rng * 1103515245u + 12345u;
+        int16_t s = static_cast<int16_t>((rng >> 16) - 32768);
+        demod.feedSample(s, false);
+        frame_t frame;
+        if (!demod.takeFrame(frame))
+            continue;
+        if (decoder.decodeFrame(frame) == HorseFrameType::LINK_SETUP)
+            locks++;
+    }
+    demod.terminate();
+    std::printf("false-lock: HAMMING_ACQUIRE_MAX=%u locks=%zu in %zu noise "
+                "samples (baseband, not RF)\n",
+                HAMMING_ACQUIRE_MAX, locks, n);
+    if (locks > 2)
+        return -1;
+    return 0;
+}
+
 static int test_layer_dc_block()
 {
     HorseFrameEncoder enc;
@@ -500,6 +555,10 @@ int main()
     if (test_layer_b_rrc_known_phase() != 0)
         return -1;
     if (test_layer_c_demod_timing() != 0)
+        return -1;
+    if (test_no_late_entry() != 0)
+        return -1;
+    if (test_lsf_false_lock_noise() != 0)
         return -1;
     if (test_layer_dc_block() != 0)
         return -1;

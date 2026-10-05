@@ -48,9 +48,14 @@ uint16_t HorseFrameEncoder::encodeVoiceFrame(const uint8_t* melpe96bits,
                                             frame_t& output, bool isLast)
 {
     uint16_t fn = voiceFrameNumber & 0x7FFF;
+    if (fn > VOICE_FN_MAX)
+        fn = VOICE_FN_MAX;
     uint16_t out_fn = encodeVoiceFrameWithFn(melpe96bits, tag32bits, fn, output,
-                                             isLast);
-    voiceFrameNumber = (voiceFrameNumber + 1) & 0x7FFF;
+                                             isLast || (fn == VOICE_FN_MAX));
+    if (fn < VOICE_FN_MAX)
+        voiceFrameNumber = fn + 1;
+    else
+        voiceFrameNumber = SIG_FRAME_BASE;
     return out_fn;
 }
 

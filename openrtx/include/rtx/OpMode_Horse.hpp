@@ -69,6 +69,8 @@ private:
     bool signRx;
     bool txSigSent;
     bool rxSigReady;
+    bool haveRxVoiceFn;
+    uint16_t rxLastVoiceFn;
 };
 
 #endif  // OPMODE_HORSE_H
