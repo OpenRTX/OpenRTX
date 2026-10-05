@@ -279,8 +279,8 @@ void OpMode_Horse::rxState(rtxStatus_t *const status)
         if (newData) {
             const frame_t &frame = demodulator.getFrame();
             HorseFrameType type = decoder.decodeFrame(frame);
-            status->horseLsfOk = (type == HorseFrameType::LINK_SETUP);
-            if (status->horseLsfOk) {
+            if (type == HorseFrameType::LINK_SETUP && decoder.lsfReady()) {
+                status->horseLsfOk = true;
                 dataValid = true;
                 resetRxCrypto();
                 decoder.getLsfCallsigns(rxLsfSrc, rxLsfDst);
@@ -294,7 +294,7 @@ void OpMode_Horse::rxState(rtxStatus_t *const status)
                 uint8_t eph_pk[HORSE_X25519_PUBLICKEY_BYTES];
                 uint8_t flags = 0;
                 uint8_t version = 0;
-                if (decoder.getLsfCrypto(frame, eph_pk, &flags, &version)) {
+                if (decoder.getLsfCrypto(eph_pk, &flags, &version)) {
                     rxLsfFlags = flags;
                     rxLsfVersion = version;
                     memcpy(rxLsfEphPk, eph_pk, sizeof rxLsfEphPk);
@@ -541,14 +541,18 @@ void OpMode_Horse::txState(rtxStatus_t *const status)
             return;
         }
 
-        encoder.encodeLsf(srcCall, dstCall, eph_pk, flags, outFrame);
+        frame_t lsfFrames[LSF_OPENING_FRAMES];
+        encoder.encodeLsf(srcCall, dstCall, eph_pk, flags, lsfFrames);
         modulator.invertPhase(invertTxPhase);
         if (!modulator.start()) {
             abortTx(status, false);
             return;
         }
         modulator.sendPreamble();
-        modulator.sendFrame(outFrame);
+        for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+            modulator.sendFrame(lsfFrames[i]);
+            sleepFor(0u, 40u);
+        }
 
         if (signTx) {
             uint8_t zeroTag[HORSE_VOICE_TAG_BYTES] = { 0 };

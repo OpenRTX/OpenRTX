@@ -84,7 +84,9 @@ horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
 
 horse_frame_test_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
                         'openrtx/src/protocols/horse/HorseFrameDecoder.cpp',
-                        'openrtx/src/protocols/horse/HorseVoiceCodec.cpp']
+                        'openrtx/src/protocols/horse/HorseVoiceCodec.cpp',
+                        'openrtx/src/core/crc.c',
+                        'openrtx/src/protocols/horse/horse_crypto.c']
 
 openrtx_inc = ['openrtx/include', 'platform']
 

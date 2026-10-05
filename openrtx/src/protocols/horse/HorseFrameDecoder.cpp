@@ -7,6 +7,7 @@
 #include "protocols/horse/HorseFrameDecoder.hpp"
 #include "protocols/horse/HorseVoiceCodec.hpp"
 #include "protocols/horse/horse_crypto.h"
+#include "core/crc.h"
 #include <cstring>
 
 namespace horse
@@ -17,10 +18,13 @@ static uint8_t hammingDistance(uint8_t x, uint8_t y)
     return __builtin_popcount(x ^ y);
 }
 
-HorseFrameDecoder::HorseFrameDecoder() : lastVoiceFrameNum(0)
+HorseFrameDecoder::HorseFrameDecoder()
+    : lsfNextChunk(0), lsfComplete(false), lastVoiceFrameNum(0)
 {
     lsfSrc.fill(0);
     lsfDst.fill(0);
+    std::memset(lsfAssembled, 0, sizeof lsfAssembled);
+    std::memset(lsfChunkOk, 0, sizeof lsfChunkOk);
 }
 
 HorseFrameDecoder::~HorseFrameDecoder()
@@ -32,6 +36,10 @@ void HorseFrameDecoder::reset()
     lsfSrc.fill(0);
     lsfDst.fill(0);
     lastVoiceFrameNum = 0;
+    lsfNextChunk = 0;
+    lsfComplete = false;
+    std::memset(lsfAssembled, 0, sizeof lsfAssembled);
+    std::memset(lsfChunkOk, 0, sizeof lsfChunkOk);
 }
 
 HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
@@ -44,8 +52,29 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
                   + hammingDistance(frame[1], EOT_SYNC_WORD[1]);
 
     if (lsfHd <= HAMMING_SYNC_MAX) {
-        std::copy(frame.begin() + 2, frame.begin() + 8, lsfSrc.begin());
-        std::copy(frame.begin() + 8, frame.begin() + 14, lsfDst.begin());
+        if (!lsfComplete && frame.size() >= 2 + HORSE_VOICE_CODED_BYTES
+            && lsfNextChunk < LSF_OPENING_FRAMES) {
+            uint8_t chunk[HORSE_VOICE_INFO_BYTES];
+            voice_decode(frame.data() + 2, chunk);
+            const size_t slot = lsfNextChunk;
+            std::memcpy(lsfAssembled + slot * LSF_CHUNK_BYTES, chunk,
+                        LSF_CHUNK_BYTES);
+            lsfChunkOk[slot] = 1;
+            lsfNextChunk = static_cast<uint8_t>(slot + 1);
+            if (lsfChunkOk[0] && lsfChunkOk[1] && lsfChunkOk[2]) {
+                uint16_t want = (static_cast<uint16_t>(lsfAssembled[46]) << 8)
+                              | lsfAssembled[47];
+                if (crc_m17(lsfAssembled, LSF_RAW_BYTES) == want) {
+                    std::copy(lsfAssembled, lsfAssembled + 6, lsfSrc.begin());
+                    std::copy(lsfAssembled + 6, lsfAssembled + 12,
+                              lsfDst.begin());
+                    lsfComplete = true;
+                } else {
+                    std::memset(lsfChunkOk, 0, sizeof lsfChunkOk);
+                    lsfNextChunk = 0;
+                }
+            }
+        }
         return HorseFrameType::LINK_SETUP;
     }
     if (voiceHd <= HAMMING_SYNC_MAX) {
@@ -67,19 +96,18 @@ void HorseFrameDecoder::getLsfCallsigns(call_t &src, call_t &dst)
     dst = lsfDst;
 }
 
-bool HorseFrameDecoder::getLsfCrypto(const frame_t &frame, uint8_t eph_pk[32],
-                                     uint8_t *flags, uint8_t *version)
+bool HorseFrameDecoder::getLsfCrypto(uint8_t eph_pk[32], uint8_t *flags,
+                                     uint8_t *version)
 {
-    if (frame.size() < 2 + LSF_VERSION_OFFSET + 1)
+    if (!lsfComplete)
         return false;
-
     if (eph_pk != nullptr)
-        std::memcpy(eph_pk, frame.data() + 2 + LSF_EPH_PK_OFFSET,
+        std::memcpy(eph_pk, lsfAssembled + LSF_EPH_PK_OFFSET,
                     HORSE_X25519_PUBLICKEY_BYTES);
     if (flags != nullptr)
-        *flags = frame[2 + LSF_FLAGS_OFFSET];
+        *flags = lsfAssembled[LSF_FLAGS_OFFSET];
     if (version != nullptr)
-        *version = frame[2 + LSF_VERSION_OFFSET];
+        *version = lsfAssembled[LSF_VERSION_OFFSET];
     return true;
 }
 

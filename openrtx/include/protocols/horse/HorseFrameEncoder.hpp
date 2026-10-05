@@ -27,8 +27,11 @@ public:
 
     void reset();
 
+    /**
+     * \brief Encode a three-frame opening LSF (CRC-16 + M17 DATA_PUNCTURE).
+     */
     void encodeLsf(const call_t& src, const call_t& dst, const uint8_t* eph_pk,
-                   uint8_t flags, frame_t& output);
+                   uint8_t flags, frame_t out[LSF_OPENING_FRAMES]);
 
     uint16_t encodeVoiceFrame(const uint8_t* melpe96bits, const uint8_t* tag32bits,
                               frame_t& output, bool isLast = false);

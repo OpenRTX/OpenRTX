@@ -11,6 +11,7 @@
 #include "protocols/horse/HorseConstants.hpp"
 #include "protocols/horse/HorseUtils.hpp"
 #include "protocols/horse/HorseVoiceCodec.hpp"
+#include "protocols/horse/horse_crypto.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
@@ -23,20 +24,49 @@ static int test_lsf_roundtrip()
     HorseFrameDecoder dec;
     call_t src = {{'A', 'B', '1', '2', '3', '4'}};
     call_t dst = {{'C', 'D', '5', '6', '7', '8'}};
-    frame_t frame;
+    frame_t frames[LSF_OPENING_FRAMES];
 
-    enc.encodeLsf(src, dst, nullptr, 0, frame);
-    HorseFrameType type = dec.decodeFrame(frame);
-    if (type != HorseFrameType::LINK_SETUP)
-    {
-        std::printf("horse_frame_test: LSF decode type fail (got %u)\n", static_cast<unsigned>(type));
+    enc.encodeLsf(src, dst, nullptr, 0, frames);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+        HorseFrameType type = dec.decodeFrame(frames[i]);
+        if (type != HorseFrameType::LINK_SETUP) {
+            std::printf("horse_frame_test: LSF type fail at %zu\n", i);
+            return -1;
+        }
+    }
+    if (!dec.lsfReady()) {
+        std::printf("horse_frame_test: LSF not ready after 3 frames\n");
         return -1;
     }
     call_t outSrc, outDst;
     dec.getLsfCallsigns(outSrc, outDst);
-    if (outSrc != src || outDst != dst)
-    {
+    if (outSrc != src || outDst != dst) {
         std::printf("horse_frame_test: LSF callsign round-trip fail\n");
+        return -1;
+    }
+    uint8_t flags = 0xFF, ver = 0xFF;
+    uint8_t eph[32];
+    if (!dec.getLsfCrypto(eph, &flags, &ver) || flags != 0 || ver != LSF_PROTOCOL_VERSION) {
+        std::printf("horse_frame_test: LSF crypto fields fail\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_lsf_crc_tamper()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = {{'A', 'B', '1', '2', '3', '4'}};
+    call_t dst = {{'C', 'D', '5', '6', '7', '8'}};
+    frame_t frames[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, frames);
+    for (size_t i = 2; i < FRAME_BYTES; i++)
+        frames[1][i] ^= 0xFF;
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+        dec.decodeFrame(frames[i]);
+    if (dec.lsfReady()) {
+        std::printf("horse_frame_test: tampered LSF accepted\n");
         return -1;
     }
     return 0;
@@ -156,17 +186,20 @@ static int test_lsf_crypto_roundtrip()
     uint8_t eph_pk[32];
     for (size_t i = 0; i < sizeof eph_pk; i++)
         eph_pk[i] = (uint8_t)(i + 1);
-    frame_t frame;
+    frame_t frames[LSF_OPENING_FRAMES];
 
-    enc.encodeLsf(src, dst, eph_pk, 0x01, frame);
-    HorseFrameType type = dec.decodeFrame(frame);
-    if (type != HorseFrameType::LINK_SETUP)
+    enc.encodeLsf(src, dst, eph_pk, 0x01, frames);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+        if (dec.decodeFrame(frames[i]) != HorseFrameType::LINK_SETUP)
+            return -1;
+    }
+    if (!dec.lsfReady())
         return -1;
 
     uint8_t out_pk[32];
     uint8_t flags = 0;
     uint8_t version = 0;
-    if (!dec.getLsfCrypto(frame, out_pk, &flags, &version))
+    if (!dec.getLsfCrypto(out_pk, &flags, &version))
         return -1;
     if (flags != 0x01 || version != LSF_PROTOCOL_VERSION ||
         std::memcmp(out_pk, eph_pk, 32) != 0)
@@ -176,20 +209,9 @@ static int test_lsf_crypto_roundtrip()
 
 static int test_lsf_unknown_version_is_rejected()
 {
-    HorseFrameEncoder enc;
-    HorseFrameDecoder dec;
-    call_t src = { { 1, 2, 3, 4, 5, 6 } };
-    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-    uint8_t eph_pk[32] = { 0 };
-    frame_t frame;
-
-    enc.encodeLsf(src, dst, eph_pk, LSF_FLAG_SIGNED, frame);
-    frame[2 + LSF_VERSION_OFFSET] = 99;
-    uint8_t flags = 0;
-    uint8_t version = 0;
-    if (!dec.getLsfCrypto(frame, nullptr, &flags, &version))
+    if (horse_crypto_lsf_version_ok(99))
         return -1;
-    if (version == LSF_PROTOCOL_VERSION)
+    if (!horse_crypto_lsf_version_ok(LSF_PROTOCOL_VERSION))
         return -1;
     return 0;
 }
@@ -359,6 +381,7 @@ static int test_lsf_syncword_symbols()
 int main()
 {
     if (test_lsf_roundtrip() != 0) return -1;
+    if (test_lsf_crc_tamper() != 0) return -1;
     if (test_lsf_crypto_roundtrip() != 0) return -1;
     if (test_lsf_unknown_version_is_rejected() != 0) return -1;
     if (test_voice_roundtrip() != 0) return -1;

@@ -48,6 +48,12 @@ static constexpr size_t HORSE_VOICE_SPARE_BITS = HORSE_VOICE_SPARE_BYTES * 8;
 static constexpr size_t HORSE_VOICE_CODED_BITS = HORSE_VOICE_CODED_BYTES * 8;
 static constexpr size_t HORSE_FRAG_CYCLE = 10;
 
+/* Opening LSF: three M17-coded 18-byte chunks covering 46 B + CRC16. */
+static constexpr size_t LSF_OPENING_FRAMES = 3;
+static constexpr size_t LSF_RAW_BYTES = 46;
+static constexpr size_t LSF_WITH_CRC_BYTES = 48;
+static constexpr size_t LSF_CHUNK_BYTES = HORSE_VOICE_INFO_BYTES;
+
 static inline bool voice_fn_in_session(uint16_t fn)
 {
     return fn <= VOICE_FN_MAX;

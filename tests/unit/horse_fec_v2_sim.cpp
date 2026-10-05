@@ -26,6 +26,16 @@
 
 using namespace horse;
 
+static void push_lsf_sim(HorseFrameEncoder &enc, const call_t &src,
+                         const call_t &dst, std::vector<frame_t> &frames)
+{
+    frame_t lsf[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, lsf);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+        frames.push_back(lsf[i]);
+}
+
+
 static constexpr size_t SPS_48 = 48000 / SYMBOL_RATE;
 static constexpr size_t SPS_24 = 24000 / SYMBOL_RATE;
 static constexpr size_t TX_DELAY_48 = 40;
@@ -235,10 +245,9 @@ static int run_voice_fer(Codecs &c, int id, float noise, unsigned seed,
 {
     HorseFrameEncoder enc;
     std::vector<frame_t> frames;
-    frames.resize(static_cast<size_t>(nframes) + 2);
     call_t src = { { 1, 2, 3, 4, 5, 6 } };
     call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    push_lsf_sim(enc, src, dst, frames);
     std::vector<std::array<uint8_t, FEC_INFO_BYTES>> refs(
         static_cast<size_t>(nframes));
     unsigned rng = seed;
@@ -251,9 +260,9 @@ static int run_voice_fer(Codecs &c, int id, float noise, unsigned seed,
         refs[static_cast<size_t>(i)][1] = (uint8_t)i;
         uint8_t cw[FEC_CODED_BYTES];
         encode_cid(c, id, refs[static_cast<size_t>(i)].data(), cw);
-        pack_voice(cw, frames[static_cast<size_t>(i) + 1]);
+        frame_t vf; pack_voice(cw, vf); frames.push_back(vf);
     }
-    enc.encodeEotFrame(frames.back());
+    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
 
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
@@ -522,12 +531,11 @@ static int run_voice_study(Codecs &c, int id, float noise, unsigned seed,
 {
     std::vector<frame_t> frames;
     std::vector<std::array<uint8_t, FEC_INFO_BYTES>> refs;
-    frames.resize((size_t)nframes + 2);
     refs.resize((size_t)nframes);
     HorseFrameEncoder enc;
     call_t src = { { 1, 2, 3, 4, 5, 6 } };
     call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    push_lsf_sim(enc, src, dst, frames);
     unsigned rng = seed;
     for (int i = 0; i < nframes; i++) {
         uint8_t info[FEC_INFO_BYTES];
@@ -540,9 +548,9 @@ static int run_voice_study(Codecs &c, int id, float noise, unsigned seed,
         memcpy(refs[static_cast<size_t>(i)].data(), info, FEC_INFO_BYTES);
         uint8_t cw[FEC_CODED_BYTES];
         encode_cid(c, id, info, cw);
-        pack_voice(cw, frames[static_cast<size_t>(i + 1)]);
+        frame_t vf; pack_voice(cw, vf); frames.push_back(vf);
     }
-    enc.encodeEotFrame(frames.back());
+    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -659,18 +667,19 @@ static void hist_payload(int id, Codecs &c, unsigned seed, int n, int *h)
 static int run_lockstat(float noise, unsigned seed, int nframes)
 {
     HorseFrameEncoder enc;
-    std::vector<frame_t> frames((size_t)nframes + 2);
+    std::vector<frame_t> frames;
     call_t src = { { 1, 2, 3, 4, 5, 6 } };
     call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    push_lsf_sim(enc, src, dst, frames);
     uint8_t payload[12];
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(payload, 0x5A, sizeof payload);
-    for (int i = 0; i < nframes; i++)
-        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i,
-                                   frames[static_cast<size_t>(i + 1)], false,
-                                   12);
-    enc.encodeEotFrame(frames.back());
+    for (int i = 0; i < nframes; i++) {
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
+        frames.push_back(vf);
+    }
+    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -683,7 +692,7 @@ static int run_lockstat(float noise, unsigned seed, int nframes)
     std::vector<frame_t> got, sl;
     demod_frames(rx24, got);
     slice_ideal(rx24, true, sl);
-    int eot_i = nframes + 1;
+    int eot_i = (int)LSF_OPENING_FRAMES + nframes;
     TrackStat td = track_frames(got, 4, eot_i);
     TrackStat ti = track_frames(sl, 4, eot_i);
     const char *ds[] = { "none", "eot", "miss", "never" };
@@ -709,18 +718,19 @@ static int run_clktrace(float noise, unsigned seed, int nframes, int auth)
 {
     HorseFrameEncoder enc;
     HorseFrameDecoder dec;
-    std::vector<frame_t> frames((size_t)nframes + 2);
+    std::vector<frame_t> frames;
     call_t src = { { 1, 2, 3, 4, 5, 6 } };
     call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    push_lsf_sim(enc, src, dst, frames);
     uint8_t payload[12];
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(payload, 0x5A, sizeof payload);
-    for (int i = 0; i < nframes; i++)
-        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i,
-                                   frames[static_cast<size_t>(i + 1)], false,
-                                   12);
-    enc.encodeEotFrame(frames.back());
+    for (int i = 0; i < nframes; i++) {
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
+        frames.push_back(vf);
+    }
+    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -748,7 +758,8 @@ static int run_clktrace(float noise, unsigned seed, int nframes, int auth)
         frame_t f{};
         if (!demod.takeFrame(f))
             continue;
-        if (auth && dec.decodeFrame(f) == HorseFrameType::LINK_SETUP)
+        if (auth && dec.decodeFrame(f) == HorseFrameType::LINK_SETUP
+            && dec.lsfReady())
             demod.noteValidTag();
         uint32_t sp = demod.debugSamplingPoint();
         int8_t dlt = demod.debugLastClockDelta();
@@ -780,21 +791,24 @@ static int run_eot_notice(float noise, unsigned seed, int nvoice,
                           int miss_limit)
 {
     HorseFrameEncoder enc;
-    std::vector<frame_t> frames((size_t)nvoice + 22);
+    std::vector<frame_t> frames;
     call_t src = { { 1, 2, 3, 4, 5, 6 } };
     call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    push_lsf_sim(enc, src, dst, frames);
     uint8_t payload[12];
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(payload, 0x11, sizeof payload);
-    for (int i = 0; i < nvoice; i++)
-        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i,
-                                   frames[static_cast<size_t>(i + 1)], false,
-                                   12);
-    enc.encodeEotFrame(frames[static_cast<size_t>(nvoice + 1)]);
-    for (int i = nvoice + 2; i < (int)frames.size(); i++)
-        memset(frames[static_cast<size_t>(i)].data(), 0,
-               frames[static_cast<size_t>(i)].size());
+    for (int i = 0; i < nvoice; i++) {
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
+        frames.push_back(vf);
+    }
+    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    for (int i = 0; i < 20; i++) {
+        frame_t z{};
+        memset(z.data(), 0, z.size());
+        frames.push_back(z);
+    }
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -1293,23 +1307,27 @@ static int run_complete_v1(float noise, unsigned seed, int ntx, int *ok)
     HorseFrameEncoder enc;
     *ok = 0;
     for (int t = 0; t < ntx; t++) {
-        std::vector<frame_t> frames(308);
+        std::vector<frame_t> frames;
         call_t src = { { 1, 2, 3, 4, 5, 6 } };
         call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-        enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+        push_lsf_sim(enc, src, dst, frames);
         uint8_t payload[12];
         uint8_t tag[4] = { 1, 2, 3, 4 };
         memset(payload, 0x11, sizeof payload);
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 6; i++) {
+            frame_t vf{};
             enc.encodeVoiceFrameWithFn(payload, tag,
                                        (uint16_t)(SIG_FRAME_BASE + i),
-                                       frames[static_cast<size_t>(1 + i)],
-                                       false, 12);
-        for (int i = 0; i < 300; i++)
+                                       vf, false, 12);
+            frames.push_back(vf);
+        }
+        for (int i = 0; i < 300; i++) {
+            frame_t vf{};
             enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i,
-                                       frames[static_cast<size_t>(7 + i)],
-                                       false, 12);
-        enc.encodeEotFrame(frames.back());
+                                       vf, false, 12);
+            frames.push_back(vf);
+        }
+        { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
         std::vector<int16_t> bb48, imp, rx24;
         if (render_frames(frames, bb48, true) != 0)
             return -1;
@@ -1386,24 +1404,33 @@ int main(int argc, char **argv)
         }
         {
             HorseFrameEncoder enc;
-            frame_t lsf{}, voice{}, eot{};
+            frame_t lsf3[LSF_OPENING_FRAMES], voice{}, eot{};
             call_t src = { { 1, 2, 3, 4, 5, 6 } };
             call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-            enc.encodeLsf(src, dst, nullptr, 0, lsf);
+            enc.encodeLsf(src, dst, nullptr, 0, lsf3);
+            std::vector<frame_t> lsfv(lsf3, lsf3 + LSF_OPENING_FRAMES);
             uint8_t cw[FEC_CODED_BYTES];
             encode_cid(c, CID_M17H, info, cw);
             pack_voice(cw, voice);
             enc.encodeEotFrame(eot);
             std::vector<int16_t> bb48, rx24;
-            if (render_frames({ lsf, voice, eot }, bb48, true) != 0)
+            lsfv.push_back(voice); lsfv.push_back(eot);
+            if (render_frames(lsfv, bb48, true) != 0)
                 return 1;
             to_24k(bb48, rx24);
             std::vector<frame_t> sl;
             slice_ideal(rx24, true, sl);
-            if (sl.size() < 3 || sl[0] != lsf || sl[1] != voice
-                || sl[2] != eot) {
+            if (sl.size() < LSF_OPENING_FRAMES + 2
+                || sl[LSF_OPENING_FRAMES] != voice
+                || sl[LSF_OPENING_FRAMES + 1] != eot) {
                 std::printf("selftest fail ideal slice n=%zu\n", sl.size());
                 return 1;
+            }
+            for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+                if (sl[i] != lsf3[i]) {
+                    std::printf("selftest fail ideal LSF %zu\n", i);
+                    return 1;
+                }
             }
             std::printf("selftest ok ideal_slice\n");
         }

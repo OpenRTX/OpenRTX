@@ -68,8 +68,10 @@ static int count_good_voice(const std::vector<frame_t> &onair,
     for (const auto &fr : onair) {
         HorseFrameType t = decoder.decodeFrame(fr);
         if (t == HorseFrameType::LINK_SETUP) {
+            if (!decoder.lsfReady())
+                continue;
             decoder.getLsfCallsigns(src, dst);
-            if (!decoder.getLsfCrypto(fr, eph, &flags, &version))
+            if (!decoder.getLsfCrypto(eph, &flags, &version))
                 return -1;
             if (!horse_crypto_lsf_version_ok(version))
                 return -1;
@@ -163,12 +165,18 @@ static int run_mode(bool enc, bool sign, mut_t mut)
 
     HorseFrameEncoder encf;
     std::vector<frame_t> frames;
-    frame_t lsf{};
-    encf.encodeLsf(src, dst, eph_pk, tx_flags, lsf);
-    if (mut == mut_t::VERSION)
-        lsf[2 + LSF_VERSION_OFFSET] ^= 0x01;
-    if (mut != mut_t::DROP_LSF)
-        frames.push_back(lsf);
+    frame_t lsf3[LSF_OPENING_FRAMES];
+    encf.encodeLsf(src, dst, eph_pk, tx_flags, lsf3);
+    if (mut == mut_t::VERSION) {
+        /* Corrupt coded LSF so CRC fails / version path rejects. */
+        for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+            for (size_t b = 2; b < FRAME_BYTES; b++)
+                lsf3[i][b] ^= 0xA5;
+    }
+    if (mut != mut_t::DROP_LSF) {
+        for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+            frames.push_back(lsf3[i]);
+    }
 
     if (sign) {
         uint8_t msg[HORSE_SESSION_MSG_BYTES], signature[64];

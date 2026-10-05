@@ -8,6 +8,7 @@
 #include "protocols/horse/HorseUtils.hpp"
 #include "protocols/horse/HorseVoiceCodec.hpp"
 #include "protocols/horse/horse_crypto.h"
+#include "core/crc.h"
 #include <cstring>
 
 namespace horse
@@ -28,8 +29,10 @@ void HorseFrameEncoder::reset()
 
 void HorseFrameEncoder::encodeLsf(const call_t& src, const call_t& dst,
                                   const uint8_t* eph_pk, uint8_t flags,
-                                  frame_t& output)
+                                  frame_t out[LSF_OPENING_FRAMES])
 {
+    uint8_t pad[LSF_CHUNK_BYTES * LSF_OPENING_FRAMES];
+    std::memset(pad, 0, sizeof pad);
     lsf_raw_t payload;
     payload.fill(0);
     std::copy(src.begin(), src.end(), payload.begin());
@@ -39,8 +42,16 @@ void HorseFrameEncoder::encodeLsf(const call_t& src, const call_t& dst,
                     HORSE_X25519_PUBLICKEY_BYTES);
     payload[LSF_FLAGS_OFFSET] = flags;
     payload[LSF_VERSION_OFFSET] = LSF_PROTOCOL_VERSION;
-    std::copy(LSF_SYNC_WORD.begin(), LSF_SYNC_WORD.end(), output.begin());
-    std::copy(payload.begin(), payload.end(), output.begin() + 2);
+    std::memcpy(pad, payload.data(), LSF_RAW_BYTES);
+    uint16_t crc = crc_m17(pad, LSF_RAW_BYTES);
+    pad[46] = static_cast<uint8_t>((crc >> 8) & 0xFF);
+    pad[47] = static_cast<uint8_t>(crc & 0xFF);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+        uint8_t coded[HORSE_VOICE_CODED_BYTES];
+        voice_encode(pad + i * LSF_CHUNK_BYTES, coded);
+        std::copy(LSF_SYNC_WORD.begin(), LSF_SYNC_WORD.end(), out[i].begin());
+        std::memcpy(out[i].data() + 2, coded, HORSE_VOICE_CODED_BYTES);
+    }
 }
 
 uint16_t HorseFrameEncoder::encodeVoiceFrame(const uint8_t* melpe96bits,

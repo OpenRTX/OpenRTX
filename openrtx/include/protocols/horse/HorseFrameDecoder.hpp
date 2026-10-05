@@ -28,9 +28,15 @@ public:
 
     HorseFrameType decodeFrame(const frame_t &frame);
 
+    /** True after three opening chunks pass crc_m17. */
+    bool lsfReady() const
+    {
+        return lsfComplete;
+    }
+
     void getLsfCallsigns(call_t &src, call_t &dst);
 
-    bool getLsfCrypto(const frame_t &frame, uint8_t eph_pk[32], uint8_t *flags,
+    bool getLsfCrypto(uint8_t eph_pk[32], uint8_t *flags,
                       uint8_t *version = nullptr);
 
     void getVoicePayload(const frame_t &frame, uint8_t *melpe96bits,
@@ -39,6 +45,10 @@ public:
 private:
     call_t lsfSrc;
     call_t lsfDst;
+    uint8_t lsfAssembled[LSF_CHUNK_BYTES * LSF_OPENING_FRAMES];
+    uint8_t lsfChunkOk[LSF_OPENING_FRAMES];
+    uint8_t lsfNextChunk;
+    bool lsfComplete;
     uint16_t lastVoiceFrameNum;
 };
 
