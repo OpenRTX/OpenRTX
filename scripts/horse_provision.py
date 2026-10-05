@@ -203,6 +203,9 @@ def unwrap_identity(data, passphrase):
         "x25519_pk": x_pk.hex(),
         "x25519_sk": x_sk.hex(),
     }
+
+
+def store_identity_file(identity, passphrase, label=None):
     path = identity_path(label)
     path.parent.mkdir(parents=True, exist_ok=True)
     data = wrap_identity(identity, passphrase)

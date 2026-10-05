@@ -1323,6 +1323,21 @@ horse_keystore_test = executable('horse_keystore_test',
                                  cpp_args : linux_cpp_args,
                                  link_args : linux_l_args)
 
+horse_host_interop_test = executable('horse_host_interop_test',
+                                     sources : ['openrtx/src/protocols/horse/horse_keystore.c',
+                                                'openrtx/src/protocols/horse/horse_crypto.c',
+                                                'openrtx/src/protocols/horse/horse_peers.c',
+                                                'tests/unit/crypto_utils_stub.c',
+                                                'tests/unit/horse_host_interop.cpp'],
+                                     include_directories : openrtx_inc,
+                                     dependencies : linux_deps + [threads_dep],
+                                     c_args : linux_c_args + ['-DPLATFORM_LINUX'],
+                                     cpp_args : linux_cpp_args + [
+                                       '-DPLATFORM_LINUX',
+                                       '-DHORSE_PROVISION_PY="' + meson.project_source_root() / 'scripts/horse_provision.py' + '"'
+                                     ],
+                                     link_args : linux_l_args)
+
 horse_loopback_test = executable('horse_loopback_test',
                                  sources : unit_test_src + ['tests/unit/horse_loopback.cpp'],
                                  kwargs : unit_test_opts)
@@ -1398,6 +1413,8 @@ test('Horse Codec 20ms Test', horse_codec_test,
 test('Horse Peers Test', horse_peers_test,
      env : horse_test_env, timeout : 30)
 test('Horse Keystore Test', horse_keystore_test,
+     env : horse_test_env, timeout : 60)
+test('Horse Host Interop Test', horse_host_interop_test,
      env : horse_test_env, timeout : 60)
 test('Horse Loopback Test', horse_loopback_test,
      env : horse_test_env, timeout : 180)
