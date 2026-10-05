@@ -11,7 +11,8 @@
  *  - Ed25519 for digital signatures (without encryption)
  *  - Argon2id (via crypto_pwhash) for passphrase-based key derivation
  *
- * All functions have fallback implementations for platforms without libsodium.
+ * Without libsodium every primitive returns false. There is no PBKDF2,
+ * cleartext, or stub-crypto fallback.
  */
 
 #ifndef HORSE_CRYPTO_H
@@ -100,7 +101,7 @@ bool horse_crypto_voice_decrypt(
     const uint8_t *tag_truncated_32bit,
     uint8_t *plaintext_out);
 
-/* Derive key from passphrase (Argon2id where libsodium is available, PBKDF2 fallback otherwise). */
+/* Derive key from passphrase (Argon2id via libsodium). Fails closed without it. */
 bool horse_crypto_argon2id_derive(
     const char *passphrase,
     size_t passphrase_len,
@@ -190,6 +191,23 @@ bool horse_crypto_verify(
     const uint8_t *message,
     size_t message_len,
     const uint8_t *signature);
+
+void horse_crypto_memzero(void *buf, size_t len);
+
+/*
+ * TX is allowed only when libsodium is present, the keystore is unlocked,
+ * and the peer keys required by the selected mode exist. Both flags clear
+ * still means encrypt (legacy default) and therefore still requires crypto.
+ */
+bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
+                      bool keystore_unlocked, bool have_x25519_peer,
+                      bool have_ed25519_peer);
+
+/* Voice audio is released only with a valid encrypt session and/or verified
+ * signature when the corresponding LSF flags are set.
+ */
+bool horse_rx_may_output_voice(bool lsf_encrypted, bool session_valid,
+                               bool lsf_signed, bool signature_ready);
 
 #ifdef __cplusplus
 }

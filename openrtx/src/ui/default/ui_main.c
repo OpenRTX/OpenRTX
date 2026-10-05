@@ -233,8 +233,15 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             {
                 const char *dst = strnlen(rtxStatus.destination_address, 10) == 0
                     ? currentLanguage->broadcast : rtxStatus.destination_address;
-                gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
-                          color_white, "Horse #%s", dst);
+                if(rtxStatus.horseError == HORSE_ERR_NO_CRYPTO)
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "Horse: no crypto");
+                else if(rtxStatus.horseError == HORSE_ERR_NO_KEYS)
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "Horse: no keys");
+                else
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "Horse #%s", dst);
             }
             break;
         }

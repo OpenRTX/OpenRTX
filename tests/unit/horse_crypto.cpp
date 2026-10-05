@@ -300,6 +300,46 @@ static int test_session_frame_auth_roundtrip()
     return 0;
 }
 
+static int test_tx_rx_policy()
+{
+    if (horse_tx_allowed(true, false, false, true, true, true))
+        return -1;
+    if (horse_tx_allowed(true, false, true, false, true, true))
+        return -1;
+    if (horse_tx_allowed(true, false, true, true, false, true))
+        return -1;
+    if (!horse_tx_allowed(true, false, true, true, true, false))
+        return -1;
+    if (horse_tx_allowed(false, true, true, true, true, false))
+        return -1;
+    if (!horse_tx_allowed(false, true, true, true, false, true))
+        return -1;
+    if (!horse_tx_allowed(false, false, true, true, true, false))
+        return -1;
+    if (horse_rx_may_output_voice(true, false, false, false))
+        return -1;
+    if (horse_rx_may_output_voice(false, false, true, false))
+        return -1;
+    if (!horse_rx_may_output_voice(true, true, true, true))
+        return -1;
+    if (!horse_rx_may_output_voice(false, false, false, false))
+        return -1;
+    return 0;
+}
+
+static int test_memzero()
+{
+    uint8_t buf[8];
+    memset(buf, 0xA5, sizeof buf);
+    horse_crypto_memzero(buf, sizeof buf);
+    for (size_t i = 0; i < sizeof buf; i++)
+    {
+        if (buf[i] != 0)
+            return -1;
+    }
+    return 0;
+}
+
 int main()
 {
     if (test_voice_encrypt_decrypt_roundtrip() != 0)
@@ -315,6 +355,10 @@ int main()
     if (test_sign_verify_bad_signature() != 0)
         return -1;
     if (test_session_frame_auth_roundtrip() != 0)
+        return -1;
+    if (test_tx_rx_policy() != 0)
+        return -1;
+    if (test_memzero() != 0)
         return -1;
 
     std::printf("horse_crypto_test: all tests passed\n");

@@ -287,9 +287,9 @@ bool horse_crypto_argon2id_derive(
     }
     return true;
 #else
-    /* Fallback to PBKDF2 when libsodium is not available. */
-    return crypto_pbkdf2(passphrase, passphrase_len, salt, salt_len,
-                         10000, key_out, key_len) == 0;
+    (void)passphrase_len;
+    (void)salt_len;
+    return false;
 #endif
 }
 
@@ -632,4 +632,46 @@ bool horse_crypto_verify(
     (void)signature;
     return false;
 #endif
+}
+
+void horse_crypto_memzero(void *buf, size_t len)
+{
+    if (buf == NULL || len == 0)
+        return;
+#ifdef HAVE_LIBSODIUM
+    sodium_memzero(buf, len);
+#else
+    volatile uint8_t *p = (volatile uint8_t *)buf;
+    while (len--)
+        *p++ = 0;
+#endif
+}
+
+bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
+                      bool keystore_unlocked, bool have_x25519_peer,
+                      bool have_ed25519_peer)
+{
+    bool want_encrypt = encrypt_en;
+    bool want_sign = sign_en;
+
+    if (!want_encrypt && !want_sign)
+        want_encrypt = true;
+
+    if (!crypto_available || !keystore_unlocked)
+        return false;
+    if (want_encrypt && !have_x25519_peer)
+        return false;
+    if (want_sign && !have_ed25519_peer)
+        return false;
+    return true;
+}
+
+bool horse_rx_may_output_voice(bool lsf_encrypted, bool session_valid,
+                               bool lsf_signed, bool signature_ready)
+{
+    if (lsf_encrypted && !session_valid)
+        return false;
+    if (lsf_signed && !signature_ready)
+        return false;
+    return true;
 }

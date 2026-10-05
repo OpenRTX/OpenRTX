@@ -57,8 +57,13 @@ typedef struct
     bool     horseLsfOk;               /**  Horse LSF is valid          */
     char     horse_dst[10];            /**  Horse LSF destination      */
     char     horse_src[10];            /**  Horse LSF source           */
+    uint8_t  horseError;               /**  HORSE_ERR_*                  */
 }
 rtxStatus_t;
+
+#define HORSE_ERR_NONE      0
+#define HORSE_ERR_NO_CRYPTO 1
+#define HORSE_ERR_NO_KEYS   2
 
 /**
  * \enum bandwidth Enumeration type defining the current rtx bandwidth.
