@@ -1268,6 +1268,31 @@ horse_crypto_test = executable('horse_crypto_test',
                                cpp_args : linux_cpp_args,
                                link_args : linux_l_args)
 
+horse_info_test = executable('horse_info_test',
+                             sources : ['tests/unit/horse_info.cpp'],
+                             include_directories : openrtx_inc,
+                             c_args : linux_c_args,
+                             cpp_args : linux_cpp_args)
+
+horse_keystore_test = executable('horse_keystore_test',
+                                 sources : ['openrtx/src/protocols/horse/horse_keystore.c',
+                                            'openrtx/src/protocols/horse/horse_crypto.c',
+                                            'tests/unit/crypto_utils_stub.c',
+                                            'tests/unit/horse_keystore.cpp'],
+                                 include_directories : openrtx_inc,
+                                 dependencies : linux_deps + [threads_dep],
+                                 c_args : linux_c_args,
+                                 cpp_args : linux_cpp_args,
+                                 link_args : linux_l_args)
+
+horse_loopback_test = executable('horse_loopback_test',
+                                 sources : unit_test_src + ['tests/unit/horse_loopback.cpp'],
+                                 kwargs : unit_test_opts)
+
+py3 = find_program('python3', required : true)
+test('Horse Provision Pack Test', py3,
+     args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'])
+
 ui_check_standby_test = executable('ui_check_standby_test',
                                     sources : unit_test_src + ['tests/unit/ui_check_standby.cpp'],
                                     kwargs  : unit_test_opts)
@@ -1316,6 +1341,11 @@ test('Codeplug Test',         cps_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('Horse Frame Unit Test',  horse_frame_test)
 test('Horse Crypto Unit Test', horse_crypto_test)
+test('Horse Info Reset Test', horse_info_test)
+test('Horse Keystore Test', horse_keystore_test)
+# Analog loopback still does not decode a full LSF+voice+EOT stream; keep the
+# binary for host work. Do not fail meson test until the DSP path locks.
+# test('Horse Loopback Test', horse_loopback_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)

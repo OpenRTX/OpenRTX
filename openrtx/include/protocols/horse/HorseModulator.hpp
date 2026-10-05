@@ -41,6 +41,15 @@ public:
 
     void invertPhase(bool status);
 
+    static constexpr size_t captureSamplesPerFrame()
+    {
+        return FRAME_SYMBOLS * (48000 / SYMBOL_RATE);
+    }
+
+    void beginCapture(int16_t *buf, size_t cap);
+    size_t captureLength() const;
+    void endCapture();
+
 private:
     void symbolsToBaseband();
     void sendBaseband();
@@ -58,6 +67,9 @@ private:
     pathId outPath;
     bool txRunning;
     bool invPhase;
+    int16_t *captureBuf;
+    size_t captureCap;
+    size_t captureLen;
 
 #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     M17::PwmCompensator pwmComp;

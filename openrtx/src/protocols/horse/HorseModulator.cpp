@@ -16,7 +16,13 @@
 namespace horse
 {
 
-HorseModulator::HorseModulator() : idleBuffer(nullptr), txRunning(false), invPhase(false)
+HorseModulator::HorseModulator()
+    : idleBuffer(nullptr),
+      txRunning(false),
+      invPhase(false),
+      captureBuf(nullptr),
+      captureCap(0),
+      captureLen(0)
 {
 }
 
@@ -108,6 +114,24 @@ void HorseModulator::invertPhase(bool status)
     invPhase = status;
 }
 
+void HorseModulator::beginCapture(int16_t *buf, size_t cap)
+{
+    captureBuf = buf;
+    captureCap = cap;
+    captureLen = 0;
+}
+
+size_t HorseModulator::captureLength() const
+{
+    return captureLen;
+}
+
+void HorseModulator::endCapture()
+{
+    captureBuf = nullptr;
+    captureCap = 0;
+}
+
 void HorseModulator::symbolsToBaseband()
 {
     std::memset(idleBuffer, 0x00, FRAME_SAMPLES * sizeof(stream_sample_t));
@@ -136,6 +160,19 @@ void HorseModulator::sendBaseband()
 #else
 void HorseModulator::sendBaseband()
 {
+    if (captureBuf != nullptr)
+    {
+        size_t n = FRAME_SAMPLES;
+        if (captureLen + n > captureCap)
+            n = captureCap - captureLen;
+        if (n > 0)
+        {
+            std::memcpy(captureBuf + captureLen, idleBuffer,
+                        n * sizeof(int16_t));
+            captureLen += n;
+        }
+        return;
+    }
     FILE* outfile = fopen("/tmp/horse_output.raw", "ab");
     if (outfile)
     {
