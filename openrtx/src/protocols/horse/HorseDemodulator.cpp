@@ -41,6 +41,7 @@ HorseDemodulator::HorseDemodulator()
     , corrPeakMin(CORR_PEAK_MIN)
     , dropWithoutTag(false)
     , framesWithoutTag(0)
+    , lastLockCorr(0)
     , sampleFilter(sfNum, sfDen)
 {
     dsp_resetState(dcBlock);
@@ -152,6 +153,11 @@ void HorseDemodulator::setDropWithoutTag(bool enable)
 void HorseDemodulator::noteValidTag()
 {
     framesWithoutTag = 0;
+}
+
+int32_t HorseDemodulator::lastLockCorrAbs() const
+{
+    return lastLockCorr;
 }
 
 bool HorseDemodulator::feedSample(int16_t sample, bool invertPhase)
@@ -294,10 +300,13 @@ void HorseDemodulator::unlockedState()
     int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
     const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
     int32_t cL = correlator.convolve(lsfSym);
+    int32_t cLabs = std::abs(cL);
 
-    if ((std::abs(cL) > syncThresh) && (std::abs(cL) >= corrPeakMin)
-        && acquireSync(LSF_SYNC_WORD))
+    if ((cLabs > syncThresh) && (cLabs >= corrPeakMin)
+        && acquireSync(LSF_SYNC_WORD)) {
+        lastLockCorr = cLabs;
         return;
+    }
 }
 
 void HorseDemodulator::syncedState()

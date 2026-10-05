@@ -94,10 +94,10 @@ static constexpr uint8_t HAMMING_ACQUIRE_MAX = 0;
 
 /*
  * Extra floor on |correlator peak| at LSF acquire, on top of the
- * envelope * CORR_SYNC_SCALE test. 0 until the false-lock table picks
- * a non-zero value.
+ * envelope * CORR_SYNC_SCALE test. False locks on FM-open noise sat
+ * around 90-103k; real LSF stayed above 280k even with noise=15000.
  */
-static constexpr int32_t CORR_PEAK_MIN = 0;
+static constexpr int32_t CORR_PEAK_MIN = 180000;
 
 /*
  * After lock, this many completed frames without noteValidTag() drops

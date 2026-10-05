@@ -55,6 +55,7 @@ public:
     void setCorrPeakMin(int32_t peak);
     void setDropWithoutTag(bool enable);
     void noteValidTag();
+    int32_t lastLockCorrAbs() const;
 
 private:
     void quantize(int16_t sample);
@@ -101,6 +102,7 @@ private:
     int32_t corrPeakMin;
     bool dropWithoutTag;
     uint8_t framesWithoutTag;
+    int32_t lastLockCorr;
     struct dcBlock dcBlock;
 
     Correlator<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> correlator;
