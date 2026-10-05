@@ -327,29 +327,67 @@ static int test_layer_c_demod_timing()
     return 0;
 }
 
-static int test_no_late_entry()
+/*
+ * Late entry: no opening LSF on the air. Demod locks on voice sync;
+ * decoder rebuilds LSF from spare fragments (slots 0..3).
+ */
+static int test_late_entry_voice_rebuilds_lsf()
 {
     HorseFrameEncoder enc;
+    HorseFrameDecoder decoder;
     std::vector<frame_t> frames;
+    call_t src = { { 'L', 'A', 'T', 'E', '0', '1' } };
+    call_t dst = { { 'L', 'A', 'T', 'E', '0', '2' } };
+    frame_t opening[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, opening);
     uint8_t melpe[12];
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(melpe, 0x11, sizeof melpe);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    for (uint16_t fn = 0; fn < 20; fn++) {
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, fn, vf, false, 12);
+        frames.push_back(vf);
+    }
+    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
     std::vector<int16_t> bb48, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
     to_24k(bb48, rx24);
-    std::vector<decoded_t> got;
-    demod_stream(rx24, false, got);
-    for (const auto &d : got) {
-        if (d.type == HorseFrameType::VOICE || d.type == HorseFrameType::EOT) {
-            std::printf("late-entry: locked without LSF type %u\n",
-                        static_cast<unsigned>(d.type));
-            return -1;
+    HorseDemodulator demod;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    bool locked = false;
+    bool ready = false;
+    int voice_n = 0;
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f;
+        if (!demod.takeFrame(f))
+            continue;
+        locked = true;
+        HorseFrameType t = decoder.decodeFrame(f);
+        if (t == HorseFrameType::VOICE)
+            voice_n++;
+        if (decoder.lsfReady()) {
+            ready = true;
+            demod.noteValidTag();
         }
     }
-    std::printf("late-entry: no lock without LSF\n");
+    demod.terminate();
+    if (!locked || !ready || voice_n < 4) {
+        std::printf("late-entry: lock=%d ready=%d voice=%d\n",
+                    (int)locked, (int)ready, voice_n);
+        return -1;
+    }
+    call_t outSrc, outDst;
+    decoder.getLsfCallsigns(outSrc, outDst);
+    if (outSrc != src || outDst != dst) {
+        std::printf("late-entry: callsign mismatch after frag rebuild\n");
+        return -1;
+    }
+    std::printf("late-entry: voice acquire + frag LSF OK (voice=%d)\n",
+                voice_n);
     return 0;
 }
 
@@ -1563,7 +1601,7 @@ int main(int argc, char **argv)
         return -1;
     if (test_layer_c_demod_timing() != 0)
         return -1;
-    if (test_no_late_entry() != 0)
+    if (test_late_entry_voice_rebuilds_lsf() != 0)
         return -1;
     if (test_lsf_false_lock_noise() != 0)
         return -1;

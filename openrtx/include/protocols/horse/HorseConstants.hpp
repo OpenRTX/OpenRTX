@@ -119,10 +119,10 @@ static constexpr size_t VOICE_TAG_BITS = 32;
 /* Max Hamming distance when matching a 16-bit sync word (two bytes). */
 static constexpr uint8_t HAMMING_SYNC_MAX = 2;
 /*
- * Acquisition Hamming (LSF only). Hamming 0 has the fewest LSF false
+ * Acquisition Hamming (LSF and voice). Hamming 0 has the fewest false
  * locks on open-FM Gaussian noise and still passes clean/impaired
- * loopback (see horse_loopback table). Late entry on voice/EOT is not
- * supported.
+ * loopback (see horse_loopback table). Voice acquire enables late
+ * entry; LSF fragments rebuild the link setup (section 7b).
  */
 static constexpr uint8_t HAMMING_ACQUIRE_MAX = 0;
 

@@ -436,7 +436,7 @@ bool HorseDemodulator::tryAcquireLsf()
     const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
     int32_t cL = correlator.convolve(lsfSym);
     int32_t cLabs = std::abs(cL);
-    int32_t ncc = lsfNccQ12(cL, lsfSym);
+    int32_t ncc = syncNccQ12(cL, lsfSym);
 
     if ((cLabs > syncThresh) && (ncc >= corrPeakMin)
         && acquireSyncConvPhase(LSF_SYNC_WORD)) {
@@ -446,9 +446,25 @@ bool HorseDemodulator::tryAcquireLsf()
     return false;
 }
 
+bool HorseDemodulator::tryAcquireVoice()
+{
+    int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
+    const auto voiceSym = syncwordSymbols(VOICE_SYNC_WORD);
+    int32_t cV = correlator.convolve(voiceSym);
+    int32_t cVabs = std::abs(cV);
+    int32_t ncc = syncNccQ12(cV, voiceSym);
+
+    if ((cVabs > syncThresh) && (ncc >= corrPeakMin)
+        && acquireSyncConvPhase(VOICE_SYNC_WORD)) {
+        lastLockCorr = ncc;
+        return true;
+    }
+    return false;
+}
+
 int32_t
-HorseDemodulator::lsfNccQ12(int32_t conv,
-                            const std::array<int8_t, SYNCWORD_SYMBOLS> &sym)
+HorseDemodulator::syncNccQ12(int32_t conv,
+                             const std::array<int8_t, SYNCWORD_SYMBOLS> &sym)
 {
     int64_t e2 = 0;
     int64_t p2 = 0;
@@ -471,7 +487,9 @@ HorseDemodulator::lsfNccQ12(int32_t conv,
 
 void HorseDemodulator::unlockedState()
 {
-    (void)tryAcquireLsf();
+    if (tryAcquireLsf())
+        return;
+    (void)tryAcquireVoice();
 }
 
 void HorseDemodulator::syncedState()
