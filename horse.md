@@ -21,7 +21,9 @@ call fails closed. There is no cleartext fallback.
 - 4-FSK LUT: `00=+1`, `01=+3`, `10=-1`, `11=-3`
 - TX RRC at 48 kHz (`M17::rrc_48k`); RX RRC at 24 kHz
 - Voice payload after 2-byte sync: 16-bit FN (MSB = last frame), 12-byte
-  codec, 4-byte tag. FEC is repeat-2 in `ldpc_horse.c`, not an LDPC code.
+  codec, 4-byte tag. Voice FEC is repeat-2 in `ldpc_horse.c`, not an
+  LDPC code. The LSF has no FEC and no checksum (open; protocol v2
+  with C17).
 
 ### LSF (46 bytes after sync)
 
@@ -32,6 +34,14 @@ call fails closed. There is no cleartext fallback.
 | 12 | 32 | Ephemeral X25519 public key (always present) |
 | 44 | 1 | Flags: `LSF_FLAG_ENCRYPTED=0x01`, `LSF_FLAG_SIGNED=0x02` |
 | 45 | 1 | Protocol version (`LSF_PROTOCOL_VERSION` / `HORSE_LSF_VERSION` = 1) |
+
+The 46 bytes are copied onto the air with no FEC and no checksum. A
+sync match is enough for the decoder to accept the fields. Intact
+LSF+voice+EOT rates on the analog loopback (gain 1.0, 200 trials,
+uncoded LSF) were 200/200 at sigma 2000 and 5000, 121/200 at 10000,
+57/200 at 12500, and 11/200 at 15000. That drop is the reception
+limit: voice still has repeat-2, the LSF does not. Fix in protocol
+version 2 together with replacing repeat-2 (C17).
 
 ### Signature frames
 
@@ -102,7 +112,9 @@ Limits:
   a high-budget attacker on a long recording.
 - Argon2id 16 KiB is sized for 192 KiB SRAM and is weak against offline
   guessing of a bad passphrase from a flash dump. Unverified on MD-3x0.
-- Repeat-2 FEC is not an LDPC code.
+- Repeat-2 FEC is not an LDPC code (voice only). The LSF has no FEC
+  and no checksum; this is the limiting factor for reception (open,
+  protocol version 2 with C17).
 - No late entry: miss the LSF and the rest of the call is silent.
 - Hamming-0 acquire. The extra normalised correlator floor was removed
   (`CORR_PEAK_MIN` = 0). Real LSF ncc under noise overlaps Hamming-0
@@ -115,9 +127,7 @@ Limits:
   rate (see Tests). They are harmless: no audio plays without a valid
   tag, and a real LSF replaces an unauthenticated lock. Ten minutes of
   open-FM Hamming-0 noise produced 5.80 decoded false LSFs per minute
-  both before and after the pair-disagreement check (limit 120; false
-  diss min 72 / p50 90 / max 107). Keyed uncoded LSF sits near 71-100,
-  so the check does not cut that rate.
+  (58 frames; demod acquires 0.10/min).
 - Gain 0.25 and 0.5 decode 3/3. Gain 2.0 fails in the impairment test
   because the samples clip.
 - Until the first tagged frame, a new LSF can replace the current lock
@@ -148,11 +158,10 @@ meson test -C build_linux --no-rebuild
 ```
 
 See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
-the loopback Hamming-0 false-lock table to ten minutes (rate before and
-after the LSF pair-disagreement check).
+the loopback Hamming-0 false-lock table to ten minutes.
 
 Horse tests: Frame, Crypto, Info, Codec, Peers, Keystore, Host Interop,
-Loopback (layers, DC-block, false-lock table, real LSF ncc/diss under
+Loopback (layers, DC-block, false-lock table, intact uncoded LSF under
 noise, LSF replace at 1/4/7 frames, three-mode modem plus negatives),
 Provision Pack, settings.h vs upstream.
 
