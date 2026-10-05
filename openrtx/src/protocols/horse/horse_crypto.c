@@ -8,9 +8,7 @@
  * When libsodium is available (HAVE_LIBSODIUM), this file provides:
  *  - XChaCha20 stream cipher + BLAKE2b-based 32-bit MAC for voice frames
  *  - Argon2id via crypto_pwhash for passphrase-based key derivation
- *
- * ECIES-style session key operations remain stubs until a concrete curve and
- * key storage format are finalized in this tree.
+ *  - X25519 ECDH with an LSF-bound KDF for session keys
  */
 
 #include "protocols/horse/horse_crypto.h"
@@ -35,130 +33,6 @@ static int horse_sodium_init(void)
 #else
 #include "core/crypto_utils.h"
 #endif
-
-bool horse_crypto_ecies_encrypt_session_key(
-    const uint8_t *recipient_x25519_pubkey,
-    const uint8_t *session_key,
-    uint8_t *ephemeral_pubkey_out,
-    uint8_t *ciphertext_out,
-    uint8_t *tag_out)
-{
-    if (recipient_x25519_pubkey == NULL || session_key == NULL ||
-        ephemeral_pubkey_out == NULL || ciphertext_out == NULL || tag_out == NULL)
-        return false;
-
-#ifdef HAVE_LIBSODIUM
-    if (horse_sodium_init() != 0)
-        return false;
-
-    unsigned char eph_pk[HORSE_X25519_PUBLICKEY_BYTES];
-    unsigned char eph_sk[HORSE_X25519_SECRETKEY_BYTES];
-    crypto_kx_keypair(eph_pk, eph_sk);
-    memcpy(ephemeral_pubkey_out, eph_pk, sizeof eph_pk);
-
-    /* ECDH shared secret. */
-    unsigned char shared[crypto_scalarmult_BYTES];
-    if (crypto_scalarmult(shared, eph_sk, recipient_x25519_pubkey) != 0)
-    {
-        sodium_memzero(eph_sk, sizeof eph_sk);
-        return false;
-    }
-
-    /* Derive AEAD key and nonce deterministically from shared secret + context. */
-    unsigned char aead_key[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
-    unsigned char nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
-
-    crypto_generichash(aead_key, sizeof aead_key,
-                       shared, sizeof shared,
-                       (const unsigned char *)"HORSE-ECIES-KEY", 14);
-    crypto_generichash(nonce, sizeof nonce,
-                       shared, sizeof shared,
-                       (const unsigned char *)"HORSE-ECIES-NONCE", 16);
-
-    unsigned long long clen = 0;
-    if (crypto_aead_xchacha20poly1305_ietf_encrypt_detached(
-            ciphertext_out,
-            tag_out,
-            &clen,
-            session_key,
-            (unsigned long long)HORSE_SESSION_KEY_BYTES,
-            eph_pk,
-            (unsigned long long)sizeof eph_pk,
-            NULL, /* nsec */
-            nonce,
-            aead_key) != 0)
-    {
-        sodium_memzero(eph_sk, sizeof eph_sk);
-        sodium_memzero(shared, sizeof shared);
-        return false;
-    }
-
-    sodium_memzero(eph_sk, sizeof eph_sk);
-    sodium_memzero(shared, sizeof shared);
-    return clen == HORSE_SESSION_KEY_BYTES;
-#else
-    (void)recipient_x25519_pubkey;
-    (void)ephemeral_pubkey_out;
-    (void)ciphertext_out;
-    (void)tag_out;
-    return false;
-#endif
-}
-
-bool horse_crypto_ecies_decrypt_session_key(
-    const uint8_t *ephemeral_pubkey,
-    const uint8_t *ciphertext,
-    const uint8_t *tag,
-    const uint8_t *recipient_x25519_seckey,
-    uint8_t *session_key_out)
-{
-    if (ephemeral_pubkey == NULL || ciphertext == NULL || tag == NULL ||
-        recipient_x25519_seckey == NULL || session_key_out == NULL)
-        return false;
-
-#ifdef HAVE_LIBSODIUM
-    if (horse_sodium_init() != 0)
-        return false;
-
-    unsigned char shared[crypto_scalarmult_BYTES];
-    if (crypto_scalarmult(shared, recipient_x25519_seckey, ephemeral_pubkey) != 0)
-        return false;
-
-    unsigned char aead_key[crypto_aead_xchacha20poly1305_ietf_KEYBYTES];
-    unsigned char nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
-
-    crypto_generichash(aead_key, sizeof aead_key,
-                       shared, sizeof shared,
-                       (const unsigned char *)"HORSE-ECIES-KEY", 14);
-    crypto_generichash(nonce, sizeof nonce,
-                       shared, sizeof shared,
-                       (const unsigned char *)"HORSE-ECIES-NONCE", 16);
-
-    if (crypto_aead_xchacha20poly1305_ietf_decrypt_detached(
-            session_key_out,
-            NULL, /* nsec */
-            ciphertext,
-            (unsigned long long)HORSE_SESSION_KEY_BYTES,
-            tag,
-            ephemeral_pubkey,
-            (unsigned long long)HORSE_X25519_PUBLICKEY_BYTES,
-            nonce,
-            aead_key) != 0)
-    {
-        sodium_memzero(shared, sizeof shared);
-        return false;
-    }
-    sodium_memzero(shared, sizeof shared);
-    return true;
-#else
-    (void)ephemeral_pubkey;
-    (void)ciphertext;
-    (void)tag;
-    (void)recipient_x25519_seckey;
-    (void)session_key_out;
-    return false;
-#endif
-}
 
 static bool horse_crypto_tag_dir_fn_payload(const uint8_t *k_tag, uint8_t dir,
                                             uint16_t frame_num,

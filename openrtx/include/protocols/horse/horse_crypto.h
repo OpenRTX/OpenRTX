@@ -7,8 +7,8 @@
  *
  * Current implementation uses libsodium where available:
  *  - XChaCha20 stream cipher + BLAKE2b-based 32-bit MAC for voice frames
- *  - X25519 ECDH + XChaCha20-Poly1305 for session key wrapping (ECIES-style)
- *  - Ed25519 for digital signatures (without encryption)
+ *  - X25519 ECDH for session keys (LSF-bound KDF)
+ *  - Ed25519 for digital signatures
  *  - Argon2id (via crypto_pwhash) for passphrase-based key derivation
  *
  * Without libsodium every primitive returns false. There is no PBKDF2,
@@ -50,10 +50,6 @@ extern "C" {
 #define HORSE_X25519_PUBLICKEY_BYTES   32
 #define HORSE_X25519_SECRETKEY_BYTES   32
 
-/* AEAD used for session key wrapping (XChaCha20-Poly1305). */
-#define HORSE_AEAD_XCHACHA20_NONCE_BYTES 24
-#define HORSE_AEAD_TAG_BYTES             16
-
 /* Ed25519 signature sizes. */
 #define HORSE_ED25519_SIGNATURE_BYTES    64
 
@@ -69,34 +65,6 @@ typedef struct
     uint8_t x25519_pk[HORSE_X25519_PUBLICKEY_BYTES];
     uint8_t x25519_sk[HORSE_X25519_SECRETKEY_BYTES];
 } __attribute__((packed)) horse_identity_keys_t;
-
-/* Session key wrap (ECIES-like):
- * - X25519 ECDH (ephemeral_sk * recipient_pk)
- * - Derive AEAD key via BLAKE2b generichash
- * - Encrypt session key with XChaCha20-Poly1305 (detached tag)
- *
- * Out:
- *  - ephemeral_pubkey_out[32]
- *  - ciphertext_out[32]
- *  - tag_out[16]
- */
-bool horse_crypto_ecies_encrypt_session_key(
-    const uint8_t *recipient_x25519_pubkey,
-    const uint8_t *session_key,
-    uint8_t *ephemeral_pubkey_out,
-    uint8_t *ciphertext_out,
-    uint8_t *tag_out);
-
-/* Session key unwrap, see horse_crypto_ecies_encrypt_session_key().
- * Input:
- *  - recipient_x25519_seckey[32]
- */
-bool horse_crypto_ecies_decrypt_session_key(
-    const uint8_t *ephemeral_pubkey,
-    const uint8_t *ciphertext,
-    const uint8_t *tag,
-    const uint8_t *recipient_x25519_seckey,
-    uint8_t *session_key_out);
 
 /* Voice frame encrypt: XChaCha20 with k_enc. Tag is keyed BLAKE2b with
  * k_tag over dir || FN16 (no last-frame bit) || payload (ciphertext). */
