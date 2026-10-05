@@ -1281,7 +1281,8 @@ horse_info_test = executable('horse_info_test',
                              sources : ['tests/unit/horse_info.cpp'],
                              include_directories : openrtx_inc,
                              c_args : linux_c_args,
-                             cpp_args : linux_cpp_args)
+                             cpp_args : linux_cpp_args,
+                             link_args : linux_l_args)
 
 horse_codec_test = executable('horse_codec_test',
                               sources : ['openrtx/src/protocols/horse/melpe_horse.c',
@@ -1289,7 +1290,8 @@ horse_codec_test = executable('horse_codec_test',
                               include_directories : openrtx_inc,
                               dependencies : linux_deps,
                               c_args : linux_c_args,
-                              cpp_args : linux_cpp_args)
+                              cpp_args : linux_cpp_args,
+                              link_args : linux_l_args)
 
 horse_peers_test = executable('horse_peers_test',
                               sources : unit_test_src + ['tests/unit/horse_peers.cpp'],
