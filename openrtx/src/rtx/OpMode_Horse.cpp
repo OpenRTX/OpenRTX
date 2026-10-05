@@ -20,6 +20,7 @@
 #include "protocols/horse/horse_crypto.h"
 #include "rtx/rtx.h"
 #include <cstring>
+#include <string>
 
 static bool horse_is_sig_frame(uint16_t fn)
 {
@@ -78,8 +79,8 @@ OpMode_Horse::OpMode_Horse()
       signTx(false),
       signRx(false),
       txSigSent(false),
-      rxSigReady(false),
-      rxSigChunks(0)
+      rxSigChunks(0),
+      rxSigReady(false)
 {
     memset(sessionKey, 0, sizeof sessionKey);
     memset(frameAuthKey, 0, sizeof frameAuthKey);
@@ -312,8 +313,8 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                 dataValid = true;
                 resetRxCrypto();
                 decoder.getLsfCallsigns(rxLsfSrc, rxLsfDst);
-                std::string srcStr = M17::decode_callsign(rxLsfSrc);
-                std::string dstStr = M17::decode_callsign(rxLsfDst);
+                std::string srcStr = M17::Callsign(rxLsfSrc);
+                std::string dstStr = M17::Callsign(rxLsfDst);
                 strncpy(status->horse_src, srcStr.c_str(), 9);
                 status->horse_src[9] = '\0';
                 strncpy(status->horse_dst, dstStr.c_str(), 9);
@@ -356,6 +357,7 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                 uint16_t fn;
                 decoder.getVoicePayload(frame, melpe, tag, &fn);
 
+                bool drop_voice = false;
                 if (horse_is_sig_frame(fn))
                 {
                     uint16_t chunk = fn - SIG_FRAME_BASE;
@@ -365,10 +367,9 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                         rxSigChunks++;
                         tryFinalizeRxSessionSig();
                     }
-                    break;
+                    drop_voice = true;
                 }
-
-                if (encryptRx && sessionValid)
+                else if (encryptRx && sessionValid)
                 {
                     uint8_t nonce[12];
                     uint8_t plain[HORSE_CODEC_FRAME_BYTES];
@@ -376,18 +377,19 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                     if (!horse_crypto_voice_decrypt(sessionKey, nonce, melpe,
                                                     HORSE_CODEC_FRAME_BYTES,
                                                     tag, plain))
-                        break;
-                    memcpy(melpe, plain, sizeof melpe);
+                        drop_voice = true;
+                    else
+                        memcpy(melpe, plain, sizeof melpe);
                 }
                 else if (signRx)
                 {
-                    if (!rxSigReady)
-                        break;
-                    if (!horse_crypto_voice_auth_verify(frameAuthKey, fn, melpe, tag))
-                        break;
+                    if (!rxSigReady ||
+                        !horse_crypto_voice_auth_verify(frameAuthKey, fn, melpe,
+                                                        tag))
+                        drop_voice = true;
                 }
 
-                if (rxAudioPath >= 0 && horse_codec_running())
+                if (!drop_voice && rxAudioPath >= 0 && horse_codec_running())
                     horse_codec_pushFrame(melpe, false);
             }
         }
@@ -434,9 +436,8 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
             status->opStatus = OFF;
             return;
         }
-        horse::call_t srcCall, dstCall;
-        M17::encode_callsign(status->source_address, srcCall, false);
-        M17::encode_callsign(status->destination_address, dstCall, false);
+        horse::call_t srcCall = M17::Callsign(status->source_address);
+        horse::call_t dstCall = M17::Callsign(status->destination_address);
         encoder.reset();
         sessionValid = false;
         encryptTx = false;

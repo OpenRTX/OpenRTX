@@ -6,7 +6,7 @@
 
 #include "protocols/horse/HorseModulator.hpp"
 #include "protocols/horse/HorseUtils.hpp"
-#include "protocols/M17/M17DSP.hpp"
+#include "protocols/M17/DSP.hpp"
 #include <cstring>
 
 #if defined(PLATFORM_LINUX)

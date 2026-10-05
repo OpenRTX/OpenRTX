@@ -391,11 +391,11 @@ linux_inc = ['platform/targets/linux',
              'platform/drivers/audio',
              'platform/drivers/tones']
 
-linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
+linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':'', 'CONFIG_HORSE': ''}
 
 sdl_dep     = dependency('SDL2',     required: false)
 threads_dep = dependency('threads',  required: false)
-linux_src  += openrtx_src
+linux_src  += openrtx_src + horse_src
 linux_inc  += openrtx_inc
 linux_def  += openrtx_def
 linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}

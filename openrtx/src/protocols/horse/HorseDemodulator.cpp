@@ -5,8 +5,8 @@
  */
 
 #include "protocols/horse/HorseDemodulator.hpp"
-#include "protocols/M17/M17DSP.hpp"
-#include "protocols/M17/M17Utils.hpp"
+#include "protocols/M17/DSP.hpp"
+#include "protocols/M17/Utils.hpp"
 #include <cmath>
 #include <cstring>
 
@@ -19,8 +19,7 @@ static uint8_t hammingDistance(uint8_t x, uint8_t y)
 }
 
 HorseDemodulator::HorseDemodulator()
-    : streamSync({{+1, +3, +3, -1, -1, +1, -1, +3}}),
-      demodState(DemodState::INIT),
+    : demodState(DemodState::INIT),
       newFrame(false),
       resetClockRec(false),
       updateSampPoint(false),
@@ -236,5 +235,8 @@ void HorseDemodulator::syncUpdateState()
     else
         demodState = DemodState::LOCKED;
 }
+
+constexpr std::array<float, 3> HorseDemodulator::sfNum;
+constexpr std::array<float, 3> HorseDemodulator::sfDen;
 
 }  // namespace horse

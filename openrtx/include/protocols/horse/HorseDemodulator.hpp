@@ -13,6 +13,7 @@
 #include <memory>
 #include <array>
 #include "core/dsp.h"
+#include <cmath>
 #include "core/audio_path.h"
 #include "core/audio_stream.h"
 #include "HorseDatatypes.hpp"
@@ -89,7 +90,8 @@ private:
     struct dcBlock dcBlock;
 
     Correlator<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> correlator;
-    Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> streamSync;
+    Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> streamSync{
+        {+1, +3, +3, -1, -1, +1, -1, +3}};
     DevEstimator devEstimator;
     ClockRecovery<SAMPLES_PER_SYMBOL> clockRec;
     Iir<3> sampleFilter;
