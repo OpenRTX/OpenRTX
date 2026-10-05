@@ -441,7 +441,8 @@ if get_option('ubsan')
   linux_l_args   += '-fsanitize=undefined'
 endif
 
-# dsp.cpp:19 left-shift of a negative sample is UB (see UPSTREAM_ISSUE_dsp.md).
+# dsp.cpp:19 left-shift of a negative sample is UB (see
+# docs/horse/UPSTREAM_ISSUE_dsp.md).
 # Do not change dsp.cpp; skip the shift sanitizer so Horse DC-block loopback
 # can complete under -Db_sanitize=address,undefined.
 if get_option('b_sanitize') != 'none' or get_option('asan') or get_option('ubsan')
@@ -1252,6 +1253,12 @@ cps_test = executable('cps_test',
                       sources : unit_test_src + ['tests/unit/cps.cpp'],
                       kwargs  : unit_test_opts)
 
+cps_layout_test = executable('cps_layout_test',
+                             sources : ['tests/unit/cps_layout.c'],
+                             include_directories : openrtx_inc,
+                             c_args : linux_c_args,
+                             link_args : linux_l_args)
+
 linux_inputStream_test = executable('linux_inputStream_test',
                                     sources : unit_test_src + ['tests/unit/linux_inputStream_test.cpp'],
                                     kwargs  : unit_test_opts)
@@ -1267,8 +1274,7 @@ horse_frame_test = executable('horse_frame_test',
                               cpp_args : linux_cpp_args,
                               link_args : linux_l_args)
 
-horse_crypto_test_src = ['openrtx/src/protocols/horse/horse_crypto.c',
-                        'tests/unit/crypto_utils_stub.c']
+horse_crypto_test_src = ['openrtx/src/protocols/horse/horse_crypto.c']
 horse_crypto_test = executable('horse_crypto_test',
                                sources : horse_crypto_test_src + ['tests/unit/horse_crypto.cpp'],
                                include_directories : openrtx_inc,
@@ -1300,7 +1306,6 @@ horse_peers_test = executable('horse_peers_test',
 horse_keystore_test = executable('horse_keystore_test',
                                  sources : ['openrtx/src/protocols/horse/horse_keystore.c',
                                             'openrtx/src/protocols/horse/horse_crypto.c',
-                                            'tests/unit/crypto_utils_stub.c',
                                             'tests/unit/horse_keystore.cpp'],
                                  include_directories : openrtx_inc,
                                  dependencies : linux_deps + [threads_dep],
@@ -1312,7 +1317,6 @@ horse_host_interop_test = executable('horse_host_interop_test',
                                      sources : ['openrtx/src/protocols/horse/horse_keystore.c',
                                                 'openrtx/src/protocols/horse/horse_crypto.c',
                                                 'openrtx/src/protocols/horse/horse_peers.c',
-                                                'tests/unit/crypto_utils_stub.c',
                                                 'tests/unit/horse_host_interop.cpp'],
                                      include_directories : openrtx_inc,
                                      dependencies : linux_deps + [threads_dep],
@@ -1386,6 +1390,7 @@ test('M17 RRC Test',          m17_rrc_test)
 test('M17 Callsign Unit Test',          m17_callsign_test)
 test('M17 Meta Text Unit Test',         m17_metatext_test)
 test('Codeplug Test',         cps_test)
+test('CPS layout vs upstream', cps_layout_test)
 ## test('Linux InputStream Test', linux_inputStream_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('Horse Frame Unit Test',  horse_frame_test,
@@ -1414,7 +1419,7 @@ test('M17 Baseband Replay Test', m17_replay_test)
 ## ----------------------------------- LibFuzzer targets (optional) ------------------------------
 ## Build with: meson setup build -Dfuzzing=true (requires clang)
 ## Run each: ./build/fuzz_<name> [corpus_dir] [artifacts_dir]
-## Run all for 3h: ./scripts/run_all_fuzzers_3h.sh build
+## Run Horse: ./scripts/run_all_fuzzers_3h.sh build
 ##
 if get_option('fuzzing')
   fuzz_sanitizer_args = ['-fsanitize=fuzzer,address,undefined', '-fno-omit-frame-pointer', '-g']
@@ -1432,41 +1437,4 @@ if get_option('fuzzing')
                               include_directories : fuzz_inc,
                               c_args : fuzz_sanitizer_args,
                               link_args : fuzz_sanitizer_args)
-
-  fuzz_m17_golay = executable('fuzz_m17_golay',
-                              sources : ['openrtx/src/protocols/M17/Golay.cpp', 'tests/fuzz/fuzz_m17_golay.cpp'],
-                              include_directories : fuzz_inc,
-                              cpp_args : fuzz_sanitizer_args,
-                              link_args : fuzz_sanitizer_args)
-
-  m17_callsign_fuzz_src = ['openrtx/src/protocols/M17/Callsign.cpp',
-                           'tests/fuzz/fuzz_m17_callsign.cpp']
-  fuzz_m17_callsign = executable('fuzz_m17_callsign',
-                                 sources : m17_callsign_fuzz_src,
-                                 include_directories : fuzz_inc,
-                                 cpp_args : fuzz_sanitizer_args,
-                                 link_args : fuzz_sanitizer_args)
-
-  m17_frame_fuzz_src = ['openrtx/src/protocols/M17/DSP.cpp',
-                        'openrtx/src/protocols/M17/Golay.cpp',
-                        'openrtx/src/protocols/M17/MetaText.cpp',
-                        'openrtx/src/protocols/M17/Callsign.cpp',
-                        'openrtx/src/protocols/M17/Modulator.cpp',
-                        'openrtx/src/protocols/M17/Demodulator.cpp',
-                        'openrtx/src/protocols/M17/FrameEncoder.cpp',
-                        'openrtx/src/protocols/M17/FrameDecoder.cpp',
-                        'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
-                        'tests/fuzz/fuzz_m17_frame.cpp']
-  fuzz_m17_frame = executable('fuzz_m17_frame',
-                              sources : m17_frame_fuzz_src,
-                              include_directories : fuzz_inc,
-                              cpp_args : fuzz_sanitizer_args,
-                              link_args : fuzz_sanitizer_args)
-
-  minmea_inc = include_directories('lib/minmea/include')
-  fuzz_minmea = executable('fuzz_minmea',
-                           sources : ['lib/minmea/minmea.c', 'tests/fuzz/fuzz_minmea.c'],
-                           include_directories : [fuzz_inc, minmea_inc],
-                           c_args : fuzz_sanitizer_args,
-                           link_args : fuzz_sanitizer_args)
 endif
