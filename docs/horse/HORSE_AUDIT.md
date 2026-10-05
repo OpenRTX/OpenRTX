@@ -186,20 +186,15 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
 - **Proposed fix:** Dedicated frame type (or a reserved high range never
   used for voice). 96-bit nonce = `session_id || FN32`. Stop TX before wrap.
 
-### C7. Argon2id moderate (~256 MiB) vs STM32F405; PBKDF2 fallback is not real -- high
+### C7. Argon2id moderate (~256 MiB) vs STM32F405 -- high
 
-- **Where:** `horse_crypto.c:274-293`; `crypto_utils.h` declares
-  `crypto_pbkdf2`; `crypto_utils.c` has **no** `crypto_pbkdf2` body;
-  only `tests/unit/crypto_utils_stub.c` (always -1).
-- **What is wrong:** With libsodium, KDF uses
+- **Where:** `horse_crypto.c` `crypto_pwhash`.
+- **What is wrong:** Early code used
   `crypto_pwhash_OPSLIMIT_MODERATE` / `MEMLIMIT_MODERATE`. F405 has
-  192 KiB RAM; `crypto_pwhash` fails, keystore never unlocks, C2
-  then transmits cleartext. Without sodium, the `#else` calls
-  `crypto_pbkdf2`, which is not in the firmware link. Keystore unlock
-  also requires `horse_crypto_available()`, so the PBKDF2 branch is
-  unreachable for the keystore.
-- **Confirmed:** Grep of `crypto_utils.c`; meson does not compile
-  `crypto_utils.c` into `horse_src`.
+  192 KiB RAM. Current memlimit is 16 KiB (`crypto_pwhash` heap).
+  Without libsodium every crypto call fails closed; there is no
+  PBKDF2 / `crypto_utils` fallback.
+- **Confirmed:** `horse_crypto.c` `#else` returns false; no PBKDF2.
 - **Proposed fix:** F405-safe Argon2id parameters, same on the provision
   PC. Do not claim PBKDF2 unless implemented and never mixed with
   Argon2id blobs.

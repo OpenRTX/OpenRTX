@@ -161,9 +161,8 @@ See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
 the loopback Hamming-0 false-lock table to ten minutes.
 
 Horse tests: Frame, Crypto, Info, Codec, Peers, Keystore, Host Interop,
-Loopback (layers, DC-block, false-lock table, intact uncoded LSF under
-noise, LSF replace at 1/4/7 frames, three-mode modem plus negatives),
-Provision Pack, settings.h vs upstream.
+Loopback, CPS layout vs upstream, Provision Pack, settings.h vs
+upstream. Audit: `docs/horse/HORSE_AUDIT.md`.
 
 Sanitizer: `meson setup build_asan -Db_sanitize=address,undefined` with
 `-fno-sanitize=shift` and `ASAN_OPTIONS=detect_leaks=0`.

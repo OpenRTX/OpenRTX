@@ -230,7 +230,7 @@ static int demod_stream(const std::vector<int16_t> &rx24, bool invert,
      * int16_t (dsp.cpp:19), which is UB. The firmware still runs that
      * filter. test_layer_dc_block() sets skip_dc=false. That path is
      * registered in the unsanitized meson suite; under UBSan it aborts
-     * on the upstream shift (see UPSTREAM_ISSUE_dsp.md). Do not patch
+     * on the upstream shift (see docs/horse/UPSTREAM_ISSUE_dsp.md). Do not patch
      * dsp.cpp in this fork.
      */
     demod.setSkipDcBlock(skip_dc);
