@@ -44,6 +44,9 @@ private:
     void abortTx(rtxStatus_t *const status, bool stop_mod);
     void resetRxCrypto();
     void tryFinalizeRxSessionSig();
+    void tryFinalizeRxSigFragments();
+    bool applyLsfIfReady(rtxStatus_t *const status);
+    void maybeStartRxAudio();
     void sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
                           horse::frame_t &outFrame);
 

@@ -65,11 +65,10 @@ static int count_good_voice(const std::vector<frame_t> &onair,
     bool have_keys = false;
     memset(sig, 0, sizeof sig);
 
+    bool sig_ok = !want_sign;
     for (const auto &fr : onair) {
         HorseFrameType t = decoder.decodeFrame(fr);
-        if (t == HorseFrameType::LINK_SETUP) {
-            if (!decoder.lsfReady())
-                continue;
+        if (!have_lsf && decoder.lsfReady()) {
             decoder.getLsfCallsigns(src, dst);
             if (!decoder.getLsfCrypto(eph, &flags, &version))
                 return -1;
@@ -81,10 +80,7 @@ static int count_good_voice(const std::vector<frame_t> &onair,
                 return -1;
             have_keys = true;
             have_lsf = true;
-            continue;
         }
-        if (!have_lsf || !have_keys)
-            continue;
         if (t != HorseFrameType::VOICE)
             continue;
         uint8_t payload[12], tag[4];
@@ -95,15 +91,25 @@ static int count_good_voice(const std::vector<frame_t> &onair,
             sig_n++;
             continue;
         }
-        if (want_sign) {
-            if (sig_n < SIG_FRAME_COUNT)
-                continue;
-            uint8_t msg[HORSE_SESSION_MSG_BYTES];
-            horse_crypto_build_session_message(src.data(), dst.data(), eph,
-                                               flags, version, msg);
-            if (!horse_crypto_verify(ed_pk, msg, sizeof msg, sig))
+        if (want_sign && !sig_ok) {
+            uint8_t frag_sig[64];
+            bool have_sig = (sig_n >= SIG_FRAME_COUNT);
+            if (!have_sig && decoder.getSigFragments(frag_sig)) {
+                memcpy(sig, frag_sig, sizeof sig);
+                have_sig = true;
+            }
+            if (have_sig && have_lsf) {
+                uint8_t msg[HORSE_SESSION_MSG_BYTES];
+                horse_crypto_build_session_message(src.data(), dst.data(), eph,
+                                                   flags, version, msg);
+                if (horse_crypto_verify(ed_pk, msg, sizeof msg, sig))
+                    sig_ok = true;
+            }
+            if (!sig_ok)
                 continue;
         }
+        if (!have_lsf || !have_keys)
+            continue;
         uint8_t nonce[12], plain[12];
         horse_crypto_voice_nonce_from_fn(fn, nonce);
         bool ok;
@@ -178,12 +184,15 @@ static int run_mode(bool enc, bool sign, mut_t mut)
             frames.push_back(lsf3[i]);
     }
 
+    uint8_t signature[64];
+    memset(signature, 0, sizeof signature);
     if (sign) {
-        uint8_t msg[HORSE_SESSION_MSG_BYTES], signature[64];
+        uint8_t msg[HORSE_SESSION_MSG_BYTES];
         horse_crypto_build_session_message(src.data(), dst.data(), eph_pk,
                                            tx_flags, HORSE_LSF_VERSION, msg);
         if (!horse_crypto_sign(ed_sk, msg, sizeof msg, signature))
             return -1;
+        encf.setSignatureFragments(signature);
         unsigned nchunk = (mut == mut_t::SHORT_SIG) ? 3u : SIG_FRAME_COUNT;
         for (unsigned i = 0; i < nchunk; i++) {
             uint8_t chunk[12];
@@ -196,41 +205,41 @@ static int run_mode(bool enc, bool sign, mut_t mut)
                                         vf, false);
             frames.push_back(vf);
         }
-    }
+    } else
+        encf.setSignatureFragments(nullptr);
 
-    uint8_t p0[12], p1[12], c0[12], c1[12], t0[4], t1[4], nonce[12];
-    memset(p0, 0xA1, sizeof p0);
-    memset(p1, 0xB2, sizeof p1);
-    horse_crypto_voice_nonce_from_fn(0, nonce);
-    if (enc)
-        horse_crypto_voice_encrypt(k_enc, k_tag, HORSE_VOICE_DIR_FORWARD, 0,
-                                   nonce, p0, 12, c0, t0);
-    else {
-        memcpy(c0, p0, 12);
-        horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 0, c0, t0);
+    /* Enough voice frames for a full fragment cycle on late entry. */
+    const int nvoice = (mut == mut_t::DROP_LSF) ? 12 : 2;
+    std::vector<frame_t> voices;
+    for (int i = 0; i < nvoice; i++) {
+        uint8_t plain[12], cipher[12], tag[4], nonce[12];
+        memset(plain, static_cast<int>(0xA0 + i), sizeof plain);
+        horse_crypto_voice_nonce_from_fn(static_cast<uint16_t>(i), nonce);
+        if (enc)
+            horse_crypto_voice_encrypt(k_enc, k_tag, HORSE_VOICE_DIR_FORWARD,
+                                       static_cast<uint16_t>(i), nonce, plain,
+                                       12, cipher, tag);
+        else {
+            memcpy(cipher, plain, 12);
+            horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD,
+                                        static_cast<uint16_t>(i), cipher, tag);
+        }
+        if (mut == mut_t::FLIP_TAG && i == 0)
+            tag[0] ^= 1u;
+        frame_t vf{};
+        encf.encodeVoiceFrameWithFn(cipher, tag, static_cast<uint16_t>(i), vf,
+                                    false);
+        voices.push_back(vf);
     }
-    horse_crypto_voice_nonce_from_fn(1, nonce);
-    if (enc)
-        horse_crypto_voice_encrypt(k_enc, k_tag, HORSE_VOICE_DIR_FORWARD, 1,
-                                   nonce, p1, 12, c1, t1);
-    else {
-        memcpy(c1, p1, 12);
-        horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 1, c1, t1);
-    }
-    if (mut == mut_t::FLIP_TAG)
-        t0[0] ^= 1u;
-
-    frame_t v0{}, v1{};
-    encf.encodeVoiceFrameWithFn(c0, t0, 0, v0, false);
-    encf.encodeVoiceFrameWithFn(c1, t1, 1, v1, false);
-    if (mut == mut_t::REORDER) {
-        frames.push_back(v1);
-        frames.push_back(v0);
+    if (mut == mut_t::REORDER && voices.size() >= 2) {
+        frames.push_back(voices[1]);
+        frames.push_back(voices[0]);
     } else {
-        frames.push_back(v0);
-        frames.push_back(v1);
-        if (mut == mut_t::REPLAY)
-            frames.push_back(v0);
+        for (size_t i = 0; i < voices.size(); i++) {
+            frames.push_back(voices[i]);
+            if (mut == mut_t::REPLAY && i == 0)
+                frames.push_back(voices[0]);
+        }
     }
     frame_t eot{};
     encf.encodeEotFrame(eot);
@@ -291,9 +300,12 @@ int test_three_mode_loopback(void)
         }
         if (run_mode(m.enc, m.sign, mut_t::VERSION) > 0)
             return -1;
+        /* Late entry: opening LSF omitted; fragments rebuild it. */
         n = run_mode(m.enc, m.sign, mut_t::DROP_LSF);
-        if (n > 0)
+        if (n < 2) {
+            std::printf("modes: %s late-entry recovered %d\n", m.name, n);
             return -1;
+        }
         if (m.sign && run_mode(m.enc, m.sign, mut_t::SHORT_SIG) > 0)
             return -1;
         std::printf("modes: %s clean+negatives OK\n", m.name);

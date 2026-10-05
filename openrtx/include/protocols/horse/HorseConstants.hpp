@@ -145,10 +145,11 @@ static constexpr int32_t CORR_PEAK_MIN = 0;
 
 /*
  * After lock, this many completed frames without noteValidTag() drops
- * the lock so a real LSF can be acquired. Sized for LSF + 6 signature
- * frames; the first tagged voice must arrive in that window.
+ * the lock so a real LSF can be acquired. Sized for three opening LSF
+ * frames + 6 signature frames with margin; OpMode also notes a valid
+ * tag when the LSF CRC passes (opening or fragment rebuild).
  */
-static constexpr uint8_t LOCK_NO_TAG_FRAMES = 8;
+static constexpr uint8_t LOCK_NO_TAG_FRAMES = 12;
 /*
  * After lock, this many completed frames without a Hamming-2 sync
  * still keep the sampling point (coasting). EOT still unlocks at
