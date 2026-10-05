@@ -9,6 +9,7 @@
 
 #include "HorseDatatypes.hpp"
 #include <cstddef>
+#include <cstring>
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -52,6 +53,10 @@ static inline bool voice_fn_newer(bool have_prev, uint16_t prev, uint16_t next)
         return true;
     return next > prev;
 }
+/*
+ * Signature transport is final: 5 frames of 12 bytes and 1 frame of 4
+ * bytes (64 total). Remaining payload bytes in the last frame are zero.
+ */
 static constexpr size_t SIG_CHUNK_BYTES = 12;
 static constexpr size_t SIG_BYTES = 64;
 
@@ -62,6 +67,16 @@ static inline size_t sig_chunk_bytes(unsigned chunk)
         return 0;
     const size_t left = SIG_BYTES - off;
     return (left > SIG_CHUNK_BYTES) ? SIG_CHUNK_BYTES : left;
+}
+
+static inline bool horse_sig_store_chunk(uint8_t *sig, unsigned chunk,
+                                         const uint8_t *src)
+{
+    const size_t n = sig_chunk_bytes(chunk);
+    if (sig == nullptr || src == nullptr || n == 0)
+        return false;
+    std::memcpy(sig + static_cast<size_t>(chunk) * SIG_CHUNK_BYTES, src, n);
+    return true;
 }
 static constexpr size_t VOICE_FRAME_COUNTER_BITS = 16;
 static constexpr size_t VOICE_MELPE_BITS = 96;

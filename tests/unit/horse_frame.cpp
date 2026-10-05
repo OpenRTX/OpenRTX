@@ -211,6 +211,71 @@ static int test_sig_chunk_last_is_partial()
     return 0;
 }
 
+static int test_sig_last_chunk_does_not_overflow()
+{
+    uint8_t buf[SIG_BYTES + 8];
+    uint8_t src[SIG_CHUNK_BYTES];
+
+    memset(buf, 0xA5, sizeof buf);
+    memset(src, 0x3C, sizeof src);
+    if (!horse_sig_store_chunk(buf, 5, src))
+        return -1;
+    if (memcmp(buf + SIG_BYTES, "\xA5\xA5\xA5\xA5\xA5\xA5\xA5\xA5", 8) != 0)
+        return -1;
+    if (buf[60] != 0x3C || buf[63] != 0x3C)
+        return -1;
+    return 0;
+}
+
+static int test_sig_last_frame_payload_pad_zero()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t chunk[12];
+    uint8_t last[4] = { 0x11, 0x22, 0x33, 0x44 };
+    uint8_t tag[4] = { 0 };
+    frame_t frame;
+    uint16_t fn = 0;
+
+    enc.encodeVoiceFrameWithFn(last, tag, SIG_FRAME_BASE + 5, frame, false, 4);
+    if (dec.decodeFrame(frame) != HorseFrameType::VOICE)
+        return -1;
+    memset(chunk, 0xFF, sizeof chunk);
+    dec.getVoicePayload(frame, chunk, nullptr, &fn);
+    if (fn != SIG_FRAME_BASE + 5)
+        return -1;
+    if (chunk[0] != 0x11 || chunk[1] != 0x22 || chunk[2] != 0x33 ||
+        chunk[3] != 0x44)
+        return -1;
+    for (size_t i = 4; i < 12; i++)
+    {
+        if (chunk[i] != 0)
+            return -1;
+    }
+    return 0;
+}
+
+static int test_sig_incomplete_does_not_fill_64()
+{
+    uint8_t sig[SIG_BYTES];
+    uint8_t src[12];
+    unsigned i;
+
+    memset(sig, 0, sizeof sig);
+    memset(src, 0x7E, sizeof src);
+    for (i = 0; i < 5; i++)
+    {
+        if (!horse_sig_store_chunk(sig, i, src))
+            return -1;
+    }
+    for (i = 60; i < SIG_BYTES; i++)
+    {
+        if (sig[i] != 0)
+            return -1;
+    }
+    return 0;
+}
+
 static int test_voice_fn_never_enters_sig_range()
 {
     HorseFrameEncoder enc;
@@ -270,6 +335,9 @@ int main()
     if (test_voice_frame_number() != 0) return -1;
     if (test_sig_frames_roundtrip() != 0) return -1;
     if (test_sig_chunk_last_is_partial() != 0) return -1;
+    if (test_sig_last_chunk_does_not_overflow() != 0) return -1;
+    if (test_sig_last_frame_payload_pad_zero() != 0) return -1;
+    if (test_sig_incomplete_does_not_fill_64() != 0) return -1;
     if (test_voice_fn_never_enters_sig_range() != 0) return -1;
     if (test_lsf_syncword_symbols() != 0) return -1;
     std::printf("horse_frame_test: all tests passed\n");

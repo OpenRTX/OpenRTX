@@ -378,9 +378,8 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                     uint16_t chunk = fn - SIG_FRAME_BASE;
                     if (chunk < SIG_FRAME_COUNT)
                     {
-                        const size_t n = horse::sig_chunk_bytes(chunk);
-                        memcpy(rxSessionSig + (chunk * horse::SIG_CHUNK_BYTES),
-                               melpe, n);
+                        horse::horse_sig_store_chunk(rxSessionSig, chunk,
+                                                     melpe);
                         rxSigChunks++;
                         tryFinalizeRxSessionSig();
                         if (horse_rx_may_output_voice(
