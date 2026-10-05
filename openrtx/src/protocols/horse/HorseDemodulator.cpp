@@ -352,8 +352,7 @@ void HorseDemodulator::syncedState()
 
 void HorseDemodulator::lockedState(int16_t sample)
 {
-    if (dropWithoutTag && !haveValidTag && (lastLockCorr < corrPeakMin)
-        && (framesWithoutTag >= 1) && tryAcquireLsf())
+    if (!haveValidTag && (framesWithoutTag >= 1) && tryAcquireLsf())
         return;
     if (sampleIndex != samplingPoint)
         return;
@@ -388,10 +387,7 @@ void HorseDemodulator::syncUpdateState()
         missedSyncs = 0;
     else
         missedSyncs += 1;
-    bool hold_unauth = dropWithoutTag && !haveValidTag;
-    if (eot && !hold_unauth)
-        demodState = DemodState::UNLOCKED;
-    else if (!hold_unauth && (missedSyncs > 4))
+    if ((missedSyncs > 4) || eot)
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;
