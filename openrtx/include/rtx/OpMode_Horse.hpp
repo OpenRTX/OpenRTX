@@ -27,17 +27,25 @@ public:
 
     virtual void enable() override;
     virtual void disable() override;
-    virtual void update(rtxStatus_t* const status, const bool newCfg) override;
-    virtual opmode getID() override { return OPMODE_HORSE; }
-    virtual bool rxSquelchOpen() override { return dataValid; }
+    virtual void update(rtxStatus_t *const status, const bool newCfg) override;
+    virtual opmode getID() override
+    {
+        return OPMODE_HORSE;
+    }
+    virtual bool rxSquelchOpen() override
+    {
+        return dataValid;
+    }
 
 private:
-    void offState(rtxStatus_t* const status);
-    void rxState(rtxStatus_t* const status);
-    void txState(rtxStatus_t* const status);
+    void offState(rtxStatus_t *const status);
+    void rxState(rtxStatus_t *const status);
+    void txState(rtxStatus_t *const status);
+    void abortTx(rtxStatus_t *const status, bool stop_mod);
     void resetRxCrypto();
     void tryFinalizeRxSessionSig();
-    void sendTxVoiceFrame(const uint8_t *melpe, bool isLast, horse::frame_t &outFrame);
+    void sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
+                          horse::frame_t &outFrame);
 
     bool startRx;
     bool startTx;
@@ -73,4 +81,4 @@ private:
     uint16_t rxLastVoiceFn;
 };
 
-#endif  // OPMODE_HORSE_H
+#endif // OPMODE_HORSE_H

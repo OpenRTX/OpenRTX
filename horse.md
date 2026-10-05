@@ -104,10 +104,14 @@ Limits:
   guessing of a bad passphrase from a flash dump. Unverified on MD-3x0.
 - Repeat-2 FEC is not an LDPC code.
 - No late entry: miss the LSF and the rest of the call is silent.
-- Hamming-0 acquire still produced 7 LSF false locks per minute on
-  open-FM Gaussian noise in a one-minute host measurement.
-- MD-3x0 flash, RTX stack, Argon2 RAM, and C5000 TX enable (C13) are
-  unverified until a Miosix cross build exists in the environment.
+- Hamming-0 plus CORR_PEAK_MIN 180000 is the compile-time acquire
+  floor. Open-FM false-lock peaks sat around 90-103k; real LSF stayed
+  above 280k on clean and impaired loopback.
+- C13 C5000 TX enable is implemented (radio_enableTx at Horse TX start
+  and radio_disableRtx on every TX exit, including refusals) and is
+  untested on hardware.
+- MD-3x0 flash, RTX stack, and Argon2 RAM are unverified until a
+  Miosix cross-build report exists.
 
 ---
 
