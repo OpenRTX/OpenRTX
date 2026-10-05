@@ -294,7 +294,49 @@ bool HorseDemodulator::acquireSync(const syncw_t &word)
     frameIndex = SYNCWORD_SYMBOLS;
     framesWithoutTag = 0;
     haveValidTag = false;
+    missedSyncs = 0;
     devEstimator.init(bestDev);
+    demodState = DemodState::LOCKED;
+    return true;
+}
+
+bool HorseDemodulator::acquireSyncConvPhase(const syncw_t &word)
+{
+    /*
+     * phase = SAMPLES_PER_SYMBOL-1 matches Correlator::convolve()
+     * (index()+SAMPLES_PER_SYMBOL). Slice only that alignment so a
+     * Hamming-0 match cannot lock a neighbour sample when the floor
+     * is 0.
+     */
+    const uint32_t phase = SAMPLES_PER_SYMBOL - 1u;
+    size_t pos = (correlator.index() + 1 + phase) % SYNCWORD_SAMPLES;
+    int16_t taps[SYNCWORD_SYMBOLS];
+    int16_t peakAbs = 1;
+    for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++) {
+        taps[s] = correlator.data()[pos];
+        int16_t a = static_cast<int16_t>(std::abs(taps[s]));
+        if (a > peakAbs)
+            peakAbs = a;
+        pos = (pos + SAMPLES_PER_SYMBOL) % SYNCWORD_SAMPLES;
+    }
+    frameIndex = 0;
+    int16_t outerPos = peakAbs;
+    int16_t outerNeg = static_cast<int16_t>(-peakAbs);
+    for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++) {
+        int8_t sy = quantizeLevel(taps[s], outerPos, outerNeg);
+        setSymbol(*demodFrame, frameIndex, sy);
+        frameIndex += 1;
+    }
+    uint8_t hd = hammingDistance((*demodFrame)[0], word[0])
+               + hammingDistance((*demodFrame)[1], word[1]);
+    if (hd > acquireHammingMax)
+        return false;
+    samplingPoint = sampleIndex;
+    frameIndex = SYNCWORD_SYMBOLS;
+    framesWithoutTag = 0;
+    haveValidTag = false;
+    missedSyncs = 0;
+    devEstimator.init({ outerPos, outerNeg });
     demodState = DemodState::LOCKED;
     return true;
 }
@@ -308,7 +350,7 @@ bool HorseDemodulator::tryAcquireLsf()
     int32_t ncc = lsfNccQ12(cL, lsfSym);
 
     if ((cLabs > syncThresh) && (ncc >= corrPeakMin)
-        && acquireSync(LSF_SYNC_WORD)) {
+        && acquireSyncConvPhase(LSF_SYNC_WORD)) {
         lastLockCorr = ncc;
         return true;
     }
@@ -352,7 +394,8 @@ void HorseDemodulator::syncedState()
 
 void HorseDemodulator::lockedState(int16_t sample)
 {
-    if (!haveValidTag && (framesWithoutTag >= 1) && tryAcquireLsf())
+    if (!haveValidTag && (framesWithoutTag >= 1) && (missedSyncs > 0)
+        && tryAcquireLsf())
         return;
     if (sampleIndex != samplingPoint)
         return;

@@ -94,12 +94,21 @@ static constexpr uint8_t HAMMING_ACQUIRE_MAX = 0;
 
 /*
  * Floor on LSF acquire: |corr| / (||samples|| * ||sync||) in Q12
- * (4096 == 1.0), on top of the envelope * CORR_SYNC_SCALE test.
- * Ten minutes of Hamming-0 open-FM noise: false ncc max 4056 at
- * gains 0.25-1.0 (4073 at gain 2.0, which also clips real LSF to
- * 4067). Real LSF is 4096 at 0.25-1.0. 4076 sits in that gap.
+ * (4096 == 1.0). Real LSF ncc under noise overlaps Hamming-0 false
+ * locks (p5 at sigma 12500 is 3985; false-lock max is ~4056), so the
+ * extra floor is 0. Hamming-0 acquire remains.
  */
-static constexpr int32_t CORR_PEAK_MIN = 4076;
+static constexpr int32_t CORR_PEAK_MIN = 0;
+
+/*
+ * After LSF sync match, reject the frame if this many consecutive
+ * bit-pairs disagree. Horse LSF is 46 uncoded bytes in the same slot
+ * as a repeat-2 voice codeword, so a keyed LSF already sits near 80-100
+ * on a clean channel. 120 is above every real LSF measured under noise
+ * (zero-eph payload-OK max 22; 0x22 eph clean 80). False locks overlap
+ * (72-107) and are not rejected.
+ */
+static constexpr unsigned LSF_REPEAT_DISAGREE_MAX = 120;
 
 /*
  * After lock, this many completed frames without noteValidTag() drops

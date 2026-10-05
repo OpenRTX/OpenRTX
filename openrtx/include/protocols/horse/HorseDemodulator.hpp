@@ -61,6 +61,7 @@ private:
     void quantize(int16_t sample);
     void reset();
     bool acquireSync(const syncw_t &word);
+    bool acquireSyncConvPhase(const syncw_t &word);
     bool tryAcquireLsf();
     int32_t lsfNccQ12(int32_t conv,
                       const std::array<int8_t, SYNCWORD_SYMBOLS> &sym);
