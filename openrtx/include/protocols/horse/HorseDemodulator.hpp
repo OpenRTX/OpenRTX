@@ -42,14 +42,15 @@ public:
     void startBasebandSampling();
     void stopBasebandSampling();
 
-    const frame_t& getFrame();
+    const frame_t &getFrame();
     bool update(bool invertPhase = false);
     bool isLocked();
     static std::array<int8_t, SYNCWORD_SYMBOLS> acquisitionSync();
     void resetImmediate();
     bool feedSample(int16_t sample, bool invertPhase);
     bool takeFrame(frame_t &out);
-    void setSkipRxFilter(bool skip);
+    /* Skip the upstream DC-block (negative left-shift UB). Still applies RRC. */
+    void setSkipDcBlock(bool skip);
 
 private:
     void quantize(int16_t sample);
@@ -59,23 +60,20 @@ private:
     void lockedState(int16_t sample);
     void syncUpdateState();
 
-    static constexpr size_t RX_SAMPLE_RATE      = 24000;
-    static constexpr size_t SAMPLES_PER_SYMBOL  = RX_SAMPLE_RATE / SYMBOL_RATE;
-    static constexpr size_t FRAME_SAMPLES       = FRAME_SYMBOLS * SAMPLES_PER_SYMBOL;
-    static constexpr size_t SAMPLE_BUF_SIZE     = FRAME_SAMPLES / 2;
-    static constexpr size_t SYNCWORD_SAMPLES   = SAMPLES_PER_SYMBOL * SYNCWORD_SYMBOLS;
+    static constexpr size_t RX_SAMPLE_RATE = 24000;
+    static constexpr size_t SAMPLES_PER_SYMBOL = RX_SAMPLE_RATE / SYMBOL_RATE;
+    static constexpr size_t FRAME_SAMPLES = FRAME_SYMBOLS * SAMPLES_PER_SYMBOL;
+    static constexpr size_t SAMPLE_BUF_SIZE = FRAME_SAMPLES / 2;
+    static constexpr size_t SYNCWORD_SAMPLES = SAMPLES_PER_SYMBOL
+                                             * SYNCWORD_SYMBOLS;
 
-    enum class DemodState
-    {
-        INIT,
-        UNLOCKED,
-        SYNCED,
-        LOCKED,
-        SYNC_UPDATE
-    };
+    enum class DemodState { INIT, UNLOCKED, SYNCED, LOCKED, SYNC_UPDATE };
 
-    static constexpr std::array<float, 3> sfNum = {4.24433681e-05f, 8.48867363e-05f, 4.24433681e-05f};
-    static constexpr std::array<float, 3> sfDen = {1.0f, -1.98148851f, 0.98165828f};
+    static constexpr std::array<float, 3> sfNum = { 4.24433681e-05f,
+                                                    8.48867363e-05f,
+                                                    4.24433681e-05f };
+    static constexpr std::array<float, 3> sfDen = { 1.0f, -1.98148851f,
+                                                    0.98165828f };
 
     DemodState demodState;
     std::unique_ptr<int16_t[]> baseband_buffer;
@@ -93,17 +91,18 @@ private:
     uint8_t missedSyncs;
     uint32_t initCount;
     float corrThreshold;
-    bool skipRxFilter;
+    bool skipDcBlock;
     struct dcBlock dcBlock;
 
     Correlator<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> correlator;
     Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> streamSync{
-        syncwordSymbols(LSF_SYNC_WORD)};
+        syncwordSymbols(LSF_SYNC_WORD)
+    };
     DevEstimator devEstimator;
     ClockRecovery<SAMPLES_PER_SYMBOL> clockRec;
     Iir<3> sampleFilter;
 };
 
-}  // namespace horse
+} // namespace horse
 
-#endif  // HORSE_DEMODULATOR_H
+#endif // HORSE_DEMODULATOR_H

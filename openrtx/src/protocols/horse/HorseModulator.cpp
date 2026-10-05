@@ -17,12 +17,12 @@ namespace horse
 {
 
 HorseModulator::HorseModulator()
-    : idleBuffer(nullptr),
-      txRunning(false),
-      invPhase(false),
-      captureBuf(nullptr),
-      captureCap(0),
-      captureLen(0)
+    : idleBuffer(nullptr)
+    , txRunning(false)
+    , invPhase(false)
+    , captureBuf(nullptr)
+    , captureCap(0)
+    , captureLen(0)
 {
 }
 
@@ -34,8 +34,9 @@ HorseModulator::~HorseModulator()
 void HorseModulator::init()
 {
     baseband_buffer = std::make_unique<int16_t[]>(2 * FRAME_SAMPLES);
-    idleBuffer      = baseband_buffer.get();
-    txRunning       = false;
+    idleBuffer = baseband_buffer.get();
+    txRunning = false;
+    M17::rrc_48k.reset();
 #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     pwmComp.reset();
 #endif
@@ -43,8 +44,7 @@ void HorseModulator::init()
 
 void HorseModulator::terminate()
 {
-    if (txRunning)
-    {
+    if (txRunning) {
         audioStream_terminate(outStream);
         txRunning = false;
     }
@@ -73,9 +73,8 @@ bool HorseModulator::start()
 
 void HorseModulator::sendPreamble()
 {
-    for (size_t i = 0; i < symbols.size(); i += 2)
-    {
-        symbols[i]     = +3;
+    for (size_t i = 0; i < symbols.size(); i += 2) {
+        symbols[i] = +3;
         symbols[i + 1] = -3;
     }
     symbolsToBaseband();
@@ -84,13 +83,12 @@ void HorseModulator::sendPreamble()
     sendBaseband();
 }
 
-void HorseModulator::sendFrame(const frame_t& frame)
+void HorseModulator::sendFrame(const frame_t &frame)
 {
     auto it = symbols.begin();
-    for (size_t i = 0; i < frame.size(); i++)
-    {
+    for (size_t i = 0; i < frame.size(); i++) {
         auto sym = byteToSymbols(frame[i]);
-        it       = std::copy(sym.begin(), sym.end(), it);
+        it = std::copy(sym.begin(), sym.end(), it);
     }
     symbolsToBaseband();
     sendBaseband();
@@ -100,10 +98,12 @@ void HorseModulator::stop()
 {
     if (!txRunning)
         return;
+#ifndef PLATFORM_LINUX
     audioStream_stop(outStream);
-    txRunning  = false;
-    idleBuffer = baseband_buffer.get();
     audioPath_release(outPath);
+#endif
+    txRunning = false;
+    idleBuffer = baseband_buffer.get();
 #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     pwmComp.reset();
 #endif
@@ -137,14 +137,14 @@ void HorseModulator::symbolsToBaseband()
     std::memset(idleBuffer, 0x00, FRAME_SAMPLES * sizeof(stream_sample_t));
     for (size_t i = 0; i < symbols.size(); i++)
         idleBuffer[i * 10] = symbols[i];
-    for (size_t i = 0; i < FRAME_SAMPLES; i++)
-    {
+    for (size_t i = 0; i < FRAME_SAMPLES; i++) {
         float elem = static_cast<float>(idleBuffer[i]);
-        elem       = M17::rrc_48k(elem * RRC_GAIN) - RRC_OFFSET;
+        elem = M17::rrc_48k(elem * RRC_GAIN) - RRC_OFFSET;
 #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
         elem = pwmComp(elem);
 #endif
-        if (invPhase) elem = 0.0f - elem;
+        if (invPhase)
+            elem = 0.0f - elem;
         idleBuffer[i] = static_cast<int16_t>(elem);
     }
 }
@@ -152,30 +152,29 @@ void HorseModulator::symbolsToBaseband()
 #ifndef PLATFORM_LINUX
 void HorseModulator::sendBaseband()
 {
-    if (!txRunning) return;
-    if (audioPath_getStatus(outPath) != PATH_OPEN) return;
+    if (!txRunning)
+        return;
+    if (audioPath_getStatus(outPath) != PATH_OPEN)
+        return;
     outputStream_sync(outStream, true);
     idleBuffer = outputStream_getIdleBuffer(outStream);
 }
 #else
 void HorseModulator::sendBaseband()
 {
-    if (captureBuf != nullptr)
-    {
+    if (captureBuf != nullptr) {
         size_t n = FRAME_SAMPLES;
         if (captureLen + n > captureCap)
             n = captureCap - captureLen;
-        if (n > 0)
-        {
+        if (n > 0) {
             std::memcpy(captureBuf + captureLen, idleBuffer,
                         n * sizeof(int16_t));
             captureLen += n;
         }
         return;
     }
-    FILE* outfile = fopen("/tmp/horse_output.raw", "ab");
-    if (outfile)
-    {
+    FILE *outfile = fopen("/tmp/horse_output.raw", "ab");
+    if (outfile) {
         for (size_t i = 0; i < FRAME_SAMPLES; i++)
             fwrite(&idleBuffer[i], sizeof(idleBuffer[i]), 1, outfile);
         fclose(outfile);
@@ -183,4 +182,4 @@ void HorseModulator::sendBaseband()
 }
 #endif
 
-}  // namespace horse
+} // namespace horse

@@ -20,24 +20,24 @@ static uint8_t hammingDistance(uint8_t x, uint8_t y)
 }
 
 HorseDemodulator::HorseDemodulator()
-    : demodState(DemodState::INIT),
-      baseband_buffer(),
-      basebandId(-1),
-      basebandPath(-1),
-      demodFrame(),
-      readyFrame(),
-      newFrame(false),
-      resetClockRec(false),
-      updateSampPoint(false),
-      frameIndex(0),
-      sampleIndex(0),
-      samplingPoint(0),
-      sampleCount(0),
-      missedSyncs(0),
-      initCount(0),
-      corrThreshold(0.0f),
-      skipRxFilter(false),
-      sampleFilter(sfNum, sfDen)
+    : demodState(DemodState::INIT)
+    , baseband_buffer()
+    , basebandId(-1)
+    , basebandPath(-1)
+    , demodFrame()
+    , readyFrame()
+    , newFrame(false)
+    , resetClockRec(false)
+    , updateSampPoint(false)
+    , frameIndex(0)
+    , sampleIndex(0)
+    , samplingPoint(0)
+    , sampleCount(0)
+    , missedSyncs(0)
+    , initCount(0)
+    , corrThreshold(0.0f)
+    , skipDcBlock(false)
+    , sampleFilter(sfNum, sfDen)
 {
     dsp_resetState(dcBlock);
 }
@@ -50,8 +50,9 @@ HorseDemodulator::~HorseDemodulator()
 void HorseDemodulator::init()
 {
     baseband_buffer = std::make_unique<int16_t[]>(2 * SAMPLE_BUF_SIZE);
-    demodFrame      = std::make_unique<frame_t>();
-    readyFrame      = std::make_unique<frame_t>();
+    demodFrame = std::make_unique<frame_t>();
+    readyFrame = std::make_unique<frame_t>();
+    M17::rrc_24k.reset();
     reset();
 }
 
@@ -67,9 +68,9 @@ void HorseDemodulator::terminate()
 void HorseDemodulator::startBasebandSampling()
 {
     basebandPath = audioPath_request(SOURCE_RTX, SINK_MCU, PRIO_RX);
-    basebandId   = audioStream_start(basebandPath, baseband_buffer.get(),
-                                    2 * SAMPLE_BUF_SIZE, RX_SAMPLE_RATE,
-                                    STREAM_INPUT | BUF_CIRC_DOUBLE);
+    basebandId = audioStream_start(basebandPath, baseband_buffer.get(),
+                                   2 * SAMPLE_BUF_SIZE, RX_SAMPLE_RATE,
+                                   STREAM_INPUT | BUF_CIRC_DOUBLE);
     reset();
 }
 
@@ -79,7 +80,7 @@ void HorseDemodulator::stopBasebandSampling()
     audioPath_release(basebandPath);
 }
 
-const frame_t& HorseDemodulator::getFrame()
+const frame_t &HorseDemodulator::getFrame()
 {
     newFrame = false;
     return *readyFrame;
@@ -87,7 +88,8 @@ const frame_t& HorseDemodulator::getFrame()
 
 bool HorseDemodulator::isLocked()
 {
-    return (demodState == DemodState::LOCKED) || (demodState == DemodState::SYNC_UPDATE);
+    return (demodState == DemodState::LOCKED)
+        || (demodState == DemodState::SYNC_UPDATE);
 }
 
 std::array<int8_t, SYNCWORD_SYMBOLS> HorseDemodulator::acquisitionSync()
@@ -123,57 +125,53 @@ bool HorseDemodulator::takeFrame(frame_t &out)
     return true;
 }
 
-void HorseDemodulator::setSkipRxFilter(bool skip)
+void HorseDemodulator::setSkipDcBlock(bool skip)
 {
-    skipRxFilter = skip;
+    skipDcBlock = skip;
 }
 
 bool HorseDemodulator::feedSample(int16_t sample, bool invertPhase)
 {
-    if (!skipRxFilter)
+    if (!skipDcBlock)
         sample = dsp_dcBlockFilter(&dcBlock, sample);
-    float elem     = static_cast<float>(sample);
-    if (invertPhase) elem = 0.0f - elem;
-    if (!skipRxFilter)
-        sample = static_cast<int16_t>(M17::rrc_24k(elem));
-    else
-        sample = static_cast<int16_t>(elem);
-    if ((sampleIndex == 0) && resetClockRec)
-    {
+    float elem = static_cast<float>(sample);
+    if (invertPhase)
+        elem = 0.0f - elem;
+    sample = static_cast<int16_t>(M17::rrc_24k(elem));
+    if ((sampleIndex == 0) && resetClockRec) {
         clockRec.reset();
-        resetClockRec   = false;
+        resetClockRec = false;
         updateSampPoint = false;
     }
     int diff = static_cast<int>(samplingPoint) - static_cast<int>(sampleIndex);
-    if (updateSampPoint && (std::abs(diff) == static_cast<int>(SAMPLES_PER_SYMBOL / 2)))
-    {
+    if (updateSampPoint
+        && (std::abs(diff) == static_cast<int>(SAMPLES_PER_SYMBOL / 2))) {
         clockRec.update();
-        samplingPoint  = clockRec.samplingPoint();
+        samplingPoint = clockRec.samplingPoint();
         updateSampPoint = false;
     }
     clockRec.sample(sample);
     correlator.sample(sample);
     corrThreshold = sampleFilter(static_cast<float>(std::abs(sample)));
-    switch (demodState)
-    {
-    case DemodState::INIT:
-        if (initCount == 0)
-            demodState = DemodState::UNLOCKED;
-        else
-            initCount -= 1;
-        break;
-    case DemodState::UNLOCKED:
-        unlockedState();
-        break;
-    case DemodState::SYNCED:
-        syncedState();
-        break;
-    case DemodState::LOCKED:
-        lockedState(sample);
-        break;
-    case DemodState::SYNC_UPDATE:
-        syncUpdateState();
-        break;
+    switch (demodState) {
+        case DemodState::INIT:
+            if (initCount == 0)
+                demodState = DemodState::UNLOCKED;
+            else
+                initCount -= 1;
+            break;
+        case DemodState::UNLOCKED:
+            unlockedState();
+            break;
+        case DemodState::SYNCED:
+            syncedState();
+            break;
+        case DemodState::LOCKED:
+            lockedState(sample);
+            break;
+        case DemodState::SYNC_UPDATE:
+            syncUpdateState();
+            break;
     }
     sampleCount += 1;
     sampleIndex = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
@@ -192,51 +190,51 @@ void HorseDemodulator::quantize(int16_t sample)
         symbol = +1;
     else
         symbol = -1;
-    M17::setSymbol(*demodFrame, frameIndex, symbol);
+    horse::setSymbol(*demodFrame, frameIndex, symbol);
     frameIndex += 1;
 }
 
 void HorseDemodulator::reset()
 {
-    sampleIndex  = 0;
-    frameIndex   = 0;
-    sampleCount  = 0;
-    newFrame     = false;
-    demodState   = DemodState::INIT;
-    initCount    = RX_SAMPLE_RATE / 50;
+    sampleIndex = 0;
+    frameIndex = 0;
+    sampleCount = 0;
+    newFrame = false;
+    missedSyncs = 0;
+    demodState = DemodState::INIT;
+    initCount = RX_SAMPLE_RATE / 50;
     dsp_resetState(dcBlock);
 }
 
 void HorseDemodulator::unlockedState()
 {
-    int32_t syncThresh = static_cast<int32_t>(corrThreshold * (skipRxFilter ? 4.0f : 33.0f));
-    int8_t syncStatus  = streamSync.update(correlator, syncThresh, -syncThresh);
+    int32_t syncThresh = static_cast<int32_t>(corrThreshold * 33.0f);
+    int8_t syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
     if (syncStatus != 0)
         demodState = DemodState::SYNCED;
 }
 
 void HorseDemodulator::syncedState()
 {
-    samplingPoint     = streamSync.samplingIndex();
-    auto deviation    = correlator.maxDeviation(samplingPoint);
-    frameIndex        = 0;
+    samplingPoint = streamSync.samplingIndex();
+    auto deviation = correlator.maxDeviation(samplingPoint);
+    frameIndex = 0;
     devEstimator.init(deviation);
-    for (size_t i = 0; i < SYNCWORD_SAMPLES; i++)
-    {
+    for (size_t i = 0; i < SYNCWORD_SAMPLES; i++) {
         size_t pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
-        if ((pos % SAMPLES_PER_SYMBOL) == samplingPoint)
-        {
+        if ((pos % SAMPLES_PER_SYMBOL) == samplingPoint) {
             int16_t val = correlator.data()[pos];
             quantize(val);
         }
     }
-    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0]) +
-                  hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
-    uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0]) +
-                      hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
-    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0]) +
-                    hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
-    if (lsfHd <= 2 || voiceHd <= 2 || eotHd <= 2)
+    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0])
+                  + hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
+    uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0])
+                    + hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
+    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0])
+                  + hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
+    if (lsfHd <= HAMMING_SYNC_MAX || voiceHd <= HAMMING_SYNC_MAX
+        || eotHd <= HAMMING_SYNC_MAX)
         demodState = DemodState::LOCKED;
     else
         demodState = DemodState::UNLOCKED;
@@ -248,37 +246,29 @@ void HorseDemodulator::lockedState(int16_t sample)
         return;
     quantize(sample);
     devEstimator.sample(sample);
-    if (frameIndex == FRAME_SYMBOLS)
-    {
+    if (frameIndex == FRAME_SYMBOLS) {
         devEstimator.update();
         std::swap(readyFrame, demodFrame);
-        frameIndex      = 0;
-        newFrame        = true;
-        if (!skipRxFilter)
-            updateSampPoint = true;
-        demodState      = DemodState::SYNC_UPDATE;
+        frameIndex = 0;
+        newFrame = true;
+        updateSampPoint = true;
+        demodState = DemodState::SYNC_UPDATE;
     }
 }
 
 void HorseDemodulator::syncUpdateState()
 {
-    if (skipRxFilter)
-    {
-        missedSyncs = 0;
-        demodState = DemodState::LOCKED;
-        return;
-    }
-    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0]) +
-                    hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
-    uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0]) +
-                      hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
-    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0]) +
-                    hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
-    if (lsfHd <= 2 || voiceHd <= 2)
+    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0])
+                  + hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
+    uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0])
+                    + hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
+    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0])
+                  + hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
+    if (lsfHd <= HAMMING_SYNC_MAX || voiceHd <= HAMMING_SYNC_MAX)
         missedSyncs = 0;
     else
         missedSyncs += 1;
-    if ((missedSyncs > 4) || (eotHd <= 2))
+    if ((missedSyncs > 4) || (eotHd <= HAMMING_SYNC_MAX))
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;
@@ -287,4 +277,4 @@ void HorseDemodulator::syncUpdateState()
 constexpr std::array<float, 3> HorseDemodulator::sfNum;
 constexpr std::array<float, 3> HorseDemodulator::sfDen;
 
-}  // namespace horse
+} // namespace horse
