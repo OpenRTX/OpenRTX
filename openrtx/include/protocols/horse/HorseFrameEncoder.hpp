@@ -10,6 +10,7 @@
 #include "HorseDatatypes.hpp"
 #include "HorseConstants.hpp"
 #include <cstdint>
+#include <cstddef>
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -34,7 +35,8 @@ public:
 
     uint16_t encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
                                     const uint8_t* tag32bits, uint16_t frame_num,
-                                    frame_t& output, bool isLast = false);
+                                    frame_t& output, bool isLast = false,
+                                    size_t payload_len = 12);
 
     void encodeEotFrame(frame_t& output);
 

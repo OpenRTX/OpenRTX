@@ -56,7 +56,8 @@ uint16_t HorseFrameEncoder::encodeVoiceFrame(const uint8_t* melpe96bits,
 uint16_t HorseFrameEncoder::encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
                                                    const uint8_t* tag32bits,
                                                    uint16_t frame_num,
-                                                   frame_t& output, bool isLast)
+                                                   frame_t& output, bool isLast,
+                                                   size_t payload_len)
 {
     uint8_t raw_payload[LDPC_VOICE_PAYLOAD_BYTES];
     std::memset(raw_payload, 0, sizeof(raw_payload));
@@ -65,8 +66,12 @@ uint16_t HorseFrameEncoder::encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
         fn |= 0x8000;
     raw_payload[0] = (fn >> 8) & 0xFF;
     raw_payload[1] = fn & 0xFF;
-    if (melpe96bits != nullptr)
-        std::memcpy(raw_payload + 2, melpe96bits, 12);
+    if (melpe96bits != nullptr && payload_len > 0)
+    {
+        if (payload_len > 12)
+            payload_len = 12;
+        std::memcpy(raw_payload + 2, melpe96bits, payload_len);
+    }
     if (tag32bits != nullptr)
         std::memcpy(raw_payload + 14, tag32bits, 4);
     std::copy(VOICE_SYNC_WORD.begin(), VOICE_SYNC_WORD.end(), output.begin());

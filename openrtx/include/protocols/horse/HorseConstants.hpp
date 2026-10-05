@@ -33,6 +33,17 @@ static constexpr uint8_t  LSF_FLAG_ENCRYPTED = 0x01;
 static constexpr uint8_t  LSF_FLAG_SIGNED    = 0x02;
 static constexpr uint16_t SIG_FRAME_BASE     = 0x7000;
 static constexpr uint16_t SIG_FRAME_COUNT   = 6;
+static constexpr size_t SIG_CHUNK_BYTES      = 12;
+static constexpr size_t SIG_BYTES            = 64;
+
+static inline size_t sig_chunk_bytes(unsigned chunk)
+{
+    const size_t off = static_cast<size_t>(chunk) * SIG_CHUNK_BYTES;
+    if (off >= SIG_BYTES)
+        return 0;
+    const size_t left = SIG_BYTES - off;
+    return (left > SIG_CHUNK_BYTES) ? SIG_CHUNK_BYTES : left;
+}
 static constexpr size_t VOICE_FRAME_COUNTER_BITS = 16;
 static constexpr size_t VOICE_MELPE_BITS         = 96;
 static constexpr size_t VOICE_TAG_BITS           = 32;

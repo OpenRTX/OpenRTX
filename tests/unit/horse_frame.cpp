@@ -9,6 +9,7 @@
 #include "protocols/horse/HorseFrameEncoder.hpp"
 #include "protocols/horse/HorseFrameDecoder.hpp"
 #include "protocols/horse/HorseConstants.hpp"
+#include "protocols/horse/HorseUtils.hpp"
 #include "protocols/horse/ldpc_horse.h"
 #include <cstdio>
 #include <cstring>
@@ -155,8 +156,9 @@ static int test_sig_frames_roundtrip()
     memset(rebuilt, 0, sizeof rebuilt);
     for (uint16_t i = 0; i < SIG_FRAME_COUNT; i++)
     {
-        enc.encodeVoiceFrameWithFn(signature + (i * 12), zeroTag,
-                                   SIG_FRAME_BASE + i, frame, false);
+        const size_t n = sig_chunk_bytes(i);
+        enc.encodeVoiceFrameWithFn(signature + (i * SIG_CHUNK_BYTES), zeroTag,
+                                   SIG_FRAME_BASE + i, frame, false, n);
         HorseFrameType type = dec.decodeFrame(frame);
         if (type != HorseFrameType::VOICE)
             return -1;
@@ -166,10 +168,37 @@ static int test_sig_frames_roundtrip()
         dec.getVoicePayload(frame, chunk, nullptr, &fn);
         if (fn != SIG_FRAME_BASE + i)
             return -1;
-        memcpy(rebuilt + (i * 12), chunk, 12);
+        memcpy(rebuilt + (i * SIG_CHUNK_BYTES), chunk, n);
     }
 
     if (std::memcmp(rebuilt, signature, sizeof signature) != 0)
+        return -1;
+    return 0;
+}
+
+static int test_sig_chunk_last_is_partial()
+{
+    if (sig_chunk_bytes(0) != 12)
+        return -1;
+    if (sig_chunk_bytes(4) != 12)
+        return -1;
+    if (sig_chunk_bytes(5) != 4)
+        return -1;
+    if (sig_chunk_bytes(6) != 0)
+        return -1;
+    return 0;
+}
+
+static int test_lsf_syncword_symbols()
+{
+    const std::array<int8_t, 8> lsf = {+3, +3, -1, -1, -1, -1, +3, -3};
+    const std::array<int8_t, 8> voice = {+3, -3, -3, -1, -1, +3, -1, -3};
+    const std::array<int8_t, 8> eot = {+1, -3, -3, +1, -3, +3, -1, +1};
+    if (syncwordSymbols(LSF_SYNC_WORD) != lsf)
+        return -1;
+    if (syncwordSymbols(VOICE_SYNC_WORD) != voice)
+        return -1;
+    if (syncwordSymbols(EOT_SYNC_WORD) != eot)
         return -1;
     return 0;
 }
@@ -182,6 +211,8 @@ int main()
     if (test_eot_detect() != 0) return -1;
     if (test_voice_frame_number() != 0) return -1;
     if (test_sig_frames_roundtrip() != 0) return -1;
+    if (test_sig_chunk_last_is_partial() != 0) return -1;
+    if (test_lsf_syncword_symbols() != 0) return -1;
     std::printf("horse_frame_test: all tests passed\n");
     return 0;
 }
