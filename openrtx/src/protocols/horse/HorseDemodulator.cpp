@@ -208,15 +208,19 @@ void HorseDemodulator::reset()
 
 void HorseDemodulator::unlockedState()
 {
+    /*
+     * Lock on the correlator peak, not the M17 falling edge. Horse mixed
+     * inner/outer symbols make the edge several samples late.
+     */
     int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
-    int8_t syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
-    if (syncStatus != 0)
+    const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
+    if (std::abs(correlator.convolve(lsfSym)) > syncThresh)
         demodState = DemodState::SYNCED;
 }
 
 void HorseDemodulator::syncedState()
 {
-    samplingPoint = streamSync.samplingIndex();
+    samplingPoint = sampleIndex;
     auto deviation = correlator.maxDeviation(samplingPoint);
     frameIndex = 0;
     devEstimator.init(deviation);
