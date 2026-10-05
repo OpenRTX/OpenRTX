@@ -12,13 +12,13 @@ This fork does not ship M17 or minmea fuzz targets.
 export CC=clang
 export CXX=clang++
 meson setup build_fuzz -Dfuzzing=true
-meson compile -C build_fuzz fuzz_horse_frame fuzz_ldpc_horse
+meson compile -C build_fuzz fuzz_horse_frame fuzz_horse_voice
 ```
 
 | Target | Input | Code under test |
 |--------|--------|------------------|
 | `fuzz_horse_frame` | 48 bytes | Horse frame decoder (LSF, voice, EOT) |
-| `fuzz_ldpc_horse` | 46 bytes | Horse repeat-2 voice decoder |
+| `fuzz_horse_voice` | 46 bytes | Horse option-C voice decoder |
 
 Seeds: `tests/fuzz/corpus/<target>/`. Optional dict:
 `tests/fuzz/dict/frame_sync_words.dict`.

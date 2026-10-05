@@ -9,7 +9,7 @@
 #ifndef HORSE_FEC_V2_CODES_HPP
 #define HORSE_FEC_V2_CODES_HPP
 
-#include "protocols/horse/ldpc_horse.h"
+#include "protocols/horse/HorseVoiceCodec.hpp"
 #include "protocols/M17/ConvolutionalEncoder.hpp"
 #include "protocols/M17/CodePuncturing.hpp"
 #include "protocols/M17/Interleaver.hpp"
@@ -510,21 +510,38 @@ struct PolarLsfCodec {
     }
 };
 
+/* Historical v1 repeat-2, kept only for study tables (not firmware). */
 struct Repeat2Codec {
     void encode(const uint8_t info144[FEC_INFO_BYTES],
                 uint8_t coded46[FEC_CODED_BYTES]) const
     {
-        uint8_t raw[LDPC_VOICE_PAYLOAD_BYTES];
-        memset(raw, 0, sizeof raw);
-        memcpy(raw, info144, FEC_INFO_BYTES);
-        ldpc_horse_encode_voice(raw, coded46);
+        uint8_t bits[184];
+        uint8_t outb[368];
+        memset(bits, 0, sizeof bits);
+        for (size_t i = 0; i < FEC_INFO_BITS; i++)
+            bits[i] = (info144[i / 8] >> (7 - (i % 8))) & 1u;
+        for (size_t i = 0; i < 184; i++) {
+            outb[2 * i] = bits[i];
+            outb[2 * i + 1] = bits[i];
+        }
+        memset(coded46, 0, FEC_CODED_BYTES);
+        for (size_t i = 0; i < 368; i++)
+            if (outb[i])
+                coded46[i / 8] |= (uint8_t)(0x80u >> (i % 8));
     }
     bool decode_hard(const uint8_t coded46[FEC_CODED_BYTES],
                      uint8_t info144[FEC_INFO_BYTES]) const
     {
-        uint8_t raw[LDPC_VOICE_PAYLOAD_BYTES];
-        ldpc_horse_decode_voice(coded46, raw);
-        memcpy(info144, raw, FEC_INFO_BYTES);
+        uint8_t bits[184];
+        for (size_t i = 0; i < 184; i++) {
+            bool a = (coded46[(2 * i) / 8] >> (7 - ((2 * i) % 8))) & 1u;
+            bool b = (coded46[(2 * i + 1) / 8] >> (7 - ((2 * i + 1) % 8))) & 1u;
+            bits[i] = (a && b) ? 1 : 0;
+        }
+        memset(info144, 0, FEC_INFO_BYTES);
+        for (size_t i = 0; i < FEC_INFO_BITS; i++)
+            if (bits[i])
+                info144[i / 8] |= (uint8_t)(0x80u >> (i % 8));
         return true;
     }
     bool decode_soft(const float *llr, uint8_t info144[FEC_INFO_BYTES]) const

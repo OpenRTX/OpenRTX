@@ -23,7 +23,7 @@ fi
 
 mkdir -p "$ARTIFACTS_BASE"
 
-FUZZERS="fuzz_horse_frame fuzz_ldpc_horse"
+FUZZERS="fuzz_horse_frame fuzz_horse_voice"
 
 for name in $FUZZERS; do
     bin="${BUILD_DIR}/${name}"

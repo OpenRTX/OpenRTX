@@ -28,8 +28,8 @@ def write_horse_frame(base):
         print("Wrote", os.path.join(d, name))
 
 
-def write_ldpc_horse(base):
-    d = os.path.join(base, "fuzz_ldpc_horse")
+def write_horse_voice(base):
+    d = os.path.join(base, "fuzz_horse_voice")
     os.makedirs(d, exist_ok=True)
     with open(os.path.join(d, "seed_46.bin"), "wb") as f:
         f.write(bytes(46))
@@ -40,7 +40,7 @@ def main():
     base = sys.argv[1] if len(sys.argv) > 1 else CORPUS_BASE
     os.makedirs(base, exist_ok=True)
     write_horse_frame(base)
-    write_ldpc_horse(base)
+    write_horse_voice(base)
     print("Corpus generation done.")
 
 

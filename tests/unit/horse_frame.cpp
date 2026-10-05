@@ -10,7 +10,7 @@
 #include "protocols/horse/HorseFrameDecoder.hpp"
 #include "protocols/horse/HorseConstants.hpp"
 #include "protocols/horse/HorseUtils.hpp"
-#include "protocols/horse/ldpc_horse.h"
+#include "protocols/horse/HorseVoiceCodec.hpp"
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
@@ -73,28 +73,34 @@ static int test_voice_roundtrip()
     return 0;
 }
 
-static int test_ldpc_static_scratch_reuse()
+/* Fails on repeat-2: M17 coded bytes must not equal bit-duplication. */
+static int test_voice_m17_not_repeat2()
 {
-    uint8_t a[LDPC_VOICE_PAYLOAD_BYTES];
-    uint8_t b[LDPC_VOICE_PAYLOAD_BYTES];
-    uint8_t enc_a[LDPC_VOICE_ENCODED_BYTES];
-    uint8_t enc_b[LDPC_VOICE_ENCODED_BYTES];
-    uint8_t out[LDPC_VOICE_PAYLOAD_BYTES];
-    size_t i;
-
-    for (i = 0; i < sizeof a; i++)
-    {
-        a[i] = (uint8_t)(i + 1);
-        b[i] = (uint8_t)(0x80 ^ i);
+    uint8_t info[HORSE_VOICE_INFO_BYTES];
+    uint8_t coded[HORSE_VOICE_CODED_BYTES];
+    uint8_t out[HORSE_VOICE_INFO_BYTES];
+    uint8_t repeat2[HORSE_VOICE_CODED_BYTES];
+    std::memset(info, 0xA5, sizeof info);
+    info[0] = 0x00;
+    info[1] = 0x07;
+    voice_encode(info, coded);
+    voice_decode(coded, out);
+    if (std::memcmp(out, info, sizeof info) != 0) {
+        std::printf("horse_frame_test: M17 voice round-trip fail\n");
+        return -1;
     }
-    ldpc_horse_encode_voice(a, enc_a);
-    ldpc_horse_encode_voice(b, enc_b);
-    ldpc_horse_decode_voice(enc_a, out);
-    if (memcmp(out, a, sizeof a) != 0)
+    std::memset(repeat2, 0, sizeof repeat2);
+    for (size_t i = 0; i < HORSE_VOICE_INFO_BYTES * 8 && (2 * i + 1) < 368;
+         i++) {
+        bool b = (info[i / 8] >> (7 - (i % 8))) & 1u;
+        if (b) {
+            repeat2[i / 4] |= static_cast<uint8_t>(0xC0u >> (2 * (i % 4)));
+        }
+    }
+    if (std::memcmp(coded, repeat2, sizeof coded) == 0) {
+        std::printf("horse_frame_test: voice still looks like repeat-2\n");
         return -1;
-    ldpc_horse_decode_voice(enc_b, out);
-    if (memcmp(out, b, sizeof b) != 0)
-        return -1;
+    }
     return 0;
 }
 
@@ -356,7 +362,7 @@ int main()
     if (test_lsf_crypto_roundtrip() != 0) return -1;
     if (test_lsf_unknown_version_is_rejected() != 0) return -1;
     if (test_voice_roundtrip() != 0) return -1;
-    if (test_ldpc_static_scratch_reuse() != 0) return -1;
+    if (test_voice_m17_not_repeat2() != 0) return -1;
     if (test_eot_detect() != 0) return -1;
     if (test_voice_frame_number() != 0) return -1;
     if (test_sig_frames_roundtrip() != 0) return -1;

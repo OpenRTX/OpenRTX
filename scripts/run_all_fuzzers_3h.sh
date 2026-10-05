@@ -20,7 +20,7 @@ if [ ! -d "$BUILD_DIR" ]; then
     exit 1
 fi
 
-FUZZERS="fuzz_horse_frame fuzz_ldpc_horse"
+FUZZERS="fuzz_horse_frame fuzz_horse_voice"
 CORPUS_BASE="tests/fuzz/corpus"
 ARTIFACTS_BASE="fuzz_artifacts"
 LOG_DIR="${ARTIFACTS_BASE}/logs"
@@ -40,7 +40,7 @@ for name in $FUZZERS; do
     mkdir -p "$corpus" "$artifacts"
     extra_args=""
     case "$name" in
-        fuzz_ldpc_horse)  extra_args="-max_len=92" ;;
+        fuzz_horse_voice)  extra_args="-max_len=92" ;;
         fuzz_horse_frame) extra_args="-max_len=240"
             [ -f "$DICT_FRAME" ] && extra_args="$extra_args -dict=$DICT_FRAME" ;;
     esac

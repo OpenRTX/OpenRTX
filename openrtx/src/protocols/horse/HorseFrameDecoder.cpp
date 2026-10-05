@@ -5,8 +5,8 @@
  */
 
 #include "protocols/horse/HorseFrameDecoder.hpp"
+#include "protocols/horse/HorseVoiceCodec.hpp"
 #include "protocols/horse/horse_crypto.h"
-#include "protocols/horse/ldpc_horse.h"
 #include <cstring>
 
 namespace horse
@@ -49,11 +49,10 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
         return HorseFrameType::LINK_SETUP;
     }
     if (voiceHd <= HAMMING_SYNC_MAX) {
-        if (frame.size() >= 2 + LDPC_VOICE_ENCODED_BYTES) {
-            uint8_t payload[LDPC_VOICE_PAYLOAD_BYTES];
-            ldpc_horse_decode_voice(frame.data() + 2, payload);
-            lastVoiceFrameNum = (static_cast<uint16_t>(payload[0]) << 8)
-                              | payload[1];
+        if (frame.size() >= 2 + HORSE_VOICE_CODED_BYTES) {
+            uint8_t info[HORSE_VOICE_INFO_BYTES];
+            voice_decode(frame.data() + 2, info);
+            lastVoiceFrameNum = (static_cast<uint16_t>(info[0]) << 8) | info[1];
         }
         return HorseFrameType::VOICE;
     }
@@ -88,18 +87,18 @@ void HorseFrameDecoder::getVoicePayload(const frame_t &frame,
                                         uint8_t *melpe96bits,
                                         uint8_t *tag32bits, uint16_t *frameNum)
 {
-    if (frame.size() < 2 + LDPC_VOICE_ENCODED_BYTES)
+    if (frame.size() < 2 + HORSE_VOICE_CODED_BYTES)
         return;
-    uint8_t payload[LDPC_VOICE_PAYLOAD_BYTES];
-    ldpc_horse_decode_voice(frame.data() + 2, payload);
+    uint8_t info[HORSE_VOICE_INFO_BYTES];
+    voice_decode(frame.data() + 2, info);
     if (frameNum != nullptr) {
-        *frameNum = (static_cast<uint16_t>(payload[0]) << 8) | payload[1];
+        *frameNum = (static_cast<uint16_t>(info[0]) << 8) | info[1];
         *frameNum &= 0x7FFF;
     }
     if (melpe96bits != nullptr)
-        std::memcpy(melpe96bits, payload + 2, 12);
+        std::memcpy(melpe96bits, info + 2, 12);
     if (tag32bits != nullptr)
-        std::memcpy(tag32bits, payload + 14, 4);
+        std::memcpy(tag32bits, info + 14, 4);
 }
 
 } // namespace horse

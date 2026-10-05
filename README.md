@@ -57,7 +57,7 @@ The `Supermagnum/OpenRTX` fork adds a small number of **experimental** features 
 - Key provisioning tool `scripts/horse_provision.py` generates Ed25519/X25519 identities and provisions them to radios over USB or the Linux emulator FIFO.
 - For protocol, modulation, cryptography and key-handling details see the dedicated [horse documentation](./horse.md).
 - Audit, design notes, DSP UB, and PR text live under [docs/horse/](./docs/horse/).
-- Horse libFuzzer targets (`fuzz_horse_frame`, `fuzz_ldpc_horse`): see [FUZZING.md](./FUZZING.md); build with `-Dfuzzing=true` (requires clang).
+- Horse libFuzzer targets (`fuzz_horse_frame`, `fuzz_horse_voice`): see [FUZZING.md](./FUZZING.md); build with `-Dfuzzing=true` (requires clang).
 
 These features are intended for experimentation and research only and may change or be removed without notice.
 

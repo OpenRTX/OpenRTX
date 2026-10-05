@@ -39,6 +39,15 @@ static constexpr uint16_t SIG_FRAME_COUNT = 6;
 /* Last legal voice FN. 0x7000-0x7FFF are signature frames only. */
 static constexpr uint16_t VOICE_FN_MAX = 0x6FFF;
 
+/* Option C voice: 18 info bytes -> M17 DATA_PUNCTURE (34 B) + 12 B spare. */
+static constexpr size_t HORSE_VOICE_INFO_BYTES = 18;
+static constexpr size_t HORSE_VOICE_CODED_BYTES = 46;
+static constexpr size_t HORSE_VOICE_PUNCT_BYTES = 34;
+static constexpr size_t HORSE_VOICE_SPARE_BYTES = 12;
+static constexpr size_t HORSE_VOICE_SPARE_BITS = HORSE_VOICE_SPARE_BYTES * 8;
+static constexpr size_t HORSE_VOICE_CODED_BITS = HORSE_VOICE_CODED_BYTES * 8;
+static constexpr size_t HORSE_FRAG_CYCLE = 10;
+
 static inline bool voice_fn_in_session(uint16_t fn)
 {
     return fn <= VOICE_FN_MAX;

@@ -71,10 +71,10 @@ openrtx_src = ['openrtx/src/core/state.c',
 
 horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
              'openrtx/src/protocols/horse/HorseFrameDecoder.cpp',
+             'openrtx/src/protocols/horse/HorseVoiceCodec.cpp',
              'openrtx/src/protocols/horse/HorseModulator.cpp',
              'openrtx/src/protocols/horse/HorseDemodulator.cpp',
              'openrtx/src/protocols/horse/melpe_horse.c',
-             'openrtx/src/protocols/horse/ldpc_horse.c',
              'openrtx/src/protocols/horse/horse_crypto.c',
              'openrtx/src/protocols/horse/horse_keystore.c',
              'openrtx/src/protocols/horse/horse_peers.c',
@@ -84,7 +84,7 @@ horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
 
 horse_frame_test_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
                         'openrtx/src/protocols/horse/HorseFrameDecoder.cpp',
-                        'openrtx/src/protocols/horse/ldpc_horse.c']
+                        'openrtx/src/protocols/horse/HorseVoiceCodec.cpp']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -1439,9 +1439,11 @@ if get_option('fuzzing')
                                 cpp_args : fuzz_sanitizer_args,
                                 link_args : fuzz_sanitizer_args)
 
-  fuzz_ldpc_horse = executable('fuzz_ldpc_horse',
-                              sources : ['openrtx/src/protocols/horse/ldpc_horse.c', 'tests/fuzz/fuzz_ldpc_horse.c'],
+  fuzz_horse_voice = executable('fuzz_horse_voice',
+                              sources : horse_frame_test_src +
+                                        ['tests/fuzz/fuzz_horse_voice.cpp'],
                               include_directories : fuzz_inc,
                               c_args : fuzz_sanitizer_args,
+                              cpp_args : fuzz_sanitizer_args,
                               link_args : fuzz_sanitizer_args)
 endif

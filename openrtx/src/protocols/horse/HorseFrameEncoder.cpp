@@ -6,8 +6,8 @@
 
 #include "protocols/horse/HorseFrameEncoder.hpp"
 #include "protocols/horse/HorseUtils.hpp"
+#include "protocols/horse/HorseVoiceCodec.hpp"
 #include "protocols/horse/horse_crypto.h"
-#include "protocols/horse/ldpc_horse.h"
 #include <cstring>
 
 namespace horse
@@ -65,23 +65,22 @@ uint16_t HorseFrameEncoder::encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
                                                    frame_t& output, bool isLast,
                                                    size_t payload_len)
 {
-    uint8_t raw_payload[LDPC_VOICE_PAYLOAD_BYTES];
-    std::memset(raw_payload, 0, sizeof(raw_payload));
+    uint8_t info[HORSE_VOICE_INFO_BYTES];
+    std::memset(info, 0, sizeof(info));
     uint16_t fn = frame_num & 0x7FFF;
     if (isLast)
         fn |= 0x8000;
-    raw_payload[0] = (fn >> 8) & 0xFF;
-    raw_payload[1] = fn & 0xFF;
-    if (melpe96bits != nullptr && payload_len > 0)
-    {
+    info[0] = (fn >> 8) & 0xFF;
+    info[1] = fn & 0xFF;
+    if (melpe96bits != nullptr && payload_len > 0) {
         if (payload_len > 12)
             payload_len = 12;
-        std::memcpy(raw_payload + 2, melpe96bits, payload_len);
+        std::memcpy(info + 2, melpe96bits, payload_len);
     }
     if (tag32bits != nullptr)
-        std::memcpy(raw_payload + 14, tag32bits, 4);
+        std::memcpy(info + 14, tag32bits, 4);
     std::copy(VOICE_SYNC_WORD.begin(), VOICE_SYNC_WORD.end(), output.begin());
-    ldpc_horse_encode_voice(raw_payload, output.data() + 2);
+    voice_encode(info, output.data() + 2);
     return fn & 0x7FFF;
 }
 
