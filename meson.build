@@ -1069,7 +1069,7 @@ foreach t : targets
                               output           : 'CMakeLists.txt',
                               command          : ['xcopy', '@INPUT@', '@OUTPUT@'],
                               install          : false,
-                              build_by_default : true)
+                              build_by_default : meson.is_cross_build())
       else  # Unix-like OS that has cp
 
           txt = custom_target('Copy CMakeLists.txt',
@@ -1077,7 +1077,7 @@ foreach t : targets
                               output           : 'CMakeLists.txt',
                               command          : ['cp', '@INPUT@', '@OUTPUT@'],
                               install          : false,
-                              build_by_default : true)
+                              build_by_default : meson.is_cross_build())
       endif
 
 
@@ -1087,7 +1087,8 @@ foreach t : targets
                           command : [west,
                                     'build',
                                     '-b', 'ttwrplus',
-                                    '-d', '.', '..'])
+                                    '-d', '.', '..'],
+                          build_by_default : meson.is_cross_build())
 
       uf2 = custom_target(name+'_uf2',
                           input   : bin,
@@ -1097,29 +1098,36 @@ foreach t : targets
                                     '-c',
                                     '-f', 'ESP32S3',
                                     '-b', '0x0',
-                                    '-o', '@OUTPUT@'])
+                                    '-o', '@OUTPUT@'],
+                          build_by_default : meson.is_cross_build())
 
       custom_target(name+'_flash',
                     input   : uf2,
                     output  : name+'_flash',
-                    command : [uf2conv, '-D', '@INPUT@'])
+                    command : [uf2conv, '-D', '@INPUT@'],
+                    build_by_default : meson.is_cross_build())
 
   else
 
     target_opts = t['opts']
+    # Native: linux targets only. Cross: firmware only. meson test must
+    # not rebuild ARM firmware with the host compiler.
+    should_build = (t['cpu'] == 'linux') != meson.is_cross_build()
     exe = executable(name,
                      sources             : target_opts['sources'] + main_src,
                      include_directories : target_opts['include_directories'],
                      dependencies        : target_opts['dependencies'],
                      c_args              : target_opts['c_args'],
                      cpp_args            : target_opts['cpp_args'],
-                     link_args           : target_opts['link_args'])
+                     link_args           : target_opts['link_args'],
+                     build_by_default    : should_build)
     if t['flashable']
 
       bin = custom_target(name+'_bin',
                           output  : name+'_bin',
                           input   : exe,
-                          command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'])
+                          command : [objcopy, '-O', 'binary', '@INPUT@', '@OUTPUT@'],
+                          build_by_default : should_build)
 
       # Handle GD77 custom wrapping and flashing tools
       if name == 'openrtx_gd77' or name == 'openrtx_dm1801'
@@ -1130,12 +1138,14 @@ foreach t : targets
                               command : [bin2sgl,
                                         '--in', '@INPUT@',
                                         '--out', '@OUTPUT@',
-                                        '--mode', t['wrap']])
+                                        '--mode', t['wrap']],
+                              build_by_default : should_build)
 
         custom_target(name+'_flash',
                       input   : wrap,
                       output  : name+'_flash',
-                      command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']])
+                      command : [gd77_loader, '-f', '@INPUT@', '-m', t['wrap']],
+                      build_by_default : should_build)
 
       # Module17 uses dfu-tool for flashing
       elif name == 'openrtx_mod17'
@@ -1147,19 +1157,22 @@ foreach t : targets
                                  '-d', '0483:df11',
                                  '-a', '0',
                                  '-D', '@INPUT@',
-                                 '-s', '0x08000000'])
+                                 '-s', '0x08000000'],
+                      build_by_default : should_build)
 
       elif name == 'openrtx_cs7000' or name == 'openrtx_cs7000p'
 
         custom_target(name+'_dfu',
                       output  : name+'_dfu',
                       input   : bin,
-                      command : [dfu_convert, '-b', t['load_addr']+':@INPUT@', '@OUTPUT@'])
+                      command : [dfu_convert, '-b', t['load_addr']+':@INPUT@', '@OUTPUT@'],
+                      build_by_default : should_build)
 
         custom_target(name+'_wrap',
                       output  : name+'_wrap',
                       input   : bin,
-                      command : [cs7000_wrap, '@INPUT@', '@OUTPUT@'])
+                      command : [cs7000_wrap, '@INPUT@', '@OUTPUT@'],
+                      build_by_default : should_build)
 
         custom_target(name+'_flash',
                       input   : bin,
@@ -1168,7 +1181,8 @@ foreach t : targets
                                  '-d', '0483:df11',
                                  '-a', '0',
                                  '-D', '@INPUT@',
-                                 '-s', t['load_addr']])
+                                 '-s', t['load_addr']],
+                      build_by_default : should_build)
       else
 
         wrap = custom_target(name+'_wrap',
@@ -1178,12 +1192,14 @@ foreach t : targets
                                         '--wrap',
                                         '-o', '@OUTPUT@',
                                         '-r', t['wrap'],
-                                        '-s', t['load_addr']+':@INPUT@'])
+                                        '-s', t['load_addr']+':@INPUT@'],
+                             build_by_default : should_build)
 
         custom_target(name+'_flash',
                       input   : wrap,
                       output  : name+'_flash',
-                      command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'])
+                      command : [radio_tool, '-d', '0', '-f', '-i', '@INPUT@'],
+                      build_by_default : should_build)
 
       endif
 
@@ -1246,7 +1262,8 @@ cps_test = executable('cps_test',
 
 linux_inputStream_test = executable('linux_inputStream_test',
                                     sources : unit_test_src + ['tests/unit/linux_inputStream_test.cpp'],
-                                    kwargs  : unit_test_opts)
+                                    kwargs  : unit_test_opts,
+                                    build_by_default : false)
 
 minmea_conversion_test = executable('minmea_conversion_test',
                                      sources : unit_test_src + ['tests/unit/convert_minmea_coord.cpp'],
@@ -1338,7 +1355,7 @@ m17_replay_tool = executable('m17_replay_tool',
                              c_args              : linux_c_args,
                              cpp_args            : linux_cpp_args,
                              include_directories : m17_replay_inc,
-                             dependencies        : [sdl_dep, threads_dep, codec2_dep],
+                             dependencies        : linux_deps,
                              link_args           : linux_l_args)
 
 m17_replay_test_opts = unit_test_opts + {'include_directories' : m17_replay_inc,
