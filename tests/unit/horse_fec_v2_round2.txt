@@ -1,0 +1,440 @@
+=== study id=0 noise=0 ===
+study last_demod repeat2 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod repeat2 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=4.4 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal repeat2 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=4.8 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 repeat2 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 repeat2 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 repeat2 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=0 noise=6000 ===
+study last_demod repeat2 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod repeat2 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=4.4 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal repeat2 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=5.5 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 repeat2 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 repeat2 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 repeat2 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=0 noise=8000 ===
+study last_demod repeat2 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod repeat2 noise=8000 n=10000 got=10000 ok=9482 fer=0.051800 us/frame=4.3 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal repeat2 noise=8000 n=10000 got=10000 ok=9691 fer=0.030900 us/frame=4.7 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 repeat2 noise=8000 n=10000 got=10000 ok=9691 fer=0.030900 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 repeat2 noise=8000 n=10000 got=10000 ok=9691 fer=0.030900 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 repeat2 noise=8000 n=10000 got=10000 ok=9691 fer=0.030900 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=0 noise=10000 ===
+study last_demod repeat2 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod repeat2 noise=10000 n=10000 got=10000 ok=4336 fer=0.566400 us/frame=4.5 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal repeat2 noise=10000 n=10000 got=10000 ok=6069 fer=0.393100 us/frame=4.9 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 repeat2 noise=10000 n=10000 got=10000 ok=6069 fer=0.393100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 repeat2 noise=10000 n=10000 got=10000 ok=6069 fer=0.393100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 repeat2 noise=10000 n=10000 got=10000 ok=6069 fer=0.393100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=0 noise=11000 ===
+study last_demod repeat2 hd_v=5 hd_l=9 hd_e=2 n=10002
+demod repeat2 noise=11000 n=10000 got=10000 ok=1725 fer=0.827500 us/frame=4.5 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal repeat2 noise=11000 n=10000 got=10000 ok=3542 fer=0.645800 us/frame=4.9 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 repeat2 noise=11000 n=10000 got=10000 ok=3542 fer=0.645800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 repeat2 noise=11000 n=10000 got=10000 ok=3542 fer=0.645800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 repeat2 noise=11000 n=10000 got=10000 ok=3542 fer=0.645800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=0 noise=12000 ===
+study last_demod repeat2 hd_v=7 hd_l=5 hd_e=8 n=171
+demod repeat2 noise=12000 n=10000 got=159 ok=6 fer=0.999400 us/frame=4.2 lock_len=6 n_locks=2 drop=miss eot_hd=0 miss_ev=10
+ideal repeat2 noise=12000 n=10000 got=10000 ok=1579 fer=0.842100 us/frame=4.8 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 repeat2 noise=12000 n=10000 got=10000 ok=1579 fer=0.842100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 repeat2 noise=12000 n=10000 got=10000 ok=1579 fer=0.842100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 repeat2 noise=12000 n=10000 got=10000 ok=1579 fer=0.842100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=2 lock_len=6
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=0 noise=12500 ===
+study last_demod repeat2 hd_v=7 hd_l=5 hd_e=8 n=171
+demod repeat2 noise=12500 n=10000 got=159 ok=3 fer=0.999700 us/frame=6.7 lock_len=6 n_locks=2 drop=miss eot_hd=0 miss_ev=10
+ideal repeat2 noise=12500 n=10000 got=10000 ok=998 fer=0.900200 us/frame=4.9 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 repeat2 noise=12500 n=10000 got=10000 ok=998 fer=0.900200 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 repeat2 noise=12500 n=10000 got=10000 ok=998 fer=0.900200 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 repeat2 noise=12500 n=10000 got=10000 ok=998 fer=0.900200 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=2 lock_len=6
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=4 noise=0 ===
+study last_demod m17_hard hd_v=5 hd_l=11 hd_e=0 n=10002
+demod m17_hard noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=89.9 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal m17_hard noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=93.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 m17_hard noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 m17_hard noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 m17_hard noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=4 noise=6000 ===
+study last_demod m17_hard hd_v=5 hd_l=11 hd_e=0 n=10002
+demod m17_hard noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=94.1 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal m17_hard noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=94.9 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 m17_hard noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 m17_hard noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 m17_hard noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=4 noise=8000 ===
+study last_demod m17_hard hd_v=5 hd_l=11 hd_e=0 n=10002
+demod m17_hard noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=86.7 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal m17_hard noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=87.8 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 m17_hard noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 m17_hard noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 m17_hard noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=4 noise=10000 ===
+study last_demod m17_hard hd_v=5 hd_l=11 hd_e=0 n=10002
+demod m17_hard noise=10000 n=10000 got=10000 ok=9999 fer=0.000100 us/frame=91.4 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal m17_hard noise=10000 n=10000 got=10000 ok=9999 fer=0.000100 us/frame=91.7 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 m17_hard noise=10000 n=10000 got=10000 ok=9999 fer=0.000100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 m17_hard noise=10000 n=10000 got=10000 ok=9999 fer=0.000100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 m17_hard noise=10000 n=10000 got=10000 ok=9999 fer=0.000100 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=4 noise=11000 ===
+study last_demod m17_hard hd_v=5 hd_l=9 hd_e=2 n=10002
+demod m17_hard noise=11000 n=10000 got=10000 ok=9970 fer=0.003000 us/frame=112.8 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal m17_hard noise=11000 n=10000 got=10000 ok=9983 fer=0.001700 us/frame=113.4 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 m17_hard noise=11000 n=10000 got=10000 ok=9983 fer=0.001700 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 m17_hard noise=11000 n=10000 got=10000 ok=9983 fer=0.001700 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 m17_hard noise=11000 n=10000 got=10000 ok=9983 fer=0.001700 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=4 noise=12000 ===
+study last_demod m17_hard hd_v=8 hd_l=10 hd_e=9 n=440
+demod m17_hard noise=12000 n=10000 got=159 ok=158 fer=0.984200 us/frame=91.3 lock_len=6 n_locks=22 drop=miss eot_hd=0 miss_ev=210
+ideal m17_hard noise=12000 n=10000 got=10000 ok=9952 fer=0.004800 us/frame=90.5 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 m17_hard noise=12000 n=10000 got=10000 ok=9952 fer=0.004800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 m17_hard noise=12000 n=10000 got=10000 ok=9952 fer=0.004800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 m17_hard noise=12000 n=10000 got=10000 ok=9952 fer=0.004800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=2 lock_len=6
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=4 noise=12500 ===
+study last_demod m17_hard hd_v=11 hd_l=9 hd_e=8 n=442
+demod m17_hard noise=12500 n=10000 got=159 ok=157 fer=0.984300 us/frame=97.3 lock_len=9 n_locks=23 drop=none eot_hd=0 miss_ev=210
+ideal m17_hard noise=12500 n=10000 got=10000 ok=9922 fer=0.007800 us/frame=90.6 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=21
+coast2 m17_hard noise=12500 n=10000 got=10000 ok=9922 fer=0.007800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=21
+coast4 m17_hard noise=12500 n=10000 got=10000 ok=9922 fer=0.007800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=21
+coast8 m17_hard noise=12500 n=10000 got=10000 ok=9922 fer=0.007800 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=21
+study last_demod_note drop=0 lock_len=9
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=1 noise=0studystudy last_demod polar_L4 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod polar_L4 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=11688.2 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal polar_L4 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=11700.2 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 polar_L4 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 polar_L4 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 polar_L4 noise=0 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=1 noise=6000studystudy last_demod polar_L4 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod polar_L4 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=11446.5 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal polar_L4 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=11603.2 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 polar_L4 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 polar_L4 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 polar_L4 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=1 noise=8000studystudy last_demod polar_L4 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod polar_L4 noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=13121.5 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal polar_L4 noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=16085.1 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 polar_L4 noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 polar_L4 noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 polar_L4 noise=8000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=1 noise=10000studystudy last_demod polar_L4 hd_v=5 hd_l=11 hd_e=0 n=10002
+demod polar_L4 noise=10000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=12852.8 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+ideal polar_L4 noise=10000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=12165.5 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 polar_L4 noise=10000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 polar_L4 noise=10000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 polar_L4 noise=10000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=1 lock_len=10002
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=1 noise=11000 ===
+study last_demod polar_L4 hd_v=7 hd_l=5 hd_e=10 n=4881
+demod polar_L4 noise=11000 n=10000 got=4744 ok=4744 fer=0.525600 us/frame=12285.6 lock_len=17 n_locks=15 drop=none eot_hd=0 miss_ev=106
+ideal polar_L4 noise=11000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=13031.8 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 polar_L4 noise=11000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 polar_L4 noise=11000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 polar_L4 noise=11000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=0 lock_len=17
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=1 noise=12000 ===
+study last_demod polar_L4 hd_v=7 hd_l=5 hd_e=10 n=403
+demod polar_L4 noise=12000 n=10000 got=159 ok=159 fer=0.984100 us/frame=11217.1 lock_len=28 n_locks=26 drop=miss eot_hd=0 miss_ev=189
+ideal polar_L4 noise=12000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=12458.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast2 polar_L4 noise=12000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast4 polar_L4 noise=12000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+coast8 polar_L4 noise=12000 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=1
+study last_demod_note drop=2 lock_len=28
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== study id=1 noise=12500 ===
+study last_demod polar_L4 hd_v=7 hd_l=5 hd_e=10 n=431
+demod polar_L4 noise=12500 n=10000 got=159 ok=159 fer=0.984100 us/frame=12117.6 lock_len=20 n_locks=29 drop=miss eot_hd=0 miss_ev=212
+ideal polar_L4 noise=12500 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=12829.7 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=19
+coast2 polar_L4 noise=12500 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=19
+coast4 polar_L4 noise=12500 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=19
+coast8 polar_L4 noise=12500 n=10000 got=10000 ok=10000 fer=0.000000 us/frame=0.0 lock_len=10002 n_locks=1 drop=eot eot_hd=1 miss_ev=19
+study last_demod_note drop=2 lock_len=20
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=4 mode=1 ===
+complete_v2 mode=encrypt miss_limit=4 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=4 mode=2 ===
+complete_v2 mode=sign miss_limit=4 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=4 mode=3 ===
+complete_v2 mode=both miss_limit=4 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=2 mode=1 ===
+complete_v2 mode=encrypt miss_limit=2 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=2 mode=2 ===
+complete_v2 mode=sign miss_limit=2 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=2 mode=3 ===
+complete_v2 mode=both miss_limit=2 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=8 mode=1 ===
+complete_v2 mode=encrypt miss_limit=8 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=8 mode=2 ===
+complete_v2 mode=sign miss_limit=8 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=5000 miss=8 mode=3 ===
+complete_v2 mode=both miss_limit=8 noise=5000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=4 mode=1 ===
+complete_v2 mode=encrypt miss_limit=4 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=4 mode=2 ===
+complete_v2 mode=sign miss_limit=4 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=4 mode=3 ===
+complete_v2 mode=both miss_limit=4 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=2 mode=1 ===
+complete_v2 mode=encrypt miss_limit=2 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=2 mode=2 ===
+complete_v2 mode=sign miss_limit=2 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=2 mode=3 ===
+complete_v2 mode=both miss_limit=2 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=8 mode=1 ===
+complete_v2 mode=encrypt miss_limit=8 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=8 mode=2 ===
+complete_v2 mode=sign miss_limit=8 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=8000 miss=8 mode=3 ===
+complete_v2 mode=both miss_limit=8 noise=8000 ok=200/200 voice_ok=60000
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=4 mode=1 ===
+complete_v2 mode=encrypt miss_limit=4 noise=10000 ok=189/200 voice_ok=59988
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=4 mode=2 ===
+complete_v2 mode=sign miss_limit=4 noise=10000 ok=189/200 voice_ok=59989
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=4 mode=3 ===
+complete_v2 mode=both miss_limit=4 noise=10000 ok=189/200 voice_ok=59988
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=2 mode=1 ===
+complete_v2 mode=encrypt miss_limit=2 noise=10000 ok=189/200 voice_ok=59988
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=2 mode=2 ===
+complete_v2 mode=sign miss_limit=2 noise=10000 ok=189/200 voice_ok=59989
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=2 mode=3 ===
+complete_v2 mode=both miss_limit=2 noise=10000 ok=189/200 voice_ok=59988
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=8 mode=1 ===
+complete_v2 mode=encrypt miss_limit=8 noise=10000 ok=189/200 voice_ok=59988
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=8 mode=2 ===
+complete_v2 mode=sign miss_limit=8 noise=10000 ok=189/200 voice_ok=59989
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=10000 miss=8 mode=3 ===
+complete_v2 mode=both miss_limit=8 noise=10000 ok=189/200 voice_ok=59988
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=4 mode=1 ===
+complete_v2 mode=encrypt miss_limit=4 noise=11000 ok=132/200 voice_ok=59619
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=4 mode=2 ===
+complete_v2 mode=sign miss_limit=4 noise=11000 ok=159/200 voice_ok=59655
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=4 mode=3 ===
+complete_v2 mode=both miss_limit=4 noise=11000 ok=132/200 voice_ok=59619
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=2 mode=1 ===
+complete_v2 mode=encrypt miss_limit=2 noise=11000 ok=132/200 voice_ok=59619
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=2 mode=2 ===
+complete_v2 mode=sign miss_limit=2 noise=11000 ok=159/200 voice_ok=59655
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=2 mode=3 ===
+complete_v2 mode=both miss_limit=2 noise=11000 ok=132/200 voice_ok=59619
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=8 mode=1 ===
+complete_v2 mode=encrypt miss_limit=8 noise=11000 ok=132/200 voice_ok=59619
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=8 mode=2 ===
+complete_v2 mode=sign miss_limit=8 noise=11000 ok=159/200 voice_ok=59655
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=11000 miss=8 mode=3 ===
+complete_v2 mode=both miss_limit=8 noise=11000 ok=132/200 voice_ok=59619
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=4 mode=1 ===
+complete_v2 mode=encrypt miss_limit=4 noise=12500 ok=18/200 voice_ok=54762
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=4 mode=2 ===
+complete_v2 mode=sign miss_limit=4 noise=12500 ok=15/200 voice_ok=55036
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=4 mode=3 ===
+complete_v2 mode=both miss_limit=4 noise=12500 ok=18/200 voice_ok=54763
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=2 mode=1 ===
+complete_v2 mode=encrypt miss_limit=2 noise=12500 ok=18/200 voice_ok=54762
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=2 mode=2 ===
+complete_v2 mode=sign miss_limit=2 noise=12500 ok=15/200 voice_ok=55036
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=2 mode=3 ===
+complete_v2 mode=both miss_limit=2 noise=12500 ok=18/200 voice_ok=54763
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=8 mode=1 ===
+complete_v2 mode=encrypt miss_limit=8 noise=12500 ok=18/200 voice_ok=54762
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=8 mode=2 ===
+complete_v2 mode=sign miss_limit=8 noise=12500 ok=15/200 voice_ok=55036
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=12500 miss=8 mode=3 ===
+complete_v2 mode=both miss_limit=8 noise=12500 ok=18/200 voice_ok=54763
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=4 mode=1 ===
+complete_v2 mode=encrypt miss_limit=4 noise=15000 ok=0/200 voice_ok=29745
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=4 mode=2 ===
+complete_v2 mode=sign miss_limit=4 noise=15000 ok=0/200 voice_ok=31313
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=4 mode=3 ===
+complete_v2 mode=both miss_limit=4 noise=15000 ok=0/200 voice_ok=31126
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=2 mode=1 ===
+complete_v2 mode=encrypt miss_limit=2 noise=15000 ok=0/200 voice_ok=29745
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=2 mode=2 ===
+complete_v2 mode=sign miss_limit=2 noise=15000 ok=0/200 voice_ok=31313
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=2 mode=3 ===
+complete_v2 mode=both miss_limit=2 noise=15000 ok=0/200 voice_ok=31126
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=8 mode=1 ===
+complete_v2 mode=encrypt miss_limit=8 noise=15000 ok=0/200 voice_ok=29745
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=8 mode=2 ===
+complete_v2 mode=sign miss_limit=8 noise=15000 ok=0/200 voice_ok=31313
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+=== complete_v2 noise=15000 miss=8 mode=3 ===
+complete_v2 mode=both miss_limit=8 noise=15000 ok=0/200 voice_ok=31126
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+eot_notice miss_limit=2 noise=15000 delivered=0 drop=never extra_after_eot=0 lock_len=0
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+eot_notice miss_limit=2 noise=18000 delivered=0 drop=never extra_after_eot=0 lock_len=0
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+eot_notice miss_limit=4 noise=15000 delivered=0 drop=never extra_after_eot=0 lock_len=0
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+eot_notice miss_limit=4 noise=18000 delivered=0 drop=never extra_after_eot=0 lock_len=0
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+eot_notice miss_limit=8 noise=15000 delivered=0 drop=never extra_after_eot=0 lock_len=0
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+eot_notice miss_limit=8 noise=18000 delivered=0 drop=never extra_after_eot=0 lock_len=0
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called

@@ -72,10 +72,10 @@ static void bytes_from_bits(const uint8_t *bits, size_t nbits, uint8_t *bytes)
 }
 
 /* Table 5.4.1.1-1 */
-static constexpr uint8_t POLAR_P32[32] = {
-    0,  1,  2,  4,  3,  5,  6,  7,  8,  16, 9,  17, 10, 18, 11, 19,
-    12, 20, 13, 21, 14, 22, 15, 23, 24, 25, 26, 28, 27, 29, 30, 31
-};
+static constexpr uint8_t POLAR_P32[32] = { 0,  1,  2,  4,  3,  5,  6,  7,
+                                           8,  16, 9,  17, 10, 18, 11, 19,
+                                           12, 20, 13, 21, 14, 22, 15, 23,
+                                           24, 25, 26, 28, 27, 29, 30, 31 };
 
 static size_t polar_J(size_t n)
 {
@@ -86,8 +86,12 @@ static size_t polar_J(size_t n)
 struct PolarCodec {
     uint8_t frozen[POLAR_N];
     uint16_t info_pos[POLAR_K];
+    mutable uint64_t n_path_copy;
+    mutable uint64_t n_encode_n;
+    mutable uint64_t n_fcomb;
+    mutable uint64_t n_leaf;
 
-    PolarCodec()
+    PolarCodec() : n_path_copy(0), n_encode_n(0), n_fcomb(0), n_leaf(0)
     {
         memset(frozen, 1, sizeof frozen);
         uint8_t ftmp[POLAR_N];
@@ -169,13 +173,14 @@ struct PolarCodec {
     struct SclPath {
         uint8_t u[POLAR_N];
         float metric;
-        std::vector<std::vector<float> > yst;
+        std::vector<std::vector<float>> yst;
     };
 
     void scl_rec(size_t n, size_t u0, std::vector<SclPath> &ps,
                  size_t Lmax) const
     {
         if (n == 1) {
+            n_leaf += ps.size();
             std::vector<SclPath> nxt;
             nxt.reserve(ps.size() * 2);
             for (SclPath &p : ps) {
@@ -186,6 +191,7 @@ struct PolarCodec {
                         p.metric += -l;
                     nxt.push_back(p);
                 } else {
+                    n_path_copy += 2;
                     SclPath a = p;
                     SclPath b = p;
                     a.u[u0] = 0;
@@ -213,8 +219,10 @@ struct PolarCodec {
         for (SclPath &p : ps) {
             const std::vector<float> &y = p.yst.back();
             std::vector<float> left(h);
-            for (size_t k = 0; k < h; k++)
+            for (size_t k = 0; k < h; k++) {
                 left[k] = fcomb(y[k], y[k + h]);
+                n_fcomb++;
+            }
             p.yst.push_back(std::move(left));
         }
         scl_rec(h, u0, ps, Lmax);
@@ -223,6 +231,7 @@ struct PolarCodec {
             uint8_t xl[POLAR_N];
             memcpy(xl, p.u + u0, h);
             encode_n(xl, h);
+            n_encode_n++;
             const std::vector<float> &y = p.yst.back();
             std::vector<float> right(h);
             for (size_t k = 0; k < h; k++)
@@ -443,7 +452,7 @@ struct Ccsds512 {
         for (int i = FEC_INFO_BITS; i < 256; i++)
             L[i] = 1.0e4f; /* known filler zeros */
         /* H = [W^T | I] */
-        std::vector<std::pair<int, int> > edges;
+        std::vector<std::pair<int, int>> edges;
         for (int r = 0; r < 256; r++) {
             for (int c = 0; c < 256; c++)
                 if (W[c][r])
@@ -453,7 +462,7 @@ struct Ccsds512 {
         const int E = (int)edges.size();
         std::vector<float> msg_c2v(E, 0.f);
         std::vector<float> msg_v2c(E, 0.f);
-        std::vector<std::vector<int> > vn(512), cn(256);
+        std::vector<std::vector<int>> vn(512), cn(256);
         for (int e = 0; e < E; e++) {
             cn[edges[e].first].push_back(e);
             vn[edges[e].second].push_back(e);
