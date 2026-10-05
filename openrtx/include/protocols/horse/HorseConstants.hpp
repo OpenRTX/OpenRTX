@@ -106,6 +106,15 @@ static constexpr int32_t CORR_PEAK_MIN = 0;
  * frames; the first tagged voice must arrive in that window.
  */
 static constexpr uint8_t LOCK_NO_TAG_FRAMES = 8;
+/*
+ * After lock, this many completed frames without a Hamming-2 sync
+ * still keep the sampling point (coasting). EOT still unlocks at
+ * once. Measured on HorseDemodulator with idle zeros after the last
+ * voice: N=2 released after 3 extra frames (120 ms), N=4 after 5
+ * (200 ms), N=8 after 9 (360 ms). N=4 covers a two-frame fade without
+ * holding the channel for a third of a second after a missed EOT.
+ */
+static constexpr uint8_t COAST_MISS_UNLOCK = 4;
 
 /*
  * Correlator peak must exceed corrThreshold * this scale. M17 uses 33 for

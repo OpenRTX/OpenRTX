@@ -1111,6 +1111,235 @@ static int test_frame_index_stall()
     return 0;
 }
 
+static int count_stream_frames(float noise, int nvoice, unsigned seed,
+                               uint8_t miss, bool auth)
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder decoder;
+    std::vector<frame_t> frames((size_t)nvoice + 2);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 9, 8, 7, 6 };
+    memset(melpe, 0xA5, sizeof melpe);
+    for (int i = 0; i < nvoice; i++)
+        enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i,
+                                   frames[static_cast<size_t>(i + 1)], false,
+                                   12);
+    enc.encodeEotFrame(frames.back());
+    std::vector<int16_t> bb48, imp48, rx24;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    impair_t p{};
+    p.noise = noise;
+    p.gain = 1.0f;
+    p.seed = seed;
+    impair_48k(bb48.data(), bb48.size(), p, imp48);
+    to_24k(imp48, rx24);
+    HorseDemodulator demod;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setMissUnlock(miss);
+    int got = 0;
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f;
+        if (!demod.takeFrame(f))
+            continue;
+        if (auth && decoder.decodeFrame(f) == HorseFrameType::LINK_SETUP)
+            demod.noteValidTag();
+        got++;
+    }
+    demod.terminate();
+    return got;
+}
+
+static int count_idle_after_voice(uint8_t miss)
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder decoder;
+    const int nvoice = 20;
+    std::vector<frame_t> frames((size_t)nvoice + 1);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    memset(melpe, 0x11, sizeof melpe);
+    for (int i = 0; i < nvoice; i++)
+        enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i,
+                                   frames[static_cast<size_t>(i + 1)], false,
+                                   12);
+    std::vector<int16_t> bb48, rx24;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    to_24k(bb48, rx24);
+    const size_t extra = 30u * FRAME_SYMBOLS * 5u;
+    rx24.insert(rx24.end(), extra, 0);
+    HorseDemodulator demod;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setMissUnlock(miss);
+    int after_voice = 0;
+    bool seen_voice = false;
+    int voice_n = 0;
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f;
+        if (!demod.takeFrame(f))
+            continue;
+        HorseFrameType t = decoder.decodeFrame(f);
+        if (t == HorseFrameType::LINK_SETUP)
+            demod.noteValidTag();
+        if (t == HorseFrameType::VOICE) {
+            seen_voice = true;
+            voice_n++;
+            after_voice = 0;
+        } else if (seen_voice && voice_n >= nvoice)
+            after_voice++;
+        if (!demod.isLocked() && seen_voice && voice_n >= nvoice)
+            break;
+    }
+    demod.terminate();
+    return after_voice;
+}
+
+static int test_coast_and_sp_protect()
+{
+    int auth = count_stream_frames(12000.f, 300, 1u, COAST_MISS_UNLOCK, true);
+    int auth125 = count_stream_frames(12500.f, 300, 1u, COAST_MISS_UNLOCK,
+                                      true);
+    std::printf("coast/sp: noise12000 auth=%d/302 noise12500 auth=%d/302\n",
+                auth, auth125);
+    if (auth < 290 || auth125 < 290) {
+        std::printf("coast/sp: authenticated long lock failed\n");
+        return -1;
+    }
+
+    HorseFrameEncoder enc;
+    HorseFrameDecoder decoder;
+    std::vector<frame_t> tx(4);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    memset(melpe, 0x33, sizeof melpe);
+    enc.encodeLsf(src, dst, nullptr, 0, tx[0]);
+    enc.encodeVoiceFrame(melpe, tag, tx[1], false);
+    enc.encodeVoiceFrame(melpe, tag, tx[2], false);
+    enc.encodeLsf(src, dst, nullptr, 0, tx[3]);
+    std::vector<int16_t> bb48, rx24;
+    if (render_frames(tx, bb48, true) != 0)
+        return -1;
+    to_24k(bb48, rx24);
+    HorseDemodulator demod;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    uint32_t sp_after_tag = 0;
+    bool tagged = false;
+    int lsf_n = 0;
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f;
+        if (!demod.takeFrame(f))
+            continue;
+        HorseFrameType t = decoder.decodeFrame(f);
+        if (t == HorseFrameType::LINK_SETUP) {
+            lsf_n++;
+            if (lsf_n == 1)
+                demod.noteValidTag();
+            if (tagged && demod.debugSamplingPoint() != sp_after_tag) {
+                std::printf("coast/sp: authenticated lock moved SP on LSF "
+                            "%u -> %u\n",
+                            sp_after_tag, demod.debugSamplingPoint());
+                demod.terminate();
+                return -1;
+            }
+        }
+        if (t == HorseFrameType::VOICE && !tagged) {
+            demod.noteValidTag();
+            tagged = true;
+            sp_after_tag = demod.debugSamplingPoint();
+        }
+    }
+    demod.terminate();
+    if (!tagged || lsf_n < 1) {
+        std::printf("coast/sp: auth LSF-ignore setup failed tag=%d lsf=%d\n",
+                    tagged, lsf_n);
+        return -1;
+    }
+    std::printf("coast/sp: authenticated lock kept SP=%u through later LSF\n",
+                sp_after_tag);
+
+    {
+        HorseFrameEncoder enc2;
+        HorseFrameDecoder decoder2;
+        std::vector<frame_t> tx2(2);
+        enc2.encodeLsf(src, dst, nullptr, 0, tx2[0]);
+        enc2.encodeVoiceFrame(melpe, tag, tx2[1], false);
+        std::vector<int16_t> bb2, rx2;
+        if (render_frames(tx2, bb2, true) != 0)
+            return -1;
+        to_24k(bb2, rx2);
+        HorseDemodulator d2;
+        d2.init();
+        d2.resetImmediate();
+        d2.setSkipDcBlock(true);
+        uint32_t sp_lock = 0;
+        bool have_lock = false;
+        for (size_t i = 0; i < rx2.size(); i++) {
+            d2.feedSample(rx2[i], false);
+            frame_t f;
+            if (!d2.takeFrame(f))
+                continue;
+            if (decoder2.decodeFrame(f) == HorseFrameType::VOICE) {
+                have_lock = true;
+                sp_lock = d2.debugSamplingPoint();
+                break;
+            }
+        }
+        if (!have_lock) {
+            std::printf("coast/sp: unauth reject setup failed\n");
+            d2.terminate();
+            return -1;
+        }
+        const uint16_t fi_lock = d2.debugFrameIndex();
+        for (int z = 0; z < 200; z++)
+            d2.feedSample(0, false);
+        if (d2.debugSamplingPoint() != sp_lock
+            || d2.debugFrameIndex() < fi_lock) {
+            std::printf("coast/sp: rejected LSF search moved lock sp %u->%u "
+                        "fi %u->%u\n",
+                        sp_lock, d2.debugSamplingPoint(), (unsigned)fi_lock,
+                        (unsigned)d2.debugFrameIndex());
+            d2.terminate();
+            return -1;
+        }
+        d2.terminate();
+        std::printf("coast/sp: unauth rejected candidate kept SP=%u\n",
+                    sp_lock);
+    }
+
+    std::printf("coast idle frames after last voice (no EOT):\n");
+    int extra4 = 0;
+    for (uint8_t n : { (uint8_t)2, (uint8_t)4, (uint8_t)8 }) {
+        int extra = count_idle_after_voice(n);
+        std::printf("  N=%u extra=%d (%.0f ms)\n", (unsigned)n, extra,
+                    extra * 40.0f);
+        if (n == 4)
+            extra4 = extra;
+    }
+    if (extra4 < 0 || extra4 > 12) {
+        std::printf("coast/sp: coast N=4 extra out of range\n");
+        return -1;
+    }
+    return 0;
+}
+
 int test_three_mode_loopback(void);
 
 int main()
@@ -1140,6 +1369,8 @@ int main()
     if (test_lsf_intact_under_noise() != 0)
         return -1;
     if (test_frame_index_stall() != 0)
+        return -1;
+    if (test_coast_and_sp_protect() != 0)
         return -1;
     if (test_three_mode_loopback() != 0)
         return -1;

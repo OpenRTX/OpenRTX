@@ -55,7 +55,20 @@ public:
     void setCorrPeakMin(int32_t peak);
     void setDropWithoutTag(bool enable);
     void noteValidTag();
+    void setMissUnlock(uint8_t n);
     int32_t lastLockCorrAbs() const;
+    bool lockAuthenticated() const
+    {
+        return haveValidTag;
+    }
+    uint32_t debugSamplingPoint() const
+    {
+        return samplingPoint;
+    }
+    uint16_t debugFrameIndex() const
+    {
+        return frameIndex;
+    }
 
 private:
     void quantize(int16_t sample);
@@ -99,6 +112,7 @@ private:
     uint32_t samplingPoint;
     uint32_t sampleCount;
     uint8_t missedSyncs;
+    uint8_t missUnlock;
     uint32_t initCount;
     float corrThreshold;
     bool skipDcBlock;

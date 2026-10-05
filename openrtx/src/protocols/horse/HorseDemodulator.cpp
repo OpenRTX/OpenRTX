@@ -34,6 +34,7 @@ HorseDemodulator::HorseDemodulator()
     , samplingPoint(0)
     , sampleCount(0)
     , missedSyncs(0)
+    , missUnlock(COAST_MISS_UNLOCK)
     , initCount(0)
     , corrThreshold(0.0f)
     , skipDcBlock(false)
@@ -157,6 +158,11 @@ void HorseDemodulator::noteValidTag()
     haveValidTag = true;
 }
 
+void HorseDemodulator::setMissUnlock(uint8_t n)
+{
+    missUnlock = n;
+}
+
 int32_t HorseDemodulator::lastLockCorrAbs() const
 {
     return lastLockCorr;
@@ -179,7 +185,13 @@ bool HorseDemodulator::feedSample(int16_t sample, bool invertPhase)
     if (updateSampPoint
         && (std::abs(diff) == static_cast<int>(SAMPLES_PER_SYMBOL / 2))) {
         clockRec.update();
-        samplingPoint = clockRec.samplingPoint();
+        /*
+         * Interim: keep the acquire sampling point. Applying the M17
+         * energy TED can move SP by one sample after LSF and drop the
+         * first voice on the DC-block path; a bounded tracker replaces
+         * this freeze in a follow-up.
+         */
+        (void)clockRec.samplingPoint();
         updateSampPoint = false;
     }
     clockRec.sample(sample);
@@ -448,7 +460,7 @@ void HorseDemodulator::syncUpdateState()
         missedSyncs = 0;
     else
         missedSyncs += 1;
-    if ((missedSyncs > 4) || eot)
+    if ((missedSyncs > missUnlock) || eot)
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;
