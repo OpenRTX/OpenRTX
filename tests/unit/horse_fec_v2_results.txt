@@ -347,3 +347,24 @@ burst m17_soft nsym=32 intl=1 ok=0/1000
 radio_linux: disableRtx() called
 radio_linux: disableRtx() called
 done
+/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/build_linux/horse_fec_v2_sim voice 2 4000 2000 1
+voice polar_L8 noise=4000 n=2000 got=2000 ok=2000 fer=0.000000 undet=0 us/frame=2102.0
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/build_linux/horse_fec_v2_sim voice 0 6000 10000 1
+voice repeat2 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 undet=0 us/frame=3.6
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/build_linux/horse_fec_v2_sim voice 1 6000 10000 1
+voice polar_L4 noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 undet=0 us/frame=1174.3
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/build_linux/horse_fec_v2_sim voice 4 6000 10000 1
+voice m17_hard noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 undet=0 us/frame=80.2
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/build_linux/horse_fec_v2_sim voice 5 6000 10000 1
+voice m17_soft noise=6000 n=10000 got=10000 ok=10000 fer=0.000000 undet=0 us/frame=93.7
+radio_linux: disableRtx() called
+radio_linux: disableRtx() called
+/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/build_linux/horse_fec_v2_sim voice 6 6000 10000 1

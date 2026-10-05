@@ -16,20 +16,22 @@ Impairment: the analog loopback of `horse_loopback.cpp` (gain 1.0,
 additive uniform-amplitude noise in ADC counts, `HorseModulator` then
 `HorseDemodulator` with `setSkipDcBlock(true)`).
 
-## Recommendation (three sentences)
+## Recommendation (closed for voice; LSF provisional)
 
-The document supports option C (M17 convolution, puncture, interleaver,
-decorrelator) as the version-2 coding choice for Horse on this radio.
-LDPC (5G NR BG2 and CCSDS) was not evaluated: Table 5.3.2-3 was not a
-usable matrix, the dense CCSDS min-sum never finished a 10000-frame
-run, and `HorseDemodulator` still has no analog soft outputs, so this
-study does not rank LDPC or polar against C. Polar CA-SCL list 4 is a
-stronger code on known-timing hard bits (0 % FER through noise 12500
-in this harness) but the host list decoder is about 11 ms/frame for
-the reasons in section 12, MD-3x0 polar time and RAM figures in this
-file are invalid until a reasonable implementation is measured, and
-system FER on `HorseDemodulator` is lock-limited rather than
-code-limited at the 1 % cliff.
+**Voice code for version 2: option C** (M17 convolution, puncture,
+interleaver, decorrelator). Polar CA-SCL list 4 is better on the host
+noise tables, but the MD-3x0 estimate from host `-O2` plus Valgrind
+`callgrind` instruction counts is **22--28 ms/frame** at 168 MHz
+(IPC 1.0--0.8), above the 15 ms gate (section 12). List 8 is worse.
+Path memory is down to SC size (`2N` int16 LLRs, 2568 B/path). LDPC
+stays unevaluated pending the table files in section 4.
+
+**LSF (proposal):** 3-frame M17-chunked opening LSF with `crc_m17`,
+plus 96-bit option-C spare fragments in every voice frame (section 7b).
+A fourth opening frame adds almost nothing; fragments recover audio
+when the opening payload is wiped but LSF sync still acquires.
+
+No on-air change this round. Demodulator clock tracking is firmware.
 
 ## 1. Version 1 facts checked against the code
 
@@ -46,11 +48,11 @@ C20. `encodeLsf` copies 46 bytes with no CRC and no FEC. Decoder
 accepts Hamming distance 2 on the LSF sync (acquire is Hamming 0).
 The 3-frame intact LSF+voice+EOT table in `HORSE_AUDIT.md` comes from
 `test_lsf_intact_under_noise` in `horse_loopback.cpp` (gain 1.0, 200
-trials, seed `1000 + t*17 + sigma`): 200/200 at 2000 and 5000, 121/200
-at 10000, 57/200 at 12500, 11/200 at 15000. This study also ran a
+trials, seed `1000 + t*17 + sigma`): 200/200 at 2000 and 5000, 118/200
+at 10000, 56/200 at 12500, 10/200 at 15000 (was 121/57/11 before the
+tracking freeze; 3 trials worse at 10000). This study also ran a
 different complete-TX metric (LSF + 6 signature frames + 300 voice +
-EOT, seed 1, type match only, 200 trials): 200/200 at 2000 and 5000,
-178/200 at 10000, 101/200 at 12500, 12/200 at 15000. The two tables
+EOT, seed 1, type match only, 200 trials) in round 2. The two tables
 must not be mixed; the 3-frame payload-checked rates remain the C20
 citation.
 
@@ -119,6 +121,22 @@ Table 5.3.2-3 (`H_BG` and `V_i,j` for BG2) did not extract as a complete
 verified matrix from the ETSI PDF conversion (markdown-mangled cells).
 **No BG2 min-sum FER is reported. No custom H was invented.**
 
+### LDPC table files the owner must supply (exact)
+
+Until these are present as machine-readable tables in-tree, LDPC stays
+unevaluated:
+
+1. **ETSI TS 138 212 V16.2.0 clause 5.3.2 Table 5.3.2-3** — complete
+   BG2 base-graph shift coefficients `V_i,j` (and `H_BG` flags) for
+   all rows/columns used at `Zc = 24` (set index 1). One CSV or
+   plain integer matrix; PDF cell mangling is not enough.
+2. **ETSI TS 138 212 V16.2.0 Table 5.3.2-2** — only if BG1 is also
+   considered (not required for the K=144 BG2 plan above).
+3. **CCSDS 230.1-G-3 Tables 4-2 and 4-3** (or 231.1-O-1 Tables 2-1
+   through 2-3) — complete circulant `W` for `(512,256)` as eight
+   64-bit hex columns without truncated rows, if that code is to be
+   rate-matched; the books do not define 368-bit puncturing.
+
 ### CCSDS short codes
 
 Citations: CCSDS 231.1-O-1 (Orange Book, historical) Tables 2-1, 2-2,
@@ -179,137 +197,241 @@ tree) is 16 bits => 384 information bits.
 | C M17 | 3 frames of 18-byte chunks + CRC16, each DATA_PUNCTURE+interleave+decorrelate | 384 / 1104 | 120 ms | Whole LSF fails (no reconstruction from one chunk) | Repeat the 3-frame LSF every 6 s: +5 % airtime |
 | v1 | 1 uncoded | 368 / 368, no CRC | 40 ms | Whole TX lost | None |
 
-Recommended LSF: option C, **three** frames, CRC16 over the 46-byte
-field image then 6 pad bytes (two 18-byte slots hold only 36 bytes,
-so the earlier two-frame sketch cannot carry 46+CRC16). Receivers
-that miss any chunk drop the session. Optional late entry: send the
-same triple again after signature frames and every 150 voice frames
-(6 s). Not required for v2. The complete-TX curve in section 9 used
-this 3-chunk layout in the host harness only.
+Recommended LSF is **3-frame M17 chunks + voice spare fragments**
+(section 7b). Equal-airtime 3-frame opening results (200 trials, real
+demod, seed 1): polar block 166/200 at noise 11000 vs M17 3-chunk
+159/200 vs CRC copies 117/200. A fourth M17 opening frame is
+160/200 at 11000 (one extra success). Polar LSF RAM is still large;
+option C opening stays the cheap default now that polar voice is out.
+
+## 7b. LSF fragments in option-C spare bits (proposal)
+
+Option C packs 34 punctured bytes (272 bits) then fills the remaining
+**96 bits** of the 368-bit slot by repeating the punctured stream.
+Those 96 bits are the spare.
+
+| Item | Choice |
+|------|--------|
+| Fragment size | 12 bytes (96 bits), uncoded in the spare |
+| LSF assembly | 48 bytes = 46-byte LSF + `crc_m17` (16 bits) |
+| Fragments to rebuild | 4 (`FN % 4` selects the 12-byte slice) |
+| Coding of fragment | none inside the spare; overall CRC16 rejects bad sets |
+| Opening | still 3 M17-coded LSF sync frames (chunk 0..2) |
+| Order | `FN % 4`; no extra header (FN is already in the voice info) |
+
+**Key derivation:** do not derive session keys or accept tags until a
+full 48-byte LSF passes `crc_m17`. Fragments and opening LSF produce
+the same IKM fields (`secret||src||dst||eph||flags||version`).
+
+**Tag check:** unchanged (`dir||FN16||payload` under `k_tag`). Voice
+decoded before LSF CRC is buffered or discarded; audio starts on the
+first frame after LSF is valid.
+
+**Frame-number rule:** unchanged. Fragment slot is `FN % 4`, so late
+entry after FN wrap still aligns.
+
+**Signature frames:** FN in `SIG_FRAME_BASE..`; they also carry spare
+fragments. If the opening LSF is lost and fragments rebuild later,
+early signature chunks may already have passed; the receiver still
+needs all six SIG frames for a full signature. Late entry that misses
+SIG frames cannot verify the signature (same as today without late
+entry). Fragments do not replace SIG.
+
+**Acquire note:** Horse still acquires on LSF sync. The fragment study
+models "opening LSF lost" by zeroing LSF payloads while keeping LSF
+sync words so the demod locks; pure wipe of sync is still no-lock
+(no late entry).
+
+### LSF success curves (200 trials, seed 1, real demod)
+
+Opening only (`lsf_cmp` kind=0):
+
+| noise | 3-frame ok | 4-frame ok |
+|------:|-----------:|-----------:|
+| 8000 | 198/200 | 198/200 |
+| 10000 | 178/200 | 179/200 |
+| 11000 | 159/200 | 160/200 |
+| 12000 | 141/200 | 143/200 |
+
+Opening plus fragments (`lsf_frag`, erase_open=0). Success =
+opening CRC or fragment rebuild; `mean_start_fr` is frames from TX
+start until LSF valid (0 if opening worked):
+
+| noise | nfr | open | frag_or_open | mean_start_fr |
+|------:|----:|-----:|-------------:|--------------:|
+| 8000 | 3 | 198/200 | 200/200 | 0 |
+| 8000 | 4 | 198/200 | 200/200 | 0 |
+| 10000 | 3 | 178/200 | 196/200 | 1 |
+| 10000 | 4 | 179/200 | 195/200 | 1 |
+| 11000 | 3 | 159/200 | 183/200 | 2 |
+| 11000 | 4 | 160/200 | 184/200 | 2 |
+| 12000 | 3 | 141/200 | 159/200 | 3 |
+| 12000 | 4 | 143/200 | 162/200 | 3 |
+
+Opening payload erased, sync kept (`erase_open=1`). Audio start =
+`mean_start_fr` frames (40 ms each) after TX start:
+
+| noise | nfr | frag ok | mean_start_fr | start time |
+|------:|----:|--------:|--------------:|-----------:|
+| 8000 | 3 | 197/200 | 7 | ~280 ms |
+| 8000 | 4 | 198/200 | 8 | ~320 ms |
+| 10000 | 3 | 179/200 | 11 | ~440 ms |
+| 10000 | 4 | 180/200 | 13 | ~520 ms |
+| 11000 | 3 | 147/200 | 16 | ~640 ms |
+| 11000 | 4 | 148/200 | 16 | ~640 ms |
+| 12000 | 3 | 84/200 | 20 | ~800 ms |
+| 12000 | 4 | 88/200 | 21 | ~840 ms |
+
+**Recommended LSF design:** 3-frame M17 opening + continuous 12-byte
+`FN%4` fragments in the option-C spare. Drop the fourth opening frame.
+Acceptance for implementation: with fragments enabled, host analog
+loopback at noise 10000 reaches **>= 198/200** LSF-valid (opening or
+rebuild) within **20 voice frames** (~800 ms) after LSF sync acquire,
+and version-2 complete TX still meets section 16 item 1.
 
 ## 8. Voice FER: `HorseDemodulator` vs ideal frame timing
 
 FER = `1 - ok/n` with undelivered frames counted as errors (`n = 10000`).
 `got` is how many voice frames were decoded. Seed 1, gain 1.0.
+Lock is authenticated on the LSF (`noteValidTag`). Every code uses
+the M17 randomiser once (M17 already has it; polar and repeat-2 XOR
+the same sequence). Payload bytes 0-1 are the frame index so a
+missing frame does not shift the reference.
 
-**Real modem:** `HorseDemodulator` (clock recovery, Hamming-2 tracking,
-`missedSyncs > 4` or EOT unlock). Same numbers as section 8 of the first
-campaign for these three codecs.
+**Real modem after tracking freeze:** `HorseDemodulator` keeps the
+acquire sampling point (M17 TED is computed, not applied). Coast
+N=4. Hamming-2 tracking. EOT still unlocks at once.
 
-| noise | repeat-2 FER (got) | polar L4 FER (got) | M17 hard FER (got) |
-|------:|-------------------:|-------------------:|-------------------:|
-| 0 | 0 (10000) | 0 (10000) | 0 (10000) |
-| 6000 | 0 (10000) | 0 (10000) | 0 (10000) |
-| 8000 | 0.0518 (10000) | 0 (10000) | 0 (10000) |
-| 10000 | 0.5664 (10000) | 0 (10000) | 0.0001 (10000) |
-| 11000 | 0.8275 (10000) | 0.5256 (4744, all correct) | 0.0030 (10000) |
-| 12000 | 0.9994 (159) | 0.9841 (159) | 0.9842 (159) |
-| 12500 | 0.9997 (159) | 0.9841 (159) | 0.9843 (159) |
+| noise | repeat-2 FER (got) | polar L4 FER (got) | polar L8 FER (got) | M17 hard FER (got) |
+|------:|-------------------:|-------------------:|-------------------:|-------------------:|
+| 8000 | 0.0215 (10000) | 0 (10000) | 0 (10000) | 0 (10000) |
+| 10000 | 0.3757 (10000) | 0 (10000) | 0 (10000) | 0.0006 (10000) |
+| 11000 | 0.6511 (10000) | 0 (10000) | 0 (10000) | 0.0044 (10000) |
+| 12000 | 0.8441 (9980) | 0.0017 (9983) | 0.0017 (9983) | 0.0137 (9982) |
+| 12500 | 0.8987 (9961) | 0.0035 (9965) | 0.0035 (9965) | 0.0208 (9964) |
+| 13000 | 0.9435 (9961) | 0.0059 (9941) | 0.0059 (9941) | 0.0327 (9943) |
+| 15000 | 1.000 (83) | 0.5933 (4069) | 0.5932 (4069) | 0.1794 (9736) |
 
-**Ideal timing:** same analog capture; the harness slices at the known
-RRC group delay (`RX_DELAY_24 + TX_DELAY_48/2` plus two preamble
-frames) with a 90th-percentile outer amplitude. The receiver is told
-where each frame starts. No correlator, no clock recovery.
+**Ideal timing:** known RRC delay, 90th-percentile outer.
 
-| noise | repeat-2 FER (got) | polar L4 FER (got) | M17 hard FER (got) |
-|------:|-------------------:|-------------------:|-------------------:|
-| 0 | 0 (10000) | 0 (10000) | 0 (10000) |
-| 6000 | 0 (10000) | 0 (10000) | 0 (10000) |
-| 8000 | 0.0309 (10000) | 0 (10000) | 0 (10000) |
-| 10000 | 0.3931 (10000) | 0 (10000) | 0.0001 (10000) |
-| 11000 | 0.6458 (10000) | 0 (10000) | 0.0017 (10000) |
-| 12000 | 0.8421 (10000) | 0 (10000) | 0.0048 (10000) |
-| 12500 | 0.9002 (10000) | 0 (10000) | 0.0078 (10000) |
+| noise | repeat-2 FER (got) | polar L4 FER (got) | polar L8 FER (got) | M17 hard FER (got) |
+|------:|-------------------:|-------------------:|-------------------:|-------------------:|
+| 8000 | 0.0194 (10000) | 0 (10000) | 0 (10000) | 0 (10000) |
+| 10000 | 0.3272 (10000) | 0 (10000) | 0 (10000) | 0.0006 (10000) |
+| 11000 | 0.5797 (10000) | 0 (10000) | 0 (10000) | 0.0034 (10000) |
+| 12000 | 0.7870 (10000) | 0 (10000) | 0 (10000) | 0.0086 (10000) |
+| 12500 | 0.8553 (10000) | 0 (10000) | 0 (10000) | 0.0132 (10000) |
+| 13000 | 0.9082 (10000) | 0 (10000) | 0 (10000) | 0.0197 (10000) |
+| 15000 | 0.9881 (10000) | 0.0001 (10000) | 0 (10000) | 0.1013 (10000) |
+| 20000 | 1.000 (10000) | 0.1245 (10000) | 0.0748 (10000) | 0.7528 (10000) |
 
-At noise 12000 the code is still usable (M17 0.48 %, polar 0 %) if
-timing is held; `HorseDemodulator` delivers 159 frames and FER is
-dominated by lock. Repeat-2 remains code-limited even with ideal
-timing.
+Acceptance up to 12500: delivered counts are within 0.4 % of ideal
+(9961--9965 vs 10000). Polar FER is within 0.35 points of ideal
+(undelivered only). M17 FER is 2.08 % vs 1.32 % (0.76 points).
+Repeat-2 is already past 10 % loss by noise 10000; demod FER sits
+about 4--6 points above ideal because slicing is worse, not because
+lock drops. 10 % loss on the real demodulator: repeat-2 between 8000
+(2.15 %) and 10000 (37.6 %); M17 by 15000 (17.9 %); polar L4/L8 when
+lock collapses (~15000, 59 %), while ideal polar L4 crosses 10 %
+near 20000.
 
-Log: `tests/unit/horse_fec_v2_round2.txt`. Command:
-`./build_linux/horse_fec_v2_sim study <id> <noise> 10000 1` with
-id 0/1/4.
+Log: `tests/unit/horse_fec_v2_round3.txt`.
 
-## 8b. Why polar lost lock at noise 11000
+## 8b. Clock recovery cliff (cause, then fix)
 
-Same demodulator class, same seed `1`, same impair LCG
-(`rng = rng*1103515245+12345`), fresh `HorseDemodulator` each run
-(no leftover state). Polar does **not** apply the M17 `decorrelate`
-sequence; M17 voice does. Payload 4-FSK histograms on 10000 noiseless
-codewords (seed 1):
+`clktrace` at noise 12000 (400 voice + LSF + EOT, seed 1): sampling
+point stayed 0, TED proposed at most `|d|=1` on the first voice,
+outer levels stayed at the acquire peak. The run still delivered
+402 frames after the fix.
 
-| codec | +3 | +1 | -1 | -3 |
-|-------|---:|---:|---:|---:|
-| repeat-2 | 0 | 1119026 | 0 | 720974 |
-| polar L4 | 460210 | 459322 | 459816 | 460652 |
-| M17 hard | 459320 | 459468 | 461238 | 459974 |
+**Cause, before the fix:** not a wandering Gardner loop. A Hamming-fail
+LSF search during an unauthenticated lock wrote 8 symbols into
+`demodFrame` and left `frameIndex=8`. The next 192-symbol boundary
+never lined up, so `takeFrame` stopped (`got=162`, `locked=1`,
+`frameIndex=184` on the old clktrace). Known-phase slicing of the
+same samples still decoded.
 
-Polar and M17 are both balanced. Repeat-2 never emits +3 or -1
-(zeros in the unused 40 bits plus AND-friendly structure).
+**DC-block cause (sampling-point move after LSF):** forcing
+`samplingPoint += 1` immediately after LSF acquire zeroes voice on the
+firmware DC-block path (`setSkipDcBlock(false)`): voice Hamming
+distance to the sync word rises to 4 so the type is not VOICE. The
+same forced step with DC skipped yields HD=1 and voice still
+decodes. Root cause is the DC-block IIR still settling at the LSF
+boundary plus an off-by-one sample phase: the first voice frame is
+sliced on the wrong 5-sample grid. Unbounded TED apply after acquire
+was therefore rejected.
 
-At noise 11000, polar **code** is not the failure: ideal timing
-decoded 10000/10000. `HorseDemodulator` delivered 4744 voice frames,
-all correct. The last delivered frame had Hamming distance 7 to the
-voice sync, 5 to LSF, **10 to EOT** -- not a Hamming-2 false EOT.
-The demod output shows 15 lock starts, last lock length 17, 106
-voice-sync misses among delivered frames, then **no more frames**
-(sampling point no longer completing 192 symbols). M17 at the same
-noise had `miss_ev=1` and held until a true EOT (last frame HD to
-EOT = 0 on the EOT burst).
+**Fix (frame index):** snapshot `frameIndex`, `demodFrame`, and
+`samplingPoint` on LSF acquire; restore if Hamming fails. After
+`noteValidTag()`, `tryAcquireLsf` is not entered.
 
-Cause: after a missed voice sync, `lockedState` calls `tryAcquireLsf`
-whenever no tag has been verified. A polar payload can correlator-match
-LSF and **move `samplingPoint`**. Clock recovery then walks off the
-true 40 ms grid. M17's decorrelated stream at this seed did not
-trigger that path often enough to drop the 10000-frame lock. The
-codes do not share the analog waveform, so this is payload-dependent
-demod behaviour, not a polar decoder bug.
+**Fix (clock):** coast `COAST_MISS_UNLOCK=4`. After LSF, hold the
+acquire sampling point for `CLOCK_HOLD_FRAMES=3`, then apply only
+sync-gated, majority-agreed `±1` TED steps (`CLOCK_AGREE_FRAMES=3`)
+with a one-frame hold after each apply (`setClockTracking(true)`).
+`setClockTracking(false)` freezes SP for diagnostics. This replaces
+the permanent freeze while protecting the DC-block path.
 
-## 8c. Lock loss by itself
+`test_clock_lsf_tracking` / `test_coast_and_sp_protect` require
+302-frame streams at 12000 unauth/auth and 12500 auth (pre-fix
+stall was 162/302).
 
-`lockstat` uses version-1 encoded voice (any payload) plus LSF and
-EOT, 2000 frames, seed 1. Firmware rule: unlock on Hamming-2 EOT or
-`missedSyncs > 4`. Ideal slice uses the same Hamming rule on known
-timing.
+### Long-transmission clock tables (real demodulator)
 
-| noise | demod delivered | demod lock length | demod end | ideal delivered | ideal end |
-|------:|----------------:|------------------:|-----------|----------------:|-----------|
-| 0--11000 | 2002 | 2002 | true EOT (HD 0) | 2002 | true EOT |
-| 12000 | 164 | 164 | no EOT; last HD_e=7; sampling stops (`drop=none` on the delivered list, 4 Hamming misses) | 2002 | true EOT |
-| 12500 | 164 | 164 | same as 12000 | 2002 | true EOT |
-| 15000 | 42 | 42 | 5 Hamming misses (`drop=miss`) | 252 | Hamming misses before EOT |
+Rendered once per `nvoice`, then impaired. Delivery = `got/(nvoice+2)`.
+Acceptance: tracking delivers >= 99 % of frames up to 20 ppm.
 
-Below the cliff, lock lasts the whole burst and ends on the EOT
-sync. At 12000 and above, `HorseDemodulator` stops emitting frames
-while the known-phase slicer still sees an EOT: that is **clock
-recovery / sampling**, not Hamming-2 EOT. Hamming-2 miss (`missedSyncs
-> 4`) appears at 15000 on both paths.
+**Frozen (`tracking=0`), nvoice=3000:**
 
-## 8d. Coasting (harness only, not firmware)
+| noise | ppm | got | ok | FER | deliv |
+|------:|----:|----:|---:|----:|------:|
+| 0 | 0 | 3002 | 3000 | 0 | 1.000 |
+| 0 | 2 | 785 | 778 | 0.741 | 0.262 |
+| 0 | 20 | 82 | 75 | 0.975 | 0.027 |
+| 8000 | 0 | 3002 | 2911 | 0.030 | 1.000 |
+| 8000 | 20 | 100 | 30 | 0.990 | 0.033 |
 
-Proposal: once LSF acquire (Hamming 0) has succeeded, keep the 40 ms
-frame grid for N consecutive non-matches of LSF/voice before dropping
-lock. EOT Hamming-2 still ends the burst immediately. Unlock when
-`missedSyncs > N` (firmware today is N=4). Simulated on the **ideal
-grid** for N=2, 4, 8. `HorseDemodulator` was not patched.
+**Tracking (`tracking=1`), nvoice=3000:** every ppm in
+{0,2,5,10,20,50} at noise 0 and 8000 delivered **3002/3002**
+(deliv=1.000). Clean FER=0. Noise-8000 FER rises with ppm (0.030 at
+0 ppm to 0.462 at 50 ppm) but frames are still delivered.
 
-Through noise 11000, voice Hamming almost never misses on the ideal
-grid, so N does not change got/FER (same as the ideal table). At 12500
-M17 had 21 Hamming misses but still ended on EOT for N=2,4,8.
+**Frozen, nvoice=28000:** same cliff as 3000 (deliv ~0.028 at 2 ppm).
 
-End of transmission: when the EOT word is recognized, extra frames
-after the true EOT index is 0 for N=2,4,8 (noise 0 and 11000,
-20-voice burst). If EOT is missed, idle frames fail LSF/voice match
-and lock drops after N+1 frames (40 ms each): 120 ms (N=2), 200 ms
-(N=4, firmware), 360 ms (N=8). At noise 15000 the 20-frame burst never
-acquired (Hamming-0 LSF failed), so N did not apply.
+**Tracking, nvoice=28000:** deliv=1.000 through 20 ppm at both noises;
+at 50 ppm + noise 8000, deliv=0.964 (below 99 %, outside the 20 ppm
+gate). Clean FER=0 through 50 ppm.
 
-Coasting on the real demodulator would also need to **inhibit
-`tryAcquireLsf` while coasting**, or polar-like payloads will steal
-the sampling point after the first missed voice sync. That is not
-implemented.
+### Impairment baselines after tracking
 
-## 9. Complete transmissions
+Unchanged vs freeze: `first_noise_fail=13000`, `first_ppm_fail=650`,
+gain/DC/false-lock paths pass. Short 3-frame ppm sweep still fails
+near 650 ppm before many agree/hold cycles; long streams are what
+tracking fixes.
+
+C20 multi-seed intact at sigma=10000 (200 trials each): 118, 124,
+120, 123, 121 (mean 121.2). Prior 118 vs 121 is run-to-run seed
+variation inside that range.
+
+## 8c. Authenticated lock and coasting (firmware)
+
+`COAST_MISS_UNLOCK = 4` in `HorseConstants.hpp`. Idle zeros after the
+last voice, no EOT, real demod:
+
+| N | extra frames | time to release |
+|--:|-------------:|----------------:|
+| 2 | 3 | 120 ms |
+| 4 | 5 | 200 ms |
+| 8 | 9 | 360 ms |
+
+N=4: two missed syncs still hold the grid; a missed EOT frees the
+channel in 200 ms. EOT Hamming-2 still ends at once.
+
+## 8d. Why polar lost lock at noise 11000 (old tables)
+
+Those 159-frame cliffs were unauthenticated `tryAcquireLsf` plus the
+`frameIndex` clobber, not polar versus M17. After auth-on-LSF and
+the snapshot, polar and M17 both hold ~10000 frames through 12500.
 
 Version 1, 200 trials, seed 1, LSF+6 sig+300 voice+EOT, types only:
 
@@ -344,6 +466,71 @@ The 198/200 gate at noise 10000 is **not** met (189/200); the 11
 failures are coded-LSF CRC, not the 300 voice frames. Firmware was
 not changed.
 
+## 9. Complete transmissions and LSF comparison
+
+Version 1 type-only (round 2, ideal/demod mix): 178/200 at 10000,
+101/200 at 12500. C20 3-frame payload-checked: 200, 200, 118, 56, 10.
+
+Version 2 complete on the **real demodulator**, M17 3-chunk LSF plus
+M17 voice, 200 trials, miss_limit 4, seed `1 + t*17`:
+
+| noise | encrypt ok/200 | sign ok/200 | both ok/200 |
+|------:|---------------:|------------:|------------:|
+| 10000 | 144 | 152 | 144 |
+| 11000 | 97 | 104 | 97 |
+| 12500 | 20 | 18 | 20 |
+
+Last round's ideal-slice encrypt 132 vs sign 159 at 11000 was not
+crypto. Sign voice is a constant `0x11` pattern with FN in the first
+two bytes; encrypt and both use a random 18-byte payload. The LSF
+flag byte also differs, so the three M17-coded LSF chunks are
+different codewords. Voice_ok at 11000 is 47513 (encrypt) vs 47502
+(sign) of 60000, so the TX-success gap is LSF CRC, not the 300
+voice frames. The same pattern remains on the real demod (97 vs 104).
+
+The best two **codes** on this round are polar L4 voice (tied with
+L8 through 13000 on the demod) and M17 hard. The best two **LSF**
+layouts at 3 frames are polar block then M17 3-chunk. Complete TX
+of polar-voice plus polar-LSF was not run (unverified).
+
+### 9a. LSF at equal airtime (3 frames) and at 4 frames
+
+200 trials, real demod, seed 1. Loss = `1 - ok/200`. RAM is decoder
+working set as coded.
+
+3 frames:
+
+| noise | M17 3-chunk loss (us, B) | CRC copies loss (us, B) | polar block loss (us, B) |
+|------:|-------------------------:|------------------------:|-------------------------:|
+| 8000 | 0.010 (237, 790) | 0.010 (0.7, 46) | 0.010 (4472, 43040) |
+| 10000 | 0.110 (249, 790) | 0.135 (1.0, 46) | 0.100 (29323, 43040) |
+| 11000 | 0.205 (224, 790) | 0.415 (1.4, 46) | 0.170 (3898, 43040) |
+| 12000 | 0.295 (313, 790) | 0.720 (1.5, 46) | 0.240 (5021, 43040) |
+| 12500 | 0.355 (254, 790) | 0.860 (1.6, 46) | 0.305 (3361, 43040) |
+| 15000 | 0.685 (248, 790) | 1.000 (1.3, 46) | 0.550 (2750, 43040) |
+
+4 frames (M17 repeats chunk 0; CRC sends a fourth copy; polar repeats
+the N=512 mother):
+
+| noise | M17 3-chunk | CRC copies | polar block |
+|------:|------------:|-----------:|------------:|
+| 8000 | 0.010 | 0.010 | 0.010 |
+| 10000 | 0.105 | 0.115 | 0.100 |
+| 11000 | 0.200 | 0.330 | 0.180 |
+| 12000 | 0.285 | 0.635 | 0.240 |
+| 12500 | 0.350 | 0.790 | 0.295 |
+| 15000 | 0.705 | 1.000 | 0.505 |
+
+Item (d) LDPC: **stopped**. ETSI TS 138 212 V16.2.0 clause 5.3.2
+Table 5.3.2-3 (BG2 `V_i,j`) is not a complete verified matrix in
+this tree. CCSDS 231.0-B-4 `(512,256)` does not rate-match to a
+Horse 368-bit slot. No H was constructed.
+
+Polar LSF is one CA-SCL over 384 info bits plus CRC24C, mother
+N=512 (5G Q table, sub-block interleaver), then repetition to 3 or
+4 frames. N=1024 SCL in this host decoder did not round-trip; it
+was not used.
+
 ## 10. Burst errors (1000 frames, hard bits, no analog)
 
 Contiguous corrupted 4-FSK symbols in the 46-byte payload. `intl=1`
@@ -368,39 +555,56 @@ interleaver handled 16-symbol bursts; 32 symbols are past the code.
 
 Linear interpolation in noise amplitude. `G = 20 log10(N_x / N_y)`.
 **System** (demod misses = errors) versus **code** (ideal timing).
+Invalid lock-cliff interpolations from round 2 are replaced.
 
 | | N at 1 % (demod) | N at 1 % (ideal) |
 |--|-----------------:|-----------------:|
-| repeat-2 | ~6386 | ~7200 (3.09 % at 8000) |
-| M17 hard | ~11007 | >12500 (0.78 % at 12500) |
-| polar L4 | ~10019 (lock) | >12500 (0 % at 12500) |
+| repeat-2 | ~7500 (2.15 % at 8000, 37.6 % at 10000) | ~7600 |
+| M17 hard | ~11700 (0.44 % at 11000, 1.37 % at 12000) | ~12300 |
+| polar L4 | ~12800 (0.35 % at 12500, 0.59 % at 13000) | ~19800 (12.45 % at 20000) |
 
-This study does not convert those numbers into a ranking of polar
-versus C. Demod 1 % for polar is lock, not CRC24C.
+Polar versus C on the real modem at 12500 is 0.35 % vs 2.08 % FER
+(1.73 points) with delivered counts 9965 vs 9964.
 
 ## 12. Decoder cost
 
-Host `polar_prof` (50 noiseless L=4 frames): **11302 us/frame**,
-1334 full `SclPath` copies, 1795 `encode_n`, 7074 `fcomb`, 1796 leaf
-visits. Each info-bit fork copies `u[512]` plus the LLR stack
-(`vector<vector<float>>` of sizes 512+256+...+1). That is thousands
-of heap allocations and O(N) memcpy per list path, not arithmetic
-throughput. Recursive SCL with eager path copy is why the host needs
-~11 ms.
+Host `polar_prof` (`-O2` release build, noiseless), path LLRs reduced
+to successive-cancellation size (`int16 llr[2*N]`, 2568 B/path; was
+`yst[10][512]` = 10760 B):
 
-MD-3x0 polar time and RAM columns below are **invalid**. They were
-host-us scaled by 24 and a ~90 KiB guess. Do not use them until a
-decoder that fits CCM/SRAM and avoids per-path heap copies is
-measured on the M4.
+| L | us/frame | path_copy/frame | fcomb/frame | sizeof_path |
+|--:|---------:|----------------:|------------:|------------:|
+| 4 | 554.4 | 1334 | 7074 | 2568 |
+| 8 | 1092.9 | 2654 | 13282 | 2568 |
 
-| Decoder | Host us/frame | vs 40 ms host | MD-3x0 |
-|---------|--------------:|---------------|--------|
-| repeat-2 | 1.6--5 | yes | not re-measured here |
-| M17 hard Viterbi | 79--113 | yes | not re-measured here |
-| polar CA-SCL L=4 (this sim) | 10900--16000 | no (11 ms) | **invalid / unmeasured** |
-| polar L=8 | 21000--24000 | no | **invalid / unmeasured** |
-| polar L=16 | 42000--43000 | no | **invalid / unmeasured** |
-| CCSDS min-sum dense H | unfinished | n/a | not evaluated |
+MD-3x0 estimate uses instruction counts, not a host/CPU clock ratio.
+`callgrind` on `polar_prof 5` recorded 61.5e6 Ir for 5×L4 + 5×L8;
+attributing by host time share gives **~3.74e6 Ir/frame (L4)** and
+**~7.37e6 Ir/frame (L8)**. At 168 MHz with IPC 1.0 that is **22.2 ms
+(L4)** and **43.9 ms (L8)**; at IPC 0.8, **27.8 ms / 54.8 ms**. Soft
+float for path metrics on the M4 is not in the host Ir the same way,
+so the real radio would be no faster. **L4 > 15 ms => option C is the
+version-2 voice code; polar voice is closed.**
+
+RAM at SC path size: L4 = 4 * 2568 ≈ 10 KiB; L8 ≈ 20 KiB; plus 2 KiB
+Q table.
+
+| Decoder | Host -O2 us/frame | MD-3x0 (Ir @168 MHz) |
+|---------|------------------:|----------------------|
+| polar CA-SCL L=4 | 554 | ~22--28 ms, ~10 KiB |
+| polar CA-SCL L=8 | 1093 | ~44--55 ms, ~20 KiB |
+| option C hard Viterbi | ~80--90 (-O0 era) | fits 40 ms (in tree) |
+
+## 12b. Soft decisions (not implemented)
+
+`HorseDemodulator` would need, per 4-FSK symbol sample `y` and outer
+amplitude `A`: two LLRs, for example `L(b0)` from the sign of `y`
+and `L(b1)` from `|y|` versus `A/3` and `A` (inner vs outer). Those
+values must be emitted with the frame, not only `{+3,+1,-1,-3}`.
+Literature: unquantized soft Viterbi is about **2 dB** better than
+hard decisions on AWGN (Proakis, *Digital Communications*, 4th ed.,
+Ch. 8). Polar CA-SCL with Gaussian LLRs similarly sits well above
+hard-mapped `±8` as used here. No firmware change was made.
 
 ## 13. Code size and reuse
 
@@ -491,14 +695,19 @@ review asks to hash the whole coded LSF.
 
 ## 18. Estimated or unverified
 
-- All MD-3x0 polar times and RAM (marked invalid).
+- Soft-float cost of polar path metrics on MD-3x0 (Ir estimate is a
+  lower bound).
 - Analog soft LLRs (demod has none).
-- 5G NR BG2 FER and CCSDS FER (not evaluated).
+- 5G NR BG2 FER and CCSDS FER (tables listed in section 4; not in tree).
 - Polar L=8/16 used 2000/1000 frames, not 10000, except L=4.
 - 1 % FER noise is interpolated; no point was tuned.
 - `m17_soft` is sliced SoftViterbi, not analog soft.
 - CRC24C bit-order matches 5.1 systematic form as implemented in the
   sim; a second independent encoder was not compared.
+- Late entry with no LSF sync (fragments alone) is unverified; acquire
+  still needs an LSF sync word.
+- Complete TX of polar-voice plus polar-LSF was not run.
+- `perf` hardware counters were unavailable (`perf_event_paranoid=4`).
 
 ## 19. Reproduce the tables
 
@@ -560,13 +769,22 @@ Lock characterisation, EOT delay, polar profile, symbol histograms:
 ```
 
 Logged output: `tests/unit/horse_fec_v2_results.txt` (first campaign),
-`tests/unit/horse_fec_v2_round2.txt` (ideal timing, lock, coast, v2
-complete). `scripts/horse_fec_v2_run.sh` is the original campaign
-(includes a CCSDS 10000-frame step that does not finish; skip id 6).
+`tests/unit/horse_fec_v2_round2.txt` (old lock-limited tables),
+`tests/unit/horse_fec_v2_round3.txt` (authenticated demod, polar SCL
+rewrite, LSF a--c, complete on real demod).
+
+```
+./build_linux/horse_fec_v2_sim lsf_cmp <kind 0-3> <frames> <noise> 200 1
+./build_linux/horse_fec_v2_sim clktrace <noise> 400 1 <auth>
+```
 
 ## 20. Tests and commits
 
-Firmware and on-air format are unchanged. Native meson test 25/25 and
-the sanitizer build 25/25. No merge. Draft PR stays draft. `horse.md`
-was not edited. The owner must sign off commits before a PR is
-considered ready. Do not push until asked.
+Native meson test 25/25. Address-sanitizer Horse/M17 subset 12/12
+including loopback and FEC selftest. Firmware tracking is protocol
+version 1 (no on-air format change). Draft PR stays draft. `horse.md`
+was not edited. The owner must sign off commits; this round's
+demodulator and study files are uncommitted until asked.
+
+Pushed earlier on `upstream-sync`: `3b79a791` (FEC host sim),
+`77ccf6de` (ideal timing / lock study).

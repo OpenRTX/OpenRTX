@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 
 static constexpr size_t FEC_INFO_BITS = 144;
 static constexpr size_t FEC_CODED_BITS = 368;
@@ -152,13 +153,14 @@ struct PolarCodec {
         bytes_from_bits(y, POLAR_E, coded46);
     }
 
-    static float fcomb(float a, float b)
+    static int16_t fcomb(int16_t a, int16_t b)
     {
-        float sa = a < 0.f ? -1.f : 1.f;
-        float sb = b < 0.f ? -1.f : 1.f;
-        float ma = a < 0.f ? -a : a;
-        float mb = b < 0.f ? -b : b;
-        return sa * sb * (ma < mb ? ma : mb);
+        int16_t sa = a < 0 ? -1 : 1;
+        int16_t sb = b < 0 ? -1 : 1;
+        int16_t ma = a < 0 ? (int16_t)-a : a;
+        int16_t mb = b < 0 ? (int16_t)-b : b;
+        int16_t m = ma < mb ? ma : mb;
+        return (int16_t)(sa * sb * m);
     }
 
     static void encode_n(uint8_t *x, size_t n)
@@ -170,11 +172,27 @@ struct PolarCodec {
         }
     }
 
+    /* SC needs one LLR vector per stage: N + N/2 + ... + 1 = 2N-1. */
+    static constexpr size_t SCL_DEPTH = 10;
+    static constexpr size_t SCL_LLR = 2 * POLAR_N;
+
     struct SclPath {
         uint8_t u[POLAR_N];
         float metric;
-        std::vector<std::vector<float>> yst;
+        uint8_t depth;
+        int16_t llr[SCL_LLR];
     };
+
+    static size_t stage_off(size_t depth)
+    {
+        size_t off = 0;
+        size_t sz = POLAR_N;
+        for (size_t i = 0; i < depth; i++) {
+            off += sz;
+            sz >>= 1;
+        }
+        return off;
+    }
 
     void scl_rec(size_t n, size_t u0, std::vector<SclPath> &ps,
                  size_t Lmax) const
@@ -184,11 +202,11 @@ struct PolarCodec {
             std::vector<SclPath> nxt;
             nxt.reserve(ps.size() * 2);
             for (SclPath &p : ps) {
-                float l = p.yst.back()[0];
+                int16_t l = p.llr[stage_off(p.depth)];
                 if (frozen[u0]) {
                     p.u[u0] = 0;
-                    if (l < 0.f)
-                        p.metric += -l;
+                    if (l < 0)
+                        p.metric += (float)-l;
                     nxt.push_back(p);
                 } else {
                     n_path_copy += 2;
@@ -196,10 +214,10 @@ struct PolarCodec {
                     SclPath b = p;
                     a.u[u0] = 0;
                     b.u[u0] = 1;
-                    if (l < 0.f)
-                        a.metric += -l;
+                    if (l < 0)
+                        a.metric += (float)-l;
                     else
-                        b.metric += l;
+                        b.metric += (float)l;
                     nxt.push_back(a);
                     nxt.push_back(b);
                 }
@@ -217,48 +235,54 @@ struct PolarCodec {
         }
         const size_t h = n / 2;
         for (SclPath &p : ps) {
-            const std::vector<float> &y = p.yst.back();
-            std::vector<float> left(h);
+            const int16_t *y = p.llr + stage_off(p.depth);
+            int16_t *left = p.llr + stage_off(p.depth + 1);
             for (size_t k = 0; k < h; k++) {
                 left[k] = fcomb(y[k], y[k + h]);
                 n_fcomb++;
             }
-            p.yst.push_back(std::move(left));
+            p.depth += 1;
         }
         scl_rec(h, u0, ps, Lmax);
         for (SclPath &p : ps) {
-            p.yst.pop_back();
+            p.depth -= 1;
             uint8_t xl[POLAR_N];
             memcpy(xl, p.u + u0, h);
             encode_n(xl, h);
             n_encode_n++;
-            const std::vector<float> &y = p.yst.back();
-            std::vector<float> right(h);
-            for (size_t k = 0; k < h; k++)
-                right[k] = y[k + h] + (xl[k] ? -y[k] : y[k]);
-            p.yst.push_back(std::move(right));
+            const int16_t *y = p.llr + stage_off(p.depth);
+            int16_t *right = p.llr + stage_off(p.depth + 1);
+            for (size_t k = 0; k < h; k++) {
+                int32_t v = (int32_t)y[k + h] + (xl[k] ? -y[k] : y[k]);
+                if (v > 32767)
+                    v = 32767;
+                if (v < -32768)
+                    v = -32768;
+                right[k] = (int16_t)v;
+            }
+            p.depth += 1;
         }
         scl_rec(h, u0 + h, ps, Lmax);
         for (SclPath &p : ps)
-            p.yst.pop_back();
+            p.depth -= 1;
     }
 
     /* CA-SCL. llr: + means bit 0 preferred. Returns false on CRC fail. */
     bool decode(const float *llr368, size_t list_size,
                 uint8_t info144[FEC_INFO_BYTES]) const
     {
-        float L[POLAR_N];
-        for (size_t n = 0; n < POLAR_N; n++)
-            L[n] = 0.f;
-        for (size_t n = 0; n < POLAR_E; n++)
-            L[polar_J(n)] = llr368[n];
-        for (size_t n = POLAR_E; n < POLAR_N; n++)
-            L[polar_J(n)] = 1.0e4f;
-
         std::vector<SclPath> ps(1);
-        memset(ps[0].u, 0, POLAR_N);
-        ps[0].metric = 0.f;
-        ps[0].yst.emplace_back(L, L + POLAR_N);
+        memset(&ps[0], 0, sizeof(SclPath));
+        for (size_t n = 0; n < POLAR_E; n++) {
+            float v = llr368[n] * 16.f;
+            if (v > 32767.f)
+                v = 32767.f;
+            if (v < -32768.f)
+                v = -32768.f;
+            ps[0].llr[polar_J(n)] = (int16_t)v;
+        }
+        for (size_t n = POLAR_E; n < POLAR_N; n++)
+            ps[0].llr[polar_J(n)] = 16000;
         scl_rec(POLAR_N, 0, ps, list_size);
 
         size_t best = ps.size();
@@ -275,6 +299,211 @@ struct PolarCodec {
                 bm = ps[p].metric;
                 best = p;
                 bytes_from_bits(kbits, FEC_INFO_BITS, info144);
+            }
+        }
+        return best < ps.size();
+    }
+};
+
+static constexpr size_t POLAR_LSF_N = 512;
+static constexpr size_t POLAR_LSF_INFO = 384;
+static constexpr size_t POLAR_LSF_K = POLAR_LSF_INFO + POLAR_CRC_BITS;
+
+static size_t polar_J_n(size_t n, size_t N)
+{
+    const size_t B = N / 32;
+    return (size_t)POLAR_P32[n / B] * B + (n % B);
+}
+
+/* One polar code over the LSF block. ETSI TS 138 212 V16 N=1024, CRC24C. */
+struct PolarLsfCodec {
+    uint8_t frozen[POLAR_LSF_N];
+    uint16_t info_pos[POLAR_LSF_K];
+    mutable uint64_t n_path_copy;
+
+    PolarLsfCodec() : n_path_copy(0)
+    {
+        memset(frozen, 1, sizeof frozen);
+        uint16_t cand[POLAR_LSF_N];
+        size_t nc = 0;
+        for (size_t i = 0; i < 1024; i++) {
+            if (polar_q_1024[i] < POLAR_LSF_N)
+                cand[nc++] = polar_q_1024[i];
+        }
+        for (size_t i = 0; i < POLAR_LSF_K; i++)
+            frozen[cand[nc - POLAR_LSF_K + i]] = 0;
+        size_t k = 0;
+        for (size_t n = 0; n < POLAR_LSF_N; n++)
+            if (!frozen[n])
+                info_pos[k++] = (uint16_t)n;
+        if (k != POLAR_LSF_K)
+            std::abort();
+    }
+
+    static void encode_kernel(uint8_t *x)
+    {
+        for (size_t s = 0; s < 9; s++) {
+            size_t half = size_t{ 1 } << s;
+            size_t step = half << 1;
+            for (size_t i = 0; i < POLAR_LSF_N; i += step)
+                for (size_t j = 0; j < half; j++)
+                    x[i + j] ^= x[i + j + half];
+        }
+    }
+
+    void encode(const uint8_t info48[48], size_t E, uint8_t *coded) const
+    {
+        uint8_t ib[POLAR_LSF_INFO];
+        bits_from_bytes(info48, POLAR_LSF_INFO, ib);
+        uint32_t c = crc24c(ib, POLAR_LSF_INFO);
+        uint8_t kbits[POLAR_LSF_K];
+        memcpy(kbits, ib, POLAR_LSF_INFO);
+        for (int i = 0; i < 24; i++)
+            kbits[POLAR_LSF_INFO + (size_t)i] = (uint8_t)((c >> (23 - i))
+                                                          & 1u);
+        uint8_t u[POLAR_LSF_N];
+        memset(u, 0, sizeof u);
+        for (size_t i = 0; i < POLAR_LSF_K; i++)
+            u[info_pos[i]] = kbits[i];
+        encode_kernel(u);
+        uint8_t y[POLAR_LSF_N];
+        for (size_t n = 0; n < POLAR_LSF_N; n++)
+            y[n] = u[polar_J_n(n, POLAR_LSF_N)];
+        for (size_t i = 0; i < E; i++) {
+            uint8_t b = y[i % POLAR_LSF_N];
+            if ((i % 8) == 0)
+                coded[i / 8] = 0;
+            if (b)
+                coded[i / 8] |= (uint8_t)(0x80u >> (i % 8));
+        }
+    }
+
+    static constexpr size_t SCL_DEPTH = 10;
+    static constexpr size_t SCL_LLR = 2 * POLAR_LSF_N;
+
+    struct SclPath {
+        uint8_t u[POLAR_LSF_N];
+        float metric;
+        uint8_t depth;
+        int16_t llr[SCL_LLR];
+    };
+
+    static size_t stage_off(size_t depth)
+    {
+        size_t off = 0;
+        size_t sz = POLAR_LSF_N;
+        for (size_t i = 0; i < depth; i++) {
+            off += sz;
+            sz >>= 1;
+        }
+        return off;
+    }
+
+    void scl_rec(size_t n, size_t u0, std::vector<SclPath> &ps,
+                 size_t Lmax) const
+    {
+        if (n == 1) {
+            std::vector<SclPath> nxt;
+            nxt.reserve(ps.size() * 2);
+            for (SclPath &p : ps) {
+                int16_t l = p.llr[stage_off(p.depth)];
+                if (frozen[u0]) {
+                    p.u[u0] = 0;
+                    if (l < 0)
+                        p.metric += (float)-l;
+                    nxt.push_back(p);
+                } else {
+                    n_path_copy += 2;
+                    SclPath a = p;
+                    SclPath b = p;
+                    a.u[u0] = 0;
+                    b.u[u0] = 1;
+                    if (l < 0)
+                        a.metric += (float)-l;
+                    else
+                        b.metric += (float)l;
+                    nxt.push_back(a);
+                    nxt.push_back(b);
+                }
+            }
+            if (nxt.size() > Lmax) {
+                std::nth_element(nxt.begin(), nxt.begin() + (ptrdiff_t)Lmax,
+                                 nxt.end(),
+                                 [](const SclPath &a, const SclPath &b) {
+                                     return a.metric < b.metric;
+                                 });
+                nxt.resize(Lmax);
+            }
+            ps.swap(nxt);
+            return;
+        }
+        const size_t h = n / 2;
+        for (SclPath &p : ps) {
+            const int16_t *y = p.llr + stage_off(p.depth);
+            int16_t *left = p.llr + stage_off(p.depth + 1);
+            for (size_t k = 0; k < h; k++)
+                left[k] = PolarCodec::fcomb(y[k], y[k + h]);
+            p.depth += 1;
+        }
+        scl_rec(h, u0, ps, Lmax);
+        for (SclPath &p : ps) {
+            p.depth -= 1;
+            uint8_t xl[POLAR_LSF_N];
+            memcpy(xl, p.u + u0, h);
+            PolarCodec::encode_n(xl, h);
+            const int16_t *y = p.llr + stage_off(p.depth);
+            int16_t *right = p.llr + stage_off(p.depth + 1);
+            for (size_t k = 0; k < h; k++) {
+                int32_t v = (int32_t)y[k + h] + (xl[k] ? -y[k] : y[k]);
+                if (v > 32767)
+                    v = 32767;
+                if (v < -32768)
+                    v = -32768;
+                right[k] = (int16_t)v;
+            }
+            p.depth += 1;
+        }
+        scl_rec(h, u0 + h, ps, Lmax);
+        for (SclPath &p : ps)
+            p.depth -= 1;
+    }
+
+    bool decode(const float *llr, size_t E, size_t list_size,
+                uint8_t info48[48]) const
+    {
+        std::vector<SclPath> ps(1);
+        memset(&ps[0], 0, sizeof(SclPath));
+        int32_t acc[POLAR_LSF_N];
+        memset(acc, 0, sizeof acc);
+        int cnt[POLAR_LSF_N];
+        memset(cnt, 0, sizeof cnt);
+        for (size_t i = 0; i < E; i++) {
+            size_t j = polar_J_n(i % POLAR_LSF_N, POLAR_LSF_N);
+            acc[j] += (int32_t)(llr[i] * 16.f);
+            cnt[j]++;
+        }
+        for (size_t n = 0; n < POLAR_LSF_N; n++) {
+            int32_t v = cnt[n] ? acc[n] / cnt[n] : 16000;
+            if (v > 32767)
+                v = 32767;
+            if (v < -32768)
+                v = -32768;
+            ps[0].llr[n] = (int16_t)v;
+        }
+        scl_rec(POLAR_LSF_N, 0, ps, list_size);
+        size_t best = ps.size();
+        float bm = 1.0e30f;
+        uint8_t kbits[POLAR_LSF_K];
+        for (size_t p = 0; p < ps.size(); p++) {
+            for (size_t i = 0; i < POLAR_LSF_K; i++)
+                kbits[i] = ps[p].u[info_pos[i]];
+            uint32_t got = 0;
+            for (int i = 0; i < 24; i++)
+                got = (got << 1) | kbits[POLAR_LSF_INFO + (size_t)i];
+            if (got == crc24c(kbits, POLAR_LSF_INFO) && ps[p].metric < bm) {
+                bm = ps[p].metric;
+                best = p;
+                bytes_from_bits(kbits, POLAR_LSF_INFO, info48);
             }
         }
         return best < ps.size();
