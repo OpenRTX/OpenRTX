@@ -8,10 +8,14 @@
 
 #include "core/horse_codec.h"
 #include "core/audio_stream.h"
+#include "core/threads.h"
 #include "protocols/horse/melpe_horse.h"
 #include <pthread.h>
 #include <string.h>
 #include <errno.h>
+#if defined(__ZEPHYR__)
+#include <stdlib.h>
+#endif
 
 #define HORSE_BUF_SIZE 4
 
@@ -297,6 +301,20 @@ static bool horse_startThread(const pathId path, void *(*func)(void *))
     pthread_mutex_unlock(&horse_init_mutex);
 
     pthread_attr_init(&horse_codecAttr);
+#if defined(_MIOSIX)
+    pthread_attr_setstacksize(&horse_codecAttr, CODEC2_THREAD_STKSIZE);
+    {
+        struct sched_param param;
+        param.sched_priority = THREAD_PRIO_HIGH;
+        pthread_attr_setschedparam(&horse_codecAttr, &param);
+    }
+#elif defined(__ZEPHYR__)
+    {
+        void *codec_thread_stack = malloc(CODEC2_THREAD_STKSIZE);
+        pthread_attr_setstack(&horse_codecAttr, codec_thread_stack,
+                              CODEC2_THREAD_STKSIZE);
+    }
+#endif
     int ret = pthread_create(&horse_codecThread, &horse_codecAttr, func, &horse_audioPath);
     if (ret != 0)
         horse_running = false;

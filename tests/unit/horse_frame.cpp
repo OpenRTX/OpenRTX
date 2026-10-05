@@ -73,6 +73,31 @@ static int test_voice_roundtrip()
     return 0;
 }
 
+static int test_ldpc_static_scratch_reuse()
+{
+    uint8_t a[LDPC_VOICE_PAYLOAD_BYTES];
+    uint8_t b[LDPC_VOICE_PAYLOAD_BYTES];
+    uint8_t enc_a[LDPC_VOICE_ENCODED_BYTES];
+    uint8_t enc_b[LDPC_VOICE_ENCODED_BYTES];
+    uint8_t out[LDPC_VOICE_PAYLOAD_BYTES];
+    size_t i;
+
+    for (i = 0; i < sizeof a; i++)
+    {
+        a[i] = (uint8_t)(i + 1);
+        b[i] = (uint8_t)(0x80 ^ i);
+    }
+    ldpc_horse_encode_voice(a, enc_a);
+    ldpc_horse_encode_voice(b, enc_b);
+    ldpc_horse_decode_voice(enc_a, out);
+    if (memcmp(out, a, sizeof a) != 0)
+        return -1;
+    ldpc_horse_decode_voice(enc_b, out);
+    if (memcmp(out, b, sizeof b) != 0)
+        return -1;
+    return 0;
+}
+
 static int test_eot_detect()
 {
     HorseFrameEncoder enc;
@@ -331,6 +356,7 @@ int main()
     if (test_lsf_crypto_roundtrip() != 0) return -1;
     if (test_lsf_unknown_version_is_rejected() != 0) return -1;
     if (test_voice_roundtrip() != 0) return -1;
+    if (test_ldpc_static_scratch_reuse() != 0) return -1;
     if (test_eot_detect() != 0) return -1;
     if (test_voice_frame_number() != 0) return -1;
     if (test_sig_frames_roundtrip() != 0) return -1;

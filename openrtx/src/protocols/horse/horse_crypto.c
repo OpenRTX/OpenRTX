@@ -167,8 +167,8 @@ static bool horse_crypto_tag_dir_fn_payload(const uint8_t *k_tag, uint8_t dir,
                                             uint8_t tag_out[4])
 {
 #ifdef HAVE_LIBSODIUM
-    uint8_t msg[3 + 12];
-    uint8_t mac[crypto_generichash_BYTES];
+    static uint8_t msg[3 + 12];
+    static uint8_t mac[64];
     uint16_t fn = frame_num & 0x7FFF;
 
     if (k_tag == NULL || payload == NULL || tag_out == NULL || payload_len != 12)
@@ -213,7 +213,7 @@ void horse_crypto_voice_encrypt(
     if (horse_sodium_init() != 0)
         return;
 
-    uint8_t nonce[crypto_stream_xchacha20_NONCEBYTES];
+    static uint8_t nonce[24];
     crypto_generichash(nonce, sizeof nonce,
                        nonce_96bit, 12,
                        (const unsigned char *)"HORSEV1", 7);
@@ -252,7 +252,8 @@ bool horse_crypto_voice_decrypt(
     uint8_t *plaintext_out)
 {
 #ifdef HAVE_LIBSODIUM
-    uint8_t expected[HORSE_VOICE_TAG_BYTES];
+    static uint8_t expected[HORSE_VOICE_TAG_BYTES];
+    static uint8_t nonce[24];
 
     if (k_enc == NULL || k_tag == NULL || ciphertext == NULL ||
         plaintext_out == NULL || tag_truncated_32bit == NULL)
@@ -268,7 +269,6 @@ bool horse_crypto_voice_decrypt(
     if (sodium_memcmp(expected, tag_truncated_32bit, HORSE_VOICE_TAG_BYTES) != 0)
         return false;
 
-    uint8_t nonce[crypto_stream_xchacha20_NONCEBYTES];
     crypto_generichash(nonce, sizeof nonce,
                        nonce_96bit, 12,
                        (const unsigned char *)"HORSEV1", 7);
