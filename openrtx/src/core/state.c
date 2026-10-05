@@ -11,6 +11,7 @@
 #include "core/event.h"
 #include "core/state.h"
 #include "core/battery.h"
+#include "core/vfo.h"
 #include "hwconfig.h"
 #include "interfaces/platform.h"
 #include "interfaces/nvmem.h"
@@ -25,27 +26,95 @@ const uint32_t freq_steps[] = { 1000,  5000,  6250,  10000, 12500,
                                 15000, 20000, 25000, 50000, 100000 };
 const size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
 
+static void migrateSettings(struct settings *new_settings,
+                            const settings_t *old_settings)
+{
+    new_settings->brightness = old_settings->brightness;
+    new_settings->contrast = old_settings->contrast;
+    new_settings->voxLevel = old_settings->voxLevel;
+    new_settings->utc_timezone = old_settings->utc_timezone;
+    new_settings->display_timer = old_settings->display_timer;
+    new_settings->vpLevel = old_settings->vpLevel;
+    new_settings->vpPhoneticSpell = old_settings->vpPhoneticSpell;
+    new_settings->macroMenuLatch = old_settings->macroMenuLatch;
+    new_settings->gps_enabled = old_settings->gps_enabled;
+    new_settings->gpsSetTime = old_settings->gpsSetTime;
+    new_settings->m17_can_rx = old_settings->m17_can_rx;
+    new_settings->showBatteryIcon = old_settings->showBatteryIcon;
+
+    memset(new_settings->callsign, 0, sizeof(new_settings->callsign));
+    strncpy(new_settings->callsign, old_settings->callsign, 10);
+}
+
+static void migrateVfo(channel_t *new_vfo, const channel_t *old_vfo,
+                       const settings_t *old_settings)
+{
+    *new_vfo = cps_getDefaultChannel();
+
+    new_vfo->mode = old_vfo->mode;
+    new_vfo->bandwidth = old_vfo->bandwidth;
+    new_vfo->rx_only = old_vfo->rx_only;
+    new_vfo->m17_can = old_settings->m17_can;
+    new_vfo->sqlLevel = old_settings->sqlLevel;
+    new_vfo->power = old_vfo->power;
+    new_vfo->rx_frequency = old_vfo->rx_frequency;
+    new_vfo->tx_frequency = old_vfo->tx_frequency;
+    new_vfo->scanList_index = old_vfo->scanList_index;
+    new_vfo->groupList_index = old_vfo->groupList_index;
+    strncpy(new_vfo->name, old_vfo->name, 32);
+    strncpy(new_vfo->descr, old_vfo->descr, 32);
+    new_vfo->ch_location = old_vfo->ch_location;
+    strncpy(new_vfo->m17_dest, old_settings->m17_dest, 10);
+    strncpy(new_vfo->M17_meta_text, old_settings->M17_meta_text, 53);
+
+    switch(new_vfo->mode)
+    {
+        case OPMODE_M17:
+            new_vfo->m17 = old_vfo->m17;
+            break;
+        case OPMODE_FM:
+            new_vfo->fm = old_vfo->fm;
+            break;
+        case OPMODE_DMR:
+            new_vfo->dmr = old_vfo->dmr;
+            break;
+    }
+}
+
 void state_init()
 {
+    settings_t oldSettings;
+    channel_t oldVfo;
+    int settingsRead, vfoRead;
+
     pthread_mutex_init(&state_mutex, NULL);
 
+    settingsRead = nvm_readSettings(&oldSettings);
+    vfoRead = nvm_readVfoChannelData(&oldVfo);
+
     /*
-     * Try loading settings from nonvolatile memory and default to sane values
-     * in case of failure.
+     * Load settings from new location first with a fallback to the old one.
+     * TODO: remove in OpenRTX v0.6.x
      */
-    if (nvm_readSettings(&state.settings) < 0) {
-        state.settings = default_settings;
+    if (settings_load(&state.settings) < 0) {
+        if (settingsRead == 0)
+            migrateSettings(&state.settings, &oldSettings);
+        else
+            state.settings = default_settings;
     }
 
     /*
-     * Try loading VFO configuration from nonvolatile memory and default to sane
-     * values in case of failure.
+     * Load VFO state from new location first with a fallback to the old one.
+     * TODO: remove in OpenRTX v0.6.x
      */
-    if (nvm_readVfoChannelData(&state.channel) < 0) {
-        state.channel = cps_getDefaultChannel();
+    if (vfo_load(&state.channel) < 0) {
+        if ((settingsRead == 0) && (vfoRead == 0))
+            migrateVfo(&state.channel, &oldVfo, &oldSettings);
+        else
+            state.channel = cps_getDefaultChannel();
     }
 
-/*
+    /*
      * Initialise remaining fields
      */
 #ifdef CONFIG_RTC
@@ -76,7 +145,8 @@ void state_terminate()
         state.settings.brightness = 5;
     }
 
-    nvm_writeSettingsAndVfo(&state.settings, &state.channel);
+    settings_save(&state.settings);
+    vfo_save(&state.channel);
     pthread_mutex_destroy(&state_mutex);
 }
 

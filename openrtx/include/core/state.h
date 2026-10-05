@@ -43,7 +43,7 @@ typedef struct {
     bool tone_enabled;
 
     bool emergency;
-    settings_t settings;
+    struct settings settings;
     gps_t gps_data;
     bool gps_set_time;
     bool gpsDetected;
