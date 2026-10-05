@@ -35,6 +35,12 @@ HorseDemodulator::HorseDemodulator()
     , sampleCount(0)
     , missedSyncs(0)
     , missUnlock(COAST_MISS_UNLOCK)
+    , lastSyncOk(true)
+    , clockHold(0)
+    , clockAccum(0)
+    , clockAgree(0)
+    , lastClockDelta(0)
+    , clockTracking(true)
     , initCount(0)
     , corrThreshold(0.0f)
     , skipDcBlock(false)
@@ -163,6 +169,11 @@ void HorseDemodulator::setMissUnlock(uint8_t n)
     missUnlock = n;
 }
 
+void HorseDemodulator::setClockTracking(bool enable)
+{
+    clockTracking = enable;
+}
+
 int32_t HorseDemodulator::lastLockCorrAbs() const
 {
     return lastLockCorr;
@@ -185,13 +196,46 @@ bool HorseDemodulator::feedSample(int16_t sample, bool invertPhase)
     if (updateSampPoint
         && (std::abs(diff) == static_cast<int>(SAMPLES_PER_SYMBOL / 2))) {
         clockRec.update();
-        /*
-         * Interim: keep the acquire sampling point. Applying the M17
-         * energy TED can move SP by one sample after LSF and drop the
-         * first voice on the DC-block path; a bounded tracker replaces
-         * this freeze in a follow-up.
-         */
-        (void)clockRec.samplingPoint();
+        uint8_t next = clockRec.samplingPoint();
+        int step = static_cast<int>(next) - static_cast<int>(samplingPoint);
+        const int sps = static_cast<int>(SAMPLES_PER_SYMBOL);
+        if (step > sps / 2)
+            step -= sps;
+        if (step < -(sps / 2))
+            step += sps;
+        if (step > 1)
+            step = 1;
+        if (step < -1)
+            step = -1;
+        lastClockDelta = static_cast<int8_t>(step);
+        if (!clockTracking) {
+            /* Frozen acquire phase (baseline / diagnostic). */
+        } else if (clockHold > 0) {
+            clockHold -= 1;
+            clockAccum = 0;
+            clockAgree = 0;
+        } else if (!lastSyncOk) {
+            clockAccum = 0;
+            clockAgree = 0;
+        } else if (step == 0) {
+            clockAccum = 0;
+            clockAgree = 0;
+        } else if (clockAgree == 0
+                   || ((step > 0) == (clockAccum > 0))) {
+            clockAccum = static_cast<int8_t>(clockAccum + step);
+            clockAgree += 1;
+            if (clockAgree >= CLOCK_AGREE_FRAMES) {
+                const int apply = clockAccum > 0 ? 1 : -1;
+                samplingPoint = static_cast<uint32_t>(
+                    (static_cast<int>(samplingPoint) + apply + sps) % sps);
+                clockAccum = 0;
+                clockAgree = 0;
+                clockHold = 1;
+            }
+        } else {
+            clockAccum = static_cast<int8_t>(step);
+            clockAgree = 1;
+        }
         updateSampPoint = false;
     }
     clockRec.sample(sample);
@@ -247,6 +291,11 @@ void HorseDemodulator::reset()
     missedSyncs = 0;
     framesWithoutTag = 0;
     haveValidTag = false;
+    lastSyncOk = true;
+    clockHold = 0;
+    clockAccum = 0;
+    clockAgree = 0;
+    lastClockDelta = 0;
     demodState = DemodState::INIT;
     initCount = RX_SAMPLE_RATE / 50;
     dsp_resetState(dcBlock);
@@ -318,6 +367,11 @@ bool HorseDemodulator::acquireSync(const syncw_t &word)
     framesWithoutTag = 0;
     haveValidTag = false;
     missedSyncs = 0;
+    lastSyncOk = true;
+    resetClockRec = true;
+    clockHold = CLOCK_HOLD_FRAMES;
+    clockAccum = 0;
+    clockAgree = 0;
     devEstimator.init(bestDev);
     demodState = DemodState::LOCKED;
     return true;
@@ -366,6 +420,11 @@ bool HorseDemodulator::acquireSyncConvPhase(const syncw_t &word)
     framesWithoutTag = 0;
     haveValidTag = false;
     missedSyncs = 0;
+    lastSyncOk = true;
+    resetClockRec = true;
+    clockHold = CLOCK_HOLD_FRAMES;
+    clockAccum = 0;
+    clockAgree = 0;
     devEstimator.init({ outerPos, outerNeg });
     demodState = DemodState::LOCKED;
     return true;
@@ -456,10 +515,13 @@ void HorseDemodulator::syncUpdateState()
     bool valid = syncwordMatch(justRx, LSF_SYNC_WORD)
               || syncwordMatch(justRx, VOICE_SYNC_WORD);
     bool eot = syncwordMatch(justRx, EOT_SYNC_WORD);
-    if (valid)
+    if (valid) {
         missedSyncs = 0;
-    else
+        lastSyncOk = true;
+    } else {
         missedSyncs += 1;
+        lastSyncOk = false;
+    }
     if ((missedSyncs > missUnlock) || eot)
         demodState = DemodState::UNLOCKED;
     else

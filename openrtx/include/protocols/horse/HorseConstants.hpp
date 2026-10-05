@@ -115,6 +115,20 @@ static constexpr uint8_t LOCK_NO_TAG_FRAMES = 8;
  * holding the channel for a third of a second after a missed EOT.
  */
 static constexpr uint8_t COAST_MISS_UNLOCK = 4;
+/*
+ * After LSF acquire, hold the sampling point this many completed
+ * frames before the timing detector may move it. Covers the firmware
+ * DC-block IIR settling: a one-sample SP jump on the first voice
+ * pushed sync Hamming distance past 2 (HD=4) with DC on; the same
+ * jump with skipDcBlock recovered voice at HD=1.
+ */
+static constexpr uint8_t CLOCK_HOLD_FRAMES = 3;
+/*
+ * Require this many consecutive same-sign TED steps (each limited to
+ * ±1) on frames with a Hamming-2 sync before applying one sample of
+ * correction. Rejects single noisy frames.
+ */
+static constexpr uint8_t CLOCK_AGREE_FRAMES = 3;
 
 /*
  * Correlator peak must exceed corrThreshold * this scale. M17 uses 33 for

@@ -28,6 +28,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <string>
 #include <vector>
 
 using namespace horse;
@@ -985,6 +986,52 @@ static int test_lsf_intact_under_noise()
     return 0;
 }
 
+static int test_c20_multiseed()
+{
+    HorseFrameEncoder enc;
+    std::vector<frame_t> frames(3);
+    call_t src = { { 2, 2, 2, 2, 2, 2 } };
+    call_t dst = { { 3, 3, 3, 3, 3, 3 } };
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 0 };
+    memset(melpe, 0x44, sizeof melpe);
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    enc.encodeVoiceFrame(melpe, tag, frames[1], false);
+    enc.encodeEotFrame(frames[2]);
+    std::vector<int16_t> bb48;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    const float sig = 10000.0f;
+    const unsigned n_try = 200u;
+    const unsigned bases[] = { 1000u, 2000u, 3000u, 4000u, 5000u };
+    std::printf("C20 multi-seed intact at sigma=10000 (200 trials each):\n");
+    unsigned sum = 0;
+    for (unsigned base : bases) {
+        unsigned intact = 0;
+        for (unsigned t = 0; t < n_try; t++) {
+            impair_t p{};
+            p.gain = 1.0f;
+            p.noise = sig;
+            p.seed = base + t * 17u + static_cast<unsigned>(sig);
+            std::vector<int16_t> imp48, rx24;
+            impair_48k(bb48.data(), bb48.size(), p, imp48);
+            to_24k(imp48, rx24);
+            int32_t ncc = 0;
+            int good = 0;
+            if (collect_real_lsf_trial(rx24, melpe, &ncc, &good) == 0
+                && good >= 3)
+                intact++;
+        }
+        sum += intact;
+        std::printf("  seed_base=%u intact=%u/200\n", base, intact);
+    }
+    double mean = sum / 5.0;
+    std::printf("C20 multi-seed mean=%.1f/200 (range covers prior 118 vs "
+                "121)\n",
+                mean);
+    return 0;
+}
+
 static int test_impairments()
 {
     impair_t base{};
@@ -1340,10 +1387,149 @@ static int test_coast_and_sp_protect()
     return 0;
 }
 
+/*
+ * Long transmissions at clock offset. Expect >= 99 % delivery up to
+ * 20 ppm with bounded tracking. Frozen mode is reported for the
+ * before/after table.
+ */
+static int run_long_clock_case(const std::vector<int16_t> &bb48, int nvoice,
+                               float ppm, float noise, bool tracking,
+                               int *got_out, int *ok_out)
+{
+    HorseFrameDecoder decoder;
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 5, 6, 7, 8 };
+    memset(melpe, 0x5A, sizeof melpe);
+    std::vector<int16_t> imp48, rx24;
+    impair_t p{};
+    p.noise = noise;
+    p.gain = 1.0f;
+    p.seed = 1u;
+    p.rate_ppm = ppm;
+    impair_48k(bb48.data(), bb48.size(), p, imp48);
+    to_24k(imp48, rx24);
+    HorseDemodulator demod;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setClockTracking(tracking);
+    int got = 0;
+    int ok = 0;
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f;
+        if (!demod.takeFrame(f))
+            continue;
+        HorseFrameType t = decoder.decodeFrame(f);
+        if (t == HorseFrameType::LINK_SETUP)
+            demod.noteValidTag();
+        got++;
+        if (t == HorseFrameType::VOICE) {
+            uint16_t fn = 0;
+            uint8_t payload[12], tagb[4];
+            decoder.getVoicePayload(f, payload, tagb, &fn);
+            if (fn < (uint16_t)nvoice && memcmp(payload, melpe, 12) == 0
+                && memcmp(tagb, tag, 4) == 0)
+                ok++;
+        }
+    }
+    demod.terminate();
+    *got_out = got;
+    *ok_out = ok;
+    return 0;
+}
+
+static int render_long_voice(int nvoice, std::vector<int16_t> &bb48)
+{
+    HorseFrameEncoder enc;
+    std::vector<frame_t> frames((size_t)nvoice + 2);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 5, 6, 7, 8 };
+    memset(melpe, 0x5A, sizeof melpe);
+    for (int i = 0; i < nvoice; i++)
+        enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i,
+                                   frames[static_cast<size_t>(i + 1)], false,
+                                   12);
+    enc.encodeEotFrame(frames.back());
+    return render_frames(frames, bb48, true);
+}
+
+static int test_long_clock_smoke()
+{
+    std::vector<int16_t> bb48;
+    if (render_long_voice(3000, bb48) != 0)
+        return -1;
+    for (float ppm : { 0.f, 20.f }) {
+        int got = 0, ok = 0;
+        if (run_long_clock_case(bb48, 3000, ppm, 0.f, true, &got, &ok) != 0)
+            return -1;
+        const int expect = 3002;
+        double deliv = (double)got / expect;
+        std::printf("long-clock smoke ppm=%.0f got=%d/%d ok=%d deliv=%.4f\n",
+                    ppm, got, expect, ok, deliv);
+        if (deliv < 0.99) {
+            std::printf("long-clock smoke: delivery below 99 %%\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int test_long_clock_tracking()
+{
+    const int nvoices[] = { 3000, 28000 };
+    const float ppms[] = { 0.f, 2.f, 5.f, 10.f, 20.f, 50.f };
+    const float noises[] = { 0.f, 8000.f };
+    int fails = 0;
+    for (int nvoice : nvoices) {
+        std::vector<int16_t> bb48;
+        std::printf("long-clock render nvoice=%d ...\n", nvoice);
+        std::fflush(stdout);
+        if (render_long_voice(nvoice, bb48) != 0)
+            return -1;
+        for (bool tracking : { false, true }) {
+            std::printf("long-clock tracking=%d nvoice=%d:\n",
+                        tracking ? 1 : 0, nvoice);
+            std::fflush(stdout);
+            for (float noise : noises) {
+                for (float ppm : ppms) {
+                    int got = 0, ok = 0;
+                    if (run_long_clock_case(bb48, nvoice, ppm, noise, tracking,
+                                            &got, &ok)
+                        != 0)
+                        return -1;
+                    const int expect = nvoice + 2;
+                    double fer = nvoice ? 1.0 - (double)ok / nvoice : 1.0;
+                    double deliv = expect ? (double)got / expect : 0.0;
+                    std::printf("  noise=%.0f ppm=%.0f got=%d/%d ok=%d "
+                                "fer=%.6f deliv=%.4f\n",
+                                noise, ppm, got, expect, ok, fer, deliv);
+                    std::fflush(stdout);
+                    if (tracking && ppm <= 20.f && deliv < 0.99) {
+                        std::printf("long-clock: delivery below 99 %% at "
+                                    "ppm=%.0f n=%d\n",
+                                    ppm, nvoice);
+                        fails++;
+                    }
+                }
+            }
+        }
+    }
+    return fails == 0 ? 0 : -1;
+}
+
 int test_three_mode_loopback(void);
 
-int main()
+int main(int argc, char **argv)
 {
+    if (argc > 1 && std::string(argv[1]) == "long")
+        return test_long_clock_tracking() == 0 ? 0 : 1;
+    if (argc > 1 && std::string(argv[1]) == "c20seeds")
+        return test_c20_multiseed() == 0 ? 0 : 1;
+
     if (test_layer_a_bytes_symbols() != 0)
         return -1;
     if (test_layer_b_rrc_known_phase() != 0)
@@ -1371,6 +1557,8 @@ int main()
     if (test_frame_index_stall() != 0)
         return -1;
     if (test_coast_and_sp_protect() != 0)
+        return -1;
+    if (test_long_clock_smoke() != 0)
         return -1;
     if (test_three_mode_loopback() != 0)
         return -1;

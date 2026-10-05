@@ -56,6 +56,7 @@ public:
     void setDropWithoutTag(bool enable);
     void noteValidTag();
     void setMissUnlock(uint8_t n);
+    void setClockTracking(bool enable);
     int32_t lastLockCorrAbs() const;
     bool lockAuthenticated() const
     {
@@ -68,6 +69,10 @@ public:
     uint16_t debugFrameIndex() const
     {
         return frameIndex;
+    }
+    int8_t debugLastClockDelta() const
+    {
+        return lastClockDelta;
     }
 
 private:
@@ -113,6 +118,12 @@ private:
     uint32_t sampleCount;
     uint8_t missedSyncs;
     uint8_t missUnlock;
+    bool lastSyncOk;
+    uint8_t clockHold;
+    int8_t clockAccum;
+    uint8_t clockAgree;
+    int8_t lastClockDelta;
+    bool clockTracking;
     uint32_t initCount;
     float corrThreshold;
     bool skipDcBlock;
