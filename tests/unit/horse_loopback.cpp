@@ -1057,6 +1057,60 @@ static int test_impairments()
     return 0;
 }
 
+/*
+ * Before the acquire snapshot/restore, a Hamming-fail LSF search at
+ * noise 12000 left frameIndex=8 and stalled takeFrame (got=162/302,
+ * locked=1). After: the full LSF+300 voice+EOT stream is delivered.
+ */
+static int test_frame_index_stall()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder decoder;
+    const int nvoice = 300;
+    std::vector<frame_t> frames((size_t)nvoice + 2);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 9, 8, 7, 6 };
+    memset(melpe, 0xA5, sizeof melpe);
+    for (int i = 0; i < nvoice; i++)
+        enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i,
+                                   frames[static_cast<size_t>(i + 1)], false,
+                                   12);
+    enc.encodeEotFrame(frames.back());
+    std::vector<int16_t> bb48, imp48, rx24;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    impair_t p{};
+    p.noise = 12000.f;
+    p.gain = 1.0f;
+    p.seed = 1u;
+    impair_48k(bb48.data(), bb48.size(), p, imp48);
+    to_24k(imp48, rx24);
+    HorseDemodulator demod;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    int got = 0;
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f;
+        if (demod.takeFrame(f))
+            got++;
+    }
+    demod.terminate();
+    std::printf("frame-index stall: noise12000 unauth got=%d/302 "
+                "(pre-fix was 162)\n",
+                got);
+    if (got < 290) {
+        std::printf("frame-index stall: still stuck after failed LSF "
+                    "acquire\n");
+        return -1;
+    }
+    return 0;
+}
+
 int test_three_mode_loopback(void);
 
 int main()
@@ -1084,6 +1138,8 @@ int main()
     if (test_impairments() != 0)
         return -1;
     if (test_lsf_intact_under_noise() != 0)
+        return -1;
+    if (test_frame_index_stall() != 0)
         return -1;
     if (test_three_mode_loopback() != 0)
         return -1;

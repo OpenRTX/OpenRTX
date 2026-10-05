@@ -252,6 +252,8 @@ bool HorseDemodulator::acquireSync(const syncw_t &word)
     uint8_t bestHd = 0xFF;
     frame_t bestFrame{};
     std::pair<int32_t, int32_t> bestDev{ 0, 0 };
+    const uint16_t savedFi = frameIndex;
+    const frame_t savedFrame = *demodFrame;
 
     /*
      * Walk the correlator buffer in the same order as Correlator::convolve():
@@ -286,8 +288,17 @@ bool HorseDemodulator::acquireSync(const syncw_t &word)
         }
     }
 
-    if (bestHd > acquireHammingMax)
+    if (bestHd > acquireHammingMax) {
+        /*
+         * A failed search must not leave frameIndex at SYNCWORD_SYMBOLS
+         * or the mid-frame demodFrame half-written: that stalled
+         * takeFrame at noise ~12000 while known-phase slicing still
+         * decoded (got=162, locked=1, frameIndex=184).
+         */
+        frameIndex = savedFi;
+        *demodFrame = savedFrame;
         return false;
+    }
 
     *demodFrame = bestFrame;
     samplingPoint = sampleIndex;
@@ -308,6 +319,9 @@ bool HorseDemodulator::acquireSyncConvPhase(const syncw_t &word)
      * Hamming-0 match cannot lock a neighbour sample when the floor
      * is 0.
      */
+    const uint16_t savedFi = frameIndex;
+    const frame_t savedFrame = *demodFrame;
+    const uint32_t savedSp = samplingPoint;
     const uint32_t phase = SAMPLES_PER_SYMBOL - 1u;
     size_t pos = (correlator.index() + 1 + phase) % SYNCWORD_SAMPLES;
     int16_t taps[SYNCWORD_SYMBOLS];
@@ -329,8 +343,12 @@ bool HorseDemodulator::acquireSyncConvPhase(const syncw_t &word)
     }
     uint8_t hd = hammingDistance((*demodFrame)[0], word[0])
                + hammingDistance((*demodFrame)[1], word[1]);
-    if (hd > acquireHammingMax)
+    if (hd > acquireHammingMax) {
+        frameIndex = savedFi;
+        *demodFrame = savedFrame;
+        samplingPoint = savedSp;
         return false;
+    }
     samplingPoint = sampleIndex;
     frameIndex = SYNCWORD_SYMBOLS;
     framesWithoutTag = 0;
