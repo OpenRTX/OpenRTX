@@ -7,6 +7,7 @@
 #include "protocols/horse/HorseDemodulator.hpp"
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Utils.hpp"
+#include "protocols/horse/HorseUtils.hpp"
 #include <cmath>
 #include <cstring>
 
@@ -20,6 +21,11 @@ static uint8_t hammingDistance(uint8_t x, uint8_t y)
 
 HorseDemodulator::HorseDemodulator()
     : demodState(DemodState::INIT),
+      baseband_buffer(),
+      basebandId(-1),
+      basebandPath(-1),
+      demodFrame(),
+      readyFrame(),
       newFrame(false),
       resetClockRec(false),
       updateSampPoint(false),
@@ -30,6 +36,7 @@ HorseDemodulator::HorseDemodulator()
       missedSyncs(0),
       initCount(0),
       corrThreshold(0.0f),
+      skipRxFilter(false),
       sampleFilter(sfNum, sfDen)
 {
     dsp_resetState(dcBlock);
@@ -83,6 +90,11 @@ bool HorseDemodulator::isLocked()
     return (demodState == DemodState::LOCKED) || (demodState == DemodState::SYNC_UPDATE);
 }
 
+std::array<int8_t, SYNCWORD_SYMBOLS> HorseDemodulator::acquisitionSync()
+{
+    return syncwordSymbols(LSF_SYNC_WORD);
+}
+
 bool HorseDemodulator::update(bool invertPhase)
 {
     if (audioPath_getStatus(basebandPath) != PATH_OPEN)
@@ -91,51 +103,80 @@ bool HorseDemodulator::update(bool invertPhase)
     if (baseband.data == nullptr)
         return false;
     for (size_t i = 0; i < baseband.len; i++)
-    {
-        int16_t sample = dsp_dcBlockFilter(&dcBlock, baseband.data[i]);
-        float elem     = static_cast<float>(sample);
-        if (invertPhase) elem = 0.0f - elem;
+        feedSample(baseband.data[i], invertPhase);
+    return newFrame;
+}
+
+void HorseDemodulator::resetImmediate()
+{
+    reset();
+    demodState = DemodState::UNLOCKED;
+    initCount = 0;
+}
+
+bool HorseDemodulator::takeFrame(frame_t &out)
+{
+    if (!newFrame || readyFrame == nullptr)
+        return false;
+    out = *readyFrame;
+    newFrame = false;
+    return true;
+}
+
+void HorseDemodulator::setSkipRxFilter(bool skip)
+{
+    skipRxFilter = skip;
+}
+
+bool HorseDemodulator::feedSample(int16_t sample, bool invertPhase)
+{
+    if (!skipRxFilter)
+        sample = dsp_dcBlockFilter(&dcBlock, sample);
+    float elem     = static_cast<float>(sample);
+    if (invertPhase) elem = 0.0f - elem;
+    if (!skipRxFilter)
         sample = static_cast<int16_t>(M17::rrc_24k(elem));
-        if ((sampleIndex == 0) && resetClockRec)
-        {
-            clockRec.reset();
-            resetClockRec   = false;
-            updateSampPoint = false;
-        }
-        int diff = static_cast<int>(samplingPoint) - static_cast<int>(sampleIndex);
-        if (updateSampPoint && (std::abs(diff) == static_cast<int>(SAMPLES_PER_SYMBOL / 2)))
-        {
-            clockRec.update();
-            samplingPoint  = clockRec.samplingPoint();
-            updateSampPoint = false;
-        }
-        clockRec.sample(sample);
-        correlator.sample(sample);
-        corrThreshold = sampleFilter(static_cast<float>(std::abs(sample)));
-        switch (demodState)
-        {
-        case DemodState::INIT:
-            if (initCount == 0)
-                demodState = DemodState::UNLOCKED;
-            else
-                initCount -= 1;
-            break;
-        case DemodState::UNLOCKED:
-            unlockedState();
-            break;
-        case DemodState::SYNCED:
-            syncedState();
-            break;
-        case DemodState::LOCKED:
-            lockedState(sample);
-            break;
-        case DemodState::SYNC_UPDATE:
-            syncUpdateState();
-            break;
-        }
-        sampleCount += 1;
-        sampleIndex = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
+    else
+        sample = static_cast<int16_t>(elem);
+    if ((sampleIndex == 0) && resetClockRec)
+    {
+        clockRec.reset();
+        resetClockRec   = false;
+        updateSampPoint = false;
     }
+    int diff = static_cast<int>(samplingPoint) - static_cast<int>(sampleIndex);
+    if (updateSampPoint && (std::abs(diff) == static_cast<int>(SAMPLES_PER_SYMBOL / 2)))
+    {
+        clockRec.update();
+        samplingPoint  = clockRec.samplingPoint();
+        updateSampPoint = false;
+    }
+    clockRec.sample(sample);
+    correlator.sample(sample);
+    corrThreshold = sampleFilter(static_cast<float>(std::abs(sample)));
+    switch (demodState)
+    {
+    case DemodState::INIT:
+        if (initCount == 0)
+            demodState = DemodState::UNLOCKED;
+        else
+            initCount -= 1;
+        break;
+    case DemodState::UNLOCKED:
+        unlockedState();
+        break;
+    case DemodState::SYNCED:
+        syncedState();
+        break;
+    case DemodState::LOCKED:
+        lockedState(sample);
+        break;
+    case DemodState::SYNC_UPDATE:
+        syncUpdateState();
+        break;
+    }
+    sampleCount += 1;
+    sampleIndex = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
     return newFrame;
 }
 
@@ -168,7 +209,7 @@ void HorseDemodulator::reset()
 
 void HorseDemodulator::unlockedState()
 {
-    int32_t syncThresh = static_cast<int32_t>(corrThreshold * 33.0f);
+    int32_t syncThresh = static_cast<int32_t>(corrThreshold * (skipRxFilter ? 4.0f : 33.0f));
     int8_t syncStatus  = streamSync.update(correlator, syncThresh, -syncThresh);
     if (syncStatus != 0)
         demodState = DemodState::SYNCED;
@@ -213,13 +254,20 @@ void HorseDemodulator::lockedState(int16_t sample)
         std::swap(readyFrame, demodFrame);
         frameIndex      = 0;
         newFrame        = true;
-        updateSampPoint = true;
+        if (!skipRxFilter)
+            updateSampPoint = true;
         demodState      = DemodState::SYNC_UPDATE;
     }
 }
 
 void HorseDemodulator::syncUpdateState()
 {
+    if (skipRxFilter)
+    {
+        missedSyncs = 0;
+        demodState = DemodState::LOCKED;
+        return;
+    }
     uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0]) +
                     hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
     uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0]) +

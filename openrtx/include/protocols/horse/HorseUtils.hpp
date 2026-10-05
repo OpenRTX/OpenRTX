@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <array>
 #include <cassert>
+#include "HorseDatatypes.hpp"
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -48,6 +49,13 @@ inline std::array<int8_t, 4> byteToSymbols(uint8_t value)
     value >>= 2;
     symbols[0] = LUT[value & 0x03];
     return symbols;
+}
+
+inline std::array<int8_t, 8> syncwordSymbols(syncw_t word)
+{
+    auto a = byteToSymbols(word[0]);
+    auto b = byteToSymbols(word[1]);
+    return {a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]};
 }
 
 }  // namespace horse

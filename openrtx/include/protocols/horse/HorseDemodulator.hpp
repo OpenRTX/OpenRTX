@@ -18,6 +18,7 @@
 #include "core/audio_stream.h"
 #include "HorseDatatypes.hpp"
 #include "HorseConstants.hpp"
+#include "HorseUtils.hpp"
 #include "protocols/M17/Correlator.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "protocols/M17/ClockRecovery.hpp"
@@ -44,6 +45,11 @@ public:
     const frame_t& getFrame();
     bool update(bool invertPhase = false);
     bool isLocked();
+    static std::array<int8_t, SYNCWORD_SYMBOLS> acquisitionSync();
+    void resetImmediate();
+    bool feedSample(int16_t sample, bool invertPhase);
+    bool takeFrame(frame_t &out);
+    void setSkipRxFilter(bool skip);
 
 private:
     void quantize(int16_t sample);
@@ -87,11 +93,12 @@ private:
     uint8_t missedSyncs;
     uint32_t initCount;
     float corrThreshold;
+    bool skipRxFilter;
     struct dcBlock dcBlock;
 
     Correlator<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> correlator;
     Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> streamSync{
-        {+1, +3, +3, -1, -1, +1, -1, +3}};
+        syncwordSymbols(LSF_SYNC_WORD)};
     DevEstimator devEstimator;
     ClockRecovery<SAMPLES_PER_SYMBOL> clockRec;
     Iir<3> sampleFilter;
