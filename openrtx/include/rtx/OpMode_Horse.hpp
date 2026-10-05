@@ -58,6 +58,7 @@ private:
     uint8_t txSessionSig[HORSE_ED25519_SIGNATURE_BYTES];
     uint8_t rxLsfEphPk[HORSE_X25519_PUBLICKEY_BYTES];
     uint8_t rxLsfFlags;
+    uint8_t rxLsfVersion;
     uint8_t rxSigChunks;
     horse::call_t rxLsfSrc;
     horse::call_t rxLsfDst;

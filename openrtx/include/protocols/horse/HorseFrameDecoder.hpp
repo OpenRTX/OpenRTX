@@ -30,7 +30,8 @@ public:
 
     void getLsfCallsigns(call_t& src, call_t& dst);
 
-    bool getLsfCrypto(const frame_t& frame, uint8_t eph_pk[32], uint8_t* flags);
+    bool getLsfCrypto(const frame_t &frame, uint8_t eph_pk[32], uint8_t *flags,
+                      uint8_t *version = nullptr);
 
     void getVoicePayload(const frame_t& frame, uint8_t* melpe96bits,
                         uint8_t* tag32bits, uint16_t* frameNum);

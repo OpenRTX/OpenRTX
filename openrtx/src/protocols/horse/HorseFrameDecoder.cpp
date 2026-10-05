@@ -69,9 +69,9 @@ void HorseFrameDecoder::getLsfCallsigns(call_t &src, call_t &dst)
 }
 
 bool HorseFrameDecoder::getLsfCrypto(const frame_t &frame, uint8_t eph_pk[32],
-                                     uint8_t *flags)
+                                     uint8_t *flags, uint8_t *version)
 {
-    if (frame.size() < 2 + LSF_FLAGS_OFFSET + 1)
+    if (frame.size() < 2 + LSF_VERSION_OFFSET + 1)
         return false;
 
     if (eph_pk != nullptr)
@@ -79,6 +79,8 @@ bool HorseFrameDecoder::getLsfCrypto(const frame_t &frame, uint8_t eph_pk[32],
                     HORSE_X25519_PUBLICKEY_BYTES);
     if (flags != nullptr)
         *flags = frame[2 + LSF_FLAGS_OFFSET];
+    if (version != nullptr)
+        *version = frame[2 + LSF_VERSION_OFFSET];
     return true;
 }
 

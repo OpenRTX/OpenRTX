@@ -161,7 +161,8 @@ bool horse_crypto_ecies_decrypt_session_key(
 }
 
 void horse_crypto_voice_encrypt(
-    const uint8_t *session_key,
+    const uint8_t *k_enc,
+    const uint8_t *k_tag,
     const uint8_t *nonce_96bit,
     const uint8_t *plaintext,
     size_t plaintext_len,
@@ -169,37 +170,35 @@ void horse_crypto_voice_encrypt(
     uint8_t *tag_truncated_32bit)
 #ifdef HAVE_LIBSODIUM
 {
-    if (plaintext == NULL || ciphertext_out == NULL)
+    if (k_enc == NULL || plaintext == NULL || ciphertext_out == NULL)
         return;
 
     if (horse_sodium_init() != 0)
         return;
 
-    /* Derive a 192-bit XChaCha20 nonce from the 96-bit input using BLAKE2b. */
     uint8_t nonce[crypto_stream_xchacha20_NONCEBYTES];
     crypto_generichash(nonce, sizeof nonce,
                        nonce_96bit, 12,
                        (const unsigned char *)"HORSEV1", 7);
 
-    /* XChaCha20 stream cipher encryption. */
     crypto_stream_xchacha20_xor(ciphertext_out,
                                 plaintext,
                                 plaintext_len,
                                 nonce,
-                                session_key);
+                                k_enc);
 
-    if (tag_truncated_32bit)
+    if (tag_truncated_32bit && k_tag != NULL)
     {
-        /* Compute a BLAKE2b MAC over the ciphertext and truncate to 32 bits. */
         uint8_t mac[crypto_generichash_BYTES];
         crypto_generichash(mac, sizeof mac,
                            ciphertext_out, plaintext_len,
-                           (const unsigned char *)"HVOICETAG", 9);
+                           k_tag, HORSE_SESSION_KEY_BYTES);
         memcpy(tag_truncated_32bit, mac, HORSE_VOICE_TAG_BYTES);
     }
 #else
 {
-    (void)session_key;
+    (void)k_enc;
+    (void)k_tag;
     (void)nonce_96bit;
     (void)plaintext_len;
     (void)ciphertext_out;
@@ -208,7 +207,8 @@ void horse_crypto_voice_encrypt(
 }
 
 bool horse_crypto_voice_decrypt(
-    const uint8_t *session_key,
+    const uint8_t *k_enc,
+    const uint8_t *k_tag,
     const uint8_t *nonce_96bit,
     const uint8_t *ciphertext,
     size_t ciphertext_len,
@@ -216,27 +216,20 @@ bool horse_crypto_voice_decrypt(
     uint8_t *plaintext_out)
 {
 #ifdef HAVE_LIBSODIUM
-    if (ciphertext == NULL || plaintext_out == NULL)
+    if (k_enc == NULL || k_tag == NULL || ciphertext == NULL ||
+        plaintext_out == NULL || tag_truncated_32bit == NULL)
         return false;
 
     if (horse_sodium_init() != 0)
         return false;
 
-    /* Verify 32-bit BLAKE2b MAC over ciphertext, if provided. */
-    if (tag_truncated_32bit != NULL)
-    {
-        uint8_t mac[crypto_generichash_BYTES];
-        crypto_generichash(mac, sizeof mac,
-                           ciphertext, ciphertext_len,
-                           (const unsigned char *)"HVOICETAG", 9);
+    uint8_t mac[crypto_generichash_BYTES];
+    crypto_generichash(mac, sizeof mac,
+                       ciphertext, ciphertext_len,
+                       k_tag, HORSE_SESSION_KEY_BYTES);
 
-        if (sodium_memcmp(mac, tag_truncated_32bit,
-                          HORSE_VOICE_TAG_BYTES) != 0)
-        {
-            /* Authentication failed. Do not decrypt into output buffer. */
-            return false;
-        }
-    }
+    if (sodium_memcmp(mac, tag_truncated_32bit, HORSE_VOICE_TAG_BYTES) != 0)
+        return false;
 
     uint8_t nonce[crypto_stream_xchacha20_NONCEBYTES];
     crypto_generichash(nonce, sizeof nonce,
@@ -247,10 +240,15 @@ bool horse_crypto_voice_decrypt(
                                 ciphertext,
                                 ciphertext_len,
                                 nonce,
-                                session_key);
+                                k_enc);
     return true;
 #else
+    (void)k_enc;
+    (void)k_tag;
+    (void)nonce_96bit;
+    (void)ciphertext;
     (void)ciphertext_len;
+    (void)tag_truncated_32bit;
     (void)plaintext_out;
     return false;
 #endif
@@ -321,12 +319,13 @@ bool horse_crypto_x25519_keypair(uint8_t *pk_out, uint8_t *sk_out)
 #endif
 }
 
-bool horse_crypto_derive_session_key(const uint8_t *local_x25519_sk,
-                                     const uint8_t *remote_x25519_pk,
-                                     uint8_t *session_key_out)
+bool horse_crypto_derive_session_keys(const uint8_t *local_x25519_sk,
+                                      const uint8_t *remote_x25519_pk,
+                                      uint8_t k_enc_out[HORSE_SESSION_KEY_BYTES],
+                                      uint8_t k_tag_out[HORSE_SESSION_KEY_BYTES])
 {
     if (local_x25519_sk == NULL || remote_x25519_pk == NULL ||
-        session_key_out == NULL)
+        k_enc_out == NULL || k_tag_out == NULL)
         return false;
 
 #ifdef HAVE_LIBSODIUM
@@ -338,17 +337,24 @@ bool horse_crypto_derive_session_key(const uint8_t *local_x25519_sk,
     if (crypto_scalarmult(shared, local_x25519_sk, remote_x25519_pk) != 0)
         return false;
 
-    crypto_generichash(session_key_out, HORSE_SESSION_KEY_BYTES,
+    crypto_generichash(k_enc_out, HORSE_SESSION_KEY_BYTES,
                        shared, sizeof shared,
-                       (const unsigned char *)"HORSE-SESSION", 13);
+                       (const unsigned char *)"HORSE-KENC", 10);
+    crypto_generichash(k_tag_out, HORSE_SESSION_KEY_BYTES,
+                       shared, sizeof shared,
+                       (const unsigned char *)"HORSE-KTAG", 10);
     sodium_memzero(shared, sizeof shared);
     return true;
 #else
     (void)local_x25519_sk;
     (void)remote_x25519_pk;
-    (void)session_key_out;
     return false;
 #endif
+}
+
+bool horse_crypto_lsf_version_ok(uint8_t version)
+{
+    return version == HORSE_LSF_VERSION;
 }
 
 void horse_crypto_voice_nonce_from_fn(uint16_t frame_num, uint8_t nonce_96bit[12])
@@ -482,39 +488,22 @@ bool horse_crypto_identity_fingerprint(const horse_identity_keys_t *identity,
 void horse_crypto_build_session_message(const uint8_t src[6],
                                         const uint8_t dst[6],
                                         const uint8_t eph_pk[32],
-                                        uint8_t message_out[44])
+                                        uint8_t flags,
+                                        uint8_t version,
+                                        uint8_t message_out[HORSE_SESSION_MSG_BYTES])
 {
     if (message_out == NULL)
         return;
 
-    memset(message_out, 0, 44);
+    memset(message_out, 0, HORSE_SESSION_MSG_BYTES);
     if (src != NULL)
         memcpy(message_out, src, 6);
     if (dst != NULL)
         memcpy(message_out + 6, dst, 6);
     if (eph_pk != NULL)
         memcpy(message_out + 12, eph_pk, 32);
-}
-
-bool horse_crypto_derive_frame_auth_key(const uint8_t session_signature[64],
-                                        uint8_t auth_key_out[32])
-{
-    if (session_signature == NULL || auth_key_out == NULL)
-        return false;
-
-#ifdef HAVE_LIBSODIUM
-    if (horse_sodium_init() != 0)
-        return false;
-
-    crypto_generichash(auth_key_out, 32,
-                       session_signature, 64,
-                       (const unsigned char *)"HORSE-FAUTH", 11);
-    return true;
-#else
-    (void)session_signature;
-    (void)auth_key_out;
-    return false;
-#endif
+    message_out[44] = flags;
+    message_out[45] = version;
 }
 
 static void horse_crypto_voice_auth_message(uint16_t frame_num,
@@ -659,7 +648,7 @@ bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
 
     if (!crypto_available || !keystore_unlocked)
         return false;
-    if (want_encrypt && !have_x25519_peer)
+    if (!have_x25519_peer)
         return false;
     if (want_sign && !have_ed25519_peer)
         return false;
@@ -669,7 +658,8 @@ bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
 bool horse_rx_may_output_voice(bool lsf_encrypted, bool session_valid,
                                bool lsf_signed, bool signature_ready)
 {
-    if (lsf_encrypted && !session_valid)
+    (void)lsf_encrypted;
+    if (!session_valid)
         return false;
     if (lsf_signed && !signature_ready)
         return false;

@@ -38,6 +38,7 @@ void HorseFrameEncoder::encodeLsf(const call_t& src, const call_t& dst,
         std::memcpy(payload.data() + LSF_EPH_PK_OFFSET, eph_pk,
                     HORSE_X25519_PUBLICKEY_BYTES);
     payload[LSF_FLAGS_OFFSET] = flags;
+    payload[LSF_VERSION_OFFSET] = LSF_PROTOCOL_VERSION;
     std::copy(LSF_SYNC_WORD.begin(), LSF_SYNC_WORD.end(), output.begin());
     std::copy(payload.begin(), payload.end(), output.begin() + 2);
 }

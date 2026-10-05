@@ -28,6 +28,8 @@ extern "C" {
 
 #define HORSE_SESSION_KEY_BYTES  32
 #define HORSE_VOICE_TAG_BYTES    4
+#define HORSE_LSF_VERSION        1
+#define HORSE_SESSION_MSG_BYTES  46
 
 /* Horse identity keys (libsodium-native sizes). */
 #define HORSE_ED25519_PUBLICKEY_BYTES  32
@@ -83,9 +85,10 @@ bool horse_crypto_ecies_decrypt_session_key(
     const uint8_t *recipient_x25519_seckey,
     uint8_t *session_key_out);
 
-/* Voice frame encrypt: XChaCha20 stream cipher + 32-bit BLAKE2b MAC. */
+/* Voice frame encrypt: XChaCha20 with k_enc, 32-bit BLAKE2b MAC with k_tag. */
 void horse_crypto_voice_encrypt(
-    const uint8_t *session_key,
+    const uint8_t *k_enc,
+    const uint8_t *k_tag,
     const uint8_t *nonce_96bit,
     const uint8_t *plaintext,
     size_t plaintext_len,
@@ -94,7 +97,8 @@ void horse_crypto_voice_encrypt(
 
 /* Voice frame decrypt with MAC verification. */
 bool horse_crypto_voice_decrypt(
-    const uint8_t *session_key,
+    const uint8_t *k_enc,
+    const uint8_t *k_tag,
     const uint8_t *nonce_96bit,
     const uint8_t *ciphertext,
     size_t ciphertext_len,
@@ -116,10 +120,17 @@ bool horse_crypto_available(void);
 /* Generate an X25519 keypair (public, secret). */
 bool horse_crypto_x25519_keypair(uint8_t *pk_out, uint8_t *sk_out);
 
-/* Derive a 32-byte session key from X25519 ECDH + BLAKE2b. */
-bool horse_crypto_derive_session_key(const uint8_t *local_x25519_sk,
-                                     const uint8_t *remote_x25519_pk,
-                                     uint8_t *session_key_out);
+/*
+ * ECDH(local_sk, remote_pk) then KDF to k_enc and k_tag with distinct
+ * labels. Used in encrypted, signed, and combined modes.
+ */
+bool horse_crypto_derive_session_keys(const uint8_t *local_x25519_sk,
+                                      const uint8_t *remote_x25519_pk,
+                                      uint8_t k_enc_out[HORSE_SESSION_KEY_BYTES],
+                                      uint8_t k_tag_out[HORSE_SESSION_KEY_BYTES]);
+
+/* True when LSF protocol version is the one this build speaks. */
+bool horse_crypto_lsf_version_ok(uint8_t version);
 
 /* Build a 96-bit voice nonce from the 16-bit frame counter. */
 void horse_crypto_voice_nonce_from_fn(uint16_t frame_num,
@@ -142,15 +153,13 @@ bool horse_crypto_decrypt_identity(const uint8_t *blob,
 bool horse_crypto_identity_fingerprint(const horse_identity_keys_t *identity,
                                        uint8_t fp_out[32]);
 
-/* Derive per-call frame auth key from a verified session Ed25519 signature. */
-bool horse_crypto_derive_frame_auth_key(const uint8_t session_signature[64],
-                                        uint8_t auth_key_out[32]);
-
-/* Build the 44-byte session message signed at the start of each transmission. */
+/* Build src||dst||eph_pk||flags||version (HORSE_SESSION_MSG_BYTES). */
 void horse_crypto_build_session_message(const uint8_t src[6],
                                         const uint8_t dst[6],
                                         const uint8_t eph_pk[32],
-                                        uint8_t message_out[44]);
+                                        uint8_t flags,
+                                        uint8_t version,
+                                        uint8_t message_out[HORSE_SESSION_MSG_BYTES]);
 
 /* Compute or verify a 32-bit voice authentication tag (cleartext voice). */
 bool horse_crypto_voice_auth_tag(const uint8_t auth_key[32],
@@ -203,8 +212,9 @@ bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
                       bool keystore_unlocked, bool have_x25519_peer,
                       bool have_ed25519_peer);
 
-/* Voice audio is released only with a valid encrypt session and/or verified
- * signature when the corresponding LSF flags are set.
+/*
+ * Voice audio requires a valid ECDH session (k_tag) in every mode.
+ * Signed LSF also requires a verified session signature.
  */
 bool horse_rx_may_output_voice(bool lsf_encrypted, bool session_valid,
                                bool lsf_signed, bool signature_ready);

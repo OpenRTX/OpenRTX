@@ -134,9 +134,31 @@ static int test_lsf_crypto_roundtrip()
 
     uint8_t out_pk[32];
     uint8_t flags = 0;
-    if (!dec.getLsfCrypto(frame, out_pk, &flags))
+    uint8_t version = 0;
+    if (!dec.getLsfCrypto(frame, out_pk, &flags, &version))
         return -1;
-    if (flags != 0x01 || std::memcmp(out_pk, eph_pk, 32) != 0)
+    if (flags != 0x01 || version != LSF_PROTOCOL_VERSION ||
+        std::memcmp(out_pk, eph_pk, 32) != 0)
+        return -1;
+    return 0;
+}
+
+static int test_lsf_unknown_version_is_rejected()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    uint8_t eph_pk[32] = { 0 };
+    frame_t frame;
+
+    enc.encodeLsf(src, dst, eph_pk, LSF_FLAG_SIGNED, frame);
+    frame[2 + LSF_VERSION_OFFSET] = 99;
+    uint8_t flags = 0;
+    uint8_t version = 0;
+    if (!dec.getLsfCrypto(frame, nullptr, &flags, &version))
+        return -1;
+    if (version == LSF_PROTOCOL_VERSION)
         return -1;
     return 0;
 }
@@ -207,6 +229,7 @@ int main()
 {
     if (test_lsf_roundtrip() != 0) return -1;
     if (test_lsf_crypto_roundtrip() != 0) return -1;
+    if (test_lsf_unknown_version_is_rejected() != 0) return -1;
     if (test_voice_roundtrip() != 0) return -1;
     if (test_eot_detect() != 0) return -1;
     if (test_voice_frame_number() != 0) return -1;
