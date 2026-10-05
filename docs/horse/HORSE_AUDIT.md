@@ -342,6 +342,25 @@ Host analog loopback (`tests/unit/horse_loopback.cpp`) now covers:
   with DC skipped. Mitigated by `CLOCK_HOLD_FRAMES=3` then bounded TED
   (`69d97b54`). Not tracked as a separate open C-item.
 
+### Cost figures (host, protocol v2)
+
+| Item | Value |
+|------|------:|
+| Hard Viterbi decode (m17_hard, noise 0, n=5000) | 82.4 us/frame |
+| Hard Viterbi decode (noise 10000, n=2000) | 82.2 us/frame |
+| `sizeof(HorseFrameDecoder)` | 454 B (fragCopy 360 B of that) |
+| `sizeof(HorseFrameEncoder)` | 116 B |
+| `sizeof(HorseDemodulator)` | 416 B |
+| `sizeof(M17::HardViterbi)` | 2032 B |
+| `voice_decode` stack (`-Wstack-usage`, host g++) | 2208 B |
+
+Gate for decode time is <= 5 ms/frame (section 16); host meets it.
+Static RAM added vs pre-fragment decoder is dominated by `fragCopy`
+(~360 B) plus small counters. **Open / unverified on MD-3x0:** placing
+`HardViterbi` on the RTX 512 B stack is impossible at 2208 B host
+stack usage; needs a static instance or larger codec/RTX stack (C14),
+unverified without the Miosix cross build.
+
 First failing layer before the demod fix was **c**. Commits:
 
 | Commit | Change |
@@ -362,8 +381,8 @@ see `UPSTREAM_ISSUE_dsp.md`).
 
 | Impairment | Pass | Fail |
 |------------|------|------|
-| Uniform noise amplitude vs outer ~21861 | 12500 | 17000 (v2 sync E2=64 + 3-frame opening; gate >=13000) |
-| Sample-rate offset | 400 ppm | 450 ppm |
+| Uniform noise amplitude vs outer ~21861 | 12500 | 17000 (v2 sync E2=64 + 3-frame opening; gate >=13000); post-v2 remeasure `first_noise_fail=17000` |
+| Sample-rate offset | 400 ppm | 450 ppm; post-v2 `first_ppm_fail=450` |
 | Polarity invert without `invertPhase` | 0/3 frames | -- |
 | Polarity invert with `invertPhase` | 3/3 | -- |
 | DC offset 500 | 3/3 | -- |

@@ -58,6 +58,9 @@ Host analog loopback (gain 1.0 unless noted), after v2:
 | Late entry | voice acquire + fragment LSF rebuild |
 | Three-mode modem | encrypt, sign, both; late-entry DROP_LSF; negatives |
 | CPS layout vs upstream | compile-time `static_assert` |
+| complete_v2 @10000 (200/mode, real demod) | 95--107/200 (gate >=198; not met) |
+| lsf_frag erase_open=0/1 @10000 | 186/200 / 137/200 (gate >=198; not met) |
+| Viterbi host | ~82 us/frame; `voice_decode` stack 2208 B host |
 
 `dsp.cpp` is not patched (`docs/horse/UPSTREAM_ISSUE_dsp.md`).
 

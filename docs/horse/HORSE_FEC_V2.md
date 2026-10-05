@@ -549,6 +549,34 @@ The 198/200 gate at noise 10000 is **not** met (189/200); the 11
 failures are coded-LSF CRC, not the 300 voice frames. Firmware was
 not changed.
 
+### Post-implementation re-run (protocol v2 in tree)
+
+After option-C voice, 3-frame LSF, cycle-10 fragments, new sync words,
+and demod coast/hold landed, `complete_v2` on the **real demodulator**
+(miss_limit 4, 200 trials) at noise 10000:
+
+| seed schedule | encrypt | sign | both | voice_ok encrypt / 60000 |
+|---------------|--------:|-----:|-----:|-------------------------:|
+| `1 + t*17` | 95 | 107 | 95 | 47195 |
+| `11000 + t*17` (section 16: `1000+noise`) | 99 | 99 | 98 | 48277 |
+
+Gate remains **>= 198/200**; still not met. Absolute complete-TX
+success is lower than the pre-fragment study rows above (189 ideal /
+144 demod). Loopback impair floors did not regress
+(`first_noise_fail=17000`, `first_ppm_fail=450`). Open: diagnose the
+complete_v2 drop vs the study tables (likely LSF+voice alignment under
+3-frame opening and CLOCK_HOLD, not a lowered gate).
+
+`lsf_frag` at noise 10000, nvoice=40, seed `1 + t*17`:
+
+| erase_open | open | frag_or_open | mean_start_fr |
+|-----------:|-----:|-------------:|--------------:|
+| 0 | 158/200 | 186/200 | 2 |
+| 1 | 0/200 | 137/200 | 15 |
+
+Section 16 / 7b LSF-valid gate (>=198/200 opening or rebuild) is **not**
+met (186/200 with opening present; 137/200 with opening payload erased).
+
 ## 9. Complete transmissions and LSF comparison
 
 Version 1 type-only (round 2, ideal/demod mix): 178/200 at 10000,
