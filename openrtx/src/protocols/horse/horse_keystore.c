@@ -6,6 +6,7 @@
 
 #include "protocols/horse/horse_keystore.h"
 #include <string.h>
+#include <pthread.h>
 
 #ifdef HAVE_LIBSODIUM
 #include <sodium.h>
@@ -40,20 +41,56 @@ typedef struct
 
 static horse_identity_keys_t unlocked_identity;
 static bool identity_unlocked;
+static pthread_mutex_t identity_mu = PTHREAD_MUTEX_INITIALIZER;
+
+static void horse_identity_wipe(horse_identity_keys_t *id)
+{
+    horse_crypto_memzero(id, sizeof *id);
+}
+
+static int horse_linux_identity_path(char *path, size_t path_len)
+{
+    const char *env = getenv("XDG_STATE_HOME");
+    const char *home = getenv("HOME");
+    int n;
+
+    if (env != NULL)
+        n = snprintf(path, path_len, "%s/OpenRTX/horse_identity.bin", env);
+    else if (home != NULL)
+        n = snprintf(path, path_len, "%s/.local/state/OpenRTX/horse_identity.bin",
+                     home);
+    else
+        return -1;
+
+    if (n < 0 || (size_t)n >= path_len)
+        return -1;
+    return 0;
+}
+
+static int horse_linux_identity_dir(char *dir, size_t dir_len)
+{
+    const char *env = getenv("XDG_STATE_HOME");
+    const char *home = getenv("HOME");
+    int n;
+
+    if (env != NULL)
+        n = snprintf(dir, dir_len, "%s/OpenRTX", env);
+    else if (home != NULL)
+        n = snprintf(dir, dir_len, "%s/.local/state/OpenRTX", home);
+    else
+        return -1;
+
+    if (n < 0 || (size_t)n >= dir_len)
+        return -1;
+    return 0;
+}
 
 static int horse_store_read(horse_identity_store_t *store)
 {
 #ifdef PLATFORM_LINUX
-    const char *env = getenv("XDG_STATE_HOME");
-    const char *home = getenv("HOME");
-    char path[256];
+    char path[512];
 
-    if (env != NULL)
-        snprintf(path, sizeof path, "%s/OpenRTX/horse_identity.bin", env);
-    else if (home != NULL)
-        snprintf(path, sizeof path, "%s/.local/state/OpenRTX/horse_identity.bin",
-                 home);
-    else
+    if (horse_linux_identity_path(path, sizeof path) != 0)
         return -1;
 
     int fd = open(path, O_RDONLY);
@@ -73,20 +110,18 @@ static int horse_store_read(horse_identity_store_t *store)
 static int horse_store_write(const horse_identity_store_t *store)
 {
 #ifdef PLATFORM_LINUX
-    const char *env = getenv("XDG_STATE_HOME");
-    const char *home = getenv("HOME");
-    char dir[256];
-    char path[256];
+    char dir[512];
+    char path[512];
 
-    if (env != NULL)
-        snprintf(dir, sizeof dir, "%s/OpenRTX", env);
-    else if (home != NULL)
-        snprintf(dir, sizeof dir, "%s/.local/state/OpenRTX", home);
-    else
+    if (horse_linux_identity_dir(dir, sizeof dir) != 0)
         return -1;
+    {
+        int n = snprintf(path, sizeof path, "%s/horse_identity.bin", dir);
+        if (n < 0 || (size_t)n >= sizeof path)
+            return -1;
+    }
 
     mkdir(dir, 0700);
-    snprintf(path, sizeof path, "%s/horse_identity.bin", dir);
 
     int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
     if (fd < 0)
@@ -110,8 +145,10 @@ static bool horse_derive_wrap_key(const char *passphrase, size_t passphrase_len,
 
 void horse_keystore_init(void)
 {
+    pthread_mutex_lock(&identity_mu);
     identity_unlocked = false;
-    memset(&unlocked_identity, 0, sizeof unlocked_identity);
+    horse_identity_wipe(&unlocked_identity);
+    pthread_mutex_unlock(&identity_mu);
 }
 
 void horse_keystore_terminate(void)
@@ -121,20 +158,37 @@ void horse_keystore_terminate(void)
 
 bool horse_keystore_is_unlocked(void)
 {
-    return identity_unlocked;
+    bool unlocked;
+
+    pthread_mutex_lock(&identity_mu);
+    unlocked = identity_unlocked;
+    pthread_mutex_unlock(&identity_mu);
+    return unlocked;
 }
 
-const horse_identity_keys_t *horse_keystore_get_identity(void)
+bool horse_keystore_copy_identity(horse_identity_keys_t *out)
 {
-    if (!identity_unlocked)
-        return NULL;
-    return &unlocked_identity;
+    bool ok = false;
+
+    if (out == NULL)
+        return false;
+
+    pthread_mutex_lock(&identity_mu);
+    if (identity_unlocked)
+    {
+        *out = unlocked_identity;
+        ok = true;
+    }
+    pthread_mutex_unlock(&identity_mu);
+    return ok;
 }
 
 void horse_keystore_lock(void)
 {
-    memset(&unlocked_identity, 0, sizeof unlocked_identity);
+    pthread_mutex_lock(&identity_mu);
+    horse_identity_wipe(&unlocked_identity);
     identity_unlocked = false;
+    pthread_mutex_unlock(&identity_mu);
 }
 
 bool horse_keystore_unlock(const char *passphrase, size_t passphrase_len)
@@ -160,11 +214,18 @@ bool horse_keystore_unlock(const char *passphrase, size_t passphrase_len)
     horse_identity_keys_t identity;
     if (!horse_crypto_decrypt_identity(store.blob, store.blob_len, wrap_key,
                                          HORSE_SESSION_KEY_BYTES, &identity))
+    {
+        horse_crypto_memzero(wrap_key, sizeof wrap_key);
         return false;
+    }
 
-    horse_keystore_lock();
+    horse_crypto_memzero(wrap_key, sizeof wrap_key);
+    pthread_mutex_lock(&identity_mu);
+    horse_identity_wipe(&unlocked_identity);
     unlocked_identity = identity;
     identity_unlocked = true;
+    pthread_mutex_unlock(&identity_mu);
+    horse_identity_wipe(&identity);
     return true;
 }
 
@@ -196,21 +257,34 @@ bool horse_keystore_store_plaintext(const horse_identity_keys_t *identity,
                                        HORSE_SESSION_KEY_BYTES,
                                        store.blob, sizeof store.blob,
                                        &blob_len))
+    {
+        horse_crypto_memzero(wrap_key, sizeof wrap_key);
         return false;
+    }
 
+    horse_crypto_memzero(wrap_key, sizeof wrap_key);
     store.blob_len = (uint16_t)blob_len;
     if (horse_store_write(&store) != 0)
         return false;
 
-    horse_keystore_lock();
+    pthread_mutex_lock(&identity_mu);
+    horse_identity_wipe(&unlocked_identity);
     unlocked_identity = *identity;
     identity_unlocked = true;
+    pthread_mutex_unlock(&identity_mu);
     return true;
 }
 
 bool horse_keystore_fingerprint(uint8_t fp_out[32])
 {
-    if (!identity_unlocked || fp_out == NULL)
+    horse_identity_keys_t id;
+    bool ok;
+
+    if (fp_out == NULL)
         return false;
-    return horse_crypto_identity_fingerprint(&unlocked_identity, fp_out);
+    if (!horse_keystore_copy_identity(&id))
+        return false;
+    ok = horse_crypto_identity_fingerprint(&id, fp_out);
+    horse_identity_wipe(&id);
+    return ok;
 }

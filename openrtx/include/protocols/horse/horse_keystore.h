@@ -21,7 +21,7 @@ void horse_keystore_init(void);
 void horse_keystore_terminate(void);
 
 bool horse_keystore_is_unlocked(void);
-const horse_identity_keys_t *horse_keystore_get_identity(void);
+bool horse_keystore_copy_identity(horse_identity_keys_t *out);
 
 bool horse_keystore_unlock(const char *passphrase, size_t passphrase_len);
 void horse_keystore_lock(void);
