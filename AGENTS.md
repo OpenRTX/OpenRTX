@@ -58,7 +58,7 @@ meson compile -C build_linux linux \
   horse_frame_test horse_crypto_test horse_info_test horse_codec_test \
   horse_peers_test horse_keystore_test horse_host_interop_test \
   horse_loopback_test ui_check_standby_test m17_packet_test \
-  dsp_oversampling_test gfx_text_test m17_replay_test
+  dsp_oversampling_test gfx_text_test m17_replay_test cps_layout_test
 meson test -C build_linux --no-rebuild
 
 # Cross-compile for ARM Cortex-M4 targets

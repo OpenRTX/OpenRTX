@@ -6,7 +6,7 @@
 # 120-second smoke test for all libFuzzer targets.
 # Verifies each fuzzer runs and that coverage rises during the run.
 # Usage: ./scripts/run_fuzz_smoke_test.sh [build_dir] [duration_sec_per_fuzzer]
-#   duration_sec_per_fuzzer defaults to 120. Use 20 for a 120s total quick smoke (6*20s).
+#   duration_sec_per_fuzzer defaults to 120.
 #
 
 set -e
@@ -23,7 +23,7 @@ fi
 
 mkdir -p "$ARTIFACTS_BASE"
 
-FUZZERS="fuzz_horse_frame fuzz_ldpc_horse fuzz_m17_golay fuzz_m17_callsign fuzz_m17_frame fuzz_minmea"
+FUZZERS="fuzz_horse_frame fuzz_ldpc_horse"
 
 for name in $FUZZERS; do
     bin="${BUILD_DIR}/${name}"

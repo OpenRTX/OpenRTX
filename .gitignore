@@ -79,10 +79,6 @@ fuzz_artifacts_smoke/
 # Fuzzer corpus: keep only seed files; ignore libFuzzer-generated (hash-named) corpus
 tests/fuzz/corpus/fuzz_horse_frame/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
 tests/fuzz/corpus/fuzz_ldpc_horse/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
-tests/fuzz/corpus/fuzz_m17_callsign/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
-tests/fuzz/corpus/fuzz_m17_frame/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
-tests/fuzz/corpus/fuzz_m17_golay/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
-tests/fuzz/corpus/fuzz_minmea/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
 tests/fuzz/corpus/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
 
 # ignore linux openrtx emulator history file
