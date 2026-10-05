@@ -31,9 +31,8 @@ static uint8_t ldpc_out_bits[LDPC_VOICE_ENCODED_BITS];
 void ldpc_horse_encode_voice(const uint8_t *payload, uint8_t *encoded)
 {
     bytes_to_bits(payload, LDPC_VOICE_PAYLOAD_BITS, ldpc_in_bits);
-    for (size_t i = 0; i < LDPC_VOICE_PAYLOAD_BITS; i++)
-    {
-        ldpc_out_bits[2 * i]     = ldpc_in_bits[i];
+    for (size_t i = 0; i < LDPC_VOICE_PAYLOAD_BITS; i++) {
+        ldpc_out_bits[2 * i] = ldpc_in_bits[i];
         ldpc_out_bits[2 * i + 1] = ldpc_in_bits[i];
     }
     bits_to_bytes(ldpc_out_bits, LDPC_VOICE_ENCODED_BITS, encoded);
@@ -43,6 +42,23 @@ void ldpc_horse_decode_voice(const uint8_t *encoded, uint8_t *payload)
 {
     bytes_to_bits(encoded, LDPC_VOICE_ENCODED_BITS, ldpc_in_bits);
     for (size_t i = 0; i < LDPC_VOICE_PAYLOAD_BITS; i++)
-        ldpc_out_bits[i] = (ldpc_in_bits[2 * i] & ldpc_in_bits[2 * i + 1]) ? 1 : 0;
+        ldpc_out_bits[i] = (ldpc_in_bits[2 * i] & ldpc_in_bits[2 * i + 1]) ? 1 :
+                                                                             0;
     bits_to_bytes(ldpc_out_bits, LDPC_VOICE_PAYLOAD_BITS, payload);
+}
+
+unsigned ldpc_horse_repeat_disagreements(const uint8_t *encoded)
+{
+    if (encoded == NULL)
+        return LDPC_VOICE_PAYLOAD_BITS;
+    unsigned n = 0;
+    for (size_t i = 0; i < LDPC_VOICE_PAYLOAD_BITS; i++) {
+        const size_t a = 2u * i;
+        const size_t b = a + 1u;
+        const uint8_t ba = (uint8_t)((encoded[a / 8] >> (7u - (a % 8))) & 1u);
+        const uint8_t bb = (uint8_t)((encoded[b / 8] >> (7u - (b % 8))) & 1u);
+        if (ba != bb)
+            n++;
+    }
+    return n;
 }

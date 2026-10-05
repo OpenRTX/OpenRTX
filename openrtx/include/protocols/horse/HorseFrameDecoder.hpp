@@ -26,15 +26,17 @@ public:
 
     void reset();
 
-    HorseFrameType decodeFrame(const frame_t& frame);
+    HorseFrameType decodeFrame(const frame_t &frame);
 
-    void getLsfCallsigns(call_t& src, call_t& dst);
+    void getLsfCallsigns(call_t &src, call_t &dst);
 
     bool getLsfCrypto(const frame_t &frame, uint8_t eph_pk[32], uint8_t *flags,
                       uint8_t *version = nullptr);
 
-    void getVoicePayload(const frame_t& frame, uint8_t* melpe96bits,
-                        uint8_t* tag32bits, uint16_t* frameNum);
+    unsigned lsfRepeatDisagreements(const frame_t &frame);
+
+    void getVoicePayload(const frame_t &frame, uint8_t *melpe96bits,
+                         uint8_t *tag32bits, uint16_t *frameNum);
 
 private:
     call_t lsfSrc;
@@ -42,6 +44,6 @@ private:
     uint16_t lastVoiceFrameNum;
 };
 
-}  // namespace horse
+} // namespace horse
 
-#endif  // HORSE_FRAME_DECODER_H
+#endif // HORSE_FRAME_DECODER_H
