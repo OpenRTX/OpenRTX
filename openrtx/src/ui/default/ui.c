@@ -1019,6 +1019,10 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             #else
                 state.channel.mode = OPMODE_FM;
             #endif
+#ifdef CONFIG_HORSE
+            if(state.channel.mode == OPMODE_HORSE)
+                horse_info_reset(&state.channel.horse);
+#endif
             *sync_rtx = true;
             vp_announceRadioMode(state.channel.mode, queueFlags);
             break;

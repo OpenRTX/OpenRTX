@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "core/datatypes.h"
 #include "rtx/rtx.h"
 
@@ -221,6 +222,13 @@ typedef struct
     uint16_t contact_index;
 }
 __attribute__((packed)) horseInfo_t; // 4B
+
+static inline void horse_info_reset(horseInfo_t *info)
+{
+    if (info == NULL)
+        return;
+    memset(info, 0, sizeof(*info));
+}
 
 /**
  * Data structure describing Horse-specific contact fields (callsign, public key).
