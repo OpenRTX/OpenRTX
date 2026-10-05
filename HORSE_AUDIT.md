@@ -13,27 +13,33 @@ work list. Finding status:
 
 | Id | Status |
 |----|--------|
-| C1 voice MAC not session-keyed | deferred to Step 2 (`HORSE_DESIGN_CHANGES.md` item 1) |
+| C1 voice MAC not session-keyed | fixed in `4e789cbf` / `16a5b677` (k_tag from ECDH) |
 | C2 TX cleartext fallback | fixed in `c6bdad06` (refuse TX; UI `horseError`) |
-| C3 demod correlator not Horse sync | fixed in `c6337821` |
-| C4 signature chunk overflow | fixed in `c3f68754` (`sig_chunk_bytes`; last chunk 4 B) |
-| C5 20 ms DMA vs 40 ms codec | deferred to Step 2 item 6 |
-| C6 FN / nonce layout | deferred to Step 2 item 2 |
-| C7 Argon2 RAM / PBKDF2 | deferred to Step 2 item 4; PBKDF2 `#else` now fails closed |
-| C8 passphrase in `settings_t` | deferred to Step 2 item 4 |
-| C9 `contact_t` growth | deferred to Step 2 item 5 |
+| C3 demod correlator not Horse sync | fixed in `c6337821` / `4d301939` |
+| C4 signature chunk overflow | fixed in `c3f68754`; packing `13ac0cef` (5x12+4) |
+| C5 20 ms DMA vs 40 ms codec | fixed in `8b965e29` |
+| C6 FN / nonce layout | fixed in `08e6c3cb` / `4e789cbf` |
+| C7 Argon2 RAM / PBKDF2 | `4015daa2`; 16 KiB Argon2id; no PBKDF2; unverified MD-3x0 |
+| C8 passphrase in `settings_t` | fixed in `4015daa2` (RAM-only) |
+| C9 `contact_t` growth | fixed in `1b79bbdb` (sidecar peers) |
 | C10 Ed25519 seed padded to 64 | fixed in `80404ce2` |
-| C11 keyring hex/JSON | fixed in `80404ce2` |
+| C11 keyring hex/JSON | fixed in `80404ce2` / `31495ec7` |
 | C12 encrypted RX without session | fixed in `c6bdad06` |
 | C13 MD-3x0 C5000 TX enable | open, unverified without cross toolchain |
-| C14 RTX 512 B stack | deferred to Step 2 item 7; unverified on MD-3x0 |
+| C14 RTX 512 B stack | `7f7069a2` host `-Wstack-usage`; unverified on MD-3x0 |
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
 | C17 LDPC name vs repeat-2 | open / documented as repetition until replaced |
-| C18 tests vs claims | analog loopback fixed; see C18 notes |
+| C18 tests vs claims | analog loopback `12dea76f`; three-mode + LSF KDF this round |
 | C19 `sodium_memzero` | fixed in `c6bdad06` / `fb86c4ed` |
 | M17 `dsp.cpp:19` UBSan | upstream; see `UPSTREAM_ISSUE_dsp.md` (do not patch in this fork) |
-| `horse_keytool.py` | deferred to Step 2 item 8 |
+| `horse_keytool.py` | removed; identities are XDG files `31495ec7` |
+| LSF bind / channel flags | `b1f207f5` |
+| False-lock Hamming 0 + tag drop | `b9f6331c` |
+| Native meson test vs ARM firmware | `18785460` |
+| Sanitizer Horse timeouts / `-fno-sanitize=shift` | `83e4a806` |
+| ECIES dead code | `c18faa08` |
+| Python/C identity interop | `3bb7439a` |
 
 ---
 

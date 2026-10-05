@@ -16,6 +16,10 @@
 #include "protocols/horse/HorseDemodulator.hpp"
 #include "protocols/horse/HorseConstants.hpp"
 #include "protocols/horse/HorseUtils.hpp"
+#include "protocols/horse/horse_crypto.h"
+#ifdef HAVE_LIBSODIUM
+#include <sodium.h>
+#endif
 #include "protocols/M17/DSP.hpp"
 #include "core/fir.hpp"
 #include <cmath>
@@ -251,6 +255,17 @@ static void to_24k(const std::vector<int16_t> &bb48, std::vector<int16_t> &rx24)
     rx24.clear();
     for (size_t i = 0; i + 1 < bb48.size(); i += 2)
         rx24.push_back(bb48[i]);
+}
+
+int horse_render_frames(const std::vector<frame_t> &frames,
+                        std::vector<int16_t> &bb48, bool preamble)
+{
+    return render_frames(frames, bb48, preamble);
+}
+
+void horse_to_24k(const std::vector<int16_t> &bb48, std::vector<int16_t> &rx24)
+{
+    to_24k(bb48, rx24);
 }
 
 static int test_layer_c_demod_timing()
@@ -690,6 +705,8 @@ static int test_impairments()
     return 0;
 }
 
+int test_three_mode_loopback(void);
+
 int main()
 {
     if (test_layer_a_bytes_symbols() != 0)
@@ -709,6 +726,8 @@ int main()
     if (test_layer_d_full_tx() != 0)
         return -1;
     if (test_impairments() != 0)
+        return -1;
+    if (test_three_mode_loopback() != 0)
         return -1;
     std::printf("horse_loopback: all tests passed\n");
     return 0;

@@ -1339,7 +1339,8 @@ horse_host_interop_test = executable('horse_host_interop_test',
                                      link_args : linux_l_args)
 
 horse_loopback_test = executable('horse_loopback_test',
-                                 sources : unit_test_src + ['tests/unit/horse_loopback.cpp'],
+                                 sources : unit_test_src + ['tests/unit/horse_loopback.cpp',
+                                                            'tests/unit/horse_session_modem.cpp'],
                                  kwargs : unit_test_opts)
 
 py3 = find_program('python3', required : true)
