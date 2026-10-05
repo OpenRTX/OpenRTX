@@ -25,6 +25,9 @@ HorseFrameDecoder::HorseFrameDecoder()
     lsfDst.fill(0);
     std::memset(lsfAssembled, 0, sizeof lsfAssembled);
     std::memset(lsfChunkOk, 0, sizeof lsfChunkOk);
+    std::memset(fragCopy, 0, sizeof fragCopy);
+    std::memset(fragCount, 0, sizeof fragCount);
+    std::memset(fragHead, 0, sizeof fragHead);
 }
 
 HorseFrameDecoder::~HorseFrameDecoder()
@@ -40,6 +43,64 @@ void HorseFrameDecoder::reset()
     lsfComplete = false;
     std::memset(lsfAssembled, 0, sizeof lsfAssembled);
     std::memset(lsfChunkOk, 0, sizeof lsfChunkOk);
+    std::memset(fragCopy, 0, sizeof fragCopy);
+    std::memset(fragCount, 0, sizeof fragCount);
+    std::memset(fragHead, 0, sizeof fragHead);
+}
+
+void HorseFrameDecoder::majoritySlot(size_t slot,
+                                     uint8_t out[HORSE_FRAG_BYTES]) const
+{
+    std::memset(out, 0, HORSE_FRAG_BYTES);
+    if (slot >= HORSE_FRAG_CYCLE || fragCount[slot] == 0)
+        return;
+    const unsigned n = fragCount[slot];
+    for (size_t bit = 0; bit < HORSE_FRAG_BYTES * 8; bit++) {
+        unsigned ones = 0;
+        for (unsigned c = 0; c < n; c++) {
+            const uint8_t *copy = fragCopy[slot][c];
+            if ((copy[bit / 8] >> (7 - (bit % 8))) & 1u)
+                ones++;
+        }
+        /* Ties count as 0. Need strict majority (> n/2). */
+        if (ones * 2 > n)
+            out[bit / 8] |= static_cast<uint8_t>(0x80u >> (bit % 8));
+    }
+}
+
+void HorseFrameDecoder::tryAssembleLsfFromFrags()
+{
+    if (lsfComplete)
+        return;
+    for (size_t s = 0; s < HORSE_FRAG_LSF_SLOTS; s++) {
+        if (fragCount[s] == 0)
+            return;
+    }
+    uint8_t block[LSF_WITH_CRC_BYTES];
+    for (size_t s = 0; s < HORSE_FRAG_LSF_SLOTS; s++)
+        majoritySlot(s, block + s * HORSE_FRAG_BYTES);
+    uint16_t want = (static_cast<uint16_t>(block[46]) << 8) | block[47];
+    if (crc_m17(block, LSF_RAW_BYTES) != want)
+        return;
+    std::memcpy(lsfAssembled, block, LSF_WITH_CRC_BYTES);
+    std::copy(lsfAssembled, lsfAssembled + 6, lsfSrc.begin());
+    std::copy(lsfAssembled + 6, lsfAssembled + 12, lsfDst.begin());
+    lsfComplete = true;
+}
+
+void HorseFrameDecoder::ingestFragment(uint16_t fn,
+                                       const uint8_t spare[HORSE_FRAG_BYTES])
+{
+    const size_t slot = horse_frag_slot(fn);
+    if (slot >= HORSE_FRAG_CYCLE)
+        return;
+    const uint8_t head = fragHead[slot];
+    std::memcpy(fragCopy[slot][head], spare, HORSE_FRAG_BYTES);
+    fragHead[slot] = static_cast<uint8_t>((head + 1) % HORSE_FRAG_MAJORITY);
+    if (fragCount[slot] < HORSE_FRAG_MAJORITY)
+        fragCount[slot] = static_cast<uint8_t>(fragCount[slot] + 1);
+    if (slot < HORSE_FRAG_LSF_SLOTS)
+        tryAssembleLsfFromFrags();
 }
 
 HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
@@ -82,6 +143,9 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
             uint8_t info[HORSE_VOICE_INFO_BYTES];
             voice_decode(frame.data() + 2, info);
             lastVoiceFrameNum = (static_cast<uint16_t>(info[0]) << 8) | info[1];
+            uint8_t spare[HORSE_FRAG_BYTES];
+            voice_extract_spare(frame.data() + 2, spare);
+            ingestFragment(lastVoiceFrameNum & 0x7FFF, spare);
         }
         return HorseFrameType::VOICE;
     }
@@ -127,6 +191,27 @@ void HorseFrameDecoder::getVoicePayload(const frame_t &frame,
         std::memcpy(melpe96bits, info + 2, 12);
     if (tag32bits != nullptr)
         std::memcpy(tag32bits, info + 14, 4);
+}
+
+bool HorseFrameDecoder::getSigFragments(uint8_t sig64[SIG_BYTES]) const
+{
+    if (sig64 == nullptr)
+        return false;
+    for (size_t s = HORSE_FRAG_LSF_SLOTS; s < HORSE_FRAG_CYCLE; s++) {
+        if (fragCount[s] == 0)
+            return false;
+    }
+    std::memset(sig64, 0, SIG_BYTES);
+    for (size_t s = HORSE_FRAG_LSF_SLOTS; s < HORSE_FRAG_CYCLE; s++) {
+        uint8_t frag[HORSE_FRAG_BYTES];
+        majoritySlot(s, frag);
+        const size_t off = (s - HORSE_FRAG_LSF_SLOTS) * HORSE_FRAG_BYTES;
+        size_t n = SIG_BYTES - off;
+        if (n > HORSE_FRAG_BYTES)
+            n = HORSE_FRAG_BYTES;
+        std::memcpy(sig64 + off, frag, n);
+    }
+    return true;
 }
 
 } // namespace horse

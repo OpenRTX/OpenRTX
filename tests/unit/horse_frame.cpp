@@ -378,6 +378,142 @@ static int test_lsf_syncword_symbols()
     return 0;
 }
 
+static int test_frag_lsf_rebuild_from_voice()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = {{'F', 'R', 'A', 'G', '0', '1'}};
+    call_t dst = {{'F', 'R', 'A', 'G', '0', '2'}};
+    frame_t opening[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, opening);
+    uint8_t melpe[12];
+    uint8_t tag[4] = {1, 2, 3, 4};
+    std::memset(melpe, 0x5A, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_LSF_SLOTS; fn++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        if (dec.decodeFrame(voice) != HorseFrameType::VOICE)
+            return -1;
+    }
+    if (!dec.lsfReady()) {
+        std::printf("horse_frame_test: frag LSF not ready after slots 0..3\n");
+        return -1;
+    }
+    call_t outSrc, outDst;
+    dec.getLsfCallsigns(outSrc, outDst);
+    if (outSrc != src || outDst != dst) {
+        std::printf("horse_frame_test: frag LSF callsigns mismatch\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_frag_tamper_rejected()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = {{'T', 'A', 'M', 'P', 'E', 'R'}};
+    call_t dst = {{'C', 'H', 'E', 'C', 'K', '1'}};
+    frame_t opening[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, opening);
+    uint8_t melpe[12];
+    uint8_t tag[4] = {0};
+    std::memset(melpe, 0x11, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_LSF_SLOTS; fn++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        if (fn == 1) {
+            uint8_t info[HORSE_VOICE_INFO_BYTES];
+            uint8_t spare[HORSE_FRAG_BYTES];
+            voice_decode(voice.data() + 2, info);
+            voice_extract_spare(voice.data() + 2, spare);
+            for (size_t i = 0; i < HORSE_FRAG_BYTES; i++)
+                spare[i] ^= 0xFF;
+            voice_encode_with_spare(info, spare, voice.data() + 2);
+        }
+        dec.decodeFrame(voice);
+    }
+    if (dec.lsfReady()) {
+        std::printf("horse_frame_test: tampered frag LSF accepted\n");
+        return -1;
+    }
+    /* Two good copies of slot 1 outvote the bad one. */
+    for (int r = 0; r < 2; r++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, 1, voice, false, 12);
+        dec.decodeFrame(voice);
+    }
+    if (!dec.lsfReady()) {
+        std::printf("horse_frame_test: majority did not recover frag LSF\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_frag_mixed_tx_rejected()
+{
+    HorseFrameEncoder encA;
+    HorseFrameEncoder encB;
+    HorseFrameDecoder dec;
+    call_t srcA = {{'A', 'A', 'A', 'A', 'A', 'A'}};
+    call_t dstA = {{'B', 'B', 'B', 'B', 'B', 'B'}};
+    call_t srcB = {{'C', 'C', 'C', 'C', 'C', 'C'}};
+    call_t dstB = {{'D', 'D', 'D', 'D', 'D', 'D'}};
+    frame_t openA[LSF_OPENING_FRAMES], openB[LSF_OPENING_FRAMES];
+    encA.encodeLsf(srcA, dstA, nullptr, 0, openA);
+    encB.encodeLsf(srcB, dstB, nullptr, 0x01, openB);
+    uint8_t melpe[12];
+    uint8_t tag[4] = {0};
+    std::memset(melpe, 0x22, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_LSF_SLOTS; fn++) {
+        frame_t voice{};
+        if ((fn & 1u) == 0)
+            encA.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        else
+            encB.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        dec.decodeFrame(voice);
+    }
+    if (dec.lsfReady()) {
+        std::printf("horse_frame_test: mixed-TX fragments accepted\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_frag_sig_slots()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = {{'S', 'I', 'G', 'F', 'R', 'G'}};
+    call_t dst = {{'S', 'I', 'G', 'D', 'S', 'T'}};
+    frame_t opening[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, LSF_FLAG_SIGNED, opening);
+    uint8_t sig[64];
+    for (size_t i = 0; i < sizeof sig; i++)
+        sig[i] = static_cast<uint8_t>(i ^ 0xA5);
+    enc.setSignatureFragments(sig);
+    uint8_t melpe[12];
+    uint8_t tag[4] = {0};
+    std::memset(melpe, 0x33, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_CYCLE; fn++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        dec.decodeFrame(voice);
+    }
+    if (!dec.lsfReady())
+        return -1;
+    uint8_t out[64];
+    if (!dec.getSigFragments(out)) {
+        std::printf("horse_frame_test: sig fragments incomplete\n");
+        return -1;
+    }
+    if (std::memcmp(out, sig, 64) != 0) {
+        std::printf("horse_frame_test: sig fragment mismatch\n");
+        return -1;
+    }
+    return 0;
+}
+
 int main()
 {
     if (test_lsf_roundtrip() != 0) return -1;
@@ -395,6 +531,10 @@ int main()
     if (test_sig_incomplete_does_not_fill_64() != 0) return -1;
     if (test_voice_fn_never_enters_sig_range() != 0) return -1;
     if (test_lsf_syncword_symbols() != 0) return -1;
+    if (test_frag_lsf_rebuild_from_voice() != 0) return -1;
+    if (test_frag_tamper_rejected() != 0) return -1;
+    if (test_frag_mixed_tx_rejected() != 0) return -1;
+    if (test_frag_sig_slots() != 0) return -1;
     std::printf("horse_frame_test: all tests passed\n");
     return 0;
 }

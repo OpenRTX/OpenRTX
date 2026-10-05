@@ -14,8 +14,11 @@
 namespace horse
 {
 
-HorseFrameEncoder::HorseFrameEncoder() : voiceFrameNumber(0)
+HorseFrameEncoder::HorseFrameEncoder()
+    : voiceFrameNumber(0), haveLsfFrag(false), haveSigFrag(false)
 {
+    std::memset(lsfWithCrc, 0, sizeof lsfWithCrc);
+    std::memset(sigBytes, 0, sizeof sigBytes);
 }
 
 HorseFrameEncoder::~HorseFrameEncoder()
@@ -25,6 +28,46 @@ HorseFrameEncoder::~HorseFrameEncoder()
 void HorseFrameEncoder::reset()
 {
     voiceFrameNumber = 0;
+    haveLsfFrag = false;
+    haveSigFrag = false;
+    std::memset(lsfWithCrc, 0, sizeof lsfWithCrc);
+    std::memset(sigBytes, 0, sizeof sigBytes);
+}
+
+void HorseFrameEncoder::setSignatureFragments(const uint8_t *sig64)
+{
+    if (sig64 == nullptr) {
+        std::memset(sigBytes, 0, sizeof sigBytes);
+        haveSigFrag = false;
+        return;
+    }
+    std::memcpy(sigBytes, sig64, SIG_BYTES);
+    haveSigFrag = true;
+}
+
+void HorseFrameEncoder::fillFragment(uint16_t fn,
+                                     uint8_t spare[HORSE_FRAG_BYTES]) const
+{
+    std::memset(spare, 0, HORSE_FRAG_BYTES);
+    const size_t slot = horse_frag_slot(fn);
+    if (slot >= HORSE_FRAG_CYCLE)
+        return;
+    if (slot < HORSE_FRAG_LSF_SLOTS) {
+        if (!haveLsfFrag)
+            return;
+        std::memcpy(spare, lsfWithCrc + slot * HORSE_FRAG_BYTES,
+                    HORSE_FRAG_BYTES);
+        return;
+    }
+    if (!haveSigFrag)
+        return;
+    const size_t off = (slot - HORSE_FRAG_LSF_SLOTS) * HORSE_FRAG_BYTES;
+    if (off >= SIG_BYTES)
+        return;
+    size_t n = SIG_BYTES - off;
+    if (n > HORSE_FRAG_BYTES)
+        n = HORSE_FRAG_BYTES;
+    std::memcpy(spare, sigBytes + off, n);
 }
 
 void HorseFrameEncoder::encodeLsf(const call_t& src, const call_t& dst,
@@ -46,6 +89,8 @@ void HorseFrameEncoder::encodeLsf(const call_t& src, const call_t& dst,
     uint16_t crc = crc_m17(pad, LSF_RAW_BYTES);
     pad[46] = static_cast<uint8_t>((crc >> 8) & 0xFF);
     pad[47] = static_cast<uint8_t>(crc & 0xFF);
+    std::memcpy(lsfWithCrc, pad, LSF_WITH_CRC_BYTES);
+    haveLsfFrag = true;
     for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
         uint8_t coded[HORSE_VOICE_CODED_BYTES];
         voice_encode(pad + i * LSF_CHUNK_BYTES, coded);
@@ -90,8 +135,10 @@ uint16_t HorseFrameEncoder::encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
     }
     if (tag32bits != nullptr)
         std::memcpy(info + 14, tag32bits, 4);
+    uint8_t spare[HORSE_FRAG_BYTES];
+    fillFragment(fn & 0x7FFF, spare);
     std::copy(VOICE_SYNC_WORD.begin(), VOICE_SYNC_WORD.end(), output.begin());
-    voice_encode(info, output.data() + 2);
+    voice_encode_with_spare(info, spare, output.data() + 2);
     return fn & 0x7FFF;
 }
 

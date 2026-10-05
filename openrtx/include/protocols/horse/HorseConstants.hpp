@@ -47,12 +47,31 @@ static constexpr size_t HORSE_VOICE_SPARE_BYTES = 12;
 static constexpr size_t HORSE_VOICE_SPARE_BITS = HORSE_VOICE_SPARE_BYTES * 8;
 static constexpr size_t HORSE_VOICE_CODED_BITS = HORSE_VOICE_CODED_BYTES * 8;
 static constexpr size_t HORSE_FRAG_CYCLE = 10;
+static constexpr size_t HORSE_FRAG_BYTES = HORSE_VOICE_SPARE_BYTES;
+static constexpr size_t HORSE_FRAG_MAJORITY = 3;
+static constexpr size_t HORSE_FRAG_LSF_SLOTS = 4;
+static constexpr size_t HORSE_FRAG_SIG_SLOTS = 6;
 
 /* Opening LSF: three M17-coded 18-byte chunks covering 46 B + CRC16. */
 static constexpr size_t LSF_OPENING_FRAMES = 3;
 static constexpr size_t LSF_RAW_BYTES = 46;
 static constexpr size_t LSF_WITH_CRC_BYTES = 48;
 static constexpr size_t LSF_CHUNK_BYTES = HORSE_VOICE_INFO_BYTES;
+
+/**
+ * \brief Map a voice or signature FN to the fragment cycle slot (0..9).
+ * @return slot index, or HORSE_FRAG_CYCLE if FN is not in the cycle.
+ */
+static inline size_t horse_frag_slot(uint16_t fn)
+{
+    fn = static_cast<uint16_t>(fn & 0x7FFF);
+    if (fn <= VOICE_FN_MAX)
+        return static_cast<size_t>(fn % HORSE_FRAG_CYCLE);
+    if (fn >= SIG_FRAME_BASE && fn < SIG_FRAME_BASE + SIG_FRAME_COUNT)
+        return HORSE_FRAG_LSF_SLOTS
+             + static_cast<size_t>(fn - SIG_FRAME_BASE);
+    return HORSE_FRAG_CYCLE;
+}
 
 static inline bool voice_fn_in_session(uint16_t fn)
 {
