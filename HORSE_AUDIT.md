@@ -8,10 +8,36 @@ This document is a read-of-the-path audit. Nothing in this file is a
 security guarantee. Findings marked **confirmed** were traced end to end.
 Fuzzing was not run (cancelled by the owner).
 
-Linux Horse enablement (Task 2 compile-only) is present as uncommitted
-working-tree changes in `meson.build`, `OpMode_Horse.cpp`,
-`HorseDemodulator.{hpp,cpp}` and `HorseModulator.cpp`. No other Horse
-bugs were patched.
+Linux Horse enablement is commit `7a2d775f`. This document is also the
+work list. Finding status:
+
+| Id | Status |
+|----|--------|
+| C1 voice MAC not session-keyed | deferred to Step 2 (`HORSE_DESIGN_CHANGES.md` item 1) |
+| C2 TX cleartext fallback | fixed (refuse TX; UI `horseError`) |
+| C3 demod correlator not Horse sync | fixed (`syncwordSymbols(LSF_SYNC_WORD)`) |
+| C4 signature chunk overflow | fixed (bounds `sig_chunk_bytes`; last chunk 4 B) |
+| C5 20 ms DMA vs 40 ms codec | deferred to Step 2 item 6 |
+| C6 FN / nonce layout | deferred to Step 2 item 2 |
+| C7 Argon2 RAM / PBKDF2 | deferred to Step 2 item 4; PBKDF2 `#else` now fails closed |
+| C8 passphrase in `settings_t` | deferred to Step 2 item 4 |
+| C9 `contact_t` growth | deferred to Step 2 item 5 |
+| C10 Ed25519 seed padded to 64 | fixed (`horse_provision.py` packs seed\|\|pk) |
+| C11 keyring hex/JSON | fixed (decode JSON or hex JSON; `show` does not print secrets) |
+| C12 encrypted RX without session | fixed (`horse_rx_may_output_voice`) |
+| C13 MD-3x0 C5000 TX enable | open, unverified without cross toolchain |
+| C14 RTX 512 B stack | deferred to Step 2 item 7; unverified on MD-3x0 |
+| C15 keystore race | fixed (mutex + `horse_keystore_copy_identity`; provision `hdr->len` cap) |
+| C16 `horseInfo_t` garbage on mode switch | fixed (`horse_info_reset`) |
+| C17 LDPC name vs repeat-2 | open / documented as repetition until replaced |
+| C18 tests vs claims | partial; analog loopback does not yet decode a full stream |
+| C19 `sodium_memzero` | fixed (`horse_crypto_memzero`) |
+| M17 `dsp.cpp:19` UBSan | upstream; see `UPSTREAM_ISSUE_dsp.md` (do not patch in this fork) |
+| `horse_keytool.py` | deferred to Step 2 item 8 |
+
+---
+
+Linux Horse enablement (Task 2 compile-only) was committed as `7a2d775f`.
 
 ---
 

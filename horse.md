@@ -26,8 +26,9 @@ Horse mode uses **4‑FSK (4‑level Frequency Shift Keying)** modulation, so it
   - `96` bits voice codec data (`VOICE_MELPE_BITS`, 12 bytes on air)
   - `32`‑bit tag field (`VOICE_TAG_BITS`): encryption MAC and/or per‑frame auth tag
 
-Voice frames use LDPC encoding (`ldpc_horse.c`) after the 18‑byte clear payload
-(2‑byte FN + 12‑byte voice + 4‑byte tag).
+Voice frames use a **repeat‑2 placeholder** in `ldpc_horse.c` (each payload bit is
+sent twice; decode is bitwise AND of the two copies). This is not an LDPC code.
+The 18‑byte clear payload is 2‑byte FN + 12‑byte voice + 4‑byte tag.
 
 ### Link Setup Frame (LSF) layout
 
@@ -50,7 +51,8 @@ When signing is enabled, the 64‑byte Ed25519 session signature is split across
 **six dedicated voice frames** before ordinary voice data:
 
 - Frame numbers: `0x7000` … `0x7005` (`SIG_FRAME_BASE`, `SIG_FRAME_COUNT`)
-- Each frame carries 12 bytes of signature material in the voice payload field
+- Chunks are 12 bytes except the last, which is 4 bytes (`sig_chunk_bytes()`).
+  Final on‑air packing is a Step 2 design item; this is a bounds‑only layout.
 - The session message signed at TX start is `src || dst || eph_pk` (44 bytes);
   `eph_pk` is included only when the encrypted flag is also set
 
@@ -105,7 +107,10 @@ Horse uses modern cryptographic primitives with per‑session keys and optional 
     uses the LSF ephemeral public key scheme above instead.
 - **Voice encryption (XChaCha20 + BLAKE2b MAC):**
   - API in `horse_crypto_voice_encrypt(...)` / `horse_crypto_voice_decrypt(...)`.
-  - Algorithm: **XChaCha20 stream cipher** with a 96‑bit nonce expanded to 192 bits and a **BLAKE2b‑derived 32‑bit MAC** carried in the `VOICE_TAG_BITS` field.
+  - Algorithm: **XChaCha20 stream cipher** with a 96‑bit nonce from the 16‑bit
+    frame number and a **32‑bit BLAKE2b tag** keyed with the public string
+    `"HVOICETAG"` (not the session key). That MAC is **not** a session‑bound
+    authenticator; a replacement is proposed in `HORSE_DESIGN_CHANGES.md`.
 - **Digital signatures (Ed25519):**
   - API in `horse_crypto.h`:
     - `horse_crypto_sign()` / `horse_crypto_verify()` — session‑level Ed25519 signature
@@ -120,15 +125,22 @@ Horse uses modern cryptographic primitives with per‑session keys and optional 
   - Without a valid passphrase or libsodium backend, crypto operations fail closed.
 - **Passphrase‑based key derivation (Argon2id):**
   - API in `horse_crypto_argon2id_derive(...)`.
-  - Implemented via libsodium’s `crypto_pwhash` API where available, with a PBKDF2 fallback on platforms that do not ship libsodium.
-  - Used to derive encryption keys from user passphrases for protecting stored private keys.
+  - Implemented via libsodium `crypto_pwhash` Argon2id only. There is no PBKDF2
+    path. Without libsodium the derive call returns false.
+  - Parameters are currently `OPSLIMIT_MODERATE` / `MEMLIMIT_MODERATE` (~256 MiB).
+    That will not fit STM32F405 SRAM; see `HORSE_DESIGN_CHANGES.md`.
 
 **Implementation status:**
 
-- **Linux emulator / unit tests:** Full libsodium backend; encrypt, sign, and combined modes exercised in `OpMode_Horse` and unit tests.
-- **Voice codec:** CODEC2 2400 (two 20 ms frames per 40 ms Horse frame) via `melpe_horse.c`; true MELPe‑2400 is not yet integrated.
-- **Embedded targets (MD‑3x0, etc.):** Crypto fails closed when libsodium is not linked (`horse_crypto_available()` returns false). Cross‑compiled libsodium is required for on‑device encrypt/sign.
-- **LDPC:** Placeholder repeat‑2 matrix; full LDPC matrix still pending.
+- **Linux emulator / unit tests:** libsodium backend. Frame, crypto, keystore,
+  provision packing, and modulator/demodulator loopback tests. `OpMode_Horse`
+  refuses TX when crypto, keystore, or peer keys are missing (no cleartext).
+  Encrypted or signed RX without a valid session produces no audio.
+- **Voice codec:** CODEC2 2400 (two 20 ms frames per 40 ms Horse frame) via `melpe_horse.c`; true MELPe‑2400 is not yet integrated. DMA vs 40 ms framing is an open design item.
+- **Embedded targets (MD‑3x0, etc.):** Crypto fails closed when libsodium is not linked (`horse_crypto_available()` returns false). Cross‑compiled libsodium is required for on‑device encrypt/sign. RTX stack, Argon2 RAM, and C5000 TX enable are **unverified** without the cross toolchain.
+- **LDPC:** Not LDPC. Repeat‑2 only, until a real code is merged.
+- **Demodulator:** Acquisition correlator uses Horse LSF symbols from
+  `byteToSymbols(LSF_SYNC_WORD)` (`+3,+3,-1,-1,-1,-1,+3,-3`).
 
 Run unit tests:
 
