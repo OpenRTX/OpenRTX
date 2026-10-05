@@ -12,9 +12,9 @@ import sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CORPUS_BASE = os.path.join(SCRIPT_DIR, "..", "tests", "fuzz", "corpus")
 
-LSF_SYNC = bytes([0x5A, 0xA7])
-VOICE_SYNC = bytes([0x7E, 0x9B])
-EOT_SYNC = bytes([0x3C, 0xD8])
+LSF_SYNC = bytes([0x15, 0x57])
+VOICE_SYNC = bytes([0x45, 0xFD])
+EOT_SYNC = bytes([0x77, 0x74])
 
 
 def write_horse_frame(base):

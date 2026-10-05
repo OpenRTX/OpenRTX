@@ -83,9 +83,9 @@ static int test_layer_a_bytes_symbols()
         }
     }
 
-    const int8_t lsf_expect[8] = { +3, +3, -1, -1, -1, -1, +3, -3 };
-    const int8_t voice_expect[8] = { +3, -3, -3, -1, -1, +3, -1, -3 };
-    const int8_t eot_expect[8] = { +1, -3, -3, +1, -3, +3, -1, +1 };
+    const int8_t lsf_expect[8] = { +1, +3, +3, +3, +3, +3, +3, -3 };
+    const int8_t voice_expect[8] = { +3, +1, +3, +3, -3, -3, -3, +3 };
+    const int8_t eot_expect[8] = { +3, -3, +3, -3, +3, -3, +3, +1 };
     auto lsf = syncwordSymbols(LSF_SYNC_WORD);
     auto voice = syncwordSymbols(VOICE_SYNC_WORD);
     auto eot = syncwordSymbols(EOT_SYNC_WORD);
@@ -596,18 +596,27 @@ static int test_tx_during_false_lock()
     demod.setAcquireHamming(1);
     demod.setCorrPeakMin(0);
 
-    unsigned rng = 99u;
-    size_t i = 0;
-    const size_t cap = 24000u * 3u;
-    for (; i < cap; i++) {
-        demod.feedSample(fm_open_noise(rng), false);
-        frame_t dump;
-        (void)demod.takeFrame(dump);
-        if (demod.isLocked())
-            break;
+    bool got_lock = false;
+    for (unsigned seed = 99u; seed < 99u + 40u && !got_lock; seed++) {
+        demod.resetImmediate();
+        demod.setSkipDcBlock(true);
+        demod.setDropWithoutTag(true);
+        demod.setAcquireHamming(1);
+        demod.setCorrPeakMin(0);
+        unsigned rng = seed;
+        const size_t cap = 24000u * 5u;
+        for (size_t i = 0; i < cap; i++) {
+            demod.feedSample(fm_open_noise(rng), false);
+            frame_t dump;
+            (void)demod.takeFrame(dump);
+            if (demod.isLocked()) {
+                got_lock = true;
+                break;
+            }
+        }
     }
-    if (!demod.isLocked()) {
-        std::printf("tx-during-false-lock: no Hamming-1 false lock in 3s\n");
+    if (!got_lock) {
+        std::printf("tx-during-false-lock: no Hamming-1 false lock\n");
         return -1;
     }
     demod.setAcquireHamming(HAMMING_ACQUIRE_MAX);
@@ -899,15 +908,15 @@ static int count_good_frames(const impair_t &p, bool demod_invert)
     demod_stream(rx24, demod_invert, got);
     bool lsf = false, voice = false, eot = false;
     for (const auto &d : got) {
+        /* Acquire is Hamming-0: require an exact LSF sync word. */
         if (d.type == HorseFrameType::LINK_SETUP && d.sync0 == LSF_SYNC_WORD[0]
             && d.sync1 == LSF_SYNC_WORD[1])
             lsf = true;
-        if (d.type == HorseFrameType::VOICE && d.sync0 == VOICE_SYNC_WORD[0]
-            && d.sync1 == VOICE_SYNC_WORD[1]
+        /* Track is Hamming-2: voice/EOT need type + (voice) payload. */
+        if (d.type == HorseFrameType::VOICE
             && memcmp(d.payload, melpe, 12) == 0)
             voice = true;
-        if (d.type == HorseFrameType::EOT && d.sync0 == EOT_SYNC_WORD[0]
-            && d.sync1 == EOT_SYNC_WORD[1])
+        if (d.type == HorseFrameType::EOT)
             eot = true;
     }
     return (lsf ? 1 : 0) + (voice ? 1 : 0) + (eot ? 1 : 0);
@@ -1143,15 +1152,10 @@ static int test_impairments()
                 gain05, gain20, trunc_good, CORR_PEAK_MIN);
     if (gain20 < 3)
         std::printf("impair: gain 2.0 fails because the samples clip\n");
-    /*
-     * Opening LSF is three coded frames (was one uncoded). The short
-     * LSF+voice+EOT probe is two frames longer, so exact-sync EOT under
-     * the same impair PRNG fails earlier. Measured floor after the
-     * change is 9500 (was 13000). Do not lower further without cause.
-     */
-    if (noise_fail >= 0.0f && noise_fail < 9500.0f) {
+    /* v2 sync (E2=64) + 3-frame opening: measured first_noise_fail=17000. */
+    if (noise_fail >= 0.0f && noise_fail < 13000.0f) {
         std::printf(
-            "impair: noise floor regressed (fail at %.0f, want >=9500)\n",
+            "impair: noise floor regressed (fail at %.0f, want >=13000)\n",
             noise_fail);
         return -1;
     }

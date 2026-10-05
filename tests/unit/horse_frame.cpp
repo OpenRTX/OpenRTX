@@ -211,8 +211,37 @@ static int test_lsf_unknown_version_is_rejected()
 {
     if (horse_crypto_lsf_version_ok(99))
         return -1;
+    if (horse_crypto_lsf_version_ok(1))
+        return -1;
     if (!horse_crypto_lsf_version_ok(LSF_PROTOCOL_VERSION))
         return -1;
+    if (LSF_PROTOCOL_VERSION != 2)
+        return -1;
+    return 0;
+}
+
+static int test_v1_sync_not_recognized()
+{
+    frame_t f{};
+    f[0] = LSF_SYNC_WORD_V1[0];
+    f[1] = LSF_SYNC_WORD_V1[1];
+    HorseFrameDecoder dec;
+    if (dec.decodeFrame(f) != HorseFrameType::UNKNOWN) {
+        std::printf("horse_frame_test: v1 LSF sync accepted\n");
+        return -1;
+    }
+    f[0] = VOICE_SYNC_WORD_V1[0];
+    f[1] = VOICE_SYNC_WORD_V1[1];
+    if (dec.decodeFrame(f) != HorseFrameType::UNKNOWN) {
+        std::printf("horse_frame_test: v1 voice sync accepted\n");
+        return -1;
+    }
+    f[0] = EOT_SYNC_WORD_V1[0];
+    f[1] = EOT_SYNC_WORD_V1[1];
+    if (dec.decodeFrame(f) != HorseFrameType::UNKNOWN) {
+        std::printf("horse_frame_test: v1 EOT sync accepted\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -366,9 +395,9 @@ static int test_voice_fn_never_enters_sig_range()
 
 static int test_lsf_syncword_symbols()
 {
-    const std::array<int8_t, 8> lsf = {+3, +3, -1, -1, -1, -1, +3, -3};
-    const std::array<int8_t, 8> voice = {+3, -3, -3, -1, -1, +3, -1, -3};
-    const std::array<int8_t, 8> eot = {+1, -3, -3, +1, -3, +3, -1, +1};
+    const std::array<int8_t, 8> lsf = {+1, +3, +3, +3, +3, +3, +3, -3};
+    const std::array<int8_t, 8> voice = {+3, +1, +3, +3, -3, -3, -3, +3};
+    const std::array<int8_t, 8> eot = {+3, -3, +3, -3, +3, -3, +3, +1};
     if (syncwordSymbols(LSF_SYNC_WORD) != lsf)
         return -1;
     if (syncwordSymbols(VOICE_SYNC_WORD) != voice)
@@ -520,6 +549,7 @@ int main()
     if (test_lsf_crc_tamper() != 0) return -1;
     if (test_lsf_crypto_roundtrip() != 0) return -1;
     if (test_lsf_unknown_version_is_rejected() != 0) return -1;
+    if (test_v1_sync_not_recognized() != 0) return -1;
     if (test_voice_roundtrip() != 0) return -1;
     if (test_voice_m17_not_repeat2() != 0) return -1;
     if (test_eot_detect() != 0) return -1;

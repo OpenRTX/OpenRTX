@@ -370,8 +370,8 @@ see `UPSTREAM_ISSUE_dsp.md`).
 
 | Impairment | Pass | Fail |
 |------------|------|------|
-| Uniform noise amplitude vs outer ~21861 | 9000 | 9500 (was 12500/13000 with 1-frame uncoded LSF; 3-frame coded opening moves the short-probe exact-sync EOT fail earlier under the same PRNG) |
-| Sample-rate offset | 250 ppm | 300 ppm |
+| Uniform noise amplitude vs outer ~21861 | 12500 | 17000 (v2 sync E2=64 + 3-frame opening; gate >=13000) |
+| Sample-rate offset | 400 ppm | 450 ppm |
 | Polarity invert without `invertPhase` | 0/3 frames | -- |
 | Polarity invert with `invertPhase` | 3/3 | -- |
 | DC offset 500 | 3/3 | -- |

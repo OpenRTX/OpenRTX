@@ -28,7 +28,7 @@ extern "C" {
 
 #define HORSE_SESSION_KEY_BYTES  32
 #define HORSE_VOICE_TAG_BYTES    4
-#define HORSE_LSF_VERSION        1
+#define HORSE_LSF_VERSION        2
 #define HORSE_SESSION_MSG_BYTES  46
 #define HORSE_PASSPHRASE_MAX     32
 #define HORSE_KDF_VERSION        1

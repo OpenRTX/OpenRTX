@@ -23,9 +23,18 @@ static constexpr size_t FRAME_SYMBOLS = 192;
 static constexpr size_t SYNCWORD_SYMBOLS = 8;
 static constexpr size_t FRAME_BYTES = FRAME_SYMBOLS / 4;
 
-static constexpr syncw_t LSF_SYNC_WORD = { 0x5A, 0xA7 };
-static constexpr syncw_t VOICE_SYNC_WORD = { 0x7E, 0x9B };
-static constexpr syncw_t EOT_SYNC_WORD = { 0x3C, 0xD8 };
+/*
+ * Version-2 sync words. Hamming distance >= 6 from each other and from
+ * the retired v1 words {0x5A,0xA7}/{0x7E,0x9B}/{0x3C,0xD8} so a v1
+ * radio cannot acquire a v2 stream (and the reverse).
+ */
+static constexpr syncw_t LSF_SYNC_WORD = { 0x15, 0x57 };
+static constexpr syncw_t VOICE_SYNC_WORD = { 0x45, 0xFD };
+static constexpr syncw_t EOT_SYNC_WORD = { 0x77, 0x74 };
+/* Retired v1 sync words (reject only; never transmit). */
+static constexpr syncw_t LSF_SYNC_WORD_V1 = { 0x5A, 0xA7 };
+static constexpr syncw_t VOICE_SYNC_WORD_V1 = { 0x7E, 0x9B };
+static constexpr syncw_t EOT_SYNC_WORD_V1 = { 0x3C, 0xD8 };
 
 static constexpr size_t LSF_CALLSIGN_BYTES = 6;
 static constexpr size_t LSF_EPH_PK_OFFSET = 12;
@@ -33,7 +42,7 @@ static constexpr size_t LSF_FLAGS_OFFSET = 44;
 static constexpr size_t LSF_VERSION_OFFSET = 45;
 static constexpr uint8_t LSF_FLAG_ENCRYPTED = 0x01;
 static constexpr uint8_t LSF_FLAG_SIGNED = 0x02;
-static constexpr uint8_t LSF_PROTOCOL_VERSION = 1;
+static constexpr uint8_t LSF_PROTOCOL_VERSION = 2;
 static constexpr uint16_t SIG_FRAME_BASE = 0x7000;
 static constexpr uint16_t SIG_FRAME_COUNT = 6;
 /* Last legal voice FN. 0x7000-0x7FFF are signature frames only. */

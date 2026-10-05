@@ -272,7 +272,7 @@ static int test_session_keys_and_signed_message()
         return -1;
     if (!horse_crypto_lsf_version_ok(HORSE_LSF_VERSION))
         return -1;
-    if (horse_crypto_lsf_version_ok(0) || horse_crypto_lsf_version_ok(2))
+    if (horse_crypto_lsf_version_ok(0) || horse_crypto_lsf_version_ok(1))
         return -1;
 #else
     std::printf("horse_crypto_test: skipping session keys (no libsodium)\n");

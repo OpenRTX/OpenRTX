@@ -292,10 +292,9 @@ a v2 LSF can pass `horse_crypto_lsf_version_ok` with probability
 1/256 on a random version byte and then derive garbage keys; (2) a v2
 radio must not acquire `{0x5A,0xA7}` / `{0x7E,0x9B}`; (3) new sync
 words make mutual silence certain without relying on the version byte
-alone. Exact byte values are chosen at implementation so each pair has
-Hamming distance >= 6 from the v1 words and from each other; EOT sync
-is reviewed the same way. `LSF_PROTOCOL_VERSION` / `HORSE_LSF_VERSION`
-become **2**.
+alone. Chosen values (Hamming distance >= 6 from each other and from
+v1): LSF `{0x15,0x57}`, voice `{0x45,0xFD}`, EOT `{0x77,0x74}`.
+`LSF_PROTOCOL_VERSION` / `HORSE_LSF_VERSION` are **2**.
 
 ### E. DC-block off-by-one sample phase
 
