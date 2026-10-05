@@ -221,9 +221,22 @@ void HorseDemodulator::unlockedState()
 void HorseDemodulator::syncedState()
 {
     samplingPoint = sampleIndex;
-    auto deviation = correlator.maxDeviation(samplingPoint);
+    /*
+     * maxDeviation() averages every sample on this phase, including inner
+     * +-1 LSF symbols, so the outer thresholds sit too low and the LSF
+     * dibits slice as outer. Use peak-absolute amplitude instead.
+     */
+    int16_t peakAbs = 1;
+    for (size_t i = 0; i < SYNCWORD_SAMPLES; i++) {
+        size_t pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
+        if ((pos % SAMPLES_PER_SYMBOL) == samplingPoint) {
+            int16_t a = static_cast<int16_t>(std::abs(correlator.data()[pos]));
+            if (a > peakAbs)
+                peakAbs = a;
+        }
+    }
     frameIndex = 0;
-    devEstimator.init(deviation);
+    devEstimator.init({ peakAbs, -peakAbs });
     for (size_t i = 0; i < SYNCWORD_SAMPLES; i++) {
         size_t pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
         if ((pos % SAMPLES_PER_SYMBOL) == samplingPoint) {
