@@ -630,6 +630,121 @@ static int test_tx_during_false_lock()
     return 0;
 }
 
+static int run_lsf_into_false_lock(unsigned frames_in)
+{
+    HorseDemodulator demod;
+    HorseFrameDecoder decoder;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setDropWithoutTag(true);
+    demod.setAcquireHamming(1);
+    demod.setCorrPeakMin(0);
+
+    unsigned rng = 99u + frames_in;
+    const size_t cap = 24000u * 3u;
+    for (size_t i = 0; i < cap; i++) {
+        demod.feedSample(fm_open_noise(rng), false);
+        frame_t dump;
+        (void)demod.takeFrame(dump);
+        if (demod.isLocked())
+            break;
+    }
+    if (!demod.isLocked()) {
+        std::printf("lsf-replace: no false lock for %u frames-in\n", frames_in);
+        return -1;
+    }
+    demod.setAcquireHamming(HAMMING_ACQUIRE_MAX);
+    demod.setCorrPeakMin(CORR_PEAK_MIN);
+
+    unsigned completed = 0;
+    const size_t wait_cap = 24000u * 5u;
+    for (size_t n = 0; n < wait_cap && completed < frames_in; n++) {
+        demod.feedSample(fm_open_noise(rng), false);
+        frame_t dump;
+        if (demod.takeFrame(dump))
+            completed++;
+        if (!demod.isLocked()) {
+            std::printf("lsf-replace: unlocked at %u/%u frames\n", completed,
+                        frames_in);
+            demod.terminate();
+            return -1;
+        }
+    }
+    if (completed < frames_in) {
+        std::printf("lsf-replace: only %u of %u noise frames\n", completed,
+                    frames_in);
+        demod.terminate();
+        return -1;
+    }
+
+    HorseFrameEncoder enc;
+    std::vector<frame_t> frames(4);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 9, 8, 7, 6 };
+    memset(melpe, 0x55, sizeof melpe);
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    enc.encodeVoiceFrame(melpe, tag, frames[1], false);
+    enc.encodeVoiceFrame(melpe, tag, frames[2], true);
+    enc.encodeEotFrame(frames[3]);
+    std::vector<int16_t> bb48;
+    std::vector<int16_t> rx24;
+    if (render_frames(frames, bb48, true) != 0) {
+        demod.terminate();
+        return -1;
+    }
+    to_24k(bb48, rx24);
+
+    bool have_lsf = false;
+    bool have_voice = false;
+    bool have_eot = false;
+    unsigned nvoice = 0;
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t frame;
+        if (!demod.takeFrame(frame))
+            continue;
+        HorseFrameType t = decoder.decodeFrame(frame);
+        if (t == HorseFrameType::LINK_SETUP)
+            have_lsf = true;
+        if (t == HorseFrameType::VOICE) {
+            uint8_t payload[12];
+            uint8_t vtag[4];
+            uint16_t fn = 0;
+            decoder.getVoicePayload(frame, payload, vtag, &fn);
+            if (fn < SIG_FRAME_BASE && memcmp(payload, melpe, 12) == 0) {
+                have_voice = true;
+                nvoice++;
+                demod.noteValidTag();
+            }
+        }
+        if (t == HorseFrameType::EOT)
+            have_eot = true;
+    }
+    demod.terminate();
+    if (!have_lsf || nvoice < 2 || !have_eot) {
+        std::printf("lsf-replace @%u: lsf=%d voice=%u eot=%d\n", frames_in,
+                    have_lsf, nvoice, have_eot);
+        return -1;
+    }
+    std::printf("lsf-replace: full RX with LSF %u frames into false lock\n",
+                frames_in);
+    (void)have_voice;
+    return 0;
+}
+
+static int test_lsf_replaces_unauth_lock()
+{
+    const unsigned offs[] = { 1, 4, 7 };
+    for (unsigned f : offs) {
+        if (run_lsf_into_false_lock(f) != 0)
+            return -1;
+    }
+    return 0;
+}
+
 static int test_layer_dc_block()
 {
     HorseFrameEncoder enc;
@@ -845,6 +960,8 @@ int main()
     if (test_corr_peak_distributions() != 0)
         return -1;
     if (test_tx_during_false_lock() != 0)
+        return -1;
+    if (test_lsf_replaces_unauth_lock() != 0)
         return -1;
     if (test_layer_dc_block() != 0)
         return -1;

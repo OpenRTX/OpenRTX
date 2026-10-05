@@ -41,6 +41,7 @@ HorseDemodulator::HorseDemodulator()
     , corrPeakMin(CORR_PEAK_MIN)
     , dropWithoutTag(false)
     , framesWithoutTag(0)
+    , haveValidTag(false)
     , lastLockCorr(0)
     , sampleFilter(sfNum, sfDen)
 {
@@ -153,6 +154,7 @@ void HorseDemodulator::setDropWithoutTag(bool enable)
 void HorseDemodulator::noteValidTag()
 {
     framesWithoutTag = 0;
+    haveValidTag = true;
 }
 
 int32_t HorseDemodulator::lastLockCorrAbs() const
@@ -232,6 +234,7 @@ void HorseDemodulator::reset()
     newFrame = false;
     missedSyncs = 0;
     framesWithoutTag = 0;
+    haveValidTag = false;
     demodState = DemodState::INIT;
     initCount = RX_SAMPLE_RATE / 50;
     dsp_resetState(dcBlock);
@@ -290,23 +293,29 @@ bool HorseDemodulator::acquireSync(const syncw_t &word)
     samplingPoint = sampleIndex;
     frameIndex = SYNCWORD_SYMBOLS;
     framesWithoutTag = 0;
+    haveValidTag = false;
     devEstimator.init(bestDev);
     demodState = DemodState::LOCKED;
     return true;
 }
 
-void HorseDemodulator::unlockedState()
+bool HorseDemodulator::tryAcquireLsf()
 {
     int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
     const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
-    int32_t cL = correlator.convolve(lsfSym);
-    int32_t cLabs = std::abs(cL);
+    int32_t cLabs = std::abs(correlator.convolve(lsfSym));
 
     if ((cLabs > syncThresh) && (cLabs >= corrPeakMin)
         && acquireSync(LSF_SYNC_WORD)) {
         lastLockCorr = cLabs;
-        return;
+        return true;
     }
+    return false;
+}
+
+void HorseDemodulator::unlockedState()
+{
+    (void)tryAcquireLsf();
 }
 
 void HorseDemodulator::syncedState()
@@ -318,6 +327,9 @@ void HorseDemodulator::syncedState()
 
 void HorseDemodulator::lockedState(int16_t sample)
 {
+    if (dropWithoutTag && !haveValidTag && (lastLockCorr < corrPeakMin)
+        && (framesWithoutTag >= 1) && tryAcquireLsf())
+        return;
     if (sampleIndex != samplingPoint)
         return;
     quantize(sample);
@@ -328,12 +340,10 @@ void HorseDemodulator::lockedState(int16_t sample)
         frameIndex = 0;
         newFrame = true;
         updateSampPoint = true;
-        if (dropWithoutTag) {
-            framesWithoutTag += 1;
-            if (framesWithoutTag > LOCK_NO_TAG_FRAMES) {
-                demodState = DemodState::UNLOCKED;
-                return;
-            }
+        framesWithoutTag += 1;
+        if (dropWithoutTag && (framesWithoutTag > LOCK_NO_TAG_FRAMES)) {
+            demodState = DemodState::UNLOCKED;
+            return;
         }
         demodState = DemodState::SYNC_UPDATE;
     }
@@ -353,7 +363,10 @@ void HorseDemodulator::syncUpdateState()
         missedSyncs = 0;
     else
         missedSyncs += 1;
-    if ((missedSyncs > 4) || eot)
+    bool hold_unauth = dropWithoutTag && !haveValidTag;
+    if (eot && !hold_unauth)
+        demodState = DemodState::UNLOCKED;
+    else if (!hold_unauth && (missedSyncs > 4))
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;

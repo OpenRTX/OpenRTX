@@ -61,6 +61,7 @@ private:
     void quantize(int16_t sample);
     void reset();
     bool acquireSync(const syncw_t &word);
+    bool tryAcquireLsf();
     void unlockedState();
     void syncedState();
     void lockedState(int16_t sample);
@@ -102,6 +103,7 @@ private:
     int32_t corrPeakMin;
     bool dropWithoutTag;
     uint8_t framesWithoutTag;
+    bool haveValidTag;
     int32_t lastLockCorr;
     struct dcBlock dcBlock;
 
