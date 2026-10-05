@@ -19,24 +19,24 @@ work list. Finding status:
 | C4 signature chunk overflow | fixed in `c3f68754`; packing `13ac0cef` (5x12+4) |
 | C5 20 ms DMA vs 40 ms codec | fixed in `8b965e29` |
 | C6 FN / nonce layout | fixed in `08e6c3cb` / `4e789cbf` |
-| C7 Argon2 RAM / PBKDF2 | `4015daa2`; 16 KiB Argon2id; no PBKDF2; unverified MD-3x0 |
+| C7 Argon2 RAM / PBKDF2 | `4015daa2`; 16 KiB Argon2id via libsodium heap; MD-3x0 map not taken (`/opt/arm-miosix-eabi` missing) |
 | C8 passphrase in `settings_t` | fixed in `4015daa2` (RAM-only) |
 | C9 `contact_t` growth | fixed in `1b79bbdb` (sidecar peers) |
 | C10 Ed25519 seed padded to 64 | fixed in `80404ce2` |
 | C11 keyring hex/JSON | fixed in `80404ce2` / `31495ec7` |
 | C12 encrypted RX without session | fixed in `c6bdad06` |
-| C13 MD-3x0 C5000 TX enable | open, unverified without cross toolchain |
-| C14 RTX 512 B stack | `7f7069a2` host `-Wstack-usage`; unverified on MD-3x0 |
+| C13 MD-3x0 C5000 TX enable | implemented `465707c4`; untested on hardware; no Miosix map |
+| C14 RTX 512 B stack | `7f7069a2` host `-Wstack-usage`; unverified on MD-3x0 (toolchain missing) |
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
 | C17 LDPC name vs repeat-2 | open / documented as repetition until replaced |
-| C18 tests vs claims | analog loopback `12dea76f`; three-mode + LSF KDF this round |
+| C18 tests vs claims | analog loopback; three-mode; NCC floor `64efe541`; LSF replace `34d9d292` |
 | C19 `sodium_memzero` | fixed in `c6bdad06` / `fb86c4ed` |
 | M17 `dsp.cpp:19` UBSan | upstream; see `UPSTREAM_ISSUE_dsp.md` (do not patch in this fork) |
 | `horse_keytool.py` | removed; identities are XDG files `31495ec7` |
 | LSF bind / channel flags | `b1f207f5` |
-| False-lock Hamming 0 + tag drop | `b9f6331c` |
-| Native meson test vs ARM firmware | `18785460` |
+| False-lock Hamming 0 + tag drop | `b9f6331c`; normalised floor `64efe541` |
+| Native meson test vs ARM firmware | reverted `a5fc2f08`; procedure in `AGENTS.md` (`--no-rebuild`) |
 | Sanitizer Horse timeouts / `-fno-sanitize=shift` | `83e4a806` |
 | ECIES dead code | `c18faa08` |
 | Python/C identity interop | `3bb7439a` |

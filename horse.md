@@ -104,14 +104,20 @@ Limits:
   guessing of a bad passphrase from a flash dump. Unverified on MD-3x0.
 - Repeat-2 FEC is not an LDPC code.
 - No late entry: miss the LSF and the rest of the call is silent.
-- Hamming-0 plus CORR_PEAK_MIN 180000 is the compile-time acquire
-  floor. Open-FM false-lock peaks sat around 90-103k; real LSF stayed
-  above 280k on clean and impaired loopback.
-- C13 C5000 TX enable is implemented (radio_enableTx at Horse TX start
-  and radio_disableRtx on every TX exit, including refusals) and is
-  untested on hardware.
-- MD-3x0 flash, RTX stack, and Argon2 RAM are unverified until a
-  Miosix cross-build report exists.
+- Hamming-0 acquire uses a normalised correlator floor
+  (`CORR_PEAK_MIN` Q12, 4076 ~= 0.995). Absolute 180000 blocked
+  gain 0.25 and 0.5 (0/3). After the change, gain 0.25 and 0.5 are
+  3/3; gain 2.0 clips (0/3). Ten minutes of open-FM Hamming-0 noise:
+  false ncc max 4056 at gains 0.25-1.0, 4073 at 2.0; real LSF is 4096
+  at 0.25-1.0 and 4067 at 2.0. 4076 sits between 4056 and 4096.
+  `HORSE_FALSE_LOCK_LONG` repeats the 10-minute table.
+- Until the first tagged frame, a new LSF replaces the current lock.
+- C13 C5000 TX enable is implemented (`465707c4`) and untested on
+  hardware.
+- MD-3x0 flash, RTX stack, libsodium, and Argon2 heap: `/opt/arm-miosix-eabi`
+  is not present on the host that last tried the cross build. Limiter
+  from the linker script only: 848 KiB flash, 64 KiB CCM + 128 KiB SRAM.
+  Argon2id 16 KiB is `crypto_pwhash` memlimit (heap inside libsodium).
 
 ---
 
@@ -126,14 +132,17 @@ upstream 39-byte layout.
 ## Tests
 
 ```bash
-meson setup build_linux
-meson compile -C build_linux
-meson test -C build_linux
+# Compile Linux and unit-test binaries by name, then:
+meson test -C build_linux --no-rebuild
 ```
 
+See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
+the loopback false-lock NCC table to ten minutes per gain.
+
 Horse tests: Frame, Crypto, Info, Codec, Peers, Keystore, Host Interop,
-Loopback (layers, DC-block, false-lock table, three-mode modem plus
-negatives), Provision Pack, settings.h vs upstream.
+Loopback (layers, DC-block, false-lock table, per-gain NCC, LSF replace
+at 1/4/7 frames, three-mode modem plus negatives), Provision Pack,
+settings.h vs upstream.
 
 Sanitizer: `meson setup build_asan -Db_sanitize=address,undefined` with
 `-fno-sanitize=shift` and `ASAN_OPTIONS=detect_leaks=0`.
