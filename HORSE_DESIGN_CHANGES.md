@@ -66,6 +66,21 @@ radios decrypt garbage). B: **breaks** FN meaning.
 
 **Stored data:** none. Session key remains per PTT (new ephemeral).
 
+**Related RX consequence (exact-match LSF acquisition):** Lock requires
+Hamming distance 0 on the 8-symbol LSF sync word. One sync-symbol error
+drops the whole transmission; there is no second LSF and no late entry
+until a later voice/EOT exact match. Options (not implemented):
+
+| Id | Approach | On-air |
+|----|----------|--------|
+| D | Tolerant acquisition (allow Hamming 1–2 at lock, as tracking already does) | Same frames; more false locks |
+| E | Repeat the LSF (two or more consecutive LSF frames) | Extra LSF frame(s) at PTT start |
+| F | Late entry: lock on a later voice sync word without a decoded LSF | Same air; RX has no LSF crypto fields until a repeat or another path |
+
+**Recommendation:** Leave D/E/F for owner approval. D is a receiver-only
+change. E is on-air compatible with receivers that ignore extra LSFs. F
+needs a defined session-key path without the LSF.
+
 ---
 
 ## 3. Signature transport (64 bytes, 12-byte slots)

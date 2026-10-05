@@ -30,7 +30,7 @@ work list. Finding status:
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
 | C17 LDPC name vs repeat-2 | open / documented as repetition until replaced |
-| C18 tests vs claims | partial in `36d84b20`; analog loopback does not yet decode a full stream |
+| C18 tests vs claims | analog loopback fixed; see C18 notes |
 | C19 `sodium_memzero` | fixed in `c6bdad06` / `fb86c4ed` |
 | M17 `dsp.cpp:19` UBSan | upstream; see `UPSTREAM_ISSUE_dsp.md` (do not patch in this fork) |
 | `horse_keytool.py` | deferred to Step 2 item 8 |
@@ -318,8 +318,47 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
 
 ### C18. Tests do not cover the claims -- medium (quality)
 
-- `horse_frame.cpp`: LSF/voice/EOT round-trip on bytes. No demod, no
-  last-frame bit, no FN wrap. Sig test is the ASan overflow (C4).
+Host analog loopback (`tests/unit/horse_loopback.cpp`) now covers:
+
+- Layer a: `byteToSymbols` / `setSymbol` inverses and the horse.md dibit table.
+- Layer b: RRC TX 48 kHz / RX 24 kHz at group delay 40 (24 kHz), SER 0.
+- Layer c: demod timing recovery of LSF, voice and EOT.
+- Layer d: preamble, LSF, six signature frames, 300 voice frames, EOT.
+- Firmware DC-block path (`test_layer_dc_block`): passes in the unsanitized
+  meson suite. Under UBSan it aborts on the known `dsp.cpp:19` shift.
+
+First failing layer before the demod fix was **c**. Commits:
+
+| Commit | Change |
+|--------|--------|
+| `b425dbf3` | RRC always on host; `setSymbol` inverse; TX RRC reset |
+| `2e3bbe98` | `CORR_SYNC_SCALE` 18 for mixed `±1`/`±3` sync words |
+| `f9cac93d` | lock at correlator peak, not M17 falling edge |
+| `09ff4e7f` | peak-abs slicing so LSF inner symbols stay inner |
+| `12dea76f` | correlator window aligned with `convolve()`; loopback first pass; `should_fail` removed |
+| `4d301939` | acquire/track LSF, voice and EOT; Hamming 0 lock / 2 track; `readyFrame` after swap |
+| `af1704cf` | DC-block loopback variant |
+
+Acquisition uses Hamming 0. Tracking uses Hamming 2 and checks
+`readyFrame` after the swap (M17 still inspects the emptied `demodFrame`;
+see `UPSTREAM_ISSUE_dsp.md`).
+
+**Baseband regression baselines** (payload must match; not RF sensitivity):
+
+| Impairment | Pass | Fail |
+|------------|------|------|
+| Uniform noise amplitude vs outer ~21861 | 12500 | 13000 |
+| Sample-rate offset | 250 ppm | 300 ppm |
+| Polarity invert without `invertPhase` | 0/3 frames | -- |
+| Polarity invert with `invertPhase` | 3/3 | -- |
+| DC offset 500 | 3/3 | -- |
+| Gain 0.25 | 3/3 | -- |
+| Drop first TX frame | 3/3 | -- |
+
+Still not covered: `OpMode_Horse` TX/RX on the air, MD-3x0, and a
+session-keyed voice MAC (C1).
+
+- `horse_frame.cpp`: LSF/voice/EOT round-trip on bytes.
 - `horse_crypto.cpp`: Encrypt round-trip needs sodium. Negative tests
   pass without sodium because decrypt returns false. Sign test can use
   all-zero keys. No check that the MAC is session-keyed (a forged
@@ -371,6 +410,10 @@ Built with `meson setup build_asan -Db_sanitize=address,undefined` and
 | M17 Demodulator Test | FAIL -- UBSan `dsp_dcBlockFilter` left shift of negative value (`dsp.cpp:19`). Upstream DSP, not Horse. |
 
 Fuzz targets were not run.
+
+Later (C18): unsanitized `meson test -C build_linux` is 19/19, including
+Horse Loopback. Horse Frame no longer overflows (C4). Address/UBSan of
+the DC-block loopback path still hits `dsp.cpp:19`.
 
 ---
 

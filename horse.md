@@ -139,8 +139,28 @@ Horse uses modern cryptographic primitives with per‑session keys and optional 
 - **Voice codec:** CODEC2 2400 (two 20 ms frames per 40 ms Horse frame) via `melpe_horse.c`; true MELPe‑2400 is not yet integrated. DMA vs 40 ms framing is an open design item.
 - **Embedded targets (MD‑3x0, etc.):** Crypto fails closed when libsodium is not linked (`horse_crypto_available()` returns false). Cross‑compiled libsodium is required for on‑device encrypt/sign. RTX stack, Argon2 RAM, and C5000 TX enable are **unverified** without the cross toolchain.
 - **LDPC:** Not LDPC. Repeat‑2 only, until a real code is merged.
-- **Demodulator:** Acquisition correlator uses Horse LSF symbols from
-  `byteToSymbols(LSF_SYNC_WORD)` (`+3,+3,-1,-1,-1,-1,+3,-3`).
+- **Demodulator:** Acquisition correlates all three Horse sync words
+  (`LSF_SYNC_WORD`, `VOICE_SYNC_WORD`, `EOT_SYNC_WORD`). The correlator
+  threshold scale is `CORR_SYNC_SCALE` (18), not M17's 33, because Horse
+  syncwords mix inner (`±1`) and outer (`±3`) symbols. Acquisition requires
+  an exact syncword match (Hamming distance 0) after slicing the correlator
+  taps with peak-absolute outer deviation. Tracking accepts Hamming distance
+  `HAMMING_SYNC_MAX` (2). The sample phase chosen at lock is the current
+  `sampleIndex` and is then tracked by `ClockRecovery` at each frame
+  boundary. Host loopback skips `dsp_dcBlockFilter` (`setSkipDcBlock`)
+  except in `test_layer_dc_block()`, because that helper has a confirmed
+  negative left-shift UB in upstream `dsp.cpp`.
+- **Preamble:** TX sends two frames of `+3,-3`. RX does not require a
+  preamble if an LSF, voice or EOT syncword is present.
+- **Loopback:** `tests/unit/horse_loopback.cpp` checks (a) bytes↔symbols
+  vs the table above, (b) RRC TX/RX at the known group delay (SER 0),
+  (c) demod timing recovery of LSF+voice+EOT, (d) preamble, LSF, six
+  signature frames, 300 voice frames and EOT, plus the firmware DC-block
+  path on a clean channel. Measured host limits (payload must match, not
+  only frame type) are **baseband** figures, not RF sensitivity: uniform
+  noise amplitude 12500 still passed / 13000 failed; sample-rate offset
+  250 ppm passed / 300 ppm failed. Polarity inversion needs `invertPhase`;
+  DC 500 and gain 0.25 passed; dropping the first TX frame still locked.
 
 Run unit tests:
 
@@ -149,7 +169,8 @@ meson setup build_linux
 meson test -C build_linux
 ```
 
-Horse‑specific tests: `Horse Frame Unit Test`, `Horse Crypto Unit Test`.
+Horse‑specific tests: `Horse Frame Unit Test`, `Horse Crypto Unit Test`,
+`Horse Loopback Test`.
 
 ---
 

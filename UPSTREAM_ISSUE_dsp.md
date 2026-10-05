@@ -73,3 +73,28 @@ dcb->prevIn = (int32_t)((uint32_t)(int32_t)sample << 15);
 The multiply form matches the comment (`32768.0 * ...`) and is easier to review.
 
 Do not change `dsp.cpp` in this fork; keep Horse tests passing without sanitizers, and expect "M17 Demodulator Test" to abort under UBSan until upstream lands a fix.
+
+The Horse loopback DC-block variant (`test_layer_dc_block` in
+`tests/unit/horse_loopback.cpp`) takes this same filter. It passes in
+the unsanitized meson suite and is expected to abort under UBSan.
+
+---
+
+## M17 `syncUpdateState` reads the swapped-out `demodFrame`
+
+Do not change M17 code in this fork.
+
+- Tree: `upstream/master` at `34052ea7` (OpenRTX version 0.4.5), retained
+  in `upstream-sync`.
+- Files:
+  - `openrtx/src/protocols/M17/Demodulator.cpp:413-415` (`lockedState`):
+    `std::swap(readyFrame, demodFrame)` then `demodState = SYNC_UPDATE`.
+  - `openrtx/src/protocols/M17/Demodulator.cpp:424-430` (`syncUpdateState`):
+    `compareSyncwords(demodFrame->data(), ...)` for LSF, stream, packet,
+    and EOT.
+
+After the swap, `demodFrame` is the buffer that will be filled next
+(empty / previous contents), and `readyFrame` holds the frame that just
+completed. The Hamming/sync check therefore inspects the wrong buffer.
+Horse now checks `readyFrame` (`HorseDemodulator.cpp` `syncUpdateState`).
+M17 is unchanged.
