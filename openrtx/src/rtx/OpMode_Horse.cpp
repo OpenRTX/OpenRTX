@@ -146,6 +146,7 @@ void OpMode_Horse::enable()
     horse_codec_init();
     modulator.init();
     demodulator.init();
+    demodulator.setDropWithoutTag(true);
     locked    = false;
     dataValid = false;
     startRx   = true;
@@ -389,8 +390,10 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                                                     HORSE_CODEC_FRAME_BYTES,
                                                     tag, plain))
                         drop_voice = true;
-                    else
+                    else {
                         memcpy(melpe, plain, sizeof melpe);
+                        demodulator.noteValidTag();
+                    }
                 }
                 else if (sessionValid)
                 {
@@ -398,6 +401,8 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                                                         HORSE_VOICE_DIR_FORWARD,
                                                         fn, melpe, tag))
                         drop_voice = true;
+                    else
+                        demodulator.noteValidTag();
                 }
                 else
                     drop_voice = true;

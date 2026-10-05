@@ -51,6 +51,10 @@ public:
     bool takeFrame(frame_t &out);
     /* Skip the upstream DC-block (negative left-shift UB). Still applies RRC. */
     void setSkipDcBlock(bool skip);
+    void setAcquireHamming(uint8_t hd);
+    void setCorrPeakMin(int32_t peak);
+    void setDropWithoutTag(bool enable);
+    void noteValidTag();
 
 private:
     void quantize(int16_t sample);
@@ -93,6 +97,10 @@ private:
     uint32_t initCount;
     float corrThreshold;
     bool skipDcBlock;
+    uint8_t acquireHammingMax;
+    int32_t corrPeakMin;
+    bool dropWithoutTag;
+    uint8_t framesWithoutTag;
     struct dcBlock dcBlock;
 
     Correlator<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> correlator;

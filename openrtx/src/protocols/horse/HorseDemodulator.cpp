@@ -37,6 +37,10 @@ HorseDemodulator::HorseDemodulator()
     , initCount(0)
     , corrThreshold(0.0f)
     , skipDcBlock(false)
+    , acquireHammingMax(HAMMING_ACQUIRE_MAX)
+    , corrPeakMin(CORR_PEAK_MIN)
+    , dropWithoutTag(false)
+    , framesWithoutTag(0)
     , sampleFilter(sfNum, sfDen)
 {
     dsp_resetState(dcBlock);
@@ -130,6 +134,26 @@ void HorseDemodulator::setSkipDcBlock(bool skip)
     skipDcBlock = skip;
 }
 
+void HorseDemodulator::setAcquireHamming(uint8_t hd)
+{
+    acquireHammingMax = hd;
+}
+
+void HorseDemodulator::setCorrPeakMin(int32_t peak)
+{
+    corrPeakMin = peak;
+}
+
+void HorseDemodulator::setDropWithoutTag(bool enable)
+{
+    dropWithoutTag = enable;
+}
+
+void HorseDemodulator::noteValidTag()
+{
+    framesWithoutTag = 0;
+}
+
 bool HorseDemodulator::feedSample(int16_t sample, bool invertPhase)
 {
     if (!skipDcBlock)
@@ -201,6 +225,7 @@ void HorseDemodulator::reset()
     sampleCount = 0;
     newFrame = false;
     missedSyncs = 0;
+    framesWithoutTag = 0;
     demodState = DemodState::INIT;
     initCount = RX_SAMPLE_RATE / 50;
     dsp_resetState(dcBlock);
@@ -252,12 +277,13 @@ bool HorseDemodulator::acquireSync(const syncw_t &word)
         }
     }
 
-    if (bestHd > HAMMING_ACQUIRE_MAX)
+    if (bestHd > acquireHammingMax)
         return false;
 
     *demodFrame = bestFrame;
     samplingPoint = sampleIndex;
     frameIndex = SYNCWORD_SYMBOLS;
+    framesWithoutTag = 0;
     devEstimator.init(bestDev);
     demodState = DemodState::LOCKED;
     return true;
@@ -269,7 +295,8 @@ void HorseDemodulator::unlockedState()
     const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
     int32_t cL = correlator.convolve(lsfSym);
 
-    if ((std::abs(cL) > syncThresh) && acquireSync(LSF_SYNC_WORD))
+    if ((std::abs(cL) > syncThresh) && (std::abs(cL) >= corrPeakMin)
+        && acquireSync(LSF_SYNC_WORD))
         return;
 }
 
@@ -292,6 +319,13 @@ void HorseDemodulator::lockedState(int16_t sample)
         frameIndex = 0;
         newFrame = true;
         updateSampPoint = true;
+        if (dropWithoutTag) {
+            framesWithoutTag += 1;
+            if (framesWithoutTag > LOCK_NO_TAG_FRAMES) {
+                demodState = DemodState::UNLOCKED;
+                return;
+            }
+        }
         demodState = DemodState::SYNC_UPDATE;
     }
 }

@@ -85,11 +85,26 @@ static constexpr size_t VOICE_TAG_BITS = 32;
 /* Max Hamming distance when matching a 16-bit sync word (two bytes). */
 static constexpr uint8_t HAMMING_SYNC_MAX = 2;
 /*
- * Acquisition Hamming (LSF only). Noise-only baseband: 2 LSF false locks
- * in 48000 samples at 24 kHz with this value (see horse_loopback). Late
- * entry on voice/EOT is not supported.
+ * Acquisition Hamming (LSF only). Hamming 0 has the fewest LSF false
+ * locks on open-FM Gaussian noise and still passes clean/impaired
+ * loopback (see horse_loopback table). Late entry on voice/EOT is not
+ * supported.
  */
-static constexpr uint8_t HAMMING_ACQUIRE_MAX = 1;
+static constexpr uint8_t HAMMING_ACQUIRE_MAX = 0;
+
+/*
+ * Extra floor on |correlator peak| at LSF acquire, on top of the
+ * envelope * CORR_SYNC_SCALE test. 0 until the false-lock table picks
+ * a non-zero value.
+ */
+static constexpr int32_t CORR_PEAK_MIN = 0;
+
+/*
+ * After lock, this many completed frames without noteValidTag() drops
+ * the lock so a real LSF can be acquired. Sized for LSF + 6 signature
+ * frames; the first tagged voice must arrive in that window.
+ */
+static constexpr uint8_t LOCK_NO_TAG_FRAMES = 8;
 
 /*
  * Correlator peak must exceed corrThreshold * this scale. M17 uses 33 for

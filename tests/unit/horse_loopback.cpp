@@ -21,6 +21,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 
@@ -321,32 +322,173 @@ static int test_no_late_entry()
     return 0;
 }
 
-static int test_lsf_false_lock_noise()
+/* Open-discriminator FM: Gaussian, sigma 10000, clipped to int16. */
+static int16_t fm_open_noise(unsigned &rng)
 {
-    const size_t n = 48000; /* 2 s at 24 kHz */
-    unsigned rng = 1u;
+    rng = rng * 1103515245u + 12345u;
+    float u1 = static_cast<float>((rng >> 8) & 0xFFFFu) / 65536.0f + 1.0e-6f;
+    rng = rng * 1103515245u + 12345u;
+    float u2 = static_cast<float>((rng >> 8) & 0xFFFFu) / 65536.0f;
+    float g = std::sqrt(-2.0f * std::log(u1))
+            * std::cos(2.0f * 3.14159265f * u2);
+    float s = g * 10000.0f;
+    if (s > 32767.0f)
+        s = 32767.0f;
+    if (s < -32768.0f)
+        s = -32768.0f;
+    return static_cast<int16_t>(s);
+}
+
+struct false_lock_row_t {
+    uint8_t hd;
+    int32_t peak;
+    size_t demod_locks;
+    size_t lsf_locks;
+    size_t samples;
+};
+
+static false_lock_row_t count_false_locks(uint8_t hd, int32_t peak,
+                                          size_t samples, unsigned seed)
+{
+    false_lock_row_t r{};
+    r.hd = hd;
+    r.peak = peak;
+    r.samples = samples;
     HorseDemodulator demod;
     HorseFrameDecoder decoder;
     demod.init();
     demod.resetImmediate();
     demod.setSkipDcBlock(true);
-    size_t locks = 0;
-    for (size_t i = 0; i < n; i++) {
-        rng = rng * 1103515245u + 12345u;
-        int16_t s = static_cast<int16_t>((rng >> 16) - 32768);
-        demod.feedSample(s, false);
+    demod.setAcquireHamming(hd);
+    demod.setCorrPeakMin(peak);
+    unsigned rng = seed;
+    for (size_t i = 0; i < samples; i++) {
+        bool was_locked = demod.isLocked();
+        demod.feedSample(fm_open_noise(rng), false);
+        if (!was_locked && demod.isLocked())
+            r.demod_locks++;
         frame_t frame;
         if (!demod.takeFrame(frame))
             continue;
         if (decoder.decodeFrame(frame) == HorseFrameType::LINK_SETUP)
-            locks++;
+            r.lsf_locks++;
     }
     demod.terminate();
-    std::printf("false-lock: HAMMING_ACQUIRE_MAX=%u locks=%zu in %zu noise "
-                "samples (baseband, not RF)\n",
-                HAMMING_ACQUIRE_MAX, locks, n);
-    if (locks > 2)
+    return r;
+}
+
+static int test_lsf_false_lock_noise()
+{
+    const bool minute = std::getenv("HORSE_FALSE_LOCK_MINUTE") != nullptr;
+    const size_t samples = minute ? (24000u * 60u) : (24000u * 2u);
+    const int32_t peak = 40000;
+    const unsigned seed = 1u;
+    false_lock_row_t rows[4];
+    rows[0] = count_false_locks(0, 0, samples, seed);
+    rows[1] = count_false_locks(1, 0, samples, seed);
+    rows[2] = count_false_locks(0, peak, samples, seed);
+    rows[3] = count_false_locks(1, peak, samples, seed);
+
+    std::printf("false-lock table (%zu s, FM-open Gaussian sigma=10000):\n",
+                samples / 24000u);
+    std::printf("  Hamming  peakMin  demod/min  LSF/min\n");
+    size_t best_i = 0;
+    double best_rate = 1e9;
+    for (size_t i = 0; i < 4; i++) {
+        double minutes = static_cast<double>(rows[i].samples) / 24000.0 / 60.0;
+        double dpm = rows[i].demod_locks / minutes;
+        double lpm = rows[i].lsf_locks / minutes;
+        std::printf("  %7u  %7d  %9.2f  %7.2f\n", rows[i].hd, rows[i].peak, dpm,
+                    lpm);
+        if (dpm < best_rate) {
+            best_rate = dpm;
+            best_i = i;
+        }
+    }
+    std::printf("false-lock: compile HAMMING_ACQUIRE_MAX=%u CORR_PEAK_MIN=%d "
+                "(table best Hamming %u peak %d)\n",
+                HAMMING_ACQUIRE_MAX, CORR_PEAK_MIN, rows[best_i].hd,
+                rows[best_i].peak);
+    if (rows[0].lsf_locks > (minute ? 30u : 4u))
         return -1;
+    return 0;
+}
+
+static int test_tx_during_false_lock()
+{
+    HorseDemodulator demod;
+    HorseFrameDecoder decoder;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setDropWithoutTag(true);
+    demod.setAcquireHamming(1);
+
+    unsigned rng = 99u;
+    size_t i = 0;
+    const size_t cap = 24000u * 3u;
+    for (; i < cap; i++) {
+        demod.feedSample(fm_open_noise(rng), false);
+        frame_t dump;
+        (void)demod.takeFrame(dump);
+        if (demod.isLocked())
+            break;
+    }
+    if (!demod.isLocked()) {
+        std::printf("tx-during-false-lock: no Hamming-1 false lock in 3s\n");
+        return -1;
+    }
+    demod.setAcquireHamming(HAMMING_ACQUIRE_MAX);
+
+    HorseFrameEncoder enc;
+    std::vector<frame_t> frames(3);
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    memset(melpe, 0x22, sizeof melpe);
+    enc.encodeLsf(src, dst, nullptr, 0, frames[0]);
+    enc.encodeVoiceFrame(melpe, tag, frames[1], false);
+    enc.encodeEotFrame(frames[2]);
+    std::vector<int16_t> bb48, rx24;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    to_24k(bb48, rx24);
+    /* Real TX starts during the false lock; drop window eats the first
+     * frames, so pad with enough samples that LSF remains after unlock. */
+    const size_t pad = static_cast<size_t>(LOCK_NO_TAG_FRAMES + 4)
+                     * FRAME_SYMBOLS * 5u;
+    std::vector<int16_t> stream(pad, 0);
+    stream.insert(stream.end(), rx24.begin(), rx24.end());
+
+    bool have_lsf = false;
+    bool have_voice = false;
+    for (int16_t s : stream) {
+        demod.feedSample(s, false);
+        frame_t frame;
+        if (!demod.takeFrame(frame))
+            continue;
+        HorseFrameType t = decoder.decodeFrame(frame);
+        if (t == HorseFrameType::LINK_SETUP)
+            have_lsf = true;
+        if (t == HorseFrameType::VOICE) {
+            uint8_t payload[12];
+            uint8_t vtag[4];
+            uint16_t fn = 0;
+            decoder.getVoicePayload(frame, payload, vtag, &fn);
+            if (fn < SIG_FRAME_BASE) {
+                have_voice = true;
+                demod.noteValidTag();
+            }
+        }
+    }
+    demod.terminate();
+    if (!have_lsf || !have_voice) {
+        std::printf("tx-during-false-lock: lsf=%d voice=%d after drop\n",
+                    have_lsf, have_voice);
+        return -1;
+    }
+    std::printf("tx-during-false-lock: real LSF+voice after false lock\n");
     return 0;
 }
 
@@ -559,6 +701,8 @@ int main()
     if (test_no_late_entry() != 0)
         return -1;
     if (test_lsf_false_lock_noise() != 0)
+        return -1;
+    if (test_tx_during_false_lock() != 0)
         return -1;
     if (test_layer_dc_block() != 0)
         return -1;
