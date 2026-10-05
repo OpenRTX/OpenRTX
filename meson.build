@@ -1332,9 +1332,16 @@ horse_loopback_test = executable('horse_loopback_test',
                                                             'tests/unit/horse_session_modem.cpp'],
                                  kwargs : unit_test_opts)
 
+horse_fec_v2_sim = executable('horse_fec_v2_sim',
+                              sources : unit_test_src + ['tests/unit/horse_fec_v2_sim.cpp'],
+                              kwargs : unit_test_opts)
+
 py3 = find_program('python3', required : true)
 horse_test_env = environment()
 horse_test_env.set('ASAN_OPTIONS', 'detect_leaks=0')
+test('Horse FEC v2 sim selftest', horse_fec_v2_sim,
+     args : ['selftest'],
+     env : horse_test_env, timeout : 60)
 test('Horse Provision Pack Test', py3,
      args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'],
      env : horse_test_env,

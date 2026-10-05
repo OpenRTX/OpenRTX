@@ -29,10 +29,10 @@ work list. Finding status:
 | C14 RTX 512 B stack | `7f7069a2` host `-Wstack-usage`; unverified on MD-3x0 (toolchain missing) |
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
-| C17 LDPC name vs repeat-2 | open; protocol v2 with C20 (uncoded LSF) |
+| C17 LDPC name vs repeat-2 | open; protocol v2, see `docs/horse/HORSE_FEC_V2.md` |
 | C18 tests vs claims | analog loopback; three-mode; NCC floor dropped `18a4d420`; LSF replace `34d9d292` |
 | C19 `sodium_memzero` | fixed in `c6bdad06` / `fb86c4ed` |
-| C20 LSF has no FEC and no checksum | open; limiting reception; protocol v2 with C17 |
+| C20 LSF has no FEC and no checksum | open; limiting reception; protocol v2, see `docs/horse/HORSE_FEC_V2.md` |
 | M17 `dsp.cpp:19` UBSan | upstream; see `UPSTREAM_ISSUE_dsp.md` (do not patch in this fork) |
 | `horse_keytool.py` | removed; identities are XDG files `31495ec7` |
 | LSF bind / channel flags | `b1f207f5` |
@@ -315,8 +315,9 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
 - **What is wrong:** Encode/decode are consistent with each other, not
   with a real LDPC matrix. `horse.md` already says placeholder LDPC and
   CODEC2. On-air FEC is fragile.
-- **Proposed fix:** Protocol version 2 together with C20: real rate-1/2
-  LDPC or an honest name, and LSF FEC or a checksum.
+- **Proposed fix:** Protocol version 2 together with C20. Study and
+  recommendation: `docs/horse/HORSE_FEC_V2.md` (do not change the
+  version-1 on-air format until that implementation round).
 
 ### C20. LSF has no FEC and no checksum -- medium (open, protocol v2)
 
@@ -329,9 +330,10 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
   Analog loopback intact LSF+voice+EOT (gain 1.0, 200 trials): 200/200
   at sigma 2000 and 5000, 121/200 at 10000, 57/200 at 12500, 11/200 at
   15000. Voice still has repeat-2; the uncoded LSF is the limit.
-- **Proposed fix:** Protocol version 2 together with C17: checksum or
-  FEC on the LSF, and a real rate-1/2 code (or an honest name) for
-  voice.
+- **Proposed fix:** Protocol version 2 together with C17. Study and
+  recommendation: `docs/horse/HORSE_FEC_V2.md`. The 3-frame intact
+  rates above are the C20 citation; a 308-frame type-only re-run is
+  in that document and is a different metric.
 
 ### C18. Tests do not cover the claims -- medium (quality)
 
