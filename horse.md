@@ -104,14 +104,25 @@ Limits:
   guessing of a bad passphrase from a flash dump. Unverified on MD-3x0.
 - Repeat-2 FEC is not an LDPC code.
 - No late entry: miss the LSF and the rest of the call is silent.
-- Hamming-0 acquire uses a normalised correlator floor
-  (`CORR_PEAK_MIN` Q12, 4076 ~= 0.995). Absolute 180000 blocked
-  gain 0.25 and 0.5 (0/3). After the change, gain 0.25 and 0.5 are
-  3/3; gain 2.0 clips (0/3). Ten minutes of open-FM Hamming-0 noise:
-  false ncc max 4056 at gains 0.25-1.0, 4073 at 2.0; real LSF is 4096
-  at 0.25-1.0 and 4067 at 2.0. 4076 sits between 4056 and 4096.
-  `HORSE_FALSE_LOCK_LONG` repeats the 10-minute table.
-- Until the first tagged frame, a new LSF replaces the current lock.
+- Hamming-0 acquire. The extra normalised correlator floor was removed
+  (`CORR_PEAK_MIN` = 0). Real LSF ncc under noise overlaps Hamming-0
+  false locks (at sigma 12500, real min 3937 / p5 3985 vs false max
+  ~4056). A floor of 4076 rejected every 12500 trial (0/3). With the
+  floor gone, noise fails at 13000 and clock offset at 300 ppm, matching
+  the pre-threshold baseline. Acquisition still uses only the correlator
+  phase that matches `convolve()`.
+- False LSF locks on open FM are expected at the measured Hamming-0
+  rate (see Tests). They are harmless: no audio plays without a valid
+  tag, and a real LSF replaces an unauthenticated lock. Ten minutes of
+  open-FM Hamming-0 noise produced 5.80 decoded false LSFs per minute
+  both before and after the pair-disagreement check (limit 120; false
+  diss min 72 / p50 90 / max 107). Keyed uncoded LSF sits near 71-100,
+  so the check does not cut that rate.
+- Gain 0.25 and 0.5 decode 3/3. Gain 2.0 fails in the impairment test
+  because the samples clip.
+- Until the first tagged frame, a new LSF can replace the current lock
+  after a missed sync (garbage frames from a false lock). A tracking
+  session with valid LSF/voice sync is not stolen.
 - C13 C5000 TX enable is implemented (`465707c4`) and untested on
   hardware.
 - MD-3x0 flash, RTX stack, libsodium, and Argon2 heap: `/opt/arm-miosix-eabi`
@@ -137,12 +148,13 @@ meson test -C build_linux --no-rebuild
 ```
 
 See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
-the loopback false-lock NCC table to ten minutes per gain.
+the loopback Hamming-0 false-lock table to ten minutes (rate before and
+after the LSF pair-disagreement check).
 
 Horse tests: Frame, Crypto, Info, Codec, Peers, Keystore, Host Interop,
-Loopback (layers, DC-block, false-lock table, per-gain NCC, LSF replace
-at 1/4/7 frames, three-mode modem plus negatives), Provision Pack,
-settings.h vs upstream.
+Loopback (layers, DC-block, false-lock table, real LSF ncc/diss under
+noise, LSF replace at 1/4/7 frames, three-mode modem plus negatives),
+Provision Pack, settings.h vs upstream.
 
 Sanitizer: `meson setup build_asan -Db_sanitize=address,undefined` with
 `-fno-sanitize=shift` and `ASAN_OPTIONS=detect_leaks=0`.
