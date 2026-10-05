@@ -140,11 +140,17 @@ bool horse_crypto_available(void);
 bool horse_crypto_x25519_keypair(uint8_t *pk_out, uint8_t *sk_out);
 
 /*
- * ECDH(local_sk, remote_pk) then KDF to k_enc and k_tag with distinct
- * labels. Used in encrypted, signed, and combined modes.
+ * ECDH(local_sk, remote_pk) then KDF over shared || src || dst || eph_pk
+ * || flags || version to k_enc and k_tag. Any LSF field change in transit
+ * changes the keys, so every voice tag fails.
  */
 bool horse_crypto_derive_session_keys(const uint8_t *local_x25519_sk,
                                       const uint8_t *remote_x25519_pk,
+                                      const uint8_t src[6],
+                                      const uint8_t dst[6],
+                                      const uint8_t eph_pk[32],
+                                      uint8_t flags,
+                                      uint8_t version,
                                       uint8_t k_enc_out[HORSE_SESSION_KEY_BYTES],
                                       uint8_t k_tag_out[HORSE_SESSION_KEY_BYTES]);
 
@@ -236,9 +242,12 @@ bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
 /*
  * Voice audio requires a valid ECDH session (k_tag) in every mode.
  * Signed LSF also requires a verified session signature.
+ * Channel encrypt_en/sign_en must match the LSF flags (legacy both-clear
+ * still means encrypt).
  */
 bool horse_rx_may_output_voice(bool lsf_encrypted, bool session_valid,
-                               bool lsf_signed, bool signature_ready);
+                               bool lsf_signed, bool signature_ready,
+                               bool ch_encrypt, bool ch_sign);
 
 #ifdef __cplusplus
 }

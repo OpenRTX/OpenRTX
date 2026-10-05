@@ -360,15 +360,21 @@ bool horse_crypto_x25519_keypair(uint8_t *pk_out, uint8_t *sk_out)
 
 bool horse_crypto_derive_session_keys(const uint8_t *local_x25519_sk,
                                       const uint8_t *remote_x25519_pk,
+                                      const uint8_t src[6],
+                                      const uint8_t dst[6],
+                                      const uint8_t eph_pk[32],
+                                      uint8_t flags,
+                                      uint8_t version,
                                       uint8_t k_enc_out[HORSE_SESSION_KEY_BYTES],
                                       uint8_t k_tag_out[HORSE_SESSION_KEY_BYTES])
 {
-    if (local_x25519_sk == NULL || remote_x25519_pk == NULL ||
-        k_enc_out == NULL || k_tag_out == NULL)
+    if (local_x25519_sk == NULL || remote_x25519_pk == NULL || src == NULL ||
+        dst == NULL || eph_pk == NULL || k_enc_out == NULL || k_tag_out == NULL)
         return false;
 
 #ifdef HAVE_LIBSODIUM
     unsigned char shared[crypto_scalarmult_BYTES];
+    unsigned char ikm[crypto_scalarmult_BYTES + 6 + 6 + 32 + 2];
 
     if (horse_sodium_init() != 0)
         return false;
@@ -376,17 +382,30 @@ bool horse_crypto_derive_session_keys(const uint8_t *local_x25519_sk,
     if (crypto_scalarmult(shared, local_x25519_sk, remote_x25519_pk) != 0)
         return false;
 
+    memcpy(ikm, shared, sizeof shared);
+    memcpy(ikm + sizeof shared, src, 6);
+    memcpy(ikm + sizeof shared + 6, dst, 6);
+    memcpy(ikm + sizeof shared + 12, eph_pk, 32);
+    ikm[sizeof shared + 44] = flags;
+    ikm[sizeof shared + 45] = version;
+
     crypto_generichash(k_enc_out, HORSE_SESSION_KEY_BYTES,
-                       shared, sizeof shared,
+                       ikm, sizeof ikm,
                        (const unsigned char *)"HORSE-KENC", 10);
     crypto_generichash(k_tag_out, HORSE_SESSION_KEY_BYTES,
-                       shared, sizeof shared,
+                       ikm, sizeof ikm,
                        (const unsigned char *)"HORSE-KTAG", 10);
     sodium_memzero(shared, sizeof shared);
+    sodium_memzero(ikm, sizeof ikm);
     return true;
 #else
     (void)local_x25519_sk;
     (void)remote_x25519_pk;
+    (void)src;
+    (void)dst;
+    (void)eph_pk;
+    (void)flags;
+    (void)version;
     return false;
 #endif
 }
@@ -660,9 +679,15 @@ bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
 }
 
 bool horse_rx_may_output_voice(bool lsf_encrypted, bool session_valid,
-                               bool lsf_signed, bool signature_ready)
+                               bool lsf_signed, bool signature_ready,
+                               bool ch_encrypt, bool ch_sign)
 {
-    (void)lsf_encrypted;
+    if (!ch_encrypt && !ch_sign)
+        ch_encrypt = true;
+    if (ch_encrypt != lsf_encrypted)
+        return false;
+    if (ch_sign != lsf_signed)
+        return false;
     if (!session_valid)
         return false;
     if (lsf_signed && !signature_ready)

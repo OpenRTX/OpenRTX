@@ -316,6 +316,9 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                     horse_identity_keys_t id;
                     if (horse_keystore_copy_identity(&id) &&
                         horse_crypto_derive_session_keys(id.x25519_sk, eph_pk,
+                                                         rxLsfSrc.data(),
+                                                         rxLsfDst.data(),
+                                                         eph_pk, flags, version,
                                                          sessionKey,
                                                          frameAuthKey))
                     {
@@ -329,9 +332,12 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                 if (flags & LSF_FLAG_SIGNED)
                     signRx = true;
 
+                const bool ch_enc = state.channel.horse.encrypt_en;
+                const bool ch_sign = state.channel.horse.sign_en;
                 const bool may_audio = horse_rx_may_output_voice(
                     (flags & LSF_FLAG_ENCRYPTED) != 0, sessionValid,
-                    (flags & LSF_FLAG_SIGNED) != 0, rxSigReady);
+                    (flags & LSF_FLAG_SIGNED) != 0, rxSigReady,
+                    ch_enc, ch_sign);
                 if (may_audio && rxAudioPath < 0)
                 {
                     rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK, PRIO_RX);
@@ -360,7 +366,9 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                                 (rxLsfFlags & LSF_FLAG_ENCRYPTED) != 0,
                                 sessionValid,
                                 (rxLsfFlags & LSF_FLAG_SIGNED) != 0,
-                                rxSigReady) &&
+                                rxSigReady,
+                                state.channel.horse.encrypt_en,
+                                state.channel.horse.sign_en) &&
                             rxAudioPath < 0)
                         {
                             rxAudioPath = audioPath_request(SOURCE_MCU, SINK_SPK,
@@ -375,7 +383,9 @@ void OpMode_Horse::rxState(rtxStatus_t* const status)
                 else if (!horse_rx_may_output_voice(
                              (rxLsfFlags & LSF_FLAG_ENCRYPTED) != 0,
                              sessionValid,
-                             (rxLsfFlags & LSF_FLAG_SIGNED) != 0, rxSigReady))
+                             (rxLsfFlags & LSF_FLAG_SIGNED) != 0, rxSigReady,
+                             state.channel.horse.encrypt_en,
+                             state.channel.horse.sign_en))
                 {
                     drop_voice = true;
                 }
@@ -511,9 +521,37 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
         }
         status->horseError = HORSE_ERR_NONE;
 
-        if (!horse_crypto_x25519_keypair(eph_pk, eph_sk) ||
-            !horse_crypto_derive_session_keys(eph_sk,
-                                              peer.x25519_pk,
+        if (!horse_crypto_x25519_keypair(eph_pk, eph_sk))
+        {
+            status->horseError = HORSE_ERR_NO_KEYS;
+            horse_crypto_memzero(eph_sk, sizeof eph_sk);
+            horse_crypto_memzero(&id, sizeof id);
+            horse_codec_stop(txAudioPath);
+            audioPath_release(txAudioPath);
+            txAudioPath = -1;
+            status->opStatus = OFF;
+            return;
+        }
+        if (want_encrypt) {
+            encryptTx = true;
+            flags |= LSF_FLAG_ENCRYPTED;
+        }
+        if (want_sign)
+        {
+            uint8_t session_msg[HORSE_SESSION_MSG_BYTES];
+            flags |= LSF_FLAG_SIGNED;
+            horse_crypto_build_session_message(srcCall.data(), dstCall.data(),
+                                               eph_pk, flags,
+                                               HORSE_LSF_VERSION, session_msg);
+            if (horse_crypto_sign(id.ed25519_sk, session_msg, sizeof session_msg,
+                                  txSessionSig))
+                signTx = true;
+            else
+                flags = static_cast<uint8_t>(flags & ~LSF_FLAG_SIGNED);
+        }
+        if (!horse_crypto_derive_session_keys(eph_sk, peer.x25519_pk,
+                                              srcCall.data(), dstCall.data(),
+                                              eph_pk, flags, HORSE_LSF_VERSION,
                                               sessionKey, frameAuthKey))
         {
             status->horseError = HORSE_ERR_NO_KEYS;
@@ -526,25 +564,7 @@ void OpMode_Horse::txState(rtxStatus_t* const status)
             return;
         }
         sessionValid = true;
-        if (want_encrypt) {
-            encryptTx = true;
-            flags |= LSF_FLAG_ENCRYPTED;
-        }
         horse_crypto_memzero(eph_sk, sizeof eph_sk);
-
-        if (want_sign)
-        {
-            uint8_t session_msg[HORSE_SESSION_MSG_BYTES];
-            horse_crypto_build_session_message(srcCall.data(), dstCall.data(),
-                                               eph_pk, flags | LSF_FLAG_SIGNED,
-                                               HORSE_LSF_VERSION, session_msg);
-            if (horse_crypto_sign(id.ed25519_sk, session_msg, sizeof session_msg,
-                                  txSessionSig))
-            {
-                signTx = true;
-                flags |= LSF_FLAG_SIGNED;
-            }
-        }
         horse_crypto_memzero(&id, sizeof id);
 
         if ((want_encrypt && !encryptTx) || (want_sign && !signTx) ||
