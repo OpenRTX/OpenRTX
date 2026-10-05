@@ -222,28 +222,24 @@ void HorseDemodulator::syncedState()
 {
     samplingPoint = sampleIndex;
     /*
-     * maxDeviation() averages every sample on this phase, including inner
-     * +-1 LSF symbols, so the outer thresholds sit too low and the LSF
-     * dibits slice as outer. Use peak-absolute amplitude instead.
+     * Walk the correlator buffer in the same order as Correlator::convolve():
+     * start at index()+phase+1, then +SAMPLES_PER_SYMBOL. Using
+     * (index()+i) % 5 == samplingPoint is one sample off those taps.
      */
+    size_t pos = (correlator.index() + 1 + samplingPoint) % SYNCWORD_SAMPLES;
+    int16_t taps[SYNCWORD_SYMBOLS];
     int16_t peakAbs = 1;
-    for (size_t i = 0; i < SYNCWORD_SAMPLES; i++) {
-        size_t pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
-        if ((pos % SAMPLES_PER_SYMBOL) == samplingPoint) {
-            int16_t a = static_cast<int16_t>(std::abs(correlator.data()[pos]));
-            if (a > peakAbs)
-                peakAbs = a;
-        }
+    for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++) {
+        taps[s] = correlator.data()[pos];
+        int16_t a = static_cast<int16_t>(std::abs(taps[s]));
+        if (a > peakAbs)
+            peakAbs = a;
+        pos = (pos + SAMPLES_PER_SYMBOL) % SYNCWORD_SAMPLES;
     }
     frameIndex = 0;
     devEstimator.init({ peakAbs, -peakAbs });
-    for (size_t i = 0; i < SYNCWORD_SAMPLES; i++) {
-        size_t pos = (correlator.index() + i) % SYNCWORD_SAMPLES;
-        if ((pos % SAMPLES_PER_SYMBOL) == samplingPoint) {
-            int16_t val = correlator.data()[pos];
-            quantize(val);
-        }
-    }
+    for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++)
+        quantize(taps[s]);
     uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0])
                   + hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
     uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0])
