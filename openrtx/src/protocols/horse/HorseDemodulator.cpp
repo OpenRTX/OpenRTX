@@ -206,51 +206,87 @@ void HorseDemodulator::reset()
     dsp_resetState(dcBlock);
 }
 
+static bool syncwordMatch(const frame_t &frame, const syncw_t &word)
+{
+    uint8_t hd = hammingDistance(frame[0], word[0])
+               + hammingDistance(frame[1], word[1]);
+    return hd <= HAMMING_SYNC_MAX;
+}
+
+bool HorseDemodulator::acquireSync(const syncw_t &word)
+{
+    uint8_t bestHd = 0xFF;
+    frame_t bestFrame{};
+    std::pair<int32_t, int32_t> bestDev{ 0, 0 };
+
+    /*
+     * Walk the correlator buffer in the same order as Correlator::convolve():
+     * start at index()+phase+1, then +SAMPLES_PER_SYMBOL. phase=4 matches
+     * the convolution taps used for the peak.
+     */
+    for (uint32_t phase = 0; phase < SAMPLES_PER_SYMBOL; phase++) {
+        size_t pos = (correlator.index() + 1 + phase) % SYNCWORD_SAMPLES;
+        int16_t taps[SYNCWORD_SYMBOLS];
+        int16_t peakAbs = 1;
+        for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++) {
+            taps[s] = correlator.data()[pos];
+            int16_t a = static_cast<int16_t>(std::abs(taps[s]));
+            if (a > peakAbs)
+                peakAbs = a;
+            pos = (pos + SAMPLES_PER_SYMBOL) % SYNCWORD_SAMPLES;
+        }
+        frameIndex = 0;
+        int16_t outerPos = peakAbs;
+        int16_t outerNeg = static_cast<int16_t>(-peakAbs);
+        for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++) {
+            int8_t sy = quantizeLevel(taps[s], outerPos, outerNeg);
+            setSymbol(*demodFrame, frameIndex, sy);
+            frameIndex += 1;
+        }
+        uint8_t hd = hammingDistance((*demodFrame)[0], word[0])
+                   + hammingDistance((*demodFrame)[1], word[1]);
+        if (hd < bestHd) {
+            bestHd = hd;
+            bestFrame = *demodFrame;
+            bestDev = { outerPos, outerNeg };
+        }
+    }
+
+    if (bestHd != 0)
+        return false;
+
+    *demodFrame = bestFrame;
+    samplingPoint = sampleIndex;
+    frameIndex = SYNCWORD_SYMBOLS;
+    devEstimator.init(bestDev);
+    demodState = DemodState::LOCKED;
+    return true;
+}
+
 void HorseDemodulator::unlockedState()
 {
-    /*
-     * Lock on the correlator peak, not the M17 falling edge. Horse mixed
-     * inner/outer symbols make the edge several samples late.
-     */
     int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
     const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
-    if (std::abs(correlator.convolve(lsfSym)) > syncThresh)
-        demodState = DemodState::SYNCED;
+    const auto voiceSym = syncwordSymbols(VOICE_SYNC_WORD);
+    const auto eotSym = syncwordSymbols(EOT_SYNC_WORD);
+    int32_t cL = correlator.convolve(lsfSym);
+    int32_t cV = correlator.convolve(voiceSym);
+    int32_t cE = correlator.convolve(eotSym);
+
+    if ((std::abs(cL) > syncThresh) && acquireSync(LSF_SYNC_WORD))
+        return;
+    if ((std::abs(cV) > syncThresh) && acquireSync(VOICE_SYNC_WORD))
+        return;
+    if ((std::abs(cE) > syncThresh) && acquireSync(EOT_SYNC_WORD))
+        return;
 }
 
 void HorseDemodulator::syncedState()
 {
-    samplingPoint = sampleIndex;
-    /*
-     * Walk the correlator buffer in the same order as Correlator::convolve():
-     * start at index()+phase+1, then +SAMPLES_PER_SYMBOL. Using
-     * (index()+i) % 5 == samplingPoint is one sample off those taps.
-     */
-    size_t pos = (correlator.index() + 1 + samplingPoint) % SYNCWORD_SAMPLES;
-    int16_t taps[SYNCWORD_SYMBOLS];
-    int16_t peakAbs = 1;
-    for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++) {
-        taps[s] = correlator.data()[pos];
-        int16_t a = static_cast<int16_t>(std::abs(taps[s]));
-        if (a > peakAbs)
-            peakAbs = a;
-        pos = (pos + SAMPLES_PER_SYMBOL) % SYNCWORD_SAMPLES;
-    }
-    frameIndex = 0;
-    devEstimator.init({ peakAbs, -peakAbs });
-    for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++)
-        quantize(taps[s]);
-    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0])
-                  + hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
-    uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0])
-                    + hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
-    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0])
-                  + hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
-    if (lsfHd <= HAMMING_SYNC_MAX || voiceHd <= HAMMING_SYNC_MAX
-        || eotHd <= HAMMING_SYNC_MAX)
-        demodState = DemodState::LOCKED;
-    else
-        demodState = DemodState::UNLOCKED;
+    if (acquireSync(LSF_SYNC_WORD) || acquireSync(VOICE_SYNC_WORD)
+        || acquireSync(EOT_SYNC_WORD))
+        return;
+    demodState = DemodState::UNLOCKED;
 }
 
 void HorseDemodulator::lockedState(int16_t sample)
@@ -271,17 +307,19 @@ void HorseDemodulator::lockedState(int16_t sample)
 
 void HorseDemodulator::syncUpdateState()
 {
-    uint8_t lsfHd = hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0])
-                  + hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
-    uint8_t voiceHd = hammingDistance((*demodFrame)[0], VOICE_SYNC_WORD[0])
-                    + hammingDistance((*demodFrame)[1], VOICE_SYNC_WORD[1]);
-    uint8_t eotHd = hammingDistance((*demodFrame)[0], EOT_SYNC_WORD[0])
-                  + hammingDistance((*demodFrame)[1], EOT_SYNC_WORD[1]);
-    if (lsfHd <= HAMMING_SYNC_MAX || voiceHd <= HAMMING_SYNC_MAX)
+    /*
+     * After swap(), readyFrame holds the frame that just completed. Check
+     * its sync word (LSF, voice or EOT), not the empty demod buffer.
+     */
+    const frame_t &justRx = *readyFrame;
+    bool valid = syncwordMatch(justRx, LSF_SYNC_WORD)
+              || syncwordMatch(justRx, VOICE_SYNC_WORD);
+    bool eot = syncwordMatch(justRx, EOT_SYNC_WORD);
+    if (valid)
         missedSyncs = 0;
     else
         missedSyncs += 1;
-    if ((missedSyncs > 4) || (eotHd <= HAMMING_SYNC_MAX))
+    if ((missedSyncs > 4) || eot)
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;

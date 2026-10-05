@@ -55,6 +55,7 @@ public:
 private:
     void quantize(int16_t sample);
     void reset();
+    bool acquireSync(const syncw_t &word);
     void unlockedState();
     void syncedState();
     void lockedState(int16_t sample);
@@ -95,9 +96,13 @@ private:
     struct dcBlock dcBlock;
 
     Correlator<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> correlator;
-    Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> streamSync{
-        syncwordSymbols(LSF_SYNC_WORD)
+    Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> lsfSync{ syncwordSymbols(
+        LSF_SYNC_WORD) };
+    Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> voiceSync{
+        syncwordSymbols(VOICE_SYNC_WORD)
     };
+    Synchronizer<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> eotSync{ syncwordSymbols(
+        EOT_SYNC_WORD) };
     DevEstimator devEstimator;
     ClockRecovery<SAMPLES_PER_SYMBOL> clockRec;
     Iir<3> sampleFilter;
