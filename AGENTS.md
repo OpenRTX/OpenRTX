@@ -47,9 +47,19 @@ scripts/            Build and utility scripts
 
 ```bash
 # Linux build and test
+# meson test rebuilds every default target, including ARM firmware, unless
+# those binaries are already built or --no-rebuild is used. On a native
+# tree without the Miosix toolchain, compile Linux and unit-test binaries
+# by name, then test without rebuilding firmware:
 meson setup build_linux
-meson compile -C build_linux openrtx_linux
-meson test -C build_linux
+meson compile -C build_linux linux \
+  m17_golay_test m17_viterbi_test m17_callsign_test m17_metatext_test \
+  m17_demodulator_test m17_rrc_test cps_test minmea_conversion_test \
+  horse_frame_test horse_crypto_test horse_info_test horse_codec_test \
+  horse_peers_test horse_keystore_test horse_host_interop_test \
+  horse_loopback_test ui_check_standby_test m17_packet_test \
+  dsp_oversampling_test gfx_text_test m17_replay_test
+meson test -C build_linux --no-rebuild
 
 # Cross-compile for ARM Cortex-M4 targets
 meson setup --cross-file cross_cm4.txt build_cm4
