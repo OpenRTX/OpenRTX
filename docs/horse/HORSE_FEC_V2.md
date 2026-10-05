@@ -2,8 +2,8 @@
 
 Date: 2026-10-05
 Branch: `upstream-sync`
-Status: proposal only. Firmware on-air format is unchanged. `horse.md`
-still describes version 1 as built.
+Status: implemented on `upstream-sync` (protocol version 2). Normative
+rules in section 7b; `horse.md` describes version 2 as built.
 
 Simulation: `tests/unit/horse_fec_v2_sim.cpp`,
 `tests/unit/horse_fec_v2_codes.hpp`,
@@ -787,8 +787,9 @@ review asks to hash the whole coded LSF.
 - `m17_soft` is sliced SoftViterbi, not analog soft.
 - CRC24C bit-order matches 5.1 systematic form as implemented in the
   sim; a second independent encoder was not compared.
-- Late entry with no LSF sync (fragments alone) is unverified; acquire
-  still needs an LSF sync word.
+- Late entry on voice sync (no opening LSF) is implemented in firmware
+  and covered by loopback three-mode / DROP_LSF tests; FEC-sim
+  `lsf_frag erase_open=1` covers erased opening payload with sync kept.
 - Complete TX of polar-voice plus polar-LSF was not run.
 - `perf` hardware counters were unavailable (`perf_event_paranoid=4`).
 

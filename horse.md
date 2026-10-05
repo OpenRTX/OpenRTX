@@ -1,11 +1,14 @@
 ## Horse digital voice mode (experimental)
 
 Horse is an experimental encrypted digital voice mode in this fork for the
-TYT MD-3x0 family. It reuses M17 DSP (RRC, correlator, clock recovery) but
-defines its own framing and cryptography.
+TYT MD-3x0 family. It reuses M17 DSP (RRC, correlator, clock recovery) and
+the M17 convolutional encoder / DATA_PUNCTURE / interleaver / decorrelator
+/ Viterbi path for voice and LSF coding. Framing and cryptography are
+Horse-specific.
 
 Horse is not a production security product. Without libsodium every crypto
-call fails closed. There is no cleartext fallback.
+call fails closed. There is no cleartext fallback. Protocol version is **2**;
+version 1 has no deployed users and is not accepted on the air.
 
 ### Why the name
 
@@ -17,15 +20,20 @@ call fails closed. There is no cleartext fallback.
 
 - Symbol rate: 4800 symbols/s
 - Frame: 192 symbols (48 bytes)
-- Sync words: LSF `{0x5A, 0xA7}`, voice `{0x7E, 0x9B}`, EOT `{0x3C, 0xD8}`
+- Sync words (v2): LSF `{0x15, 0x57}`, voice `{0x45, 0xFD}`, EOT
+  `{0x77, 0x74}` (Hamming distance >= 6 from each other and from retired
+  v1 `{0x5A,0xA7}` / `{0x7E,0x9B}` / `{0x3C,0xD8}`)
 - 4-FSK LUT: `00=+1`, `01=+3`, `10=-1`, `11=-3`
 - TX RRC at 48 kHz (`M17::rrc_48k`); RX RRC at 24 kHz
-- Voice payload after 2-byte sync: 16-bit FN (MSB = last frame), 12-byte
-  codec, 4-byte tag. Voice FEC is repeat-2 in `ldpc_horse.c`, not an
-  LDPC code. The LSF has no FEC and no checksum (open; protocol v2
-  with C17).
+- Voice after 2-byte sync: 46 coded bytes = M17 DATA_PUNCTURE of 18 info
+  bytes (FN16 + 12-byte codec + 4-byte tag) plus 12 spare bytes used for
+  the fragment cycle (section below)
 
-### LSF (46 bytes after sync)
+### Opening LSF
+
+Three LSF-sync frames. Each carries an 18-byte M17-coded chunk of the
+48-byte block `(46-byte LSF || crc_m17)`. The receiver accepts the LSF
+only when all three chunks assemble and the CRC matches.
 
 | Offset | Size | Field |
 |--------|------|-------|
@@ -33,31 +41,50 @@ call fails closed. There is no cleartext fallback.
 | 6 | 6 | Destination |
 | 12 | 32 | Ephemeral X25519 public key (always present) |
 | 44 | 1 | Flags: `LSF_FLAG_ENCRYPTED=0x01`, `LSF_FLAG_SIGNED=0x02` |
-| 45 | 1 | Protocol version (`LSF_PROTOCOL_VERSION` / `HORSE_LSF_VERSION` = 1) |
+| 45 | 1 | Protocol version (`LSF_PROTOCOL_VERSION` = 2) |
+| 46 | 2 | `crc_m17` over the first 46 bytes |
 
-The 46 bytes are copied onto the air with no FEC and no checksum. A
-sync match is enough for the decoder to accept the fields. Intact
-LSF+voice+EOT rates on the analog loopback (gain 1.0, 200 trials,
-uncoded LSF) were 200/200 at sigma 2000 and 5000, 121/200 at 10000,
-57/200 at 12500, and 11/200 at 15000. That drop is the reception
-limit: voice still has repeat-2, the LSF does not. Fix in protocol
-version 2 together with replacing repeat-2 (C17).
+### Fragment cycle (spare bits)
 
-### Signature frames
+Every voice and signature frame carries a 12-byte fragment in the option-C
+spare. Cycle length is always **10** (mode-independent until LSF CRC):
 
-When `sign_en` is set, the 64-byte Ed25519 signature of
-`src||dst||eph_pk||flags||version` (46 bytes) is sent as six voice frames
-`fn = 0x7000..0x7005`: five 12-byte chunks and one 4-byte chunk. Ordinary
-voice FN is `0..0x6FFF`. RX requires strictly increasing FN; lost frames
-are allowed as a gap, repeats and backward FN are not.
+| Slot | Content |
+|------|---------|
+| 0..3 | bytes of the 48-byte LSF\|\|CRC block |
+| 4..9 | 64-byte Ed25519 signature (encrypt-only TX fills zeros; RX ignores if unsigned) |
 
-### Acquisition
+Slot index: voice `FN % 10`; signature frames
+`4 + (FN - 0x7000)`. The receiver bit-majority combines up to three hard
+copies per slot (ties as 0) and accepts the LSF only on CRC pass. A small
+inner code on the fragments is not used (outer CRC and Ed25519 already
+reject bad assemblies). Full LSF+signature recovery under ideal
+conditions needs 10 distinct slots (400 ms); with erasures, plan on about
+20 voice frames (LSF-only) or 30 (signed).
 
-LSF-only acquire, Hamming distance 0 (`HAMMING_ACQUIRE_MAX`). Tracking
-allows Hamming 2. No late entry on voice or EOT. After lock, eight
-completed frames without a valid voice tag drop the lock so a real LSF
-can be acquired. Host loopback skips `dsp_dcBlockFilter` except
-`test_layer_dc_block()` because of upstream `dsp.cpp:19` UB.
+### Signature frames and EOT
+
+When signing, the 64-byte Ed25519 signature of
+`src||dst||eph_pk||flags||version` is also sent as six voice-coded frames
+`fn = 0x7000..0x7005`. Ordinary voice FN is `0..0x6FFF`. EOT uses the v2
+EOT sync word. RX requires strictly increasing FN from the first accepted
+frame; lost frames are gaps, repeats and backward FN are not.
+
+### Acquisition and late entry
+
+- Acquire on LSF or voice sync at Hamming 0; track at Hamming 2.
+- Late entry: lock on voice without an opening LSF; rebuild LSF (and
+  signature if required) from fragments. No audio until, in order: LSF
+  CRC-ok, session keys derived, at least one voice tag verified under
+  `k_tag`, and (if the channel requires signing) the 64-byte signature
+  verified.
+- After lock, twelve completed frames without `noteValidTag()` drop the
+  lock (OpMode notes a tag when LSF CRC passes and when a voice tag
+  verifies).
+- Host loopback skips `dsp_dcBlockFilter` except `test_layer_dc_block()`
+  because of upstream `dsp.cpp:19` UB. DC-block off-by-one at the
+  LSF/voice boundary is mitigated by `CLOCK_HOLD_FRAMES` (see
+  `docs/horse/HORSE_FEC_V2.md` section 7b E).
 
 ---
 
@@ -71,7 +98,7 @@ Every mode (encrypt, sign, both) runs ephemeral X25519 ECDH. Session keys:
 - `k_tag` = BLAKE2b(IKM, key=`HORSE-KTAG`)
 
 Any change to those LSF fields in transit changes the keys, so every
-voice tag fails.
+voice tag fails. Version must be 2.
 
 Voice: XChaCha20 with `k_enc` when the encrypted flag is set. Tag is
 keyed BLAKE2b with `k_tag` over `dir || FN16 (no last-frame bit) ||
@@ -100,11 +127,14 @@ Properties the current code aims to provide, not a formal proof:
   peer keys required by the channel mode.
 - Voice tags bind direction, FN, and payload to `k_tag`.
 - `k_enc` and `k_tag` bind the ECDH secret and the LSF src, dst,
-  ephemeral public key, flags, and version.
-- Lost frames are tolerated; FN must increase.
+  ephemeral public key, flags, and version (version 2).
+- Lost frames are tolerated; FN must increase from the first accepted
+  frame, capped at `VOICE_FN_MAX = 0x6FFF`.
 - Signed sessions also require a verified 64-byte session signature
-  before audio.
-- A lock that never produces a valid tag is dropped after eight frames.
+  before audio (dedicated frames and/or fragment rebuild).
+- Unknown or version-1 LSF bytes produce no audio. v1 sync words are
+  not acquired.
+- A lock that never produces a valid tag is dropped after twelve frames.
 
 Limits:
 
@@ -112,33 +142,18 @@ Limits:
   a high-budget attacker on a long recording.
 - Argon2id 16 KiB is sized for 192 KiB SRAM and is weak against offline
   guessing of a bad passphrase from a flash dump. Unverified on MD-3x0.
-- Repeat-2 FEC is not an LDPC code (voice only). The LSF has no FEC
-  and no checksum; this is the limiting factor for reception (open,
-  protocol version 2 with C17).
-- No late entry: miss the LSF and the rest of the call is silent.
-- Hamming-0 acquire. The extra normalised correlator floor was removed
-  (`CORR_PEAK_MIN` = 0). Real LSF ncc under noise overlaps Hamming-0
-  false locks (at sigma 12500, real min 3937 / p5 3985 vs false max
-  ~4056). A floor of 4076 rejected every 12500 trial (0/3). With the
-  floor gone, noise fails at 13000 and clock offset at 300 ppm, matching
-  the pre-threshold baseline. Acquisition still uses only the correlator
-  phase that matches `convolve()`.
-- False LSF locks on open FM are expected at the measured Hamming-0
-  rate (see Tests). They are harmless: no audio plays without a valid
-  tag, and a real LSF replaces an unauthenticated lock. Ten minutes of
-  open-FM Hamming-0 noise produced 5.80 decoded false LSFs per minute
-  (58 frames; demod acquires 0.10/min).
-- Gain 0.25 and 0.5 decode 3/3. Gain 2.0 fails in the impairment test
-  because the samples clip.
-- Until the first tagged frame, a new LSF can replace the current lock
-  after a missed sync (garbage frames from a false lock). A tracking
-  session with valid LSF/voice sync is not stolen.
-- C13 C5000 TX enable is implemented (`465707c4`) and untested on
-  hardware.
-- MD-3x0 flash, RTX stack, libsodium, and Argon2 heap: `/opt/arm-miosix-eabi`
-  is not present on the host that last tried the cross build. Limiter
-  from the linker script only: 848 KiB flash, 64 KiB CCM + 128 KiB SRAM.
-  Argon2id 16 KiB is `crypto_pwhash` memlimit (heap inside libsodium).
+- Hamming-0 acquire; `CORR_PEAK_MIN` = 0 (real LSF ncc under noise
+  overlaps false locks).
+- False LSF/voice locks on open FM are expected at the measured rate.
+  They are harmless: no audio without a valid tag and LSF CRC.
+- Gain 2.0 fails in the impairment test because the samples clip.
+- C13 C5000 TX enable is implemented and untested on hardware.
+- MD-3x0 flash, RTX stack, libsodium, and Argon2 heap: cross toolchain
+  was not available on the last host. Script limit only: 848 KiB flash,
+  64 KiB CCM + 128 KiB SRAM.
+
+Normative FEC and late-entry detail: `docs/horse/HORSE_FEC_V2.md`
+section 7b. Audit: `docs/horse/HORSE_AUDIT.md`.
 
 ---
 
@@ -161,8 +176,8 @@ See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
 the loopback Hamming-0 false-lock table to ten minutes.
 
 Horse tests: Frame, Crypto, Info, Codec, Peers, Keystore, Host Interop,
-Loopback, CPS layout vs upstream, Provision Pack, settings.h vs
-upstream. Audit: `docs/horse/HORSE_AUDIT.md`.
+Loopback (including late entry and three-mode), CPS layout vs upstream,
+Provision Pack. FEC study binary: `horse_fec_v2_sim`.
 
-Sanitizer: `meson setup build_asan -Db_sanitize=address,undefined` with
-`-fno-sanitize=shift` and `ASAN_OPTIONS=detect_leaks=0`.
+Sanitizer: `meson setup build_linux_address -Dasan=true` with
+`ASAN_OPTIONS=detect_leaks=0`.

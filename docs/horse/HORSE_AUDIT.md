@@ -29,10 +29,10 @@ work list. Finding status:
 | C14 RTX 512 B stack | `7f7069a2` host `-Wstack-usage`; unverified on MD-3x0 (toolchain missing) |
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
-| C17 LDPC name vs repeat-2 | open; protocol v2, see `docs/horse/HORSE_FEC_V2.md` |
-| C18 tests vs claims | analog loopback; three-mode; NCC floor dropped `18a4d420`; LSF replace `34d9d292` |
+| C17 LDPC name vs repeat-2 | closed in v2: M17 option-C voice `0de39b89`; `ldpc_horse` removed |
+| C18 tests vs claims | analog loopback; three-mode; late entry; NCC floor dropped `18a4d420`; LSF replace `34d9d292` |
 | C19 `sodium_memzero` | fixed in `c6bdad06` / `fb86c4ed` |
-| C20 LSF has no FEC and no checksum | open; limiting reception; protocol v2, see `docs/horse/HORSE_FEC_V2.md` |
+| C20 LSF has no FEC and no checksum | closed in v2: three M17-coded opening frames + CRC-16 `4003bcf2`; fragments `d2e4405d` |
 | M17 `dsp.cpp:19` UBSan | upstream; see `UPSTREAM_ISSUE_dsp.md` (do not patch in this fork) |
 | `horse_keytool.py` | removed; identities are XDG files `31495ec7` |
 | LSF bind / channel flags | `b1f207f5` |
@@ -308,32 +308,24 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
 - **Proposed fix:** On switch to Horse, zero `channel.horse` and require
   a provisioned Horse contact.
 
-### C17. LDPC / MELPe names vs reality -- medium (documented, still a protocol weakness)
+### C17. LDPC / MELPe names vs reality -- closed (protocol v2)
 
-- **Where:** `ldpc_horse.c` (repeat-2, decode is AND of copies);
-  `melpe_horse.c` (CODEC2 2400 x 2).
-- **What is wrong:** Encode/decode are consistent with each other, not
-  with a real LDPC matrix. `horse.md` already says placeholder LDPC and
-  CODEC2. On-air FEC is fragile.
-- **Proposed fix:** Protocol version 2 together with C20. Study and
-  recommendation: `docs/horse/HORSE_FEC_V2.md` (do not change the
-  version-1 on-air format until that implementation round).
+- **Was:** `ldpc_horse.c` repeat-2 misnamed as LDPC; fragile voice FEC.
+- **Fix:** Option-C M17 convolutional coding via existing
+  `ConvolutionalEncoder` / `DATA_PUNCTURE` / interleaver / decorrelator /
+  `HardViterbi` (`0de39b89`). `ldpc_horse.*` removed. Codec remains
+  CODEC2 2400 (`melpe_horse.c` name kept for path continuity).
+- **Normative:** `docs/horse/HORSE_FEC_V2.md` option C / section 7b.
 
-### C20. LSF has no FEC and no checksum -- medium (open, protocol v2)
+### C20. LSF has no FEC and no checksum -- closed (protocol v2)
 
-- **Where:** `HorseFrameEncoder::encodeLsf` copies 46 payload bytes;
-  `HorseFrameDecoder::decodeFrame` accepts any frame whose sync is
-  within Hamming 2 of the LSF word.
-- **What is wrong:** Callsigns, ephemeral public key, flags, and version
-  have no parity and no checksum. A pair-disagreement check on that
-  slot cannot separate a real LSF from noise (reverted `d04df96f`).
-  Analog loopback intact LSF+voice+EOT (gain 1.0, 200 trials): 200/200
-  at sigma 2000 and 5000, 121/200 at 10000, 57/200 at 12500, 11/200 at
-  15000. Voice still has repeat-2; the uncoded LSF is the limit.
-- **Proposed fix:** Protocol version 2 together with C17. Study and
-  recommendation: `docs/horse/HORSE_FEC_V2.md`. The 3-frame intact
-  rates above are the C20 citation; a 308-frame type-only re-run is
-  in that document and is a different metric.
+- **Was:** single uncoded 46-byte LSF; reception limit on analog
+  loopback (121/200 intact at sigma 10000).
+- **Fix:** three M17-coded opening frames covering 46 B + `crc_m17`
+  (`4003bcf2`); cycle-10 spare fragments with majority combine
+  (`d2e4405d`); late entry on voice sync (`b1ceb6b0`); version byte 2
+  and new sync words (`dc8c906a`).
+- **Normative:** `docs/horse/HORSE_FEC_V2.md` section 7b.
 
 ### C18. Tests do not cover the claims -- medium (quality)
 
