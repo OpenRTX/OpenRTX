@@ -8,6 +8,7 @@
 
 #include "protocols/horse/melpe_horse.h"
 #include <string.h>
+#include <stdbool.h>
 
 #if defined(PLATFORM_LINUX)
 #include <codec2/codec2.h>
@@ -20,11 +21,16 @@
 
 static struct CODEC2 *c2_encoder;
 static struct CODEC2 *c2_decoder;
+static int16_t enc_pending[MELPE_HORSE_SAMPLES_20MS];
+static bool enc_have_pending;
+static int16_t dec_pending[MELPE_HORSE_SAMPLES_20MS];
+static bool dec_have_pending;
 
 void melpe_horse_encoder_init(void)
 {
     if (c2_encoder == NULL)
         c2_encoder = codec2_create(CODEC2_MODE_2400);
+    enc_have_pending = false;
 }
 
 void melpe_horse_encoder_terminate(void)
@@ -42,20 +48,41 @@ void melpe_horse_encode(const int16_t *pcm, size_t n_samples, uint8_t *bits_96)
         return;
 
     if (n_samples < MELPE_HORSE_SAMPLES_40MS)
-    {
-        memset(bits_96, 0, MELPE_HORSE_BYTES);
         return;
-    }
 
     codec2_encode(c2_encoder, bits_96, (short *)(pcm));
     codec2_encode(c2_encoder, bits_96 + CODEC2_2400_FRAME_BYTES,
                   (short *)(pcm + CODEC2_2400_FRAME_SAMPLES));
 }
 
+int melpe_horse_encode_20ms(const int16_t *pcm160, uint8_t *bits_96)
+{
+    int16_t both[MELPE_HORSE_SAMPLES_40MS];
+
+    if (pcm160 == NULL || bits_96 == NULL || c2_encoder == NULL)
+        return -1;
+
+    if (!enc_have_pending)
+    {
+        memcpy(enc_pending, pcm160,
+               MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
+        enc_have_pending = true;
+        return 0;
+    }
+
+    memcpy(both, enc_pending, MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
+    memcpy(both + MELPE_HORSE_SAMPLES_20MS, pcm160,
+           MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
+    enc_have_pending = false;
+    melpe_horse_encode(both, MELPE_HORSE_SAMPLES_40MS, bits_96);
+    return 1;
+}
+
 void melpe_horse_decoder_init(void)
 {
     if (c2_decoder == NULL)
         c2_decoder = codec2_create(CODEC2_MODE_2400);
+    dec_have_pending = false;
 }
 
 void melpe_horse_decoder_terminate(void)
@@ -78,4 +105,29 @@ void melpe_horse_decode(const uint8_t *bits_96, int16_t *pcm, size_t *n_samples_
 
     if (n_samples_out != NULL)
         *n_samples_out = MELPE_HORSE_SAMPLES_40MS;
+}
+
+int melpe_horse_decode_20ms_start(const uint8_t *bits_96, int16_t *pcm160,
+                                  size_t cap)
+{
+    int16_t full[MELPE_HORSE_SAMPLES_40MS];
+    size_t n = 0;
+
+    if (pcm160 == NULL || cap < MELPE_HORSE_SAMPLES_20MS)
+        return -1;
+    melpe_horse_decode(bits_96, full, &n);
+    memcpy(pcm160, full, MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
+    memcpy(dec_pending, full + MELPE_HORSE_SAMPLES_20MS,
+           MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
+    dec_have_pending = true;
+    return 1;
+}
+
+int melpe_horse_decode_20ms_next(int16_t *pcm160, size_t cap)
+{
+    if (pcm160 == NULL || cap < MELPE_HORSE_SAMPLES_20MS || !dec_have_pending)
+        return -1;
+    memcpy(pcm160, dec_pending, MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
+    dec_have_pending = false;
+    return 1;
 }

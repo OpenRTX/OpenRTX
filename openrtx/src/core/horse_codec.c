@@ -154,8 +154,8 @@ int horse_codec_pushFrame(const uint8_t *frame, const bool blocking)
 static void *horse_encodeFunc(void *arg)
 {
     pathId iPath = *((pathId *)arg);
-    stream_sample_t audioBuf[MELPE_HORSE_SAMPLES_40MS];
-    streamId iStream = audioStream_start(iPath, audioBuf, MELPE_HORSE_SAMPLES_40MS,
+    stream_sample_t audioBuf[MELPE_HORSE_SAMPLES_20MS];
+    streamId iStream = audioStream_start(iPath, audioBuf, MELPE_HORSE_SAMPLES_20MS,
                                          8000, STREAM_INPUT | BUF_CIRC_DOUBLE);
     if (iStream < 0)
     {
@@ -173,7 +173,14 @@ static void *horse_encodeFunc(void *arg)
             break;
 
         uint8_t frame[HORSE_CODEC_FRAME_BYTES];
-        melpe_horse_encode(audio.data, audio.len, frame);
+        int got;
+
+        if (audio.len < MELPE_HORSE_SAMPLES_20MS)
+            break;
+
+        got = melpe_horse_encode_20ms(audio.data, frame);
+        if (got != 1)
+            continue;
 
         pthread_mutex_lock(&horse_data_mutex);
         if (horse_numElements >= HORSE_BUF_SIZE)
@@ -197,9 +204,9 @@ static void *horse_encodeFunc(void *arg)
 static void *horse_decodeFunc(void *arg)
 {
     pathId oPath = *((pathId *)arg);
-    stream_sample_t audioBuf[MELPE_HORSE_SAMPLES_40MS];
+    stream_sample_t audioBuf[MELPE_HORSE_SAMPLES_20MS];
     memset(audioBuf, 0, sizeof(audioBuf));
-    streamId oStream = audioStream_start(oPath, audioBuf, MELPE_HORSE_SAMPLES_40MS,
+    streamId oStream = audioStream_start(oPath, audioBuf, MELPE_HORSE_SAMPLES_20MS,
                                          8000, STREAM_OUTPUT | BUF_CIRC_DOUBLE);
     if (oStream < 0)
     {
@@ -208,6 +215,8 @@ static void *horse_decodeFunc(void *arg)
     }
 
     outputStream_sync(oStream, false);
+
+    bool have_second = false;
 
     while (!horse_reqStop)
     {
@@ -221,25 +230,38 @@ static void *horse_decodeFunc(void *arg)
         uint8_t frame[HORSE_CODEC_FRAME_BYTES];
         bool newData = false;
 
-        pthread_mutex_lock(&horse_data_mutex);
-        if (horse_numElements != 0)
+        if (have_second)
         {
-            memcpy(frame, horse_dataBuffer[horse_readPos], HORSE_CODEC_FRAME_BYTES);
-            horse_readPos = (horse_readPos + 1) % HORSE_BUF_SIZE;
-            horse_numElements -= 1;
-            pthread_cond_signal(&horse_wakeup_cond);
-            newData = true;
-        }
-        pthread_mutex_unlock(&horse_data_mutex);
-
-        if (newData)
-        {
-            size_t nOut;
-            melpe_horse_decode(frame, outBuf, &nOut);
+            if (melpe_horse_decode_20ms_next(outBuf, MELPE_HORSE_SAMPLES_20MS) < 0)
+                memset(outBuf, 0, MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
+            have_second = false;
         }
         else
         {
-            memset(outBuf, 0, MELPE_HORSE_SAMPLES_40MS * sizeof(stream_sample_t));
+            pthread_mutex_lock(&horse_data_mutex);
+            if (horse_numElements != 0)
+            {
+                memcpy(frame, horse_dataBuffer[horse_readPos], HORSE_CODEC_FRAME_BYTES);
+                horse_readPos = (horse_readPos + 1) % HORSE_BUF_SIZE;
+                horse_numElements -= 1;
+                pthread_cond_signal(&horse_wakeup_cond);
+                newData = true;
+            }
+            pthread_mutex_unlock(&horse_data_mutex);
+
+            if (newData)
+            {
+                if (melpe_horse_decode_20ms_start(frame, outBuf,
+                                                  MELPE_HORSE_SAMPLES_20MS) < 0)
+                    memset(outBuf, 0,
+                           MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
+                else
+                    have_second = true;
+            }
+            else
+            {
+                memset(outBuf, 0, MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
+            }
         }
 
         outputStream_sync(oStream, true);
