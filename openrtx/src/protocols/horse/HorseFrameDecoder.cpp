@@ -44,8 +44,6 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
                   + hammingDistance(frame[1], EOT_SYNC_WORD[1]);
 
     if (lsfHd <= HAMMING_SYNC_MAX) {
-        if (lsfRepeatDisagreements(frame) > LSF_REPEAT_DISAGREE_MAX)
-            return HorseFrameType::UNKNOWN;
         std::copy(frame.begin() + 2, frame.begin() + 8, lsfSrc.begin());
         std::copy(frame.begin() + 8, frame.begin() + 14, lsfDst.begin());
         return HorseFrameType::LINK_SETUP;
@@ -84,13 +82,6 @@ bool HorseFrameDecoder::getLsfCrypto(const frame_t &frame, uint8_t eph_pk[32],
     if (version != nullptr)
         *version = frame[2 + LSF_VERSION_OFFSET];
     return true;
-}
-
-unsigned HorseFrameDecoder::lsfRepeatDisagreements(const frame_t &frame)
-{
-    if (frame.size() < 2 + LDPC_VOICE_ENCODED_BYTES)
-        return LDPC_VOICE_PAYLOAD_BITS;
-    return ldpc_horse_repeat_disagreements(frame.data() + 2);
 }
 
 void HorseFrameDecoder::getVoicePayload(const frame_t &frame,

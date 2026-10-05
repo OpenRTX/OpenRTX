@@ -46,19 +46,3 @@ void ldpc_horse_decode_voice(const uint8_t *encoded, uint8_t *payload)
                                                                              0;
     bits_to_bytes(ldpc_out_bits, LDPC_VOICE_PAYLOAD_BITS, payload);
 }
-
-unsigned ldpc_horse_repeat_disagreements(const uint8_t *encoded)
-{
-    if (encoded == NULL)
-        return LDPC_VOICE_PAYLOAD_BITS;
-    unsigned n = 0;
-    for (size_t i = 0; i < LDPC_VOICE_PAYLOAD_BITS; i++) {
-        const size_t a = 2u * i;
-        const size_t b = a + 1u;
-        const uint8_t ba = (uint8_t)((encoded[a / 8] >> (7u - (a % 8))) & 1u);
-        const uint8_t bb = (uint8_t)((encoded[b / 8] >> (7u - (b % 8))) & 1u);
-        if (ba != bb)
-            n++;
-    }
-    return n;
-}

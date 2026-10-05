@@ -101,16 +101,6 @@ static constexpr uint8_t HAMMING_ACQUIRE_MAX = 0;
 static constexpr int32_t CORR_PEAK_MIN = 0;
 
 /*
- * After LSF sync match, reject the frame if this many consecutive
- * bit-pairs disagree. Horse LSF is 46 uncoded bytes in the same slot
- * as a repeat-2 voice codeword, so a keyed LSF already sits near 80-100
- * on a clean channel. 120 is above every real LSF measured under noise
- * (zero-eph payload-OK max 22; 0x22 eph clean 80). False locks overlap
- * (72-107) and are not rejected.
- */
-static constexpr unsigned LSF_REPEAT_DISAGREE_MAX = 120;
-
-/*
  * After lock, this many completed frames without noteValidTag() drops
  * the lock so a real LSF can be acquired. Sized for LSF + 6 signature
  * frames; the first tagged voice must arrive in that window.

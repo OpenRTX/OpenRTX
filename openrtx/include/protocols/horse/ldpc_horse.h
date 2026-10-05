@@ -17,17 +17,13 @@
 extern "C" {
 #endif
 
-#define LDPC_VOICE_PAYLOAD_BITS 184
-#define LDPC_VOICE_ENCODED_BITS 368
+#define LDPC_VOICE_PAYLOAD_BITS  184
+#define LDPC_VOICE_ENCODED_BITS  368
 #define LDPC_VOICE_PAYLOAD_BYTES 23
 #define LDPC_VOICE_ENCODED_BYTES 46
 
 void ldpc_horse_encode_voice(const uint8_t *payload, uint8_t *encoded);
 void ldpc_horse_decode_voice(const uint8_t *encoded, uint8_t *payload);
-/**
- * Count how many of the 184 repeat-2 pairs in a 46-byte codeword disagree.
- */
-unsigned ldpc_horse_repeat_disagreements(const uint8_t *encoded);
 
 #ifdef __cplusplus
 }
