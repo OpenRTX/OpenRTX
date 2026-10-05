@@ -97,6 +97,18 @@ static void prov_handle_identity(const uint8_t *payload, uint16_t len)
     const horse_identity_keys_t *identity =
         (const horse_identity_keys_t *)payload;
     const char *pass = state.settings.horse_passphrase;
+
+    if (identity->version != 1)
+    {
+        prov_send(MSG_ERROR, "bad identity version", 20);
+        return;
+    }
+    if (memcmp(identity->ed25519_sk + HORSE_ED25519_PUBLICKEY_BYTES,
+               identity->ed25519_pk, HORSE_ED25519_PUBLICKEY_BYTES) != 0)
+    {
+        prov_send(MSG_ERROR, "bad ed25519 sk", 14);
+        return;
+    }
     size_t pass_len = strnlen(pass, sizeof state.settings.horse_passphrase);
 
     if (!horse_keystore_store_plaintext(identity, pass, pass_len))
@@ -130,6 +142,12 @@ static void prov_feed_byte(uint8_t b)
     {
         memmove(rx_buf, rx_buf + 1, rx_len - 1);
         rx_len--;
+        return;
+    }
+
+    if (hdr->len > sizeof(rx_buf) - sizeof(horse_prov_hdr_t))
+    {
+        rx_len = 0;
         return;
     }
 

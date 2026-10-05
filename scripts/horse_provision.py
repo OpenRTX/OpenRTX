@@ -19,15 +19,20 @@ import sys
 import time
 from pathlib import Path
 
+nacl = None
+serial = None
 try:
     import nacl.public
     import nacl.signing
+    nacl = True
+except ImportError:
+    nacl = False
+
+try:
     import serial
     import serial.tools.list_ports
-except ImportError as e:
-    print(f"Error: Missing required dependency: {e.name}", file=sys.stderr)
-    print("Install with: pip install pynacl pyserial", file=sys.stderr)
-    sys.exit(1)
+except ImportError:
+    serial = None
 
 
 # Protocol constants (matches firmware expectations).
@@ -83,13 +88,30 @@ def keyctl_list(keyring):
         return []
 
 
+def ed25519_sk_libsodium(ed25519_pk_hex, ed25519_sk_hex):
+    """Return the 64-byte libsodium secret key (seed || public key)."""
+    pk = bytes.fromhex(ed25519_pk_hex)
+    sk = bytes.fromhex(ed25519_sk_hex)
+    if len(pk) != 32:
+        raise ValueError("ed25519_pk must be 32 bytes")
+    if len(sk) == 32:
+        return sk + pk
+    if len(sk) == 64:
+        if sk[32:] != pk:
+            raise ValueError("ed25519_sk[32:] must equal ed25519_pk")
+        return sk
+    raise ValueError("ed25519_sk must be 32-byte seed or 64-byte libsodium key")
+
+
 def generate_identity(label):
     """Generate a new Horse identity (Ed25519 + X25519 keypair)."""
+    if not nacl:
+        raise RuntimeError("PyNaCl is required for generate; pip install pynacl")
     signing_key = nacl.signing.SigningKey.generate()
     verify_key = signing_key.verify_key
 
     ed25519_pk = bytes(verify_key)
-    ed25519_sk = bytes(signing_key)
+    ed25519_sk = bytes(signing_key) + ed25519_pk
 
     x25519_sk = nacl.public.PrivateKey.generate()
     x25519_pk = bytes(x25519_sk.public_key)
@@ -109,11 +131,14 @@ def generate_identity(label):
 def pack_identity_binary(identity):
     """Pack identity into binary format matching horse_identity_keys_t."""
     ed25519_pk = bytes.fromhex(identity["ed25519_pk"])
-    ed25519_sk = bytes.fromhex(identity["ed25519_sk"])
+    ed25519_sk = ed25519_sk_libsodium(identity["ed25519_pk"],
+                                      identity["ed25519_sk"])
     x25519_pk = bytes.fromhex(identity["x25519_pk"])
     x25519_sk = bytes.fromhex(identity["x25519_sk"])
+    if len(x25519_pk) != 32 or len(x25519_sk) != 32:
+        raise ValueError("x25519 keys must be 32 bytes")
 
-    return struct.pack(
+    packed = struct.pack(
         "<B3s32s64s32s32s",
         1,  # version
         b"\x00\x00\x00",  # reserved
@@ -122,15 +147,26 @@ def pack_identity_binary(identity):
         x25519_pk,
         x25519_sk,
     )
+    if len(packed) != 164:
+        raise ValueError("identity blob size mismatch")
+    return packed
+
+
+def _decode_keyring_payload(raw):
+    if raw.startswith(b"{") or raw.startswith(b"["):
+        return json.loads(raw.decode("utf-8"))
+    text = raw.decode("ascii", errors="strict").strip()
+    decoded = bytes.fromhex(text)
+    return json.loads(decoded.decode("utf-8"))
 
 
 def store_in_keyring(identity, keyring="user"):
-    """Store identity in kernel keyring."""
+    """Store identity in kernel keyring as JSON."""
     label = identity["label"]
     description = f"openrtx:horse:{label}"
-    payload = json.dumps(identity).encode("utf-8")
+    payload = json.dumps(identity)
 
-    key_id = keyctl_add(keyring, description, payload.hex())
+    key_id = keyctl_add(keyring, description, payload)
     print(f"Stored identity '{label}' in keyring as key ID {key_id}")
     return key_id
 
@@ -144,9 +180,7 @@ def load_from_keyring(label, keyring="user"):
     for key_line in keys:
         if description in key_line:
             key_id = key_line.split(":")[0]
-            payload_hex = keyctl_read(key_id)
-            payload = json.loads(payload_hex.decode("utf-8"))
-            return payload
+            return _decode_keyring_payload(keyctl_read(key_id))
 
     raise ValueError(f"Identity '{label}' not found in keyring")
 
@@ -194,6 +228,9 @@ def recv_provisioning_message(ser, timeout=5.0):
 def provision_to_radio(identity, port=None, fifo=None, baudrate=115200):
     """Provision identity to radio over USB-CDC or a Linux FIFO."""
     if fifo:
+        if serial is None:
+            print("Error: pyserial required", file=sys.stderr)
+            return False
         print(f"Connecting to FIFO {fifo}...")
         try:
             ser = serial.Serial(fifo, baudrate, timeout=1.0)
@@ -240,6 +277,34 @@ def provision_to_radio(identity, port=None, fifo=None, baudrate=115200):
         ser.close()
 
 
+def selftest():
+    pk = bytes(range(32))
+    seed = bytes(range(32, 64))
+    ident32 = {
+        "ed25519_pk": pk.hex(),
+        "ed25519_sk": seed.hex(),
+        "x25519_pk": bytes(range(64, 96)).hex(),
+        "x25519_sk": bytes(range(96, 128)).hex(),
+    }
+    packed = pack_identity_binary(ident32)
+    if len(packed) != 164:
+        raise RuntimeError("packed size")
+    sk = packed[36:100]
+    if sk != seed + pk:
+        raise RuntimeError("32-byte seed was not expanded to seed||pk")
+    ident64 = dict(ident32)
+    ident64["ed25519_sk"] = (seed + pk).hex()
+    if pack_identity_binary(ident64) != packed:
+        raise RuntimeError("64-byte sk pack mismatch")
+    json_bytes = json.dumps({"version": 1, "label": "t"}).encode("utf-8")
+    if _decode_keyring_payload(json_bytes)["label"] != "t":
+        raise RuntimeError("json keyring decode")
+    if _decode_keyring_payload(json_bytes.hex().encode("ascii"))["label"] != "t":
+        raise RuntimeError("hex keyring decode")
+    print("horse_provision.py: selftest passed")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Horse identity key management and provisioning tool"
@@ -251,6 +316,8 @@ def main():
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+
+    subparsers.add_parser("selftest", help="Check Ed25519 packing and keyring decode")
 
     gen_parser = subparsers.add_parser("generate", help="Generate a new identity")
     gen_parser.add_argument("label", help="Label/name for the identity (e.g., callsign)")
@@ -281,6 +348,9 @@ def main():
         return 1
 
     try:
+        if args.command == "selftest":
+            return selftest()
+
         if args.command == "generate":
             identity = generate_identity(args.label)
             key_id = store_in_keyring(identity, args.keyring)
@@ -303,8 +373,7 @@ def main():
             print(f"Identity '{args.label}':")
             print(f"  Ed25519 public key: {identity['ed25519_pk']}")
             print(f"  X25519 public key:  {identity['x25519_pk']}")
-            print(f"  Ed25519 secret key: {identity['ed25519_sk'][:16]}... (truncated)")
-            print(f"  X25519 secret key:  {identity['x25519_sk'][:16]}... (truncated)")
+            print("  Secret keys: not printed")
 
         elif args.command == "provision":
             identity = load_from_keyring(args.label, args.keyring)
