@@ -36,13 +36,7 @@ symbol_source_dir = "../openrtx/include/fonts/symbols/sources/"
 
 debug = False
 sizes = [5, 6, 8]
-symbols = sorted(
-    [
-        f
-        for f in os.listdir(os.path.join(absolute_path, symbol_source_dir))
-        if "svg" in f
-    ]
-)
+symbols = sorted([f for f in os.listdir(os.path.join(absolute_path, symbol_source_dir)) if "svg" in f])
 print(symbols)
 ###################################################################
 
@@ -64,22 +58,16 @@ def svgToBytes(filename, height):
         alpha.show()
     return numpy.array(alpha)
 
-
 # REUSE-IgnoreStart
 first_ascii = 32  # Start at ascii d32 which is " " per https://www.rapidtables.com/code/text/ascii-table.html
-dont_edit_banner = "/*\n"
-dont_edit_banner += (
-    " * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors\n"
-)
+dont_edit_banner  = "/*\n"
+dont_edit_banner += " * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors\n"
 dont_edit_banner += " * \n"
 dont_edit_banner += " * SPDX-License-Identifier: GPL-3.0-or-later\n"
 dont_edit_banner += " */\n"
 dont_edit_banner += "\n"
-dont_edit_banner += (
-    "// This is a generated file, please do not edit it! Use generate_symbols.py\n"
-)
+dont_edit_banner += "// This is a generated file, please do not edit it! Use generate_symbols.py\n"
 # REUSE-IgnoreEnd
-
 
 class FontDefinition:
     scalar = 1.6  # this number is used to roughly convert from pt to px
@@ -169,29 +157,15 @@ for size in sizes:
     font = FontDefinition("Symbols", size)
     for symbol in symbols:
         font.addGlyph(os.path.join(absolute_path, symbol_source_dir + symbol), symbol)
-    with open(
-        os.path.join(
-            absolute_path,
-            "../openrtx/include/fonts/symbols/Symbols{}pt7b.h".format(size),
-        ),
-        "w",
-    ) as f:
+    with open(os.path.join(absolute_path, "../openrtx/include/fonts/symbols/Symbols{}pt7b.h".format(size)), "w") as f:
         f.write(str(font))
 
 # Generate the enum for convenience
-with open(
-    os.path.join(
-        absolute_path, "../openrtx/include/fonts/symbols/symbols.h".format(size)
-    ),
-    "w",
-) as f:
+with open(os.path.join(absolute_path, "../openrtx/include/fonts/symbols/symbols.h".format(size)), "w") as f:
     out = dont_edit_banner
     out += "typedef enum {\n"
     symbols.insert(0, "SPACE")
     for symbolNumber, symbolName in enumerate(symbols):
-        out += "    SYMBOL_{} = {},\n".format(
-            symbolName.split(".")[0].replace("-", "_").upper(),
-            symbolNumber + first_ascii,
-        )
+        out += "    SYMBOL_{} = {},\n".format(symbolName.split(".")[0].replace("-", "_").upper(), symbolNumber + first_ascii)
     out += "} symbol_t;\n"
     f.write(out)

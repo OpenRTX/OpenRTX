@@ -2,7 +2,7 @@
 ## OpenRTX - Modular Open Source Radio Firmware
 ##
 project('OpenRTX', ['c', 'cpp'],
-  version : '0.4.4',
+  version : '0.4.5',
   default_options : ['warning_level=3', 'b_staticpic=false'])
 
 ##
@@ -136,12 +136,25 @@ if sodium_dep.found()
 endif
 
 # CODEC2, open source speech codec, compile from source on embedded
+# Always download the subproject — the Zephyr/CMake build needs the source
+# files at subprojects/codec2/src/*.c regardless of which library is used
+# for linking. For native builds, prefer system libraries (pkg-config or
+# find_library) so homebrew, Nix, and distro packages work. For cross
+# builds (embedded), use the subproject build.
 codec2_proj = subproject('codec2')
-if meson.is_cross_build()
-  codec2_dep  = codec2_proj.get_variable('codec2_dep')
+if not meson.is_cross_build()
+  # Try pkg-config first (homebrew, Nix, and other pkg-config-based installs)
+  codec2_dep = dependency('codec2', method: 'pkg-config', required: false)
+  if not codec2_dep.found()
+    # Fall back to compiler's built-in library search (libcodec2-dev on Debian/Ubuntu)
+    cpp        = meson.get_compiler('cpp')
+    codec2_dep = cpp.find_library('codec2', required: false)
+  endif
+  if not codec2_dep.found()
+    codec2_dep = codec2_proj.get_variable('codec2_dep')
+  endif
 else
-  cpp        = meson.get_compiler('cpp')
-  codec2_dep = cpp.find_library('codec2')
+  codec2_dep = codec2_proj.get_variable('codec2_dep')
 endif
 
 # Catch2, C++ testing framework (only for native/linux builds)
@@ -367,25 +380,25 @@ linux_src = ['platform/targets/linux/emulator/emulator.c',
              'platform/drivers/baseband/radio_linux.cpp',
              'platform/drivers/audio/audio_linux.c',
              'platform/drivers/audio/file_source.c',
+             'platform/drivers/audio/audio_sdl.cpp',
              'platform/targets/linux/platform.c',
+             'platform/drivers/tones/toneGenerator_sdl.cpp',
              'platform/drivers/CPS/cps_io_libc.c',
              'platform/drivers/NVM/posix_file.c']
 
 linux_inc = ['platform/targets/linux',
-             'platform/targets/linux/emulator']
+             'platform/targets/linux/emulator',
+             'platform/drivers/audio',
+             'platform/drivers/tones']
 
 linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
 
-sdl_dep      = dependency('SDL2',      required: false)
-threads_dep  = dependency('threads',   required: false)
-readline_dep = dependency('readline',  required: false)
-linux_src   += openrtx_src
-linux_inc   += openrtx_inc
-linux_def   += openrtx_def
-linux_def   += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
-if readline_dep.found()
-  linux_def += {'CONFIG_READLINE': ''}
-endif
+sdl_dep     = dependency('SDL2',     required: false)
+threads_dep = dependency('threads',  required: false)
+linux_src  += openrtx_src
+linux_inc  += openrtx_inc
+linux_def  += openrtx_def
+linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
 
 #
 # Standard UI
@@ -404,10 +417,7 @@ linux_mod17_def = linux_def + {'CONFIG_SCREEN_WIDTH': '128', 'CONFIG_SCREEN_HEIG
 
 linux_c_args   = ['-ffunction-sections', '-fdata-sections', '-std=gnu17']
 linux_cpp_args = ['-ffunction-sections', '-fdata-sections', '-std=c++14']
-linux_l_args   = ['-lm']
-if readline_dep.found()
-  linux_l_args += '-lreadline'
-endif
+linux_l_args   = ['-lm', '-lreadline']
 
 # MacOS Clang linker uses -deadstrip instead of --gc-sections
 if build_machine.system() == 'darwin'
@@ -629,6 +639,29 @@ dm1701_inc += openrtx_inc + stm32f405_inc
 dm1701_def += openrtx_def + stm32f405_def
 
 ##
+## Radtel RT-4D
+##
+
+rt4d_src = ['platform/drivers/NVM/nvmem_rt4d.c',
+            'platform/drivers/NVM/W25Qx.c',
+            'platform/targets/RT-4D/platform.c',
+            'platform/drivers/backlight/backlight_RT4D.c',
+            'platform/drivers/stubs/audio_stub.c',
+            'platform/drivers/CPS/cps_io_native_RT4D.c',
+            'platform/drivers/display/display_rt4d.c',
+            'platform/drivers/keyboard/keyboard_rt4d.c',
+            'platform/drivers/stubs/radio_stub.c',
+            'platform/drivers/SPI/spi_custom.c',
+            'platform/drivers/SPI/spi_bitbang.c',
+            'platform/targets/RT-4D/hwconfig.c']
+rt4d_inc = ['platform/targets/RT-4D']
+rt4d_def = {'PLATFORM_RT4D': ''}
+
+rt4d_src += openrtx_src + at32f423_src + ui_src_default
+rt4d_inc += openrtx_inc + at32f423_inc
+rt4d_def += openrtx_def + at32f423_def
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -750,15 +783,22 @@ foreach k, v : dm1701_def
   endif
 endforeach
 
+rt4d_args = []
+foreach k, v : rt4d_def
+  if v == ''
+    rt4d_args += '-D@0@'.format(k)
+  else
+    rt4d_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_deps = [sdl_dep, threads_dep, codec2_dep]
-if readline_dep.found()
-  linux_deps += readline_dep
-endif
 if sodium_dep.found()
   linux_deps += sodium_dep
   linux_c_args += '-DHAVE_LIBSODIUM'
   linux_cpp_args += '-DHAVE_LIBSODIUM'
 endif
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
@@ -838,6 +878,16 @@ mod17_opts = {
   'c_args'             : mod17_args,
   'cpp_args'           : mod17_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/stm32_1m+192k_rom.ld']
+}
+
+rt4d_opts = {
+  'sources'            : rt4d_src,
+  'include_directories': rt4d_inc,
+  'dependencies'       : [codec2_dep],
+  'c_args'             : rt4d_args,
+  'cpp_args'           : rt4d_args,
+  'link_args'          : ['-Wl,-T../platform/mcu/AT32F423/linker_script.ld',
+                          '-Wl,--print-memory-usage'],
 }
 
 ttwrplus_opts = {
@@ -943,6 +993,14 @@ targets = [
   {
     'name'     : 'mod17',
     'opts'     : mod17_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' ',
+    'cpu'      : 'cm4'
+  },
+  {
+    'name'     : 'rt4d',
+    'opts'     : rt4d_opts,
     'flashable': true,
     'wrap'     : ' ',
     'load_addr': ' ',
@@ -1222,6 +1280,31 @@ dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
 
+gfx_text_test = executable('gfx_text_test',
+                            sources : unit_test_src + ['tests/unit/gfx_text.cpp'],
+                            kwargs  : unit_test_opts)
+
+# Baseband replay (tests/platform/M17Replay.hpp): a command line tool and a
+# unit test replaying a committed recording through the same class. The test
+# gets the asset directory as an absolute path so it does not depend on the
+# directory it is run from.
+m17_replay_src = ['tests/platform/M17Replay.cpp']
+m17_replay_inc = linux_inc + ['tests/platform']
+m17_replay_tool = executable('m17_replay_tool',
+                             sources             : unit_test_src + m17_replay_src + ['tests/platform/m17_replay_tool.cpp'],
+                             c_args              : linux_c_args,
+                             cpp_args            : linux_cpp_args,
+                             include_directories : m17_replay_inc,
+                             dependencies        : [sdl_dep, threads_dep, codec2_dep],
+                             link_args           : linux_l_args)
+
+m17_replay_test_opts = unit_test_opts + {'include_directories' : m17_replay_inc,
+                                         'cpp_args' : linux_cpp_args +
+      ['-DREPLAY_ASSET_DIR="' + meson.project_source_root() / 'tests/unit/assets' + '"']}
+m17_replay_test = executable('m17_replay_test',
+                             sources : unit_test_src + m17_replay_src + ['tests/unit/M17_replay.cpp'],
+                             kwargs  : m17_replay_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1236,6 +1319,8 @@ test('Horse Crypto Unit Test', horse_crypto_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
+test('GFX Text Test',        gfx_text_test)
+test('M17 Baseband Replay Test', m17_replay_test)
 
 ##
 ## ----------------------------------- LibFuzzer targets (optional) ------------------------------

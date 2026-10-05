@@ -203,8 +203,8 @@ typedef struct ui_state_t
     char new_time_buf[9];
 #endif
     char new_callsign[10];
-    char new_message[53];
-    bool edit_message;
+    char new_meta_text[53];
+    bool edit_meta_text;
     // Which state to return to when we exit menu
     uint8_t last_main_state;
 }

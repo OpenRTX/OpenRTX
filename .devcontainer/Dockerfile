@@ -1,6 +1,13 @@
-FROM ubuntu:24.04
+# Pinned by digest: the "Build and test" workflow rebuilds this Dockerfile on
+# every run using ghcr.io/openrtx/openrtx-devcontainer as a layer cache, and a
+# floating tag invalidates that cache (and forces a ~30 min toolchain rebuild
+# from flaky GNU mirrors) every time the base image is republished. Bump the
+# digest deliberately; expect one full rebuild when you do.
+FROM ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3
 
 LABEL org.opencontainers.image.source=https://github.com/OpenRTX/OpenRTX
+
+COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
 
 # Install dependencies
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
@@ -33,7 +40,6 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
   gcc \
   g++ \
   python3 \
-  python3-pip \
   && rm -rf /var/lib/apt/lists/*
 
 # compile miosix compiler
@@ -63,21 +69,13 @@ ENV PATH="$PATH:/usr/local/bin"
 RUN git clone https://github.com/open-ham/OpenGD77.git /tmp/OpenGD77
 ENV PATH="$PATH:/tmp/OpenGD77/tools/Python/FirmwareLoader:/tmp/OpenGD77/firmware/tools"
 
-# Install Python 3.11 using the deadsnakes PPA
-RUN apt-get update -y \
-    && apt-get install -y software-properties-common \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt-get update \
-    && apt-get install -y python3.11 python3.11-venv python3.11-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create and activate virtual environment
+# Create and activate a virtual environment, using uv both to supply the
+# interpreter (replacing the deadsnakes PPA) and to install into it.
 ENV VIRTUAL_ENV=/opt/venv
-RUN python3.11 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Copy requirements.txt and install dependencies
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -U pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN uv venv --python 3.11 $VIRTUAL_ENV \
+    && uv pip install --no-cache -r requirements.txt

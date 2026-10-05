@@ -51,13 +51,11 @@ openrtx/include/core/event.h
 openrtx/include/core/fir.hpp
 openrtx/include/core/goertzel.hpp
 openrtx/include/core/gps.h
-openrtx/include/core/graphics.h
 openrtx/include/core/iir.hpp
 openrtx/include/core/queue.h
 openrtx/include/core/ringbuf.hpp
 openrtx/include/core/settings.h
 openrtx/include/core/threads.h
-openrtx/include/interfaces/audio.h
 openrtx/include/interfaces/keyboard.h
 openrtx/include/interfaces/platform.h
 openrtx/include/peripherals/adc.h
@@ -103,7 +101,6 @@ openrtx/src/core/cps.c
 openrtx/src/core/data_conversion.c
 openrtx/src/core/datetime.c
 openrtx/src/core/gps.c
-openrtx/src/core/graphics.c
 openrtx/src/core/openrtx.c
 openrtx/src/core/queue.c
 openrtx/src/core/threads.c
@@ -188,7 +185,6 @@ platform/drivers/audio/audio_CS7000.cpp
 platform/drivers/audio/audio_GDx.c
 platform/drivers/audio/audio_MDx.cpp
 platform/drivers/audio/audio_Mod17.c
-platform/drivers/audio/audio_linux.c
 platform/drivers/audio/audio_ttwrplus.c
 platform/drivers/audio/stm32_adc.cpp
 platform/drivers/audio/stm32_adc.h
@@ -326,10 +322,6 @@ platform/targets/MD-UV3x0/pinmap.h
 platform/targets/MD-UV3x0/platform.c
 platform/targets/Module17/pinmap.h
 platform/targets/Module17/platform.c
-platform/targets/linux/emulator/emulator.c
-platform/targets/linux/emulator/emulator.h
-platform/targets/linux/emulator/sdl_engine.c
-platform/targets/linux/platform.c
 platform/targets/ttwrplus/platform.c
 platform/targets/ttwrplus/pmu.cpp
 tests/platform/boot_test.c

@@ -1,0 +1,225 @@
+name: "PR build comment"
+
+# Posts the build artifacts of a pull request back to that pull request.
+#
+# This has to be a separate workflow. Almost all contributions arrive from
+# forks, and a pull_request run from a fork gets a read-only GITHUB_TOKEN, so
+# the build workflow itself cannot comment. workflow_run runs in the context of
+# the base repository and can.
+#
+# Because that context is privileged, this workflow never checks out the
+# contributor's code and never runs it. It only reads the run's artifact list
+# and writes a comment. Contributor-controlled values (branch name, commit
+# subject) are read at runtime from the event payload inside the script; they
+# are never interpolated into a shell command or a script body.
+
+on:
+  workflow_run:
+    workflows: ["Build and test"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Comment build artifacts on PR
+    # A cancelled run is almost always a superseded one: main.yml cancels
+    # in-progress pull request runs when a new commit is pushed. Saying
+    # anything about it would just be noise.
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion != 'cancelled' &&
+      github.event.workflow_run.conclusion != 'skipped'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Find the pull request
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const { owner, repo } = context.repo;
+
+            // workflow_run.pull_requests is empty when the pull request comes
+            // from a fork, which is the usual case here, so fall back to
+            // matching the head SHA against the open pull requests.
+            let number = run.pull_requests?.[0]?.number;
+            if (!number) {
+              // head_repository can be null despite what the schema says,
+              // e.g. when the fork was deleted while the build ran. Without
+              // it the pull request cannot be identified, so just skip.
+              const headOwner = run.head_repository?.owner?.login;
+              const candidates = headOwner
+                ? await github.paginate(github.rest.pulls.list, {
+                    owner,
+                    repo,
+                    state: 'open',
+                    head: `${headOwner}:${run.head_branch}`,
+                    per_page: 100,
+                  })
+                : [];
+              number = candidates.find((pr) => pr.head.sha === run.head_sha)?.number;
+            }
+
+            if (!number) {
+              core.info('No open pull request matches this run, nothing to comment on.');
+              return '';
+            }
+
+            // The build takes up to two hours, so a run can finish after the
+            // pull request has already moved on. Commenting then would offer
+            // downloads that are not the current head.
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number,
+            });
+            // The state check matters on the fast path above, which unlike
+            // the fallback does not filter closed pull requests out.
+            if (pr.state !== 'open') {
+              core.info(`Pull request #${number} is ${pr.state}, skipping.`);
+              return '';
+            }
+            if (pr.head.sha !== run.head_sha) {
+              core.info(`Run ${run.id} is superseded by ${pr.head.sha}, skipping.`);
+              return '';
+            }
+
+            return String(number);
+          result-encoding: string
+
+      - name: Build the comment
+        id: body
+        if: steps.pr.outputs.result != ''
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const run = context.payload.workflow_run;
+            const { owner, repo } = context.repo;
+
+            // Artifact name -> the radio a tester would recognise. Labels
+            // only: the table itself lists whatever openrtx-* artifacts the
+            // run uploaded (no other artifact uses that prefix), so a radio
+            // added to main.yml appears here, by artifact name, before anyone
+            // remembers to label it. Radios listed here but absent from the
+            // run are called out as not built.
+            const LABELS = new Map([
+              ['openrtx-md3x0',   'Tytera MD-380 / MD-390 / Retevis RT3'],
+              ['openrtx-mduv3x0', 'Tytera MD-UV380 / Retevis RT3s'],
+              ['openrtx-md9600',  'Tytera MD-9600'],
+              ['openrtx-gd77',    'Radioddity GD-77'],
+              ['openrtx-dm1801',  'Baofeng DM-1801'],
+              ['openrtx-dm1701',  'Baofeng DM-1701'],
+              ['openrtx-cs7000',  'Connect Systems CS7000-M17'],
+              ['openrtx-cs7000p', 'Connect Systems CS7000-M17 Plus'],
+              ['openrtx-rt4d',    'Radtel RT-4D'],
+              ['openrtx-mod17',   'Module 17'],
+              ['openrtx-ttwrplus', 'Lilygo T-TWR Plus'],
+            ]);
+
+            const artifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              { owner, repo, run_id: run.id, per_page: 100 },
+            );
+            const have = new Set(artifacts.filter((a) => !a.expired).map((a) => a.name));
+
+            // nightly.link serves these without requiring a GitHub login,
+            // which the artifact URLs on github.com do.
+            const link = (name) =>
+              `https://nightly.link/${owner}/${repo}/actions/runs/${run.id}/${name}.zip`;
+
+            const built = [
+              ...[...LABELS.keys()].filter((name) => have.has(name)),
+              ...[...have].filter((name) => name.startsWith('openrtx-') && !LABELS.has(name)).sort(),
+            ].map((name) => [name, LABELS.get(name) ?? name.replace(/^openrtx-/, '')]);
+            core.setOutput('firmware', built.length > 0 ? 'true' : 'false');
+            if (built.length === 0) {
+              core.info('No firmware artifacts in this run; the previous comment will be hidden.');
+              return;
+            }
+
+            const lines = [
+              `### Firmware builds for \`${run.head_sha.slice(0, 7)}\``,
+              '',
+            ];
+            // The build jobs are independent, so firmware can exist even
+            // when the unit tests (or another job) failed. Don't let the
+            // table read as a clean run.
+            if (run.conclusion !== 'success') {
+              lines.push(
+                '> [!WARNING]',
+                `> Some jobs in [this run](${run.html_url}) failed; ` +
+                'these builds are from a commit with failing checks.',
+                '',
+              );
+            }
+            lines.push(
+              'Pick the build for your radio, then follow the',
+              '[flashing guide](https://openrtx.org/#/user_guide?id=flashing-openrtx-to-your-radio).',
+              '',
+              '| Radio | Download |',
+              '| --- | --- |',
+            );
+            for (const [name, label] of built) {
+              lines.push(`| ${label} | [${name}.zip](${link(name)}) |`);
+            }
+            lines.push('');
+
+            const missing = [...LABELS.entries()]
+              .filter(([name]) => !have.has(name))
+              .map(([, label]) => label);
+            if (missing.length > 0) {
+              lines.push(
+                `Not produced by this run: ${missing.join(', ')} — ` +
+                `see the [build log](${run.html_url}).`,
+                '',
+              );
+            }
+
+            const extras = [];
+            // release-bins comes from the devcontainer build job, so it has
+            // every radio except the Zephyr-built T-TWR Plus.
+            if (have.has('release-bins')) {
+              extras.push(
+                `[every radio except the T-TWR Plus in one file](${link('release-bins')})`,
+              );
+            }
+            if (have.has('coverage-report')) {
+              extras.push(`[coverage report](${link('coverage-report')})`);
+            }
+            if (extras.length > 0) {
+              lines.push(`Also available: ${extras.join(' · ')}.`, '');
+            }
+
+            lines.push(
+              '<sub>Updated automatically as new builds finish. ' +
+              'Downloads stop working once the artifacts expire.</sub>',
+            );
+
+            fs.writeFileSync('comment-body.md', lines.join('\n'));
+
+      - name: Post or update the comment
+        if: steps.pr.outputs.result != '' && steps.body.outputs.firmware == 'true'
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          number_force: ${{ steps.pr.outputs.result }}
+          header: openrtx-pr-build
+          skip_unchanged: true
+          path: comment-body.md
+
+      # Nothing was built, so the links in any earlier comment now point at a
+      # build that is no longer current. Delete that comment instead of adding
+      # a failure notice (the contributor already has a red check) and instead
+      # of minimizing it: the action cannot find a minimized comment again, so
+      # the next green build would post a second comment rather than update
+      # the first, and the collapsed ones would pile up.
+      - name: Delete the previous comment
+        if: steps.pr.outputs.result != '' && steps.body.outputs.firmware != 'true'
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          number_force: ${{ steps.pr.outputs.result }}
+          header: openrtx-pr-build
+          delete: true

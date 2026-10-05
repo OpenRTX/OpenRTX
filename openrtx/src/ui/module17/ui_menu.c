@@ -186,9 +186,9 @@ int _ui_getM17ValueName(char *buf, uint8_t max_len, uint8_t index)
             // limit display to 8 characters
             if (strlen(last_state.settings.M17_meta_text) > 7)
             {
-                char tmp[9];
+                char tmp[8];
                 memcpy(tmp, last_state.settings.M17_meta_text, 7);
-                tmp[8] = 0;
+                tmp[7] = 0;
                 // append asterisk to indicate more characters than displayed
                 snprintf(buf, max_len, "%s*", tmp);
             }
@@ -519,10 +519,8 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
               color_white, "Time&Date");
     if(ui_state->input_position <= 0)
     {
-        strncpy(ui_state->new_date_buf, "__/__/__", sizeof(ui_state->new_date_buf) - 1);
-        ui_state->new_date_buf[sizeof(ui_state->new_date_buf) - 1] = '\0';
-        strncpy(ui_state->new_time_buf, "__:__:00", sizeof(ui_state->new_time_buf) - 1);
-        ui_state->new_time_buf[sizeof(ui_state->new_time_buf) - 1] = '\0';
+        strcpy(ui_state->new_date_buf, "__/__/__");
+        strcpy(ui_state->new_time_buf, "__:__:00");
     }
     else
     {
@@ -580,16 +578,34 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
                   color_white, "Accept");
     }
     else
-    if((ui_state->edit_message) && (ui_state->menu_selected == M_METATEXT))
+    if((ui_state->edit_meta_text) && (ui_state->menu_selected == M_METATEXT))
     {
         gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
                     layout.horizontal_pad, layout.menu_font,
                     TEXT_ALIGN_LEFT, color_white, "Meta Txt:");
 
-        // Print M17 message being typed
-        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
-                      layout.horizontal_pad, layout.message_font,
-                      TEXT_ALIGN_CENTER, color_white, ui_state->new_message);
+        // Print the M17 meta text being typed below the label, shifted up so
+        // that the character being edited stays visible once the text grows
+        // past the bottom of the screen. Left alignment is required: the
+        // scroll offset is computed from the same wrap decisions
+        // gfx_measureText() makes, and those only match the rendered layout
+        // for left-aligned text. Unlike the default UI this screen draws no
+        // box around the field, so the text is inset from the screen margin
+        // rather than from a border.
+        uint8_t font_h    = gfx_getFontHeight(layout.message_font);
+        int16_t text_x    = layout.horizontal_pad;
+        uint16_t max_x    = CONFIG_SCREEN_WIDTH - layout.horizontal_pad;
+        int16_t clip_top  = layout.top_h + layout.line1_h + 1;
+        int16_t clip_bot  = CONFIG_SCREEN_HEIGHT - layout.bottom_h - 1;
+        int16_t scroll    = gfx_scrollOffsetForCursor(layout.message_font,
+                                ui_state->new_meta_text,
+                                ui_state->input_position, text_x, max_x,
+                                clip_bot - clip_top);
+        point_t text_start = {text_x, clip_top + font_h - scroll};
+
+        gfx_printBufferClipped(text_start, layout.message_font, TEXT_ALIGN_LEFT,
+                               color_white, ui_state->new_meta_text, max_x,
+                               clip_top, clip_bot);
         // Print Button Info
         gfx_print(layout.line5_pos, layout.line5_font, TEXT_ALIGN_LEFT,
                   color_white, "Cancel");

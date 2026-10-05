@@ -211,7 +211,7 @@ bool Demodulator::isLocked()
         || (demodState == DemodState::SYNC_UPDATE);
 }
 
-void Demodulator::sample(int16_t rawSample, bool invertPhase)
+bool Demodulator::sample(int16_t rawSample, bool invertPhase)
 {
     // Apply DC removal filter
     int16_t sample = dsp_dcBlockFilter(&dcBlock, rawSample);
@@ -271,6 +271,8 @@ void Demodulator::sample(int16_t rawSample, bool invertPhase)
 
     sampleCount += 1;
     sampleIndex  = (sampleIndex + 1) % SAMPLES_PER_SYMBOL;
+
+    return newFrame;
 }
 
 bool Demodulator::update(const bool invertPhase)

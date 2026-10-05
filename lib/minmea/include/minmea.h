@@ -222,28 +222,10 @@ static inline int_least32_t minmea_rescale(struct minmea_float *f, int_least32_t
         return 0;
     if (f->scale == new_scale)
         return f->value;
-    if (f->scale > new_scale) {
-        int_least32_t div = f->scale / new_scale;
-        if (div == 0)
-            return 0;
-        int_least64_t val = (int_least64_t)f->value + ((f->value > 0) - (f->value < 0)) * (div / 2);
-        val /= div;
-        if (val > (int_least64_t)INT32_MAX)
-            return INT32_MAX;
-        if (val < (int_least64_t)INT32_MIN)
-            return INT32_MIN;
-        return (int_least32_t)val;
-    } else {
-        int_least32_t factor = new_scale / f->scale;
-        if (factor == 0)
-            return 0;
-        int_least64_t val = (int_least64_t)f->value * (int_least64_t)factor;
-        if (val > (int_least64_t)INT32_MAX)
-            return INT32_MAX;
-        if (val < (int_least64_t)INT32_MIN)
-            return INT32_MIN;
-        return (int_least32_t)val;
-    }
+    if (f->scale > new_scale)
+        return (f->value + ((f->value > 0) - (f->value < 0)) * f->scale/new_scale/2) / (f->scale/new_scale);
+    else
+        return f->value * (new_scale/f->scale);
 }
 
 /**
@@ -265,16 +247,9 @@ static inline float minmea_tocoord(struct minmea_float *f)
 {
     if (f->scale == 0)
         return NAN;
-    int_least64_t scale100 = (int_least64_t)(f->scale) * 100;
-    if (scale100 == 0 || scale100 > (int_least64_t)INT32_MAX || scale100 < (int_least64_t)INT32_MIN)
-        return NAN;
-    int_least32_t scale100_32 = (int_least32_t)scale100;
-    float scale60 = 60.0f * (float)f->scale;
-    if (scale60 == 0.0f)
-        return NAN;
-    int_least32_t degrees = (int_least32_t)(f->value / scale100_32);
-    int_least32_t minutes = (int_least32_t)(f->value % scale100_32);
-    return (float) degrees + (float) minutes / scale60;
+    int_least32_t degrees = f->value / (f->scale * 100);
+    int_least32_t minutes = f->value % (f->scale * 100);
+    return (float) degrees + (float) minutes / (60 * f->scale);
 }
 
 /**

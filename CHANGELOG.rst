@@ -7,6 +7,44 @@
 CHANGELOG
 =========
 
+v0.4.5 - 2026-09-25
+===================
+Added
+-----
+- RT-4D: preliminary support for the Radtel RT-4D
+- mcu: support for the Artery AT32F423
+- gfx: text measurement and clipping primitives for scrolling long text
+- linux: audio output and beep generation through SDL
+
+Changed
+-------
+- ui: clearer VFO frequency display
+- ui: add scrolling on M17 meta text input
+- core: have empty M17 meta text and callsign set to N0CALL as default settings
+- drivers: failures are consistently reported as negative error values
+- build: codec2 can be resolved with pkg-config on native builds
+
+Fixed
+-----
+- ui: M17 meta text input keeping characters from the previous entry
+- ui: wrong label and a stray character on the M17 meta text menu entry
+- nvm: out of bounds accesses in EEEP, settings and W25Qx drivers
+- core: xmodem buffer overflow on the last block
+- gfx: text wrapping, glyph handling and the reported size of printed text
+- linux: emulator unable to read baseband audio from a file
+- devcontainer: broken miosix GCC toolchain path
+
+Thanks to
+---------
+- Behnood
+- Chris 2E0FRU
+- Marco DM4RCO
+- Morgan ON4MOD
+- Phillip OE7ATX
+- Ryan K0RET
+- Silvano IU2KWO
+- Vlastimil OK5VAS
+
 v0.4.4 - 2026-05-01
 ===================
 Added

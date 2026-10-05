@@ -48,8 +48,7 @@ extern "C" {
 /**
  * Structure that represents the X,Y coordinates of a single point
  */
-typedef struct point_t
-{
+typedef struct point_t {
     int16_t x;
     int16_t y;
 } point_t;
@@ -57,16 +56,14 @@ typedef struct point_t
 /**
  * Structure that represents a single color in the RGB 8 bit per channel format
  */
-typedef struct color_t
-{
+typedef struct color_t {
     uint8_t r;
     uint8_t g;
     uint8_t b;
     uint8_t alpha;
 } color_t;
 
-typedef enum
-{
+typedef enum {
     FONT_SIZE_5PT = 0,
     FONT_SIZE_6PT,
     FONT_SIZE_8PT,
@@ -78,20 +75,17 @@ typedef enum
     FONT_SIZE_NUM
 } fontSize_t;
 
-typedef enum
-{
+typedef enum {
     SYMBOLS_SIZE_5PT,
     SYMBOLS_SIZE_6PT,
     SYMBOLS_SIZE_8PT
 } symbolSize_t;
 
-typedef enum
-{
+typedef enum {
     TEXT_ALIGN_LEFT = 0,
     TEXT_ALIGN_CENTER,
     TEXT_ALIGN_RIGHT
 } textAlign_t;
-
 
 /**
  * This function calls the correspondent method of the low level interface display.h
@@ -158,7 +152,6 @@ void gfx_setPixel(point_t pos, color_t color);
  */
 void gfx_drawLine(point_t start, point_t end, color_t color);
 
-
 /**
  * Draw a horizontal line with specified vertical position and width.
  * @param y: vertical position, in pixel coordinates.
@@ -215,6 +208,95 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
                         color_t color, const char *buf);
 
 /**
+ * Measure the pixel height of text as it would be laid out by
+ * gfx_printBufferClipped, without drawing anything.
+ *
+ * Simulates the same word-wrap line-break decisions (wrap at max_x).
+ * Alignment is not simulated; only the vertical extent is computed.
+ * Wrap decisions always use start_x as the left margin of every line,
+ * which matches left-aligned layout.  For TEXT_ALIGN_CENTER or
+ * TEXT_ALIGN_RIGHT the actual rendered start.x may be larger than
+ * start_x, so the wrap point may differ and the returned height may
+ * not exactly match what gfx_printBufferClipped produces.
+ * Passing char_count < strlen(buf) lets callers find the y-coordinate
+ * of an arbitrary cursor position for scroll-offset calculations.
+ *
+ * start_x must match the x coordinate that will be passed to
+ * gfx_printBufferClipped so that wrap decisions use the same effective
+ * line width.
+ *
+ * @param size: text font size.
+ * @param buf: NUL-terminated string.
+ * @param start_x: left-edge x position (matches gfx_printBufferClipped start).
+ * @param max_x: right-edge pixel limit used for word-wrap.
+ * @param char_count: characters to measure; pass SIZE_MAX to measure all.
+ * @return y-extent in pixels of the text block; always >= one line height.
+ */
+uint16_t gfx_measureText(fontSize_t size, const char *buf, uint16_t start_x,
+                         uint16_t max_x, size_t char_count);
+
+/**
+ * Compute how far a block of text has to be shifted up so that the line
+ * holding @p cursor_pos stays visible inside a window @p visible_h pixels
+ * tall.  Intended for text fields that are edited in place and may be longer
+ * than the box they are drawn in: subtract the returned value from the y
+ * coordinate handed to gfx_printBufferClipped and the character being edited
+ * is always on screen.
+ *
+ * Wrap decisions are those of gfx_measureText, so @p start_x and @p max_x
+ * must match the values passed to gfx_printBufferClipped and the text has to
+ * be drawn with TEXT_ALIGN_LEFT for the two to agree.
+ *
+ * @param size: text font size.
+ * @param buf: NUL-terminated string.
+ * @param cursor_pos: index of the character to keep visible.
+ * @param start_x: left-edge x position (matches gfx_printBufferClipped start).
+ * @param max_x: right-edge pixel limit used for word-wrap.
+ * @param visible_h: height in pixels of the visible window.
+ * @return pixels to shift the text up by; zero when it already fits.
+ */
+int16_t gfx_scrollOffsetForCursor(fontSize_t size, const char *buf,
+                                  size_t cursor_pos, uint16_t start_x,
+                                  uint16_t max_x, int16_t visible_h);
+
+/**
+ * Measures the pixel width of a single line of text.
+ *
+ * @param size: text font size.
+ * @param buf: NUL-terminated string.
+ * @return width in pixels of the text line.
+ */
+uint16_t gfx_getTextWidth(fontSize_t size, const char *buf);
+
+/**
+ * Prints text from a char buffer into a clipped rectangular region.
+ *
+ * Like gfx_printBuffer but with an explicit right-edge limit and a
+ * vertical clip window.  Word-wrap fires when the next glyph would
+ * exceed max_x rather than CONFIG_SCREEN_WIDTH.  Pixels outside the
+ * range [clip_top_y, clip_bot_y] are suppressed without affecting
+ * layout, so a negative start.y can be used to implement scrolling.
+ *
+ * The returned text_size.y reflects only the lines processed before
+ * clip_bot_y is reached, not the full height of the text block.  Use
+ * gfx_measureText to obtain the total height for scroll calculations.
+ *
+ * @param start: top-left origin for the text block, in pixel coordinates.
+ * @param size: text font size.
+ * @param alignment: text alignment.
+ * @param color: text colour.
+ * @param buf: NUL-terminated string to render.
+ * @param max_x: right-edge pixel limit (exclusive) for word-wrap.
+ * @param clip_top_y: topmost pixel row to draw (inclusive).
+ * @param clip_bot_y: bottommost pixel row to draw (inclusive).
+ * @return text width and height of the processed portion as point_t.
+ */
+point_t gfx_printBufferClipped(point_t start, fontSize_t size,
+                               textAlign_t alignment, color_t color,
+                               const char *buf, uint16_t max_x,
+                               int16_t clip_top_y, int16_t clip_bot_y);
+
+/**
  * Prints text on the screen at the specified coordinates.
  * @param start: text line start point, in pixel coordinates.
  * @param size: text font size, defined as enum.
@@ -224,7 +306,7 @@ point_t gfx_printBuffer(point_t start, fontSize_t size, textAlign_t alignment,
  * @return text width and height as point_t coordinates
  */
 point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
-                  color_t color, const char* fmt, ... );
+                  color_t color, const char *fmt, ...);
 
 /**
  * Prints text on the screen, calculating the print position.
@@ -242,7 +324,7 @@ point_t gfx_print(point_t start, fontSize_t size, textAlign_t alignment,
  */
 point_t gfx_printLine(uint8_t cur, uint8_t tot, int16_t startY, int16_t endY,
                       int16_t startX, fontSize_t size, textAlign_t alignment,
-                      color_t color, const char* fmt, ... );
+                      color_t color, const char *fmt, ...);
 
 /**
  * Prints an error message surrounded by a red box on the screen.
@@ -259,7 +341,8 @@ void gfx_printError(const char *text, fontSize_t size);
  *                   future this will be always LEFT.
  * @param color: text color, in color_t format.
  * @param symbol: symbol to be printed.
- * @return text width and height as point_t coordinates
+ * @return position immediately to the right of the drawn symbol, suitable
+ *         for chaining consecutive symbol draws.
  */
 point_t gfx_drawSymbol(point_t start, symbolSize_t size, textAlign_t alignment,
                        color_t color, symbol_t symbol);
@@ -288,7 +371,8 @@ void gfx_drawBattery(point_t start, uint16_t width, uint16_t height,
  * @param color: color of the squelch bar
  */
 void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
-                    uint8_t squelch, uint8_t volume, bool drawVolume, color_t color);
+                    uint8_t squelch, uint8_t volume, bool drawVolume,
+                    color_t color);
 
 /**
  * Function to draw Smeter + level meter of arbitrary size.
@@ -303,7 +387,8 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
  * @param drawVolume: whether the volume bar should be drawn
  */
 void gfx_drawSmeterLevel(point_t start, uint16_t width, uint16_t height,
-                         rssi_t rssi, uint8_t level, uint8_t volume, bool drawVolume);
+                         rssi_t rssi, uint8_t level, uint8_t volume,
+                         bool drawVolume);
 
 /**
  * Function to draw GPS SNR bar graph of arbitrary size.
@@ -346,7 +431,8 @@ void gfx_plotData(point_t start, uint16_t width, uint16_t height,
  * @param background_color: background color, in color_t format.
  * @param data the string to encode in the qr code
  */
-void gfx_drawQrCodeString(color_t color, color_t background_color, const char *data);
+void gfx_drawQrCodeString(color_t color, color_t background_color,
+                          const char *data);
 
 /**
  * Draw a qr code containing string
@@ -356,7 +442,8 @@ void gfx_drawQrCodeString(color_t color, color_t background_color, const char *d
  * @param data the bytes to encode in the qr code
  * @param length the length of the data array
  */
-void gfx_drawQrCodeBytes(color_t color, color_t background_color, uint8_t *data, uint16_t length);
+void gfx_drawQrCodeBytes(color_t color, color_t background_color, uint8_t *data,
+                         uint16_t length);
 
 #ifdef __cplusplus
 }
