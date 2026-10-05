@@ -62,6 +62,8 @@ private:
     void reset();
     bool acquireSync(const syncw_t &word);
     bool tryAcquireLsf();
+    int32_t lsfNccQ12(int32_t conv,
+                      const std::array<int8_t, SYNCWORD_SYMBOLS> &sym);
     void unlockedState();
     void syncedState();
     void lockedState(int16_t sample);

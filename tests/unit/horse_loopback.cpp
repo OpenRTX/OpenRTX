@@ -365,7 +365,7 @@ struct false_lock_row_t {
 
 static false_lock_row_t
 count_false_locks(uint8_t hd, int32_t peak, size_t samples, unsigned seed,
-                  std::vector<int32_t> *lock_peaks = nullptr)
+                  std::vector<int32_t> *lock_peaks = nullptr, float gain = 1.0f)
 {
     false_lock_row_t r{};
     r.hd = hd;
@@ -381,7 +381,12 @@ count_false_locks(uint8_t hd, int32_t peak, size_t samples, unsigned seed,
     unsigned rng = seed;
     for (size_t i = 0; i < samples; i++) {
         bool was_locked = demod.isLocked();
-        demod.feedSample(fm_open_noise(rng), false);
+        float v = static_cast<float>(fm_open_noise(rng)) * gain;
+        if (v > 32767.0f)
+            v = 32767.0f;
+        if (v < -32768.0f)
+            v = -32768.0f;
+        demod.feedSample(static_cast<int16_t>(v), false);
         if (!was_locked && demod.isLocked()) {
             r.demod_locks++;
             if (lock_peaks != nullptr)
@@ -420,6 +425,7 @@ static void collect_lock_peaks(const std::vector<int16_t> &rx24,
     demod.init();
     demod.resetImmediate();
     demod.setSkipDcBlock(true);
+    demod.setCorrPeakMin(0);
     for (int16_t s : rx24) {
         bool was = demod.isLocked();
         demod.feedSample(s, false);
@@ -442,72 +448,55 @@ static int test_corr_peak_distributions()
     enc.encodeVoiceFrame(melpe, tag, frames[1], false);
     enc.encodeEotFrame(frames[2]);
 
-    std::vector<int16_t> bb48, rx24;
+    std::vector<int16_t> bb48;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
-    to_24k(bb48, rx24);
 
-    std::vector<int32_t> clean;
-    std::vector<int32_t> impaired;
-    std::vector<int32_t> noise;
-    for (int i = 0; i < 16; i++)
-        collect_lock_peaks(rx24, clean);
-
-    impair_t p{};
-    p.gain = 1.0f;
-    p.noise = 2000.0f;
-    std::vector<int16_t> imp48;
-    std::vector<int16_t> rx_imp;
-    impair_48k(bb48.data(), bb48.size(), p, imp48);
-    to_24k(imp48, rx_imp);
-    for (int i = 0; i < 16; i++)
-        collect_lock_peaks(rx_imp, impaired);
-
-    const bool minute = std::getenv("HORSE_FALSE_LOCK_MINUTE") != nullptr;
-    const size_t samples = minute ? (24000u * 60u) : (24000u * 10u);
-    count_false_locks(0, 0, samples, 7u, &noise);
-
-    print_peak_stats("real LSF clean", clean);
-    print_peak_stats("real LSF impaired noise=2000", impaired);
-
-    const float extra_nse[] = { 5000.0f, 10000.0f, 15000.0f };
-    for (float nse : extra_nse) {
-        impair_t pn{};
-        pn.gain = 1.0f;
-        pn.noise = nse;
-        std::vector<int16_t> impn;
-        std::vector<int16_t> rxn;
-        std::vector<int32_t> pnpeaks;
-        impair_48k(bb48.data(), bb48.size(), pn, impn);
-        to_24k(impn, rxn);
-        collect_lock_peaks(rxn, pnpeaks);
-        char lab[64];
-        std::snprintf(lab, sizeof lab, "real LSF impaired noise=%.0f", nse);
-        print_peak_stats(lab, pnpeaks);
-        for (int32_t x : pnpeaks)
-            impaired.push_back(x);
-    }
-    print_peak_stats("false lock Hamming0 noise", noise);
-
+    const float gains[] = { 0.25f, 0.5f, 1.0f, 2.0f };
     int32_t min_real = 0x7fffffff;
-    for (int32_t x : clean)
-        if (x < min_real)
-            min_real = x;
-    for (int32_t x : impaired)
-        if (x < min_real)
-            min_real = x;
     int32_t max_false = 0;
-    for (int32_t x : noise)
-        if (x > max_false)
-            max_false = x;
+    bool any_false = false;
 
-    if (noise.empty() || max_false >= min_real) {
-        std::printf("corr-peak: distributions overlap or no false locks "
-                    "(false_max=%d real_min=%d); leave CORR_PEAK_MIN=%d\n",
+    const bool long_noise = std::getenv("HORSE_FALSE_LOCK_LONG") != nullptr;
+    const size_t noise_s = long_noise ? (24000u * 600u) : (24000u * 10u);
+
+    for (float g : gains) {
+        impair_t p{};
+        p.gain = g;
+        std::vector<int16_t> imp48;
+        std::vector<int16_t> rx24;
+        std::vector<int32_t> real_peaks;
+        impair_48k(bb48.data(), bb48.size(), p, imp48);
+        to_24k(imp48, rx24);
+        for (int i = 0; i < 8; i++)
+            collect_lock_peaks(rx24, real_peaks);
+        char lab[80];
+        std::snprintf(lab, sizeof lab, "real LSF gain=%.2f (ncc Q12)", g);
+        print_peak_stats(lab, real_peaks);
+        for (int32_t x : real_peaks)
+            if (x < min_real)
+                min_real = x;
+
+        std::vector<int32_t> noise_peaks;
+        count_false_locks(0, 0, noise_s, 7u, &noise_peaks, g);
+        std::snprintf(lab, sizeof lab,
+                      "false lock gain=%.2f Hamming0 (ncc Q12)", g);
+        print_peak_stats(lab, noise_peaks);
+        for (int32_t x : noise_peaks) {
+            any_false = true;
+            if (x > max_false)
+                max_false = x;
+        }
+    }
+
+    if (!any_false || max_false >= min_real) {
+        std::printf("ncc Q12: overlap or no false locks "
+                    "(false_max=%d real_min=%d); CORR_PEAK_MIN=%d\n",
                     max_false, min_real, CORR_PEAK_MIN);
     } else {
-        std::printf("corr-peak: separate false_max=%d real_min=%d\n", max_false,
-                    min_real);
+        std::printf("ncc Q12: separate false_max=%d real_min=%d "
+                    "CORR_PEAK_MIN=%d\n",
+                    max_false, min_real, CORR_PEAK_MIN);
     }
     return 0;
 }
@@ -516,21 +505,18 @@ static int test_lsf_false_lock_noise()
 {
     const bool minute = std::getenv("HORSE_FALSE_LOCK_MINUTE") != nullptr;
     const size_t samples = minute ? (24000u * 60u) : (24000u * 2u);
-    const int32_t peak = 40000;
     const unsigned seed = 1u;
-    false_lock_row_t rows[5];
+    false_lock_row_t rows[3];
     rows[0] = count_false_locks(0, 0, samples, seed);
     rows[1] = count_false_locks(1, 0, samples, seed);
-    rows[2] = count_false_locks(0, peak, samples, seed);
-    rows[3] = count_false_locks(1, peak, samples, seed);
-    rows[4] = count_false_locks(0, CORR_PEAK_MIN, samples, seed);
+    rows[2] = count_false_locks(0, CORR_PEAK_MIN, samples, seed);
 
     std::printf("false-lock table (%zu s, FM-open Gaussian sigma=10000):\n",
                 samples / 24000u);
     std::printf("  Hamming  peakMin  demod/min  LSF/min\n");
     size_t best_i = 0;
     double best_rate = 1e9;
-    for (size_t i = 0; i < 5; i++) {
+    for (size_t i = 0; i < 3; i++) {
         double minutes = static_cast<double>(rows[i].samples) / 24000.0 / 60.0;
         double dpm = rows[i].demod_locks / minutes;
         double lpm = rows[i].lsf_locks / minutes;
@@ -930,6 +916,10 @@ static int test_impairments()
     impair_t gain = base;
     gain.gain = 0.25f;
     int gain_good = count_good_frames(gain, false);
+    gain.gain = 0.5f;
+    int gain05 = count_good_frames(gain, false);
+    gain.gain = 2.0f;
+    int gain20 = count_good_frames(gain, false);
 
     impair_t trunc = base;
     trunc.drop_start = HorseModulator::captureSamplesPerFrame();
@@ -937,9 +927,10 @@ static int test_impairments()
 
     std::printf("impair: first_noise_fail=%.0f first_ppm_fail=%.0f "
                 "invert_no_flag=%d/3 invert_with_flag=%d/3 dc500=%d/3 "
-                "gain0.25=%d/3 drop1frame=%d/3\n",
+                "gain0.25=%d/3 gain0.5=%d/3 gain2.0=%d/3 drop1frame=%d/3 "
+                "CORR_PEAK_MIN=%d\n",
                 noise_fail, ppm_fail, inv_auto, inv_flag, dc_good, gain_good,
-                trunc_good);
+                gain05, gain20, trunc_good, CORR_PEAK_MIN);
     return 0;
 }
 

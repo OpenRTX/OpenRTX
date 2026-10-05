@@ -303,14 +303,39 @@ bool HorseDemodulator::tryAcquireLsf()
 {
     int32_t syncThresh = static_cast<int32_t>(corrThreshold * CORR_SYNC_SCALE);
     const auto lsfSym = syncwordSymbols(LSF_SYNC_WORD);
-    int32_t cLabs = std::abs(correlator.convolve(lsfSym));
+    int32_t cL = correlator.convolve(lsfSym);
+    int32_t cLabs = std::abs(cL);
+    int32_t ncc = lsfNccQ12(cL, lsfSym);
 
-    if ((cLabs > syncThresh) && (cLabs >= corrPeakMin)
+    if ((cLabs > syncThresh) && (ncc >= corrPeakMin)
         && acquireSync(LSF_SYNC_WORD)) {
-        lastLockCorr = cLabs;
+        lastLockCorr = ncc;
         return true;
     }
     return false;
+}
+
+int32_t
+HorseDemodulator::lsfNccQ12(int32_t conv,
+                            const std::array<int8_t, SYNCWORD_SYMBOLS> &sym)
+{
+    int64_t e2 = 0;
+    int64_t p2 = 0;
+    size_t pos = correlator.index() + SAMPLES_PER_SYMBOL;
+    for (size_t s = 0; s < SYNCWORD_SYMBOLS; s++) {
+        int32_t v = correlator.data()[pos % SYNCWORD_SAMPLES];
+        e2 += static_cast<int64_t>(v) * static_cast<int64_t>(v);
+        p2 += static_cast<int64_t>(sym[s]) * static_cast<int64_t>(sym[s]);
+        pos += SAMPLES_PER_SYMBOL;
+    }
+    if (e2 <= 0 || p2 <= 0)
+        return 0;
+    float ncc = std::fabs(static_cast<float>(conv))
+              / (std::sqrt(static_cast<float>(e2))
+                 * std::sqrt(static_cast<float>(p2)));
+    if (ncc > 1.0f)
+        ncc = 1.0f;
+    return static_cast<int32_t>(ncc * 4096.0f + 0.5f);
 }
 
 void HorseDemodulator::unlockedState()

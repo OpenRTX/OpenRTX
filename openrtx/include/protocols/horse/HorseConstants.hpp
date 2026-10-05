@@ -93,11 +93,13 @@ static constexpr uint8_t HAMMING_SYNC_MAX = 2;
 static constexpr uint8_t HAMMING_ACQUIRE_MAX = 0;
 
 /*
- * Extra floor on |correlator peak| at LSF acquire, on top of the
- * envelope * CORR_SYNC_SCALE test. False locks on FM-open noise sat
- * around 90-103k; real LSF stayed above 280k even with noise=15000.
+ * Floor on LSF acquire: |corr| / (||samples|| * ||sync||) in Q12
+ * (4096 == 1.0), on top of the envelope * CORR_SYNC_SCALE test.
+ * Ten minutes of Hamming-0 open-FM noise: false ncc max 4056 at
+ * gains 0.25-1.0 (4073 at gain 2.0, which also clips real LSF to
+ * 4067). Real LSF is 4096 at 0.25-1.0. 4076 sits in that gap.
  */
-static constexpr int32_t CORR_PEAK_MIN = 180000;
+static constexpr int32_t CORR_PEAK_MIN = 4076;
 
 /*
  * After lock, this many completed frames without noteValidTag() drops
