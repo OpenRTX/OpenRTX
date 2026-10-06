@@ -128,3 +128,64 @@ TEST_CASE("OpMode_M17 addPacketTx: rejects descriptor with size < 20",
     desc.size = 10; // too small — need at least src[10] + dst[10]
     REQUIRE(mode.addPacketTx(&desc) == -EINVAL);
 }
+
+// ---------------------------------------------------------------------------
+// disable tests
+// ---------------------------------------------------------------------------
+
+TEST_CASE("OpMode_M17 disable: hands back pending descriptors",
+          "[m17][opmode][packet]")
+{
+    OpMode_M17 mode;
+
+    struct m17Packet rxPkt = {}, txPkt = {};
+    strncpy(txPkt.src, "N0CALL", 9);
+    strncpy(txPkt.dst, "TE5ST", 9);
+    struct pktDesc rxDesc = make_desc(&rxPkt, sizeof(rxPkt.payload));
+    struct pktDesc txDesc = make_desc(&txPkt, 256);
+    rxDesc.status = PKT_STATUS_SUBMITTED;
+    txDesc.status = PKT_STATUS_SUBMITTED;
+
+    REQUIRE(mode.addPacketRx(&rxDesc) == 0);
+    REQUIRE(mode.addPacketTx(&txDesc) == 0);
+
+    mode.disable();
+
+    CHECK(rxDesc.status == PKT_STATUS_ERROR);
+    CHECK(rxDesc.res == -ECANCELED);
+    CHECK(txDesc.status == PKT_STATUS_ERROR);
+    CHECK(txDesc.res == -ECANCELED);
+
+    // The mode is empty again: new descriptors are accepted.
+    rxDesc.status = PKT_STATUS_SUBMITTED;
+    txDesc.status = PKT_STATUS_SUBMITTED;
+    REQUIRE(mode.addPacketRx(&rxDesc) == 0);
+    REQUIRE(mode.addPacketTx(&txDesc) == 0);
+}
+
+TEST_CASE("OpMode_M17 enable: hands back descriptors submitted while disabled",
+          "[m17][opmode][packet]")
+{
+    OpMode_M17 mode;
+
+    struct m17Packet rxPkt = {}, txPkt = {};
+    strncpy(txPkt.src, "N0CALL", 9);
+    strncpy(txPkt.dst, "TE5ST", 9);
+    struct pktDesc rxDesc = make_desc(&rxPkt, sizeof(rxPkt.payload));
+    struct pktDesc txDesc = make_desc(&txPkt, 256);
+    rxDesc.status = PKT_STATUS_SUBMITTED;
+    txDesc.status = PKT_STATUS_SUBMITTED;
+
+    // The mode is disabled (never enabled): submissions are still queued.
+    REQUIRE(mode.addPacketRx(&rxDesc) == 0);
+    REQUIRE(mode.addPacketTx(&txDesc) == 0);
+
+    mode.enable();
+
+    CHECK(rxDesc.status == PKT_STATUS_ERROR);
+    CHECK(rxDesc.res == -ECANCELED);
+    CHECK(txDesc.status == PKT_STATUS_ERROR);
+    CHECK(txDesc.res == -ECANCELED);
+
+    mode.disable();
+}
