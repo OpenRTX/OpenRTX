@@ -5,6 +5,8 @@
  */
 
 #include "protocols/M17/Demodulator.hpp"
+#include <algorithm>
+#include <cmath>
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Utils.hpp"
 #include "core/audio_stream.h"
@@ -153,6 +155,8 @@ void Demodulator::init()
     baseband_buffer = std::make_unique< int16_t[] >(2 * SAMPLE_BUF_SIZE);
     demodFrame      = std::make_unique< frame_t >();
     readyFrame      = std::make_unique< frame_t >();
+    softDemod       = std::make_unique< softFrame_t >();
+    softReady       = std::make_unique< softFrame_t >();
 
     reset();
 
@@ -176,6 +180,8 @@ void Demodulator::terminate()
     baseband_buffer.reset();
     demodFrame.reset();
     readyFrame.reset();
+    softDemod.reset();
+    softReady.reset();
 
     #ifdef ENABLE_DEMOD_LOG
     logRunning = false;
@@ -203,6 +209,11 @@ const frame_t& Demodulator::getFrame()
     // When a frame is read is not new anymore
     newFrame = false;
     return *readyFrame;
+}
+
+const softFrame_t& Demodulator::getSoftFrame()
+{
+    return *softReady;
 }
 
 bool Demodulator::isLocked()
@@ -316,6 +327,35 @@ void Demodulator::quantize(stream_sample_t sample)
     }
 
     setSymbol(*demodFrame, frameIndex, symbol);
+    // Soft bits for the FEC decoder, one per coded bit, in the same order as
+    // the hard bits above (+3 = 01, +1 = 00, -1 = 10, -3 = 11). The decision
+    // comes from the hard symbol, so slicing at half scale reproduces it; the
+    // confidence is the distance to the decision boundary in symbol steps,
+    // using the outer deviation on the symbol's side.
+    bool    negative = (symbol < 0);
+    int32_t outer    = negative ? -outerDeviation.second
+                                : outerDeviation.first;
+    if(outer < 1) outer = 1;
+    int32_t magThr = negative ? (2 * outerDeviation.second) / 3
+                              : (2 * outerDeviation.first) / 3;
+    float unit = static_cast< float >(outer) / 3.0f;
+    float dist = static_cast< float >(sample < 0 ? -sample : sample);
+    float magDist = static_cast< float >(sample - magThr);
+    if(magDist < 0.0f) magDist = -magDist;
+
+    bool  signBit  = negative;
+    bool  magBit   = (symbol == 3) || (symbol == -3);
+    float signConf = std::min(1.0f, dist / (3.0f * unit));
+    float magConf  = std::min(1.0f, magDist / unit);
+
+    auto toSoft = [](bool bit, float conf) -> uint16_t {
+        uint16_t c = static_cast< uint16_t >(conf * 32767.0f);
+        return bit ? static_cast< uint16_t >(0x8000 + c)
+                   : static_cast< uint16_t >(0x7FFF - c);
+    };
+    (*softDemod)[2 * frameIndex]     = toSoft(signBit, signConf);
+    (*softDemod)[2 * frameIndex + 1] = toSoft(magBit, magConf);
+
     frameIndex += 1;
 }
 
@@ -411,6 +451,7 @@ void Demodulator::lockedState(int16_t sample)
     if(frameIndex == FRAME_SYMBOLS) {
         devEstimator.update();
         std::swap(readyFrame, demodFrame);
+        std::swap(softReady, softDemod);
 
         frameIndex = 0;
         newFrame = true;

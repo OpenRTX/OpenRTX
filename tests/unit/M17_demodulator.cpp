@@ -289,3 +289,40 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
                                 << " samples after lock)");
     REQUIRE_FALSE(lostLock);
 }
+
+TEST_CASE("Demodulator soft bits agree with the hard symbols of each frame",
+          "[m17][demodulator][soft]")
+{
+    static constexpr size_t PREAMBLE_SYMS = 200;
+    static constexpr size_t NUM_FRAMES = 4;
+    std::vector<int8_t> syms;
+    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
+        syms.push_back((i % 2 == 0) ? +3 : -3);
+    auto frame = makeStreamFrame();
+    // Mix in a few +-3 payload symbols so both magnitudes are exercised.
+    for (size_t i = 8; i < frame.size(); i += 7)
+        frame[i] = (frame[i] > 0) ? +3 : -3;
+    for (size_t f = 0; f < NUM_FRAMES; f++)
+        syms.insert(syms.end(), frame.begin(), frame.end());
+    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
+        syms.push_back(0);
+    auto baseband = rrcBaseband(syms);
+
+    M17::Demodulator demod;
+    demod.init();
+    size_t framesChecked = 0;
+    for (int16_t x : baseband) {
+        if (!demod.sample(x, false))
+            continue;
+        const auto &hard = demod.getFrame();
+        const auto &soft = demod.getSoftFrame();
+        for (size_t bit = 0; bit < soft.size(); bit++) {
+            bool hardBit = (hard[bit / 8] >> (7 - (bit % 8))) & 1;
+            REQUIRE((soft[bit] >= 0x8000) == hardBit);
+        }
+        framesChecked++;
+    }
+    // The demodulator may deliver one more frame of trailing silence before
+    // it releases the lock; every delivered frame must agree.
+    REQUIRE(framesChecked >= NUM_FRAMES);
+}
