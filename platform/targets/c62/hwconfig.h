@@ -37,7 +37,8 @@ extern "C" {
 #define CONFIG_BAT_LIION
 #define CONFIG_BAT_NCELLS 2
 
-#define CONFIG_M17
+/* M17 deactivated for now as the feature will come with the next PR */
+//#define CONFIG_M17
 
 /**
  * BK4819 and BK1080 device instances. Pin numbers must be kept in sync
