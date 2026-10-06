@@ -116,7 +116,7 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
         if (!lsfComplete && frame.size() >= 2 + HORSE_VOICE_CODED_BYTES
             && lsfNextChunk < LSF_OPENING_FRAMES) {
             uint8_t chunk[HORSE_VOICE_INFO_BYTES];
-            voice_decode(frame.data() + 2, chunk);
+            voiceCodec.decode(frame.data() + 2, chunk);
             const size_t slot = lsfNextChunk;
             std::memcpy(lsfAssembled + slot * LSF_CHUNK_BYTES, chunk,
                         LSF_CHUNK_BYTES);
@@ -141,10 +141,10 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
     if (voiceHd <= HAMMING_SYNC_MAX) {
         if (frame.size() >= 2 + HORSE_VOICE_CODED_BYTES) {
             uint8_t info[HORSE_VOICE_INFO_BYTES];
-            voice_decode(frame.data() + 2, info);
+            voiceCodec.decode(frame.data() + 2, info);
             lastVoiceFrameNum = (static_cast<uint16_t>(info[0]) << 8) | info[1];
             uint8_t spare[HORSE_FRAG_BYTES];
-            voice_extract_spare(frame.data() + 2, spare);
+            voiceCodec.extract_spare(frame.data() + 2, spare);
             ingestFragment(lastVoiceFrameNum & 0x7FFF, spare);
         }
         return HorseFrameType::VOICE;
@@ -182,7 +182,7 @@ void HorseFrameDecoder::getVoicePayload(const frame_t &frame,
     if (frame.size() < 2 + HORSE_VOICE_CODED_BYTES)
         return;
     uint8_t info[HORSE_VOICE_INFO_BYTES];
-    voice_decode(frame.data() + 2, info);
+    voiceCodec.decode(frame.data() + 2, info);
     if (frameNum != nullptr) {
         *frameNum = (static_cast<uint16_t>(info[0]) << 8) | info[1];
         *frameNum &= 0x7FFF;

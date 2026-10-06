@@ -9,6 +9,7 @@
 
 #include "HorseDatatypes.hpp"
 #include "HorseConstants.hpp"
+#include "protocols/horse/HorseVoiceCodec.hpp"
 #include <cstdint>
 
 #ifndef __cplusplus
@@ -64,6 +65,7 @@ private:
     uint8_t fragCopy[HORSE_FRAG_CYCLE][HORSE_FRAG_MAJORITY][HORSE_FRAG_BYTES];
     uint8_t fragCount[HORSE_FRAG_CYCLE];
     uint8_t fragHead[HORSE_FRAG_CYCLE];
+    HorseVoiceCodec voiceCodec;
 };
 
 } // namespace horse

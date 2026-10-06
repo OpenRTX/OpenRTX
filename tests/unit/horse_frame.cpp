@@ -543,6 +543,27 @@ static int test_frag_sig_slots()
     return 0;
 }
 
+static int test_voice_codec_owns_viterbi()
+{
+    /* Decoder embeds HorseVoiceCodec (HardViterbi off the call stack). */
+    if (sizeof(HorseFrameDecoder) < sizeof(HorseVoiceCodec)) {
+        std::printf("horse_frame_test: decoder too small to hold voice codec\n");
+        return -1;
+    }
+    HorseVoiceCodec codec;
+    uint8_t info[HORSE_VOICE_INFO_BYTES];
+    uint8_t coded[HORSE_VOICE_CODED_BYTES];
+    uint8_t out[HORSE_VOICE_INFO_BYTES];
+    std::memset(info, 0x5A, sizeof info);
+    codec.encode(info, coded);
+    codec.decode(coded, out);
+    if (std::memcmp(info, out, sizeof info) != 0) {
+        std::printf("horse_frame_test: HorseVoiceCodec round-trip fail\n");
+        return -1;
+    }
+    return 0;
+}
+
 int main()
 {
     if (test_lsf_roundtrip() != 0) return -1;
@@ -552,6 +573,7 @@ int main()
     if (test_v1_sync_not_recognized() != 0) return -1;
     if (test_voice_roundtrip() != 0) return -1;
     if (test_voice_m17_not_repeat2() != 0) return -1;
+    if (test_voice_codec_owns_viterbi() != 0) return -1;
     if (test_eot_detect() != 0) return -1;
     if (test_voice_frame_number() != 0) return -1;
     if (test_sig_frames_roundtrip() != 0) return -1;
