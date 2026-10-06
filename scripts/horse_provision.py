@@ -48,6 +48,8 @@ HORSE_IDENTITY_STORE_VERSION = 2
 HORSE_STORE_MAGIC = 0x484B5354
 HORSE_KDF_SALT_BYTES = 16
 HORSE_STORE_BLOB_MAX = 256
+HORSE_PASSPHRASE_MIN = 8
+HORSE_PASSPHRASE_MAX = 32
 HORSE_PEER_MAX = 64
 HORSE_PEER_BYTES = 70
 
@@ -137,7 +139,19 @@ def pack_peer(address, x25519_pk, ed25519_pk):
     return packed
 
 
+def passphrase_ok(passphrase):
+    if passphrase is None:
+        return False
+    n = len(passphrase.encode("utf-8"))
+    return HORSE_PASSPHRASE_MIN <= n <= HORSE_PASSPHRASE_MAX
+
+
 def wrap_identity(identity, passphrase):
+    if not passphrase_ok(passphrase):
+        raise RuntimeError(
+            "passphrase must be %u to %u bytes" %
+            (HORSE_PASSPHRASE_MIN, HORSE_PASSPHRASE_MAX)
+        )
     if not have_nacl:
         raise RuntimeError("PyNaCl is required to encrypt an identity")
     packed = pack_identity_binary(identity)
@@ -170,6 +184,11 @@ def wrap_identity(identity, passphrase):
 
 
 def unwrap_identity(data, passphrase):
+    if not passphrase_ok(passphrase):
+        raise RuntimeError(
+            "passphrase must be %u to %u bytes" %
+            (HORSE_PASSPHRASE_MIN, HORSE_PASSPHRASE_MAX)
+        )
     if not have_nacl:
         raise RuntimeError("PyNaCl is required to open an identity")
     if len(data) < 34:
@@ -336,6 +355,18 @@ def selftest():
         raise RuntimeError("kdf header version")
     if HORSE_ARGON2ID_OPSLIMIT != 2 or HORSE_ARGON2ID_MEMLIMIT != 16384:
         raise RuntimeError("argon2id params drifted from firmware")
+    try:
+        wrap_identity(ident32, "")
+        raise RuntimeError("empty passphrase accepted")
+    except RuntimeError as e:
+        if "passphrase" not in str(e).lower():
+            raise
+    try:
+        wrap_identity(ident32, "1234567")
+        raise RuntimeError("short passphrase accepted")
+    except RuntimeError as e:
+        if "passphrase" not in str(e).lower():
+            raise
     peer = pack_peer(b"ABCDEF", pk, bytes(range(32, 64)))
     if len(peer) != HORSE_PEER_BYTES:
         raise RuntimeError("peer size")
@@ -394,8 +425,11 @@ def main():
         if args.command == "selftest":
             return selftest()
         if args.command == "generate":
-            if not args.passphrase:
-                raise RuntimeError("passphrase required")
+            if not passphrase_ok(args.passphrase):
+                raise RuntimeError(
+                    "passphrase must be %u to %u bytes" %
+                    (HORSE_PASSPHRASE_MIN, HORSE_PASSPHRASE_MAX)
+                )
             identity = generate_identity(args.label)
             path = store_identity_file(identity, args.passphrase, args.label)
             print("Generated identity '%s'" % args.label)
@@ -413,8 +447,11 @@ def main():
                 print("No identity files found.")
             return 0
         if args.command == "show":
-            if not args.passphrase:
-                raise RuntimeError("passphrase required")
+            if not passphrase_ok(args.passphrase):
+                raise RuntimeError(
+                    "passphrase must be %u to %u bytes" %
+                    (HORSE_PASSPHRASE_MIN, HORSE_PASSPHRASE_MAX)
+                )
             path = identity_path(args.label)
             ident = unwrap_identity(path.read_bytes(), args.passphrase)
             print("Identity '%s':" % args.label)
@@ -432,8 +469,11 @@ def main():
                   (len(rec), args.index))
             return 0
         if args.command == "provision":
-            if not args.passphrase:
-                raise RuntimeError("passphrase required")
+            if not passphrase_ok(args.passphrase):
+                raise RuntimeError(
+                    "passphrase must be %u to %u bytes" %
+                    (HORSE_PASSPHRASE_MIN, HORSE_PASSPHRASE_MAX)
+                )
             path = identity_path(args.label)
             ident = unwrap_identity(path.read_bytes(), args.passphrase)
             port = args.port

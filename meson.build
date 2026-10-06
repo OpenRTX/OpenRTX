@@ -204,11 +204,16 @@ subdir('lib/miosix-kernel')
 ##
 ## Current git commit or tag
 ##
-r = run_command('git', 'describe', '--tags', '--dirty', '--always')
-if r.returncode() != 0
-  # it failed
+git_version_opt = get_option('git_version')
+if git_version_opt != ''
+  git_version = '"' + git_version_opt + '"'
+else
+  r = run_command('git', 'describe', '--tags', '--dirty', '--always')
+  if r.returncode() != 0
+    # it failed
+  endif
+  git_version = '"' + r.stdout().strip() + '"'
 endif
-git_version  = '"'+r.stdout().strip()+'"'
 openrtx_def += {'GIT_VERSION': git_version}
 
 ##
@@ -1379,6 +1384,16 @@ horse_tx_fail_test = executable('horse_tx_fail_test',
                                 sources : unit_test_src + ['tests/unit/horse_tx_fail.cpp'],
                                 kwargs : unit_test_opts)
 
+horse_randombytes_test = executable('horse_randombytes_test',
+                                    sources : ['openrtx/src/protocols/horse/horse_randombytes.c',
+                                               'openrtx/src/protocols/horse/horse_crypto.c',
+                                               'tests/unit/horse_randombytes.cpp'],
+                                    include_directories : openrtx_inc,
+                                    dependencies : linux_deps + [threads_dep],
+                                    c_args : linux_c_args + ['-DHORSE_RANDOMBYTES_TEST'],
+                                    cpp_args : linux_cpp_args + ['-DHORSE_RANDOMBYTES_TEST'],
+                                    link_args : linux_l_args)
+
 horse_fec_v2_sim = executable('horse_fec_v2_sim',
                               sources : unit_test_src + ['tests/unit/horse_fec_v2_sim.cpp'],
                               kwargs : unit_test_opts)
@@ -1484,6 +1499,8 @@ test('Horse Host Interop Test', horse_host_interop_test,
 test('Horse Loopback Test', horse_loopback_test,
      env : horse_test_env, timeout : 600)
 test('Horse TX Crypto Fail Test', horse_tx_fail_test,
+     env : horse_test_env, timeout : 30)
+test('Horse Randombytes Fail Test', horse_randombytes_test,
      env : horse_test_env, timeout : 30)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)

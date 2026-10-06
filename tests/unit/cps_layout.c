@@ -64,9 +64,11 @@ SAME_OFF(dmrInfo_t, contact_index, 2);
 SAME_OFF(m17Info_t, gps_mode, 2);
 SAME_OFF(m17Info_t, contact_index, 3);
 
+#ifdef CONFIG_HORSE
 /* Fork-only: fits in the existing union (m17Info_t is 5B). */
 SAME_SIZE(horseInfo_t, 4);
 SAME_OFF(channel_t, horse, 89);
+#endif
 
 int main(void)
 {

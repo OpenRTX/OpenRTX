@@ -203,6 +203,7 @@ typedef struct
 __attribute__((packed)) m17Contact_t; // 6B
 
 
+#ifdef CONFIG_HORSE
 /******************************************************************************
  *                         HORSE MODE                                         *
  ******************************************************************************/
@@ -227,6 +228,7 @@ static inline void horse_info_reset(horseInfo_t *info)
         return;
     memset(info, 0, sizeof(*info));
 }
+#endif
 
 
 /******************************************************************************
@@ -274,7 +276,9 @@ typedef struct
         fmInfo_t    fm;            //< Information block for FM channels
         dmrInfo_t   dmr;           //< Information block for DMR channels
         m17Info_t   m17;           //< Information block for M17 channels
+#ifdef CONFIG_HORSE
         horseInfo_t horse;         //< Information block for Horse channels
+#endif
     };
 }
 __attribute__((packed)) channel_t; // 59B

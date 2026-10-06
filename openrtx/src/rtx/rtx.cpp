@@ -10,7 +10,9 @@
 #include "rtx/rtx.h"
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
+#ifdef CONFIG_HORSE
 #include "rtx/OpMode_Horse.hpp"
+#endif
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -57,9 +59,12 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.M17_link[0]   = '\0';
     rtxStatus.M17_refl[0]   = '\0';
     rtxStatus.M17_meta_text[0] = '\0';
+#ifdef CONFIG_HORSE
     rtxStatus.horseLsfOk     = false;
     rtxStatus.horse_dst[0]   = '\0';
     rtxStatus.horse_src[0]   = '\0';
+    rtxStatus.horseError     = HORSE_ERR_NONE;
+#endif
     currMode = &noMode;
 
     /*

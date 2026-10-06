@@ -253,6 +253,9 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 else if(rtxStatus.horseError == HORSE_ERR_TX_CRYPTO)
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse: TX crypto");
+                else if(rtxStatus.horseError == HORSE_ERR_RNG)
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "Horse: RNG");
                 else
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse #%s", dst);
@@ -416,13 +419,21 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
-    #if defined(CONFIG_M17) || defined(CONFIG_HORSE)
+#ifdef CONFIG_HORSE
     rtxStatus_t status = rtx_getCurrentStatus();
-    bool showFreq = (status.opMode != OPMODE_M17 && status.opMode != OPMODE_HORSE)
-        || (status.opMode == OPMODE_M17 && status.lsfOk == false)
-        || (status.opMode == OPMODE_HORSE && status.horseLsfOk == false);
+    bool showFreq = (status.opMode != OPMODE_HORSE)
+        || (status.horseLsfOk == false);
+#ifdef CONFIG_M17
+    if(status.opMode == OPMODE_M17)
+        showFreq = (status.lsfOk == false);
+#endif
     if(showFreq)
-    #endif
+#elif defined(CONFIG_M17)
+    rtxStatus_t status = rtx_getCurrentStatus();
+    bool showFreq = (status.opMode != OPMODE_M17)
+        || (status.opMode == OPMODE_M17 && status.lsfOk == false);
+    if(showFreq)
+#endif
         _ui_drawFrequency();
 
     _ui_drawMainBottom();
@@ -442,13 +453,21 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
     _ui_drawMainTop(ui_state);
     _ui_drawModeInfo(ui_state);
 
-    #if defined(CONFIG_M17) || defined(CONFIG_HORSE)
+#ifdef CONFIG_HORSE
     rtxStatus_t status = rtx_getCurrentStatus();
-    bool showChFreq = (status.opMode != OPMODE_M17 && status.opMode != OPMODE_HORSE)
-        || (status.opMode == OPMODE_M17 && status.lsfOk == false)
-        || (status.opMode == OPMODE_HORSE && status.horseLsfOk == false);
+    bool showChFreq = (status.opMode != OPMODE_HORSE)
+        || (status.horseLsfOk == false);
+#ifdef CONFIG_M17
+    if(status.opMode == OPMODE_M17)
+        showChFreq = (status.lsfOk == false);
+#endif
     if(showChFreq)
-    #endif
+#elif defined(CONFIG_M17)
+    rtxStatus_t status = rtx_getCurrentStatus();
+    bool showChFreq = (status.opMode != OPMODE_M17)
+        || (status.opMode == OPMODE_M17 && status.lsfOk == false);
+    if(showChFreq)
+#endif
     {
         _ui_drawBankChannel();
         _ui_drawFrequency();

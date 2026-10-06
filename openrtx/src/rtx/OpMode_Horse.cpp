@@ -19,6 +19,7 @@
 #include "protocols/horse/horse_peers.h"
 #include "protocols/horse/horse_crypto.h"
 #include "protocols/horse/horse_crypto_worker.h"
+#include "protocols/horse/horse_randombytes.h"
 #include "rtx/rtx.h"
 #include <cstring>
 
@@ -571,7 +572,9 @@ void OpMode_Horse::txState(rtxStatus_t *const status)
                               have_id,
                               have_peer && horse_peer_has_x25519(&txPeer),
                               have_peer && horse_peer_has_ed25519(&txPeer))) {
-            if (!horse_crypto_available())
+            if (horse_randombytes_failed())
+                status->horseError = HORSE_ERR_RNG;
+            else if (!horse_crypto_available())
                 status->horseError = HORSE_ERR_NO_CRYPTO;
             else
                 status->horseError = HORSE_ERR_NO_KEYS;
@@ -583,7 +586,8 @@ void OpMode_Horse::txState(rtxStatus_t *const status)
 
         if (!horse_crypto_req_x25519_keypair() || !horse_wait_job(true)
             || !horse_crypto_take_keypair(txEphPk, txEphSk)) {
-            status->horseError = HORSE_ERR_NO_KEYS;
+            status->horseError = horse_randombytes_failed() ? HORSE_ERR_RNG :
+                                                              HORSE_ERR_NO_KEYS;
             horse_crypto_memzero(txEphSk, sizeof txEphSk);
             horse_crypto_memzero(&txId, sizeof txId);
             abortTx(status, false);
@@ -610,7 +614,8 @@ void OpMode_Horse::txState(rtxStatus_t *const status)
                                      HORSE_LSF_VERSION)
             || !horse_wait_job(true)
             || !horse_crypto_take_session(sessionKey, frameAuthKey)) {
-            status->horseError = HORSE_ERR_NO_KEYS;
+            status->horseError = horse_randombytes_failed() ? HORSE_ERR_RNG :
+                                                              HORSE_ERR_NO_KEYS;
             horse_crypto_memzero(txEphSk, sizeof txEphSk);
             horse_crypto_memzero(&txId, sizeof txId);
             abortTx(status, false);
@@ -622,7 +627,8 @@ void OpMode_Horse::txState(rtxStatus_t *const status)
 
         if ((want_encrypt && !encryptTx) || (want_sign && !signTx)
             || !sessionValid) {
-            status->horseError = HORSE_ERR_NO_KEYS;
+            status->horseError = horse_randombytes_failed() ? HORSE_ERR_RNG :
+                                                              HORSE_ERR_NO_KEYS;
             abortTx(status, false);
             return;
         }

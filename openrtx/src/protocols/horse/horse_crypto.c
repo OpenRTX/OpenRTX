@@ -188,7 +188,7 @@ bool horse_crypto_argon2id_derive(const char *passphrase, size_t passphrase_len,
 bool horse_crypto_available(void)
 {
 #ifdef HAVE_LIBSODIUM
-    return horse_sodium_init() == 0;
+    return horse_sodium_init() == 0 && !horse_randombytes_failed();
 #else
     return false;
 #endif
@@ -200,11 +200,17 @@ bool horse_crypto_x25519_keypair(uint8_t *pk_out, uint8_t *sk_out)
         return false;
 
 #ifdef HAVE_LIBSODIUM
-    if (horse_sodium_init() != 0)
+    if (horse_sodium_init() != 0) {
+        horse_crypto_memzero(pk_out, 32);
+        horse_crypto_memzero(sk_out, 32);
         return false;
+    }
 
-    if (crypto_kx_keypair(pk_out, sk_out) != 0)
+    if (crypto_kx_keypair(pk_out, sk_out) != 0 || horse_randombytes_failed()) {
+        horse_crypto_memzero(pk_out, 32);
+        horse_crypto_memzero(sk_out, 32);
         return false;
+    }
     return true;
 #else
     (void)pk_out;
@@ -438,6 +444,10 @@ bool horse_crypto_sign(const uint8_t *ed25519_secretkey, const uint8_t *message,
     if (crypto_sign_detached(signature_out, NULL, message, message_len,
                              ed25519_secretkey)
         != 0) {
+        return false;
+    }
+    if (horse_randombytes_failed()) {
+        horse_crypto_memzero(signature_out, 64);
         return false;
     }
     return true;
