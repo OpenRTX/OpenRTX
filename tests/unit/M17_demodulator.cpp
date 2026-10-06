@@ -360,6 +360,7 @@ static size_t validLsfs(const std::vector<int16_t> &baseband)
     M17::Demodulator demod;
     M17::FrameDecoder decoder;
     demod.init();
+    decoder.init();
 
     size_t count = 0;
     bool locked = false;
