@@ -256,8 +256,7 @@ public:
     {
         static_assert(IN < 244*2, "Input size exceeds max history");
 
-        currMetricsData.fill(0);
-        prevMetricsData.fill(0);
+        reset();
 
         size_t pos = 0;
         for (size_t i = 0; i < IN; i += 2)
@@ -287,8 +286,7 @@ public:
     {
         static_assert(IN < 244*2, "Input size exceeds max history");
 
-        currMetricsData.fill(0);
-        prevMetricsData.fill(0);
+        reset();
 
         size_t   histPos     = 0;
         size_t   punctIndex  = 0;
@@ -323,6 +321,18 @@ public:
     }
 
 private:
+
+    /**
+     * Start a new trellis: the encoder always starts in state zero, so every
+     * other state starts with a cost no path through it can overcome.
+     */
+    void reset()
+    {
+        static constexpr uint32_t UNREACHABLE = 0x3FFFFFFF;
+
+        prevMetrics->fill(UNREACHABLE);
+        (*prevMetrics)[0] = 0;
+    }
 
     /**
      * Decode one bit and update trellis.
