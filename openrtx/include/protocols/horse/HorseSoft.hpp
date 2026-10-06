@@ -55,19 +55,17 @@ inline void symbol_soft(int16_t sample, int16_t outerPos, int16_t outerNeg,
     int32_t a = (ap + an) / 2;
     if (a < 1)
         a = 1;
-    /* Same polarity as HorseDemodulator::quantize: sample > 0 is +1/+3. */
-    if (sample > 0)
-        msb = pack_soft_bit(sample, a);
-    else
-        msb = invert_soft(pack_soft_bit(-sample, a));
+    /*
+     * M17::SoftViterbi: 0 = strong 0, 32767 = erasure, 65535 = strong 1.
+     * MSB decision boundary is y=0 (positive constellation -> bit 0).
+     * LSB decision boundary is |y|=(2/3)|A| (inner -> bit 0, outer -> 1).
+     * Each value is monotonic in signed distance to its boundary, scaled
+     * by |A|. No inner/outer hard classification before packing.
+     */
+    msb = pack_soft_bit(sample, a);
     int32_t absy = sample >= 0 ? sample : -sample;
-    int32_t thresh_p = (2 * ap) / 3;
-    int32_t thresh_n = (2 * an) / 3;
-    int32_t thresh = sample >= 0 ? thresh_p : thresh_n;
-    if (absy > thresh)
-        lsb = invert_soft(pack_soft_bit(absy - thresh, a));
-    else
-        lsb = pack_soft_bit(thresh - absy, a);
+    int32_t thresh = sample >= 0 ? (2 * ap) / 3 : (2 * an) / 3;
+    lsb = pack_soft_bit(thresh - absy, a);
 }
 
 inline bool soft_bit_hard(uint16_t s)

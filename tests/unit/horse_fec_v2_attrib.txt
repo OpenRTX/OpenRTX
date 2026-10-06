@@ -137,16 +137,40 @@ host `-O2 -fstack-usage` (limit 512 B):
 |----------|------:|------:|
 | `HorseVoiceCodec::decode` | 112 | 512 |
 | `HorseVoiceCodec::decode_soft` | 56 | 512 |
-| `HorseFrameDecoder::decodeFrame` (soft ptr) | 96 | 512 |
-| `OpMode_Horse::rxState` | 176 | 512 |
+| `HorseFrameDecoder::decodeFrame` (soft ptr) | 112 | 512 |
+| `HorseFrameDecoder::acceptVoice` | 80 | 512 |
+| `OpMode_Horse::rxState` | 128 | 512 |
 | `OpMode_Horse::txState` | 224 | 512 |
-| `OpMode_Horse::applyLsfIfReady` | 432 | 512 |
-| `OpMode_Horse::sendTxVoiceFrame` | 160 | 512 |
+| `OpMode_Horse::applyLsfIfReady` | 144 | 512 |
+| `OpMode_Horse::sendTxVoiceFrame` | 128 | 512 |
 | `HorseDemodulator::acquireSync` | 240 | 512 |
+| `horse_crypto_derive_session_keys` | 80 | 512 |
+| `rtx_task` | 16 | 512 |
+| `OpMode_Horse::update` | 32 | 512 |
 | free `voice_decode` wrapper | 32 | 512 |
 
-All RTX-reachable Horse functions are under 512 B on the host. MD-3x0
-toolchain still missing.
+Call-chain sums (host `-O2`; callees add, LLVM inlining unverified on
+MD-3x0):
+
+| Path | sum | limit |
+|------|----:|------:|
+| rtx_task + update + rxState + decodeFrame + acceptVoice + decode_soft | 424 | 512 |
+| rtx_task + update + rxState + applyLsfIfReady + derive_session_keys | 400 | 512 |
+| rtx_task + update + txState + derive_session_keys | 352 | 512 |
+| rtx_task + update + txState + sendTxVoiceFrame | 400 | 512 |
+| rtx_task + update + rxState + demod update + acquireSync | 464 | 512 |
+
+`sizeof`: `HorseFrameDecoder`=10792, `HorseVoiceCodec`=6280,
+`HorseDemodulator`=480 (heap frames/soft), `OpMode_Horse`=13592
+(static `horseMode` in `rtx.cpp`). Fragment soft acc is 10*96*int32 =
+3840 B of the decoder. Could shrink to int16 (~1920 B) later. Soft
+Viterbi history is the rest of the 6.1 KiB codec. Host-only symbol
+sample capture is not allocated on MCU.
+
+`horse_crypto_derive_session_keys` `shared`/`ikm` moved to static
+(~110 B BSS) so the apply/TX chains stay under 512 B. MD-3x0
+toolchain still missing. Sodium internals of `crypto_scalarmult` /
+`crypto_generichash` are unverified.
 
 ## Voice FER reconcile (10 000 isolated frames, same harness)
 
@@ -234,4 +258,95 @@ constant stand-in tag `0x11..44` and dummy signature bytes.
 
 - strict >= 180/200 at noise 8000 (seed 11000 encrypt; 183/200)
 - usable >= 165/200 at noise 10000 (seed 1 encrypt; 168/200)
+
+## Stream versus isolated frame loss (noise 10000, 200 TX x 300 voice)
+
+Isolated `voice_cmp` FER is 0.0004 (hard, 10 000 frames). A 300-frame
+stream is not 300 independent isolated frames: the demod delivers
+~303.8 frames/TX (3 LSF + 300 voice + EOT) but some voice slots never
+appear as the expected FN.
+
+Harness `streamloss` (encrypt stand-in tags, `voice_fn_newer`):
+
+| soft | track | nloss | miss | decode | tag | FN-rule | near_step | snaps/TX | unknown |
+|-----:|------:|------:|-----:|-------:|----:|--------:|----------:|---------:|--------:|
+| 0 | 1 | 369 | 199 | 104 | 66 | 0 | 4/369 | 303.8 | 22 |
+| 1 | 1 | 33 | 26 | 3 | 4 | 0 | 3/33 | 303.8 | 22 |
+| 0 | 0 | 1402 | 619 | 478 | 305 | 0 | 19/1402 | 303.8 | 42 |
+| 1 | 0 | 178 | 81 | 74 | 23 | 0 | 10/178 | 303.8 | 33 |
+
+Lost-per-TX (hard, tracking): most TX have 0-3 losses; 8/200 have 15+.
+Burst lengths are mostly 1 (287), then 2-3. Soft tracking: 187/200 TX
+with zero losses; one TX with a long miss burst (late lock).
+
+**Cause:** extra stream loss is **not** tracking steps (near_step ~1 %,
+frozen tracking is 3-4x worse) and **not** FN-rule cascade (`fn_rule=0`;
+gaps are allowed, so one bad frame does not reject later good FNs).
+It is (1) voice sync HD 3-4 classified UNKNOWN while locked, and
+(2) a few transmissions that lock late or drop a burst. Isolated FER
+conditions on delivered, correctly numbered frames.
+
+**Fix (receiver-only):** after at least one voice frame in this lock,
+decode as voice when that sync word is nearest and HD <=
+`HAMMING_LOCKED_MAX` (4). Sync words are Hamming-6 apart. Test:
+`test_locked_sync_flywheel`. Does not change on-air format.
+
+Whole-sample TED is **not** the loss cause; sub-sample interpolation
+was not implemented. Frozen 0 ppm is worse because the detector still
+corrects RRC/acquire phase.
+
+## Soft mapping versus ideal LLR
+
+`M17::SoftViterbi` input: `uint16_t`, 0 = strong 0, 32767 = erasure,
+65535 = strong 1, puncture inserts `0x7FFF`.
+
+4-FSK: 00=+1, 01=+3, 10=-1, 11=-3. `A` = mean |outer| from the
+deviation estimator.
+
+- MSB: `pack_soft_bit(y, A)` with boundary y=0 (positive -> bit 0).
+- LSB: `pack_soft_bit(thresh-|y|, A)` with thresh=(2/3)|A_side|
+  (inner -> bit 0).
+
+`pack_soft_bit(d, A) = (uint16_t)(32767 - clamp(d*32767/A))`.
+Monotonic in signed distance to the boundary, scaled by `A`. No hard
+inner/outer class before packing.
+
+Same demod samples, n=500: map and ideal Gaussian LLR both FER=0
+through noise 14000. At 1 % voice FER, first bin with FER>=0.01 is
+map 16000 (0.014) vs LLR 18000 (0.014) => about **0.8-1.0 dB**
+(`20*log10`). Mapping is slightly worse only in that high-noise
+cliff. Operational 8000-11000 is not mapping-limited; firmware keeps
+the linear map (no `exp`/`log` on the MCU).
+
+## Full soft campaign (200 TX, two seeds, soft, miss_unlock=4)
+
+| noise | seed | mode | strict | usable |
+|------:|-----:|------|-------:|-------:|
+| 8000 | 1 | encrypt | 192 | 198 |
+| 8000 | 1 | sign | 192 | 199 |
+| 8000 | 1 | both | 192 | 198 |
+| 8000 | 2 | encrypt | 196 | 200 |
+| 8000 | 2 | sign | 195 | 200 |
+| 8000 | 2 | both | 195 | 200 |
+| 10000 | 1 | encrypt | 158 | 189 |
+| 10000 | 1 | sign | 159 | 186 |
+| 10000 | 1 | both | 159 | 188 |
+| 10000 | 2 | encrypt | 156 | 191 |
+| 10000 | 2 | sign | 156 | 189 |
+| 10000 | 2 | both | 156 | 191 |
+| 11000 | 1 | encrypt | 123 | 179 |
+| 11000 | 1 | sign | 125 | 173 |
+| 11000 | 1 | both | 124 | 176 |
+| 11000 | 2 | encrypt | 133 | 171 |
+| 11000 | 2 | sign | 134 | 170 |
+| 11000 | 2 | both | 133 | 170 |
+
+Proposed **targets** (owner approval; meson floors unchanged):
+
+- strict >= 190/200 at noise 8000 (measured 192-196)
+- usable >= 195/200 at noise 8000 (measured 198-200)
+- usable >= 180/200 at noise 10000 (measured 186-191)
+- strict >= 150/200 at noise 10000 (measured 156-159)
+
+198/200 strict at 10000 is still not a measured gate.
 

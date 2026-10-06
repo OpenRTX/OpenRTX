@@ -22,6 +22,7 @@
 #include "protocols/M17/DSP.hpp"
 #include "core/fir.hpp"
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -929,7 +930,8 @@ struct AttribTrial {
 static int
 demod_frames_attrib(const std::vector<int16_t> &rx24, std::vector<frame_t> &out,
                     std::vector<std::array<uint16_t, FRAME_BITS>> &softs,
-                    HorseUnlockReason *unlock, uint8_t *umiss, bool use_soft)
+                    HorseUnlockReason *unlock, uint8_t *umiss, bool use_soft,
+                    bool clock_track)
 {
     HorseDemodulator demod;
     HorseFrameDecoder decoder;
@@ -937,6 +939,7 @@ demod_frames_attrib(const std::vector<int16_t> &rx24, std::vector<frame_t> &out,
     demod.resetImmediate();
     demod.setSkipDcBlock(true);
     demod.setMissUnlock(COAST_MISS_UNLOCK);
+    demod.setClockTracking(clock_track);
     out.clear();
     softs.clear();
     for (int16_t s : rx24) {
@@ -1098,7 +1101,7 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
         std::vector<std::array<uint16_t, FRAME_BITS>> softs;
         HorseUnlockReason ur = HorseUnlockReason::None;
         uint8_t um = 0;
-        demod_frames_attrib(rx24, sl, softs, &ur, &um, use_soft);
+        demod_frames_attrib(rx24, sl, softs, &ur, &um, use_soft, true);
 
         HorseFrameDecoder dec;
         bool lsf_open = false;
@@ -1278,6 +1281,284 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
     return 0;
 }
 
+struct StreamSnap {
+    frame_t f;
+    std::array<uint16_t, FRAME_BITS> soft;
+    std::array<int16_t, FRAME_SYMBOLS> samp;
+    uint32_t sp;
+    int8_t applied;
+    uint8_t miss;
+    uint8_t hold;
+    bool last_sync_ok;
+    int32_t outer;
+};
+
+static int demod_stream_snaps(const std::vector<int16_t> &rx24, bool use_soft,
+                              bool clock_track, std::vector<StreamSnap> &snaps)
+{
+    HorseDemodulator demod;
+    HorseFrameDecoder decoder;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setMissUnlock(COAST_MISS_UNLOCK);
+    demod.setClockTracking(clock_track);
+    snaps.clear();
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f{};
+        if (!demod.takeFrame(f))
+            continue;
+        StreamSnap sn{};
+        sn.f = f;
+        demod.takeSoftBits(sn.soft.data());
+        demod.takeSymbolSamples(sn.samp.data());
+        sn.sp = demod.debugSamplingPoint();
+        sn.applied = demod.debugLastAppliedClock();
+        sn.miss = demod.debugMissedSyncs();
+        sn.hold = demod.debugClockHold();
+        sn.last_sync_ok = demod.debugLastSyncOk();
+        sn.outer = demod.lastOuterAbs();
+        HorseFrameType ty;
+        if (use_soft)
+            ty = decoder.decodeFrame(f, sn.soft.data());
+        else
+            ty = decoder.decodeFrame(f);
+        if (ty == HorseFrameType::LINK_SETUP && decoder.lsfReady())
+            demod.noteValidTag();
+        snaps.push_back(sn);
+    }
+    demod.terminate();
+    return 0;
+}
+
+enum {
+    LKIND_OK = 0,
+    LKIND_MISS = 1,
+    LKIND_DECODE = 2,
+    LKIND_TAG = 3,
+    LKIND_FN = 4,
+    LKIND_N = 5
+};
+
+static int run_stream_loss(float noise, unsigned seed, int ntx, bool use_soft,
+                           bool clock_track)
+{
+    const int nvoice = 300;
+    HorseFrameEncoder enc;
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    uint8_t eph[32];
+    memset(eph, 0x5A, sizeof eph);
+    uint8_t tag[4] = { 0x11, 0x22, 0x33, 0x44 };
+    std::vector<frame_t> tx;
+    frame_t lsf[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, eph, LSF_FLAG_ENCRYPTED, lsf);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+        tx.push_back(lsf[i]);
+    enc.setSignatureFragments(nullptr);
+    for (int i = 0; i < nvoice; i++) {
+        uint8_t plain[12];
+        unsigned rng = seed + (unsigned)i * 13u;
+        for (size_t b = 0; b < sizeof plain; b++) {
+            rng = rng * 1103515245u + 12345u;
+            plain[b] = (uint8_t)(rng >> 16);
+        }
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(plain, tag, (uint16_t)i, vf, false, 12);
+        tx.push_back(vf);
+    }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        tx.push_back(ef);
+    }
+    std::vector<int16_t> bb48;
+    if (render_frames(tx, bb48, true) != 0)
+        return -1;
+
+    int hist_lost[16];
+    memset(hist_lost, 0, sizeof hist_lost);
+    int burst_h[16];
+    memset(burst_h, 0, sizeof burst_h);
+    int kind_n[LKIND_N];
+    memset(kind_n, 0, sizeof kind_n);
+    int nloss = 0, nnear_step = 0, n_fn_cascade = 0, n_sync_ok = 0;
+    int printed = 0;
+    long snaps_sum = 0, nunknown = 0, nvoice_ty = 0;
+
+    for (int t = 0; t < ntx; t++) {
+        std::vector<int16_t> imp, rx24;
+        impair_t p{};
+        p.noise = noise;
+        p.gain = 1.0f;
+        p.seed = seed + (unsigned)t * 17u;
+        impair_48k(bb48.data(), bb48.size(), p, imp);
+        to_24k(imp, rx24);
+        std::vector<StreamSnap> snaps;
+        demod_stream_snaps(rx24, use_soft, clock_track, snaps);
+        snaps_sum += (long)snaps.size();
+        HorseFrameDecoder tydec;
+        for (size_t si = 0; si < snaps.size(); si++) {
+            HorseFrameType ty = use_soft ?
+                                    tydec.decodeFrame(snaps[si].f,
+                                                      snaps[si].soft.data()) :
+                                    tydec.decodeFrame(snaps[si].f);
+            if (ty == HorseFrameType::UNKNOWN)
+                nunknown++;
+            if (ty == HorseFrameType::VOICE)
+                nvoice_ty++;
+        }
+        HorseFrameDecoder dec;
+        struct Rec {
+            int fn;
+            int kind;
+            int snap_i;
+            bool sync_ok;
+            bool pay_ok;
+            bool tag_ok;
+        };
+        std::vector<Rec> recs;
+        for (size_t si = 0; si < snaps.size(); si++) {
+            HorseFrameType ty =
+                use_soft ? dec.decodeFrame(snaps[si].f, snaps[si].soft.data()) :
+                           dec.decodeFrame(snaps[si].f);
+            if (ty != HorseFrameType::VOICE)
+                continue;
+            uint8_t mel[12], tg[4];
+            uint16_t fn = 0;
+            dec.getVoicePayload(snaps[si].f, mel, tg, &fn);
+            if (!voice_fn_in_session(fn))
+                continue;
+            uint8_t exp[12];
+            unsigned rng = seed + (unsigned)fn * 13u;
+            for (size_t b = 0; b < sizeof exp; b++) {
+                rng = rng * 1103515245u + 12345u;
+                exp[b] = (uint8_t)(rng >> 16);
+            }
+            Rec r{};
+            r.fn = (int)fn;
+            r.snap_i = (int)si;
+            r.sync_ok = match_sync(snaps[si].f, VOICE_SYNC_WORD);
+            r.tag_ok = memcmp(tg, tag, 4) == 0;
+            r.pay_ok = memcmp(mel, exp, 12) == 0;
+            if (!r.tag_ok)
+                r.kind = LKIND_TAG;
+            else if (!r.pay_ok)
+                r.kind = LKIND_DECODE;
+            else
+                r.kind = LKIND_OK;
+            recs.push_back(r);
+        }
+        std::vector<int> seen((size_t)nvoice, 0);
+        std::vector<int> kind_fn((size_t)nvoice, LKIND_MISS);
+        std::vector<int> snap_fn((size_t)nvoice, -1);
+        for (const Rec &r : recs) {
+            if (r.fn < 0 || r.fn >= nvoice)
+                continue;
+            seen[(size_t)r.fn] = 1;
+            kind_fn[(size_t)r.fn] = r.kind;
+            snap_fn[(size_t)r.fn] = r.snap_i;
+            if (r.kind != LKIND_OK && r.sync_ok)
+                n_sync_ok++;
+        }
+        bool have = false;
+        uint16_t prev = 0;
+        for (const Rec &r : recs) {
+            if (r.kind != LKIND_OK)
+                continue;
+            if (!voice_fn_newer(have, prev, (uint16_t)r.fn)) {
+                n_fn_cascade++;
+                if (r.fn >= 0 && r.fn < nvoice
+                    && kind_fn[(size_t)r.fn] == LKIND_OK)
+                    kind_fn[(size_t)r.fn] = LKIND_FN;
+            } else {
+                have = true;
+                prev = (uint16_t)r.fn;
+            }
+        }
+        int lost = 0;
+        int burst = 0, burst_max = 0;
+        for (int fn = 0; fn < nvoice; fn++) {
+            int k = kind_fn[(size_t)fn];
+            if (k == LKIND_OK) {
+                if (burst > 0) {
+                    int bi = burst > 15 ? 15 : burst;
+                    burst_h[bi]++;
+                }
+                burst = 0;
+                continue;
+            }
+            lost++;
+            nloss++;
+            kind_n[k]++;
+            burst++;
+            if (burst > burst_max)
+                burst_max = burst;
+            int si = snap_fn[(size_t)fn];
+            bool near = false;
+            int lo_i = si;
+            if (si < 0) {
+                int exp = (int)LSF_OPENING_FRAMES + fn;
+                if (exp >= 0 && exp < (int)snaps.size())
+                    lo_i = exp;
+            }
+            if (lo_i >= 0) {
+                int lo = lo_i - 5;
+                if (lo < 0)
+                    lo = 0;
+                int hi = lo_i;
+                if (hi >= (int)snaps.size())
+                    hi = (int)snaps.size() - 1;
+                for (int j = lo; j <= hi && j < (int)snaps.size(); j++) {
+                    if (snaps[(size_t)j].applied != 0)
+                        near = true;
+                    if (j > lo
+                        && snaps[(size_t)j].sp != snaps[(size_t)j - 1].sp)
+                        near = true;
+                }
+            }
+            if (near)
+                nnear_step++;
+            if (printed < 12) {
+                const StreamSnap *sn = (si >= 0) ? &snaps[(size_t)si] : nullptr;
+                std::printf("streamloss sample tx=%d fn=%d kind=%d sync=%d "
+                            "sp=%u applied=%d miss=%u hold=%u outer=%d "
+                            "coast=%d\n",
+                            t, fn, k,
+                            sn ? (int)match_sync(sn->f, VOICE_SYNC_WORD) : -1,
+                            sn ? sn->sp : 0u, sn ? (int)sn->applied : 0,
+                            sn ? sn->miss : 0, sn ? sn->hold : 0,
+                            sn ? (int)sn->outer : 0,
+                            sn ? (int)!sn->last_sync_ok : -1);
+                printed++;
+            }
+        }
+        if (burst > 0) {
+            int bi = burst > 15 ? 15 : burst;
+            burst_h[bi]++;
+        }
+        int hb = lost > 15 ? 15 : lost;
+        hist_lost[hb]++;
+    }
+    std::printf("streamloss noise=%.0f ntx=%d soft=%d track=%d nloss=%d "
+                "miss=%d decode=%d tag=%d fn_rule=%d near_step=%d/%d "
+                "fn_cascade_events=%d sync_ok_on_bad=%d snaps/tx=%.1f "
+                "unknown=%ld voice_ty=%ld\n",
+                noise, ntx, (int)use_soft, (int)clock_track, nloss, kind_n[1],
+                kind_n[2], kind_n[3], kind_n[4], nnear_step, nloss,
+                n_fn_cascade, n_sync_ok, ntx ? (double)snaps_sum / ntx : 0.0,
+                nunknown, nvoice_ty);
+    std::printf("  lost_per_tx_hist");
+    for (int i = 0; i < 16; i++)
+        std::printf(" %d", hist_lost[i]);
+    std::printf("\n  burst_len_hist");
+    for (int i = 0; i < 16; i++)
+        std::printf(" %d", burst_h[i]);
+    std::printf("\n");
+    return 0;
+}
+
 static int run_voice_cmp(Codecs &c, float noise, unsigned seed, int nframes)
 {
     HorseFrameEncoder enc;
@@ -1446,6 +1727,170 @@ static int run_voice_hs(float noise, unsigned seed, int nframes)
                 nframes ? 1.0 - (double)ok_s / nframes : 1.0, worse,
                 got ? us_h / got : 0, got ? us_s / got : 0,
                 sizeof(HorseFrameDecoder));
+    return 0;
+}
+
+static uint16_t llr_to_soft(double llr)
+{
+    double v = llr * (32767.0 / 12.0);
+    if (v > 32767.0)
+        v = 32767.0;
+    if (v < -32768.0)
+        v = -32768.0;
+    return (uint16_t)(32767.0 - v);
+}
+
+static void ideal_soft_from_samp(const int16_t *samp, int32_t a,
+                                 uint16_t out[FRAME_BITS])
+{
+    if (a < 1)
+        a = 1;
+    const float mu_p3 = (float)a;
+    const float mu_p1 = (float)a / 3.f;
+    const float mu_n1 = -(float)a / 3.f;
+    const float mu_n3 = -(float)a;
+    float var = 0.f;
+    for (size_t i = 0; i < FRAME_SYMBOLS; i++) {
+        float y = (float)samp[i];
+        float d0 = y - mu_p3;
+        float d1 = y - mu_p1;
+        float d2 = y - mu_n1;
+        float d3 = y - mu_n3;
+        float d = d0 * d0;
+        if (d1 * d1 < d)
+            d = d1 * d1;
+        if (d2 * d2 < d)
+            d = d2 * d2;
+        if (d3 * d3 < d)
+            d = d3 * d3;
+        var += d;
+    }
+    var /= (float)FRAME_SYMBOLS;
+    if (var < 1.f)
+        var = 1.f;
+    for (size_t i = 0; i < FRAME_SYMBOLS; i++) {
+        float y = (float)samp[i];
+        auto nll = [&](float mu) {
+            float d = y - mu;
+            return (d * d) / (2.f * var);
+        };
+        double p_p3 = std::exp(-(double)nll(mu_p3));
+        double p_p1 = std::exp(-(double)nll(mu_p1));
+        double p_n1 = std::exp(-(double)nll(mu_n1));
+        double p_n3 = std::exp(-(double)nll(mu_n3));
+        double p_m0 = p_p3 + p_p1;
+        double p_m1 = p_n1 + p_n3;
+        double p_l0 = p_p1 + p_n1;
+        double p_l1 = p_p3 + p_n3;
+        out[2 * i] =
+            llr_to_soft(std::log(p_m0 + 1e-30) - std::log(p_m1 + 1e-30));
+        out[2 * i + 1] =
+            llr_to_soft(std::log(p_l0 + 1e-30) - std::log(p_l1 + 1e-30));
+    }
+}
+
+static int run_soft_llr(float, unsigned seed, int nframes)
+{
+    HorseFrameEncoder enc;
+    HorseVoiceCodec codec;
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    std::vector<frame_t> frames;
+    push_lsf_sim(enc, src, dst, frames);
+    std::vector<std::array<uint8_t, FEC_INFO_BYTES>> refs(
+        static_cast<size_t>(nframes));
+    unsigned rng = seed;
+    for (int i = 0; i < nframes; i++) {
+        for (size_t b = 0; b < FEC_INFO_BYTES; b++) {
+            rng = rng * 1103515245u + 12345u;
+            refs[static_cast<size_t>(i)][b] = (uint8_t)(rng >> 16);
+        }
+        refs[static_cast<size_t>(i)][0] = (uint8_t)(i >> 8);
+        refs[static_cast<size_t>(i)][1] = (uint8_t)i;
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(refs[static_cast<size_t>(i)].data() + 2,
+                                   refs[static_cast<size_t>(i)].data() + 14,
+                                   (uint16_t)i, vf, false, 12);
+        frames.push_back(vf);
+    }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
+    std::vector<int16_t> bb48;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    const float noises[] = { 8000.f,  10000.f, 12000.f, 14000.f,
+                             16000.f, 18000.f, 20000.f, 22000.f };
+    float n_map = 0, n_llr = 0;
+    for (float noise : noises) {
+        std::vector<int16_t> imp, rx24;
+        impair_t p{};
+        p.noise = noise;
+        p.gain = 1.0f;
+        p.seed = seed;
+        impair_48k(bb48.data(), bb48.size(), p, imp);
+        to_24k(imp, rx24);
+        HorseDemodulator demod;
+        HorseFrameDecoder dec;
+        demod.init();
+        demod.resetImmediate();
+        demod.setSkipDcBlock(true);
+        int got = 0, ok_map = 0, ok_llr = 0;
+        for (int16_t s : rx24) {
+            demod.feedSample(s, false);
+            frame_t f{};
+            if (!demod.takeFrame(f))
+                continue;
+            uint16_t soft[FRAME_BITS];
+            int16_t samp[FRAME_SYMBOLS];
+            demod.takeSoftBits(soft);
+            demod.takeSymbolSamples(samp);
+            HorseFrameType ty = dec.decodeFrame(f, soft);
+            if (ty == HorseFrameType::LINK_SETUP && dec.lsfReady())
+                demod.noteValidTag();
+            if (ty != HorseFrameType::VOICE)
+                continue;
+            if (got >= nframes)
+                break;
+            uint8_t om[FEC_INFO_BYTES], ol[FEC_INFO_BYTES];
+            codec.decode_soft(soft + SYNCWORD_BITS, om);
+            uint16_t ideal[FRAME_BITS];
+            ideal_soft_from_samp(samp, demod.lastOuterAbs(), ideal);
+            codec.decode_soft(ideal + SYNCWORD_BITS, ol);
+            unsigned fnm = ((unsigned)om[0] << 8) | om[1];
+            unsigned fnl = ((unsigned)ol[0] << 8) | ol[1];
+            if (fnm < (unsigned)nframes
+                && memcmp(om, refs[fnm].data(), FEC_INFO_BYTES) == 0)
+                ok_map++;
+            if (fnl < (unsigned)nframes
+                && memcmp(ol, refs[fnl].data(), FEC_INFO_BYTES) == 0)
+                ok_llr++;
+            got++;
+        }
+        demod.terminate();
+        double fer_m = nframes ? 1.0 - (double)ok_map / nframes : 1.0;
+        double fer_l = nframes ? 1.0 - (double)ok_llr / nframes : 1.0;
+        std::printf("soft_llr noise=%.0f n=%d got=%d map_ok=%d fer=%.6f "
+                    "llr_ok=%d fer=%.6f\n",
+                    noise, nframes, got, ok_map, fer_m, ok_llr, fer_l);
+        if (n_map == 0 && fer_m >= 0.01)
+            n_map = noise;
+        if (n_llr == 0 && fer_l >= 0.01)
+            n_llr = noise;
+    }
+    if (n_map > 0 && n_llr > 0) {
+        double gap_db = 20.0 * std::log10(n_map / n_llr);
+        std::printf(
+            "soft_llr 1pct_voice_FER map_noise=%.0f llr_noise=%.0f "
+            "gap_dB=%.2f (20*log10 n_map/n_llr; negative = mapping worse)\n",
+            n_map, n_llr, gap_db);
+    } else {
+        std::printf("soft_llr 1pct_voice_FER not bracketed map_noise=%.0f "
+                    "llr_noise=%.0f\n",
+                    n_map, n_llr);
+    }
     return 0;
 }
 
@@ -2060,11 +2505,25 @@ int main(int argc, char **argv)
         unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
         return run_voice_cmp(c, noise, seed, n);
     }
+    if (mode == "streamloss") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int ntx = argc > 3 ? atoi(argv[3]) : 200;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        int use_soft = argc > 5 ? atoi(argv[5]) : 0;
+        int track = argc > 6 ? atoi(argv[6]) : 1;
+        return run_stream_loss(noise, seed, ntx, use_soft != 0, track != 0);
+    }
     if (mode == "voice_hs") {
         float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
         int n = argc > 3 ? atoi(argv[3]) : 2000;
         unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
         return run_voice_hs(noise, seed, n);
+    }
+    if (mode == "soft_llr") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int n = argc > 3 ? atoi(argv[3]) : 2000;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        return run_soft_llr(noise, seed, n);
     }
     if (mode == "soft") {
         float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
