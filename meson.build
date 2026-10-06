@@ -77,6 +77,7 @@ horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
              'openrtx/src/protocols/horse/melpe_horse.c',
              'openrtx/src/protocols/horse/horse_crypto.c',
              'openrtx/src/protocols/horse/horse_crypto_worker.c',
+             'openrtx/src/protocols/horse/horse_randombytes.c',
              'openrtx/src/protocols/horse/horse_keystore.c',
              'openrtx/src/protocols/horse/horse_peers.c',
              'openrtx/src/protocols/horse/horse_provision.c',
@@ -87,7 +88,8 @@ horse_frame_test_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
                         'openrtx/src/protocols/horse/HorseFrameDecoder.cpp',
                         'openrtx/src/protocols/horse/HorseVoiceCodec.cpp',
                         'openrtx/src/core/crc.c',
-                        'openrtx/src/protocols/horse/horse_crypto.c']
+                        'openrtx/src/protocols/horse/horse_crypto.c',
+                        'openrtx/src/protocols/horse/horse_randombytes.c']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -129,12 +131,35 @@ openrtx_inc += ['lib/QRCode/include']
 # QDEC, a very simple, header only, quadrature decoding library
 openrtx_inc += ['lib/qdec/include']
 
-# libsodium (optional, used for Horse crypto on supported platforms)
+# libsodium: native builds use the host package. Cortex-M4 Horse
+# targets use a pinned Autotools prebuilt (1.0.20, see
+# scripts/build_libsodium_cm4.sh and subprojects/libsodium.wrap).
+# Meson's external_project wrap injects a relative --includedir that
+# Autotools rejects, so the library is built by the script. Other
+# radios must not link it.
 sodium_dep = dependency('libsodium', required: false)
 
 horse_crypto_args = []
 horse_deps = []
-if sodium_dep.found()
+horse_cm4_sodium_dep = []
+if meson.is_cross_build()
+  fsmod = import('fs')
+  sodium_prefix = meson.current_build_dir() / 'sodium-cm4'
+  sodium_script = find_program('scripts/build_libsodium_cm4.sh')
+  if not fsmod.exists(sodium_prefix / 'lib' / 'libsodium.a')
+    message('Cross-building libsodium 1.0.20 for Cortex-M4')
+    run_command(sodium_script, sodium_prefix, check: true)
+  endif
+  cc_host = meson.get_compiler('c')
+  sodium_lib = cc_host.find_library('sodium',
+                                    dirs: [sodium_prefix / 'lib'],
+                                    static: true,
+                                    required: true)
+  horse_cm4_sodium_dep = [declare_dependency(
+      dependencies: sodium_lib,
+      compile_args: ['-I' + sodium_prefix / 'include', '-DSODIUM_STATIC'])]
+  horse_crypto_args += ['-DHAVE_LIBSODIUM', '-DSODIUM_STATIC']
+elif sodium_dep.found()
   horse_deps += sodium_dep
   horse_crypto_args += '-DHAVE_LIBSODIUM'
 endif
@@ -723,6 +748,7 @@ foreach k, v : md3x0_def
     md3x0_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
+md3x0_args += ['-fstack-usage', '-Wstack-usage=16384']
 
 mduv3x0_args = []
 foreach k, v : mduv3x0_def
@@ -842,7 +868,7 @@ linux_mod17_opts = {
 md3x0_opts = {
   'sources'            : md3x0_src,
   'include_directories': md3x0_inc,
-  'dependencies'       : [codec2_dep] + horse_deps,
+  'dependencies'       : [codec2_dep] + horse_deps + horse_cm4_sodium_dep,
   'c_args'             : md3x0_args + horse_crypto_args,
   'cpp_args'           : md3x0_args + horse_crypto_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld']
@@ -1277,7 +1303,8 @@ horse_frame_test = executable('horse_frame_test',
                               cpp_args : linux_cpp_args,
                               link_args : linux_l_args)
 
-horse_crypto_test_src = ['openrtx/src/protocols/horse/horse_crypto.c']
+horse_crypto_test_src = ['openrtx/src/protocols/horse/horse_crypto.c',
+                         'openrtx/src/protocols/horse/horse_randombytes.c']
 horse_crypto_test = executable('horse_crypto_test',
                                sources : horse_crypto_test_src + ['tests/unit/horse_crypto.cpp'],
                                include_directories : openrtx_inc,
@@ -1289,6 +1316,7 @@ horse_crypto_test = executable('horse_crypto_test',
 horse_crypto_worker_test = executable('horse_crypto_worker_test',
                                       sources : ['openrtx/src/protocols/horse/horse_crypto.c',
                                                  'openrtx/src/protocols/horse/horse_crypto_worker.c',
+                                                 'openrtx/src/protocols/horse/horse_randombytes.c',
                                                  'tests/unit/horse_crypto_worker.cpp'],
                                       include_directories : openrtx_inc,
                                       dependencies : linux_deps + [threads_dep],
@@ -1319,6 +1347,7 @@ horse_peers_test = executable('horse_peers_test',
 horse_keystore_test = executable('horse_keystore_test',
                                  sources : ['openrtx/src/protocols/horse/horse_keystore.c',
                                             'openrtx/src/protocols/horse/horse_crypto.c',
+                                            'openrtx/src/protocols/horse/horse_randombytes.c',
                                             'tests/unit/horse_keystore.cpp'],
                                  include_directories : openrtx_inc,
                                  dependencies : linux_deps + [threads_dep],
@@ -1329,6 +1358,7 @@ horse_keystore_test = executable('horse_keystore_test',
 horse_host_interop_test = executable('horse_host_interop_test',
                                      sources : ['openrtx/src/protocols/horse/horse_keystore.c',
                                                 'openrtx/src/protocols/horse/horse_crypto.c',
+                                                'openrtx/src/protocols/horse/horse_randombytes.c',
                                                 'openrtx/src/protocols/horse/horse_peers.c',
                                                 'tests/unit/horse_host_interop.cpp'],
                                      include_directories : openrtx_inc,
@@ -1344,6 +1374,10 @@ horse_loopback_test = executable('horse_loopback_test',
                                  sources : unit_test_src + ['tests/unit/horse_loopback.cpp',
                                                             'tests/unit/horse_session_modem.cpp'],
                                  kwargs : unit_test_opts)
+
+horse_tx_fail_test = executable('horse_tx_fail_test',
+                                sources : unit_test_src + ['tests/unit/horse_tx_fail.cpp'],
+                                kwargs : unit_test_opts)
 
 horse_fec_v2_sim = executable('horse_fec_v2_sim',
                               sources : unit_test_src + ['tests/unit/horse_fec_v2_sim.cpp'],
@@ -1449,6 +1483,8 @@ test('Horse Host Interop Test', horse_host_interop_test,
      env : horse_test_env, timeout : 60)
 test('Horse Loopback Test', horse_loopback_test,
      env : horse_test_env, timeout : 600)
+test('Horse TX Crypto Fail Test', horse_tx_fail_test,
+     env : horse_test_env, timeout : 30)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)

@@ -37,7 +37,8 @@ extern "C" {
 /*
  * Shared with horse_provision.py. 16384 B is the largest Argon2id memory
  * cost justified for 192 KiB SRAM: equal to CODEC2_THREAD_STKSIZE, used
- * at mode enable when the codec thread is idle. UNVERIFIED on MD-3x0.
+ * at mode enable when the codec thread is idle. Heap headroom is in
+ * HORSE_AUDIT.md; runtime HWM unverified on the radio.
  */
 #define HORSE_ARGON2ID_OPSLIMIT  2u
 #define HORSE_ARGON2ID_MEMLIMIT  16384u

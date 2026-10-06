@@ -16,6 +16,7 @@
 
 #ifdef HAVE_LIBSODIUM
 #include <sodium.h>
+#include "protocols/horse/horse_randombytes.h"
 
 static int horse_sodium_init(void)
 {
@@ -24,6 +25,8 @@ static int horse_sodium_init(void)
     if (initialized)
         return 0;
 
+    if (horse_randombytes_install() != 0)
+        return -1;
     if (sodium_init() < 0)
         return -1;
 

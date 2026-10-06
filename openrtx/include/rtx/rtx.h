@@ -65,6 +65,7 @@ rtxStatus_t;
 #define HORSE_ERR_NO_CRYPTO  1
 #define HORSE_ERR_NO_KEYS    2
 #define HORSE_ERR_CALL_LIMIT 3
+#define HORSE_ERR_TX_CRYPTO  4
 
 /**
  * \enum bandwidth Enumeration type defining the current rtx bandwidth.

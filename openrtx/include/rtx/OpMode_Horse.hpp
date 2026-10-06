@@ -49,9 +49,13 @@ private:
     void tryFinalizeRxSigFragments();
     bool applyLsfIfReady(rtxStatus_t *const status);
     void maybeStartRxAudio();
-    void sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
+    bool sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
                           horse::frame_t &outFrame);
+    void failTxCrypto(rtxStatus_t *const status, horse::frame_t &outFrame);
 
+#ifdef PLATFORM_LINUX
+    friend int horse_test_tx_crypto_fail(void);
+#endif
     bool startRx;
     bool startTx;
     bool locked;

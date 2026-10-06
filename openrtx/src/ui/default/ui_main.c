@@ -250,6 +250,9 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 else if(rtxStatus.horseError == HORSE_ERR_CALL_LIMIT)
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse: call limit");
+                else if(rtxStatus.horseError == HORSE_ERR_TX_CRYPTO)
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "Horse: TX crypto");
                 else
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse #%s", dst);
