@@ -174,8 +174,8 @@ TEST_CASE("Soft decoder on a clean frame matches the hard-input path",
 TEST_CASE("Soft decoder recovers most link setup frames through noise",
           "[m17][decoder][soft]")
 {
-    // At this noise level about 60% decode with the sign bit of an inner
-    // symbol fully confident, 45% with a third of that confidence.
+    // At this noise level about 66% decode with the sign bit of an inner
+    // symbol fully confident, 50% with a third of that confidence.
     static constexpr size_t TRIALS = 400;
     std::mt19937 rng(1000);
     FrameDecoder dec;
