@@ -22,6 +22,8 @@ static constexpr size_t SYMBOL_RATE = 4800;
 static constexpr size_t FRAME_SYMBOLS = 192;
 static constexpr size_t SYNCWORD_SYMBOLS = 8;
 static constexpr size_t FRAME_BYTES = FRAME_SYMBOLS / 4;
+static constexpr size_t FRAME_BITS = FRAME_BYTES * 8;
+static constexpr size_t SYNCWORD_BITS = SYNCWORD_SYMBOLS * 2;
 
 /*
  * Version-2 sync words. Hamming distance >= 6 from each other and from
