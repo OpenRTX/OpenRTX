@@ -19,14 +19,14 @@ work list. Finding status:
 | C4 signature chunk overflow | fixed in `c3f68754`; packing `13ac0cef` (5x12+4) |
 | C5 20 ms DMA vs 40 ms codec | fixed in `8b965e29` |
 | C6 FN / nonce layout | fixed in `08e6c3cb` / `4e789cbf` |
-| C7 Argon2 RAM / PBKDF2 | `4015daa2`; 16 KiB Argon2id via libsodium heap; worker thread 16 KiB; MD-3x0 map pending cross build |
+| C7 Argon2 RAM / PBKDF2 | 16 KiB Argon2id heap; remaining largeram heap 89600 B vs 16+16+16 KiB |
 | C8 passphrase in `settings_t` | fixed in `4015daa2` (RAM-only) |
 | C9 `contact_t` growth | fixed in `1b79bbdb` (sidecar peers) |
 | C10 Ed25519 seed padded to 64 | fixed in `80404ce2` |
 | C11 keyring hex/JSON | fixed in `80404ce2` / `31495ec7` |
 | C12 encrypted RX without session | fixed in `c6bdad06` |
 | C13 MD-3x0 C5000 TX enable | implemented `465707c4`; untested on hardware |
-| C14 RTX 512 B stack | host `-Wstack-usage`; sodium moved to 16 KiB worker; Cortex-M4 HWM unverified |
+| C14 RTX 512 B stack | ARM `txState` 128 B; sodium worker deepest Argon2 4120 B / Ed25519 4048 B |
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
 | C17 LDPC name vs repeat-2 | closed in v2: M17 option-C voice `0de39b89`; `ldpc_horse` removed |
@@ -356,10 +356,72 @@ Host analog loopback (`tests/unit/horse_loopback.cpp`) now covers:
 
 Gate for decode time is <= 5 ms/frame (section 16); host meets it.
 Static RAM added vs pre-fragment decoder is dominated by `fragCopy`
-(~360 B) plus small counters. **Open / unverified on MD-3x0:** placing
-`HardViterbi` on the RTX 512 B stack is impossible at 2208 B host
-stack usage; needs a static instance or larger codec/RTX stack (C14),
-unverified without the Miosix cross build.
+(~360 B) plus small counters. On MD-3x0, `voice_decode` is 16 B
+(`-Wstack-usage`); `SoftViterbi::decodePunctured` 88 B; `txState`
+128 B on the 512 B RTX stack. libsodium runs on the 16 KiB worker.
+
+### MD-3x0 link with libsodium 1.0.20 (estimates marked)
+
+Seed tarball sha256
+`ebb65ef6ca439333c2bb41a0c1990587288da07f6c7fd07cb3a18cc18d30ce19`.
+Autotools: `--disable-shared --enable-static --disable-ssp --disable-pie
+--disable-asm --disable-blocking-random`, CFLAGS `-Os` Cortex-M4 hard
+float, `RANDOMBYTES_CUSTOM_IMPLEMENTATION`. Not `--enable-minimal`
+(drops `crypto_stream_xchacha20`). Unused objects dropped by
+`--gc-sections`. Randomness: STM32F405 HASH_RNG (PLL48 / PLL_Q=7),
+`rng_init`/`rng_get`, registered with `randombytes_set_implementation`
+before `sodium_init`. Not a software CSPRNG.
+
+| Region | Before sodium | After sodium |
+|--------|--------------:|-------------:|
+| flash (848 KiB) | 240896 B (27.74%) | 350000 B (40.31%) |
+| CCM smallram (64 KiB) | 29328 B (44.75%) | 30800 B (47.00%) |
+| largeram (130560 B) | 40 KiB framebuffer | 40 KiB framebuffer |
+| ELF text/data/bss | 239120 / 1776 / 68512 | 347096 / 2904 / 68856 |
+| heap (`_end` 0x2000a200 to `_heap_end` 0x20020000) | 89600 B | 89600 B |
+
+Heap 89600 B vs Argon2id 16384 + worker stack 16384 + codec stack 16384
+= 49152 B. Remainder ~40 KiB for other mallocs. **Runtime heap HWM
+unverified on the radio.**
+
+ARM `-Wstack-usage` / `.su` (bytes, static):
+
+| Path | Stack |
+|------|------:|
+| `OpMode_Horse::txState` (RTX) | 128 |
+| `OpMode_Horse::rxState` | 72 |
+| `sendTxVoiceFrame` | 72 |
+| `SoftViterbi::decodePunctured` voice | 88 |
+| `melpe_horse_encode_20ms` (codec thread) | 664 |
+| worker `generate_addresses` (Argon2id) | 4120 |
+| worker `ge25519_scalarmult` | 4048 |
+| worker `ge25519_double_scalarmult_vartime` (verify) | 2344 |
+| worker `crypto_scalarmult_curve25519_ref10` | 440 |
+| `sodium_stackzero` | unbounded warning; Horse does not call it |
+
+Timing **estimates** (not DWT traces). 168 MHz. C ref10, `-Os`, no asm.
+Published Cortex-M4 C curve25519/ed25519 figures scaled to this clock;
+Viterbi from host 82 us scaled by ~3 GHz/168 MHz.
+
+| Op | Estimate |
+|----|----------|
+| X25519 scalarmult or keypair | ~8e6 cycles, ~48 ms |
+| Ed25519 sign | ~6e6 cycles, ~36 ms |
+| Ed25519 verify | ~10e6 cycles, ~60 ms |
+| Argon2id m=16384 t=2 (unlock, not PTT) | ~15 ms |
+| Soft Viterbi / voice frame | ~1.5 ms (host 82 us) |
+| PTT to `radio_enableTx`, encrypt | ~96 ms (keypair + derive) |
+| PTT to key, signed or both | ~132 ms (keypair + sign + derive) |
+
+TX encrypt failure now encodes EOT, unkeys, `HORSE_ERR_TX_CRYPTO`
+(host test `horse_tx_fail_test`).
+
+Non-Horse `openrtx_mduv3x0` / `openrtx_gd77` vs `upstream/master`
+v0.4.5: not byte-identical. Flash +64 B / +32 B. Causes: (1)
+`GIT_VERSION` (`v0.4.5` vs `v0.4.5-95-g…-dirty`); (2) `rtxStatus_t`
+Horse overlay 0x8c to 0xa4 (+24 B BSS) compiled on every radio even
+without `CONFIG_HORSE`. No Horse UI strings in those binaries. Sodium
+is not linked.
 
 First failing layer before the demod fix was **c**. Commits:
 

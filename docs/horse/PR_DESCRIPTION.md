@@ -25,7 +25,13 @@ This branch:
   flywheel after a voice frame, tag-decided voice after authentication,
   coast, bounded TED after `CLOCK_HOLD_FRAMES`, late entry via fragments.
 - Crypto worker: 16 KiB thread; RTX never runs libsodium; TX not keyed
-  until key agreement finishes; PTT cancel.
+  until key agreement finishes; PTT cancel. TX encrypt failure sends
+  EOT, unkeys, and shows `Horse: TX crypto` (not zeros).
+- MD-3x0 links pinned libsodium 1.0.20 (sha256
+  `ebb65ef6ca439333c2bb41a0c1990587288da07f6c7fd07cb3a18cc18d30ce19`)
+  via `scripts/build_libsodium_cm4.sh`. `randombytes` is the STM32F405
+  HASH_RNG. Linux still uses the host package.
+- Hardware steps: `docs/horse/HARDWARE_TEST_PLAN.md`.
 - Soft Viterbi on the host path; fragment accumulator `int16_t`.
 - Tests: analog loopback, three-mode + late entry, long-clock, cps
   layout vs upstream, frame/crypto/worker/info/codec/peers/keystore/host
@@ -72,24 +78,23 @@ Host analog loopback (gain 1.0 unless noted), after v2:
 
 `dsp.cpp` is not patched (`docs/horse/UPSTREAM_ISSUE_dsp.md`).
 
-## Unverified without an MD-3x0 cross map and a radio
+## Unverified without a radio
 
 One list. None of these is claimed done:
 
-- On-air TX/RX, RF, UI, and C5000 key/unkey on a handset
-- Linker map (this host, gcc 9.2.0-mp3.2, no libsodium on the ARM
-  link): flash 240896 B / 848 KiB (27.7%); CCM smallram 29328 B / 64 KiB
-  (44.8%); largeram 40 KiB / 130560 B (31.4%); ELF bss 68512 B.
-  `OpMode_Horse horseMode` BSS 9608 B; static voice codec 4312 B.
-  Cortex-M4 libsodium HWM still unverified (sodium not linked).
-- Argon2id 16 KiB heap plus 16 KiB worker stack on 192 KiB SRAM
-- Device Viterbi time; host is ~82 us/frame
-- Cross-linked `HAVE_LIBSODIUM` (this MD-3x0 build did not find
-  libsodium; Horse crypto remains fail-closed on the radio until a
-  cross sodium is added)
+- On-air TX/RX, RF, UI, and C5000 key/unkey on a handset (plan:
+  `docs/horse/HARDWARE_TEST_PLAN.md`)
+- DWT/ITM cycle counts; PTT-to-key times above are estimates
+- Runtime heap high-water vs 16+16+16 KiB on the device
 - Identity NVM offset versus the MD-3x0 partition map
 - Provisioning FIFO on device
 - Empty-passphrase unlock of an identity stored with `""`
+
+MD-3x0 map with real sodium (gcc 9.2.0-mp3.2): flash 350000 B / 848 KiB
+(40.31%); CCM 30800 B / 64 KiB (47.00%); largeram framebuffer 40 KiB;
+heap 89600 B. RTX `txState` 128 B; sodium worker deepest 4120 B
+(Argon2id). Non-Horse mduv3x0/gd77 differ from `upstream/master` by
+`GIT_VERSION` and the 24 B Horse overlay on `rtxStatus_t`.
 
 ## Known limits
 
@@ -109,7 +114,7 @@ meson compile -C build_linux linux \
   horse_peers_test horse_keystore_test horse_host_interop_test \
   horse_loopback_test ui_check_standby_test m17_packet_test \
   dsp_oversampling_test gfx_text_test m17_replay_test cps_layout_test \
-  horse_fec_v2_sim horse_crypto_worker_test
+  horse_fec_v2_sim horse_crypto_worker_test horse_tx_fail_test
 meson test -C build_linux --no-rebuild
 
 meson setup build_linux_address -Dasan=true
