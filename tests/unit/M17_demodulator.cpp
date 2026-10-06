@@ -485,6 +485,76 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
     REQUIRE_FALSE(lostLock);
 }
 
+TEST_CASE("Demodulator soft bits agree with the hard symbols of each frame",
+          "[m17][demodulator][soft]")
+{
+    static constexpr size_t PREAMBLE_SYMS = 200;
+    static constexpr size_t NUM_FRAMES = 4;
+
+    // Encoded stream frames use all four symbol levels
+    std::vector<int8_t> syms;
+    M17Signal::appendPreamble(syms, PREAMBLE_SYMS);
+    auto frames = M17Signal::voiceFrames(NUM_FRAMES, false);
+    for (size_t f = 1; f <= NUM_FRAMES; f++)
+        M17Signal::appendFrame(syms, frames[f]);
+    syms.insert(syms.end(), PREAMBLE_SYMS, 0);
+    auto baseband = M17Signal::rrcBaseband(syms);
+
+    M17::Demodulator demod;
+    demod.init();
+    size_t framesChecked = 0;
+    for (int16_t x : baseband) {
+        if (!demod.sample(x, false))
+            continue;
+        const auto &hard = demod.getFrame();
+        const auto &soft = demod.getSoftFrame();
+        for (size_t bit = 0; bit < soft.size(); bit++) {
+            bool hardBit = (hard[bit / 8] >> (7 - (bit % 8))) & 1;
+            REQUIRE((soft[bit] >= 0x8000) == hardBit);
+        }
+        framesChecked++;
+    }
+    // The demodulator may deliver one more frame of trailing silence before
+    // it releases the lock; every delivered frame must agree.
+    REQUIRE(framesChecked >= NUM_FRAMES);
+}
+
+/**
+ * Soft bits of a sample, with the +1 level at 1000 and the -1 level at -800.
+ *
+ * @param sample: sample to slice.
+ * @return the soft sign and magnitude bits.
+ */
+static std::array<uint16_t, 2> softBits(const int16_t sample)
+{
+    std::array<uint16_t, 2> soft;
+    M17::Demodulator::slice(sample, { 3000, -2400 }, soft);
+    return soft;
+}
+
+TEST_CASE("Demodulator soft bits are fully confident from the nearest level on",
+          "[m17][demodulator][soft]")
+{
+    using Soft = std::array<uint16_t, 2>;
+
+    // Both bits fully confident at every symbol level
+    REQUIRE(softBits(+3000) == Soft{ 0x0000, 0xFFFF });
+    REQUIRE(softBits(+1000) == Soft{ 0x0000, 0x0000 });
+    REQUIRE(softBits(-800) == Soft{ 0xFFFF, 0x0000 });
+    REQUIRE(softBits(-2400) == Soft{ 0xFFFF, 0xFFFF });
+
+    // and no more beyond the outer levels
+    REQUIRE(softBits(+32767) == softBits(+3000));
+    REQUIRE(softBits(-32768) == softBits(-2400));
+
+    // Half scale on a decision boundary, half confident half way to a level
+    REQUIRE(softBits(0)[0] == 0x8000);
+    REQUIRE(softBits(+2000)[1] == 0x7FFF);
+    REQUIRE(softBits(-1600)[1] == 0x7FFF);
+    REQUIRE(softBits(+500)[0] == 0x4000);
+    REQUIRE(softBits(-400)[0] == 0xBFFF);
+}
+
 // ---------------------------------------------------------------------------
 // Symbol deviation estimator
 // ---------------------------------------------------------------------------
