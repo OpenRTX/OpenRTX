@@ -427,6 +427,11 @@ Horse overlay and `horseInfo_t` are behind `CONFIG_HORSE`. ELF
 relocatable objects can still differ in DWARF compile directories.
 Sodium is not linked on those radios.
 
+GitHub CI on this fork: clang-format on Horse files that the format
+script checks; unit tests with junit extra args; Cortex-M4 meson setup
+must not require a successful sodium prebuild. Crypto tests skip
+without a host libsodium package.
+
 First failing layer before the demod fix was **c**. Commits:
 
 | Commit | Change |
@@ -482,9 +487,6 @@ session-keyed voice MAC (C1).
   against every MD-3x0 partition map.
 - FIFO `serial.Serial("/tmp/openrtx_horse_prov.fifo")` vs firmware
   `open(O_RDWR|O_NONBLOCK)`: not executed.
-- Host `dependency('libsodium')` applied to **md3x0_opts**: native
-  sodium on an ARM link is likely wrong; cross builds may compile
-  without `HAVE_LIBSODIUM`.
 - Fingerprint hashes the entire identity including secrets
   (`horse_crypto.c`); CONFIRM sends only the hash.
 - MDx `data[1024]` overlay vs 128 KB sector 11: likely pre-existing;

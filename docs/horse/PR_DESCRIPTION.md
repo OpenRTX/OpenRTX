@@ -29,8 +29,10 @@ This branch:
   EOT, unkeys, and shows `Horse: TX crypto` (not zeros).
 - MD-3x0 links pinned libsodium 1.0.20 (sha256
   `ebb65ef6ca439333c2bb41a0c1990587288da07f6c7fd07cb3a18cc18d30ce19`)
-  via `scripts/build_libsodium_cm4.sh`. `randombytes` is the STM32F405
-  HASH_RNG. Linux still uses the host package.
+  via `scripts/build_libsodium_cm4.sh`. If that prebuild fails (no Miosix
+toolchain), `meson setup` for `build_cm4` still succeeds and MD-3x0
+Horse stays fail-closed without `HAVE_LIBSODIUM`. `randombytes` is the
+STM32F405 HASH_RNG. Linux still uses the host package.
 - HASH_RNG: seed/clock flags every read, discard first word after
   enable, reject consecutive identical words, mutex for the crypto
   worker. Failure is `HORSE_ERR_RNG` (`Horse: RNG`); no TX. Host mock:
@@ -39,7 +41,10 @@ This branch:
 - Soft Viterbi on the host path; fragment accumulator `int16_t`.
 - Tests: analog loopback, three-mode + late entry, long-clock, cps
   layout vs upstream, frame/crypto/worker/info/codec/peers/keystore/host
-  interop, `horse_fec_v2_sim` floors and owner targets.
+  interop, RNG mock, provision selftest (ignores extra meson args),
+  settings.h vs `upstream/master` (skip if that ref is missing),
+  `horse_fec_v2_sim` floors and owner targets. Crypto tests skip
+  (meson 77) without libsodium. Keystore/peers use `/tmp` mkdtemp.
 - Horse libFuzzer: `fuzz_horse_frame`, `fuzz_horse_voice` (`FUZZING.md`).
 - Docs: `horse.md` (root); audit/design/DSP/PR/FEC under `docs/horse/`.
 
@@ -131,6 +136,11 @@ meson setup build_linux_address -Dasan=true
 # same compile list, then:
 ASAN_OPTIONS=detect_leaks=0 meson test -C build_linux_address --no-rebuild
 ```
+
+The GitHub unit-test job also passes `--test-args '--reporter junit'`.
+Horse provision and settings wrappers ignore unknown extra arguments.
+`horse_randombytes_test` is built with `b_coverage=false` so gcovr does
+not merge two copies of `horse_randombytes.c`.
 
 `HORSE_FALSE_LOCK_LONG=1` extends the loopback Hamming-0 noise table
 to ten minutes. Do not run `ninja -C <dir>` with no target if that
