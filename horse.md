@@ -81,10 +81,14 @@ frame; lost frames are gaps, repeats and backward FN are not.
 - After lock, twelve completed frames without `noteValidTag()` drop the
   lock (OpMode notes a tag when LSF CRC passes and when a voice tag
   verifies).
+- After authentication, every frame slot is offered to the voice
+  decoder unless the sync is within Hamming 2 of EOT; the tag decides
+  acceptance. Before authentication the Hamming-2 / flywheel-4 rule
+  remains.
 - Host loopback skips `dsp_dcBlockFilter` except `test_layer_dc_block()`
   because of upstream `dsp.cpp:19` UB. DC-block off-by-one at the
   LSF/voice boundary is mitigated by `CLOCK_HOLD_FRAMES` (see
-  `docs/horse/HORSE_FEC_V2.md` section 7b E).
+  `docs/horse/HORSE_FEC_V2.md`).
 
 ---
 
@@ -114,6 +118,14 @@ Passphrase is RAM-only. Linux files are
 `$XDG_STATE_HOME/OpenRTX/horse_identity.bin` mode 0600. Peer public keys
 are a sidecar table (`horse_peer_t`, 64 slots), not `contact_t`.
 `horse_provision.py` writes both formats.
+
+All libsodium work (X25519, Ed25519, BLAKE2b, XChaCha20, Argon2id) runs
+on a dedicated 16 KiB worker thread. RTX posts a job under a mutex,
+waits on a condition variable (no busy-wait), and reads the result.
+Secrets in the job are wiped on take, cancel, and terminate. TX must
+not key the transmitter until key agreement has finished; PTT release
+cancels the pending job. Host stack watermarks are in
+`docs/horse/HORSE_FEC_V2.md`; Cortex-M4 figures will differ.
 
 Codec: CODEC2 2400, two 20 ms blocks per 40 ms Horse frame.
 
@@ -148,12 +160,12 @@ Limits:
   They are harmless: no audio without a valid tag and LSF CRC.
 - Gain 2.0 fails in the impairment test because the samples clip.
 - C13 C5000 TX enable is implemented and untested on hardware.
-- MD-3x0 flash, RTX stack, libsodium, and Argon2 heap: cross toolchain
-  was not available on the last host. Script limit only: 848 KiB flash,
-  64 KiB CCM + 128 KiB SRAM.
+- MD-3x0 flash, RTX stack, libsodium, Argon2 heap, and C5000 keying:
+  see the unverified list in `docs/horse/PR_DESCRIPTION.md`. Host
+  decoder BSS is 8872 B; fragment soft accumulator is int16.
 
-Normative FEC and late-entry detail: `docs/horse/HORSE_FEC_V2.md`
-section 7b. Audit: `docs/horse/HORSE_AUDIT.md`.
+Normative FEC, gates, and measured stack: `docs/horse/HORSE_FEC_V2.md`.
+Audit: `docs/horse/HORSE_AUDIT.md`.
 
 ---
 
@@ -175,9 +187,10 @@ meson test -C build_linux --no-rebuild
 See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
 the loopback Hamming-0 false-lock table to ten minutes.
 
-Horse tests: Frame, Crypto, Info, Codec, Peers, Keystore, Host Interop,
-Loopback (including late entry and three-mode), CPS layout vs upstream,
-Provision Pack. FEC study binary: `horse_fec_v2_sim`.
+Horse tests: Frame, Crypto, Crypto Worker (stack HWM + PTT cancel),
+Info, Codec, Peers, Keystore, Host Interop, Loopback (including late
+entry, three-mode, long-clock), CPS layout vs upstream, Provision Pack.
+FEC binary: `horse_fec_v2_sim` (floors, owner targets, streamloss).
 
 Sanitizer: `meson setup build_linux_address -Dasan=true` with
 `ASAN_OPTIONS=detect_leaks=0`.

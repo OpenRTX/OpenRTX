@@ -19,14 +19,14 @@ work list. Finding status:
 | C4 signature chunk overflow | fixed in `c3f68754`; packing `13ac0cef` (5x12+4) |
 | C5 20 ms DMA vs 40 ms codec | fixed in `8b965e29` |
 | C6 FN / nonce layout | fixed in `08e6c3cb` / `4e789cbf` |
-| C7 Argon2 RAM / PBKDF2 | `4015daa2`; 16 KiB Argon2id via libsodium heap; MD-3x0 map not taken (`/opt/arm-miosix-eabi` missing) |
+| C7 Argon2 RAM / PBKDF2 | `4015daa2`; 16 KiB Argon2id via libsodium heap; worker thread 16 KiB; MD-3x0 map pending cross build |
 | C8 passphrase in `settings_t` | fixed in `4015daa2` (RAM-only) |
 | C9 `contact_t` growth | fixed in `1b79bbdb` (sidecar peers) |
 | C10 Ed25519 seed padded to 64 | fixed in `80404ce2` |
 | C11 keyring hex/JSON | fixed in `80404ce2` / `31495ec7` |
 | C12 encrypted RX without session | fixed in `c6bdad06` |
-| C13 MD-3x0 C5000 TX enable | implemented `465707c4`; untested on hardware; no Miosix map |
-| C14 RTX 512 B stack | `7f7069a2` host `-Wstack-usage`; unverified on MD-3x0 (toolchain missing) |
+| C13 MD-3x0 C5000 TX enable | implemented `465707c4`; untested on hardware |
+| C14 RTX 512 B stack | host `-Wstack-usage`; sodium moved to 16 KiB worker; Cortex-M4 HWM unverified |
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
 | C17 LDPC name vs repeat-2 | closed in v2: M17 option-C voice `0de39b89`; `ldpc_horse` removed |

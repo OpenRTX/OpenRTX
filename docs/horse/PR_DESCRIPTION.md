@@ -21,12 +21,15 @@ This branch:
 - Crypto: X25519 ECDH, XChaCha20, 32-bit keyed tags, Ed25519 session
   signatures, Argon2id 16 KiB via `crypto_pwhash`, LSF-bound KDF
   (version 2). Fail closed. No cleartext fallback.
-- Demod: Hamming-0 LSF or voice acquire, Hamming-2 tracking, coast,
-  bounded TED after `CLOCK_HOLD_FRAMES`, late entry via fragments.
-- C13: C5000 TX key/unkey on every MD-3x0 TX path.
-- Tests: analog loopback, three-mode + late entry, cps layout vs
-  upstream, frame/crypto/info/codec/peers/keystore/host interop,
-  `horse_fec_v2_sim`.
+- Demod: Hamming-0 LSF or voice acquire, Hamming-2 tracking, HD<=4
+  flywheel after a voice frame, tag-decided voice after authentication,
+  coast, bounded TED after `CLOCK_HOLD_FRAMES`, late entry via fragments.
+- Crypto worker: 16 KiB thread; RTX never runs libsodium; TX not keyed
+  until key agreement finishes; PTT cancel.
+- Soft Viterbi on the host path; fragment accumulator `int16_t`.
+- Tests: analog loopback, three-mode + late entry, long-clock, cps
+  layout vs upstream, frame/crypto/worker/info/codec/peers/keystore/host
+  interop, `horse_fec_v2_sim` floors and owner targets.
 - Horse libFuzzer: `fuzz_horse_frame`, `fuzz_horse_voice` (`FUZZING.md`).
 - Docs: `horse.md` (root); audit/design/DSP/PR/FEC under `docs/horse/`.
 
@@ -61,17 +64,32 @@ Host analog loopback (gain 1.0 unless noted), after v2:
 | complete_v2 @10000 (200/mode, real demod) | 95--107/200 (gate >=198; not met) |
 | lsf_frag erase_open=0/1 @10000 | 186/200 / 137/200 (gate >=198; not met) |
 | Viterbi host | ~82 us/frame; `voice_decode` stack 2208 B host |
+| Soft campaign 200 TX | 8000 strict 192-196 usable 198-200; 10000 strict 156-159 usable 186-191 |
+| Owner targets (soft, both seeds) | 8000: 190/195; 10000: 150/180 (meson) |
+| Floors (not targets) | 8000 strict 180; 10000 usable 165 |
+| Streamloss nloss @10000 soft+track | 33 before tag-decided, 30 after |
+| Host sodium stack delta | derive 616, verify 1616, Argon2id 5000; RTX 512 B |
 
 `dsp.cpp` is not patched (`docs/horse/UPSTREAM_ISSUE_dsp.md`).
 
-## Unverified on MD-3x0
+## Unverified without an MD-3x0 cross map and a radio
 
-- On-air TX/RX, C5000 keying, RF, and UI.
-- Flash/RAM: `/opt/arm-miosix-eabi` missing on the last host; no linker
-  map. Script limit only: 848 KiB flash, 64 KiB CCM + 128 KiB SRAM.
-- RTX stack and Argon2id 16 KiB heap under libsodium on-device.
-- Host-only Viterbi and fragment RAM figures are in the final report;
-  device stack delta unverified.
+One list. None of these is claimed done:
+
+- On-air TX/RX, RF, UI, and C5000 key/unkey on a handset
+- Linker map (this host, gcc 9.2.0-mp3.2, no libsodium on the ARM
+  link): flash 240896 B / 848 KiB (27.7%); CCM smallram 29328 B / 64 KiB
+  (44.8%); largeram 40 KiB / 130560 B (31.4%); ELF bss 68512 B.
+  `OpMode_Horse horseMode` BSS 9608 B; static voice codec 4312 B.
+  Cortex-M4 libsodium HWM still unverified (sodium not linked).
+- Argon2id 16 KiB heap plus 16 KiB worker stack on 192 KiB SRAM
+- Device Viterbi time; host is ~82 us/frame
+- Cross-linked `HAVE_LIBSODIUM` (this MD-3x0 build did not find
+  libsodium; Horse crypto remains fail-closed on the radio until a
+  cross sodium is added)
+- Identity NVM offset versus the MD-3x0 partition map
+- Provisioning FIFO on device
+- Empty-passphrase unlock of an identity stored with `""`
 
 ## Known limits
 
@@ -91,7 +109,7 @@ meson compile -C build_linux linux \
   horse_peers_test horse_keystore_test horse_host_interop_test \
   horse_loopback_test ui_check_standby_test m17_packet_test \
   dsp_oversampling_test gfx_text_test m17_replay_test cps_layout_test \
-  horse_fec_v2_sim
+  horse_fec_v2_sim horse_crypto_worker_test
 meson test -C build_linux --no-rebuild
 
 meson setup build_linux_address -Dasan=true
