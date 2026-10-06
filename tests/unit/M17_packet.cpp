@@ -64,6 +64,7 @@ TEST_CASE("Encode then decode round-trip", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     // Build a test payload: "HELLO M17 PACKET!!" padded with zeros.
     PacketFrame frame;
@@ -91,6 +92,7 @@ TEST_CASE("Round-trip with all-zeros payload", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     PacketFrame frame;
 
@@ -109,6 +111,7 @@ TEST_CASE("Round-trip with sequential byte pattern", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     PacketFrame frame;
     for (size_t i = 0; i < PacketFrame::DATA_SIZE; i++)
@@ -167,6 +170,7 @@ TEST_CASE("Round-trip with all-0xFF payload", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     PacketFrame frame;
     for (size_t i = 0; i < PacketFrame::DATA_SIZE; i++)
@@ -187,6 +191,7 @@ TEST_CASE("Round-trip with single non-zero byte", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     PacketFrame frame;
     frame[0] = 0x42;
@@ -207,6 +212,7 @@ TEST_CASE("Decoder distinguishes PACKET from STREAM frame type",
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     // Encode a packet frame
     PacketFrame pktFrame;
@@ -232,6 +238,7 @@ TEST_CASE("Decoder identifies EOT frame type", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     frame_t eotFrame;
     encoder.encodeEotFrame(eotFrame);
@@ -244,6 +251,7 @@ TEST_CASE("Decoder identifies LSF frame type, not PACKET", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     LinkSetupFrame lsf;
     frame_t lsfEncoded;
@@ -258,6 +266,7 @@ TEST_CASE("Decoder reset clears previous packet frame data", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     // Decode a non-zero payload so decoder has data
     PacketFrame frame;
@@ -283,6 +292,7 @@ TEST_CASE("Consecutive encodes with different payloads are independent",
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     PacketFrame frame1;
     for (size_t i = 0; i < PacketFrame::DATA_SIZE; i++)
@@ -372,6 +382,7 @@ TEST_CASE("EOF and counter round-trip through encode/decode", "[m17][packet]")
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     // Intermediate frame: counter=3, not EOF
     PacketFrame frame;
@@ -410,6 +421,7 @@ TEST_CASE("Viterbi recovers payload after single bit flip in encoded frame",
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     PacketFrame frame;
     const char msg[] = "HELLO M17 PACKET!!";
@@ -433,6 +445,7 @@ TEST_CASE("Viterbi recovers payload after scattered bit flips in encoded frame",
 {
     FrameEncoder encoder;
     FrameDecoder decoder;
+    decoder.init();
 
     PacketFrame frame;
     const char msg[] = "BIT ERROR TEST";
@@ -486,6 +499,7 @@ TEST_CASE("Reference vector: assemble, encode, decode SMS packet",
 
     // --- Decode and verify every field ---
     FrameDecoder decoder;
+    decoder.init();
     FrameType type = decoder.decodeFrame(KNOWN_GOOD_FRAME);
     REQUIRE(type == FrameType::PACKET);
 

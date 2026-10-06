@@ -169,6 +169,7 @@ private:
     M17::Demodulator demod;
     M17::FrameDecoder decoder;
     M17::frame_t frame;
+    M17::softFrame_t softFrame;
     std::array<uint8_t, MAX_PACKET> packet;
 };
 
