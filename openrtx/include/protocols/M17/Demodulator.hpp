@@ -87,7 +87,7 @@ public:
      * @param rawSample: signed 16-bit baseband sample.
      * @param invertPhase: invert the phase of the sample before decoding.
      * @return true if a new frame has been fully decoded and not yet read
-     * with getFrame().
+     * with getFrame() or getSoftFrame().
      */
     bool sample(int16_t rawSample, bool invertPhase = false);
 
@@ -95,6 +95,16 @@ public:
      * @return true if a demodulator is locked on an M17 stream.
      */
     bool isLocked();
+
+    /**
+     * Get the soft bits of the last demodulated frame, one per coded bit and
+     * parallel to the frame returned by getFrame(): 0x0000 is a confident 0,
+     * 0xFFFF a confident 1. Valid for the same lifetime as getFrame(), and
+     * like getFrame() marks the frame as read.
+     *
+     * @return reference to the soft bits of the latest demodulated frame.
+     */
+    const softFrame_t& getSoftFrame();
 
 private:
 
@@ -104,9 +114,38 @@ private:
      * newFrame variable.
      *
      * @param sample: baseband sample.
-     * @return quantized symbol.
      */
     void quantize(const int16_t sample);
+
+    /**
+     * Slice a sample into its symbol.
+     *
+     * @param sample: baseband sample at the sampling point.
+     * @param outerDeviation: positive and negative outer symbol levels.
+     * @return the symbol.
+     */
+    static int8_t
+    hardSlice(const int16_t sample,
+              const std::pair< int32_t, int32_t >& outerDeviation);
+
+    /**
+     * Slice a sample into the two soft bits of its symbol, in the order of its
+     * coded bits: +3 = 01, +1 = 00, -1 = 10, -3 = 11. The first bit is the
+     * sign, decided at zero. The second is 1 only for an outer symbol, so it
+     * is decided at hardSlice()'s threshold between the inner and the outer
+     * level, two thirds of the outer level. Its confidence is measured from
+     * that threshold rather than from zero, because a sample on the threshold
+     * is as likely an inner symbol as an outer one. Both bits take their 0/1
+     * decision from hardSlice() and are fully confident from the nearest
+     * symbol level on.
+     *
+     * @param sample: baseband sample at the sampling point.
+     * @param outerDeviation: positive and negative outer symbol levels.
+     * @return the soft bits, 0x0000 a confident 0 and 0xFFFF a confident 1.
+     */
+    static std::array< uint16_t, 2 >
+    softSlice(const int16_t sample,
+              const std::pair< int32_t, int32_t >& outerDeviation);
 
     /**
      * Reset the demodulator state.
@@ -187,6 +226,8 @@ private:
     pathId                         basebandPath;    ///< Id of the baseband input path.
     std::unique_ptr<frame_t >      demodFrame;      ///< Frame being demodulated.
     std::unique_ptr<frame_t >      readyFrame;      ///< Fully demodulated frame to be returned.
+    std::unique_ptr<softFrame_t >  softDemod;       ///< Soft bits, in progress.
+    std::unique_ptr<softFrame_t >  softReady;       ///< Soft bits, ready frame.
     bool                           newFrame;        ///< A new frame has been fully decoded.
     bool                           resetClockRec;   ///< Clock recovery reset request.
     bool                           updateSampPoint; ///< Sampling point update pending.
