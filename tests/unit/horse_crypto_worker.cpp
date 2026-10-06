@@ -290,10 +290,12 @@ static int test_handoff_and_cancel(void)
 
 int main()
 {
-    if (test_stack_hwm() != 0)
-        return -1;
-    if (test_handoff_and_cancel() != 0)
-        return -1;
+    int rc = test_stack_hwm();
+    if (rc != 0)
+        return rc;
+    rc = test_handoff_and_cancel();
+    if (rc != 0)
+        return rc;
     std::printf("horse_crypto_worker_test: all tests passed\n");
     return 0;
 }

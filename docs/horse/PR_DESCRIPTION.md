@@ -145,3 +145,9 @@ not merge two copies of `horse_randombytes.c`.
 `HORSE_FALSE_LOCK_LONG=1` extends the loopback Hamming-0 noise table
 to ten minutes. Do not run `ninja -C <dir>` with no target if that
 directory also builds Miosix firmware and the ARM toolchain is missing.
+
+Before pushing, run the GitHub-shaped native checks:
+
+```bash
+bash scripts/ci_local.sh
+```
