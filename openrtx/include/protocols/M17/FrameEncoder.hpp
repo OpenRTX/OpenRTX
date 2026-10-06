@@ -73,6 +73,17 @@ public:
                                const bool isLast = false);
 
     /**
+     * Convolutionally encode and puncture the data of a stream frame, that
+     * is its frame number and payload, as they are transmitted after the
+     * LICH.
+     *
+     * @param frame: stream data frame.
+     * @param punctured: destination for the 272 punctured coded bits.
+     */
+    static void encodeStreamPayload(const StreamFrame& frame,
+                                    std::array< uint8_t, 34 >& punctured);
+
+    /**
      * Encode an End Of Transmission marker frame.
      *
      * @param output: destination buffer for the encoded data.
