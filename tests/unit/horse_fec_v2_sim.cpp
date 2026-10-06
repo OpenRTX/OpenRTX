@@ -842,66 +842,139 @@ static void m17_encode_chunk(Codecs &c, const uint8_t *info18, frame_t &out,
     memcpy(out.data() + 2, cw, FEC_CODED_BYTES);
 }
 
-static int run_complete_v2(Codecs &c, float noise, unsigned seed, int ntx,
-                           int miss_limit, int mode, int *ok, int *got_voice)
+enum FailCause : int {
+    FAIL_NONE = 0,
+    FAIL_NO_ACQ = 1,       /* a */
+    FAIL_LSF = 2,           /* b */
+    FAIL_TAG = 3,          /* c */
+    FAIL_SIG = 4,          /* d */
+    FAIL_LOCK = 5,         /* e */
+    FAIL_VOICE = 6,        /* f */
+    FAIL_EOT = 7,          /* g */
+    FAIL_LATE = 8,         /* h */
+    FAIL_N = 9
+};
+
+static const char *fail_name(int c)
 {
-    *ok = 0;
-    *got_voice = 0;
+    static const char *n[] = { "ok", "a_no_acq", "b_lsf", "c_tag", "d_sig",
+                               "e_lock", "f_voice", "g_eot", "h_late" };
+    if (c < 0 || c >= FAIL_N)
+        return "?";
+    return n[c];
+}
+
+struct AttribTrial {
+    int cause;
+    int strict_ok;
+    int usable_ok;
+    int voice_ok;
+    int voice_lost;
+    int start_fn;
+    int start_n;
+    int unlock;
+    int unlock_miss;
+    int got_frames;
+    int eot_seen;
+    int lsf_open;
+    int lsf_frag;
+    int tag_ok;
+    int sig_ok;
+};
+
+/*
+ * Demod one RX stream while recording unlock reason. noteValidTag on LSF
+ * CRC so coast tag-drop stays off the diagnosis path (modem campaign).
+ */
+static int demod_frames_attrib(const std::vector<int16_t> &rx24,
+                               std::vector<frame_t> &out,
+                               HorseUnlockReason *unlock, uint8_t *umiss)
+{
+    HorseDemodulator demod;
+    HorseFrameDecoder decoder;
+    demod.init();
+    demod.resetImmediate();
+    demod.setSkipDcBlock(true);
+    demod.setMissUnlock(COAST_MISS_UNLOCK);
+    out.clear();
+    for (int16_t s : rx24) {
+        demod.feedSample(s, false);
+        frame_t f{};
+        if (!demod.takeFrame(f))
+            continue;
+        auto ty = decoder.decodeFrame(f);
+        if (ty == HorseFrameType::LINK_SETUP && decoder.lsfReady())
+            demod.noteValidTag();
+        out.push_back(f);
+    }
+    if (unlock)
+        *unlock = demod.lastUnlockReason();
+    if (umiss)
+        *umiss = demod.lastUnlockMissedSyncs();
+    demod.terminate();
+    return 0;
+}
+
+static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
+                               int miss_limit, AttribTrial *sum, int *hist)
+{
+    (void)miss_limit;
+    memset(hist, 0, FAIL_N * sizeof(int));
+    memset(sum, 0, sizeof *sum);
+    const int nvoice = 300;
+    const bool want_sig = (mode == 2 || mode == 3);
+    uint8_t flags = 0;
+    if (mode == 1 || mode == 3)
+        flags |= LSF_FLAG_ENCRYPTED;
+    if (want_sig)
+        flags |= LSF_FLAG_SIGNED;
+    uint8_t eph[32];
+    memset(eph, 0x5A, sizeof eph);
+    uint8_t sig64[SIG_BYTES];
+    for (size_t i = 0; i < SIG_BYTES; i++)
+        sig64[i] = (uint8_t)(0xA0 + i);
+    uint8_t tag[4] = { 0x11, 0x22, 0x33, 0x44 };
+    uint8_t payload[12];
+    memset(payload, 0x55, sizeof payload);
+
     HorseFrameEncoder enc;
     call_t src = { { 1, 2, 3, 4, 5, 6 } };
     call_t dst = { { 6, 5, 4, 3, 2, 1 } };
-    uint8_t lsf46[46];
-    memset(lsf46, 0, sizeof lsf46);
-    memcpy(lsf46, src.data(), 6);
-    memcpy(lsf46 + 6, dst.data(), 6);
-    lsf46[LSF_FLAGS_OFFSET] = 0;
-    if (mode == 1 || mode == 3)
-        lsf46[LSF_FLAGS_OFFSET] |= LSF_FLAG_ENCRYPTED;
-    if (mode == 2 || mode == 3)
-        lsf46[LSF_FLAGS_OFFSET] |= LSF_FLAG_SIGNED;
-    lsf46[LSF_VERSION_OFFSET] = 2;
-    uint16_t crc = crc_m17(lsf46, 46);
-    uint8_t lsfpad[54];
-    memset(lsfpad, 0, sizeof lsfpad);
-    memcpy(lsfpad, lsf46, 46);
-    lsfpad[46] = (uint8_t)(crc >> 8);
-    lsfpad[47] = (uint8_t)(crc & 0xFF);
-    const int nlsf = 3;
-    const int nsig = 6;
-    const int nvoice = 300;
-    const int ntot = nlsf + nsig + nvoice + 1;
-    std::vector<frame_t> tx((size_t)ntot);
-    for (int i = 0; i < nlsf; i++)
-        m17_encode_chunk(c, lsfpad + i * 18, tx[static_cast<size_t>(i)], true);
-    uint8_t siginfo[FEC_INFO_BYTES];
-    memset(siginfo, 0x22, sizeof siginfo);
-    for (int i = 0; i < nsig; i++) {
-        siginfo[0] = (uint8_t)((SIG_FRAME_BASE + i) >> 8);
-        siginfo[1] = (uint8_t)(SIG_FRAME_BASE + i);
-        m17_encode_chunk(c, siginfo, tx[static_cast<size_t>(nlsf + i)], false);
+    std::vector<frame_t> tx;
+    frame_t lsf[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, eph, flags, lsf);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+        tx.push_back(lsf[i]);
+    if (want_sig)
+        enc.setSignatureFragments(sig64);
+    else
+        enc.setSignatureFragments(nullptr);
+    for (int i = 0; i < (int)SIG_FRAME_COUNT; i++) {
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(payload, tag,
+                                   (uint16_t)(SIG_FRAME_BASE + i), vf, false,
+                                   12);
+        tx.push_back(vf);
     }
-    std::vector<int16_t> bb48;
-    {
-        unsigned rng = seed;
-        for (int i = 0; i < nvoice; i++) {
-            uint8_t info[FEC_INFO_BYTES];
-            if (mode == 2) {
-                memset(info, 0x11, sizeof info);
-                info[0] = (uint8_t)(i >> 8);
-                info[1] = (uint8_t)i;
-            } else {
-                for (size_t b = 0; b < FEC_INFO_BYTES; b++) {
-                    rng = rng * 1103515245u + 12345u;
-                    info[b] = (uint8_t)(rng >> 16);
-                }
+    for (int i = 0; i < nvoice; i++) {
+        frame_t vf{};
+        if (mode == 2)
+            memset(payload, 0x11, sizeof payload);
+        else {
+            unsigned rng = seed + (unsigned)i * 13u;
+            for (size_t b = 0; b < sizeof payload; b++) {
+                rng = rng * 1103515245u + 12345u;
+                payload[b] = (uint8_t)(rng >> 16);
             }
-            m17_encode_chunk(c, info, tx[static_cast<size_t>(nlsf + nsig + i)],
-                             false);
         }
-        enc.encodeEotFrame(tx.back());
-        if (render_frames(tx, bb48, true) != 0)
-            return -1;
+        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
+        tx.push_back(vf);
     }
+    { frame_t ef; enc.encodeEotFrame(ef); tx.push_back(ef); }
+    std::vector<int16_t> bb48;
+    if (render_frames(tx, bb48, true) != 0)
+        return -1;
+
     for (int t = 0; t < ntx; t++) {
         std::vector<int16_t> imp, rx24;
         impair_t p{};
@@ -911,76 +984,166 @@ static int run_complete_v2(Codecs &c, float noise, unsigned seed, int ntx,
         impair_48k(bb48.data(), bb48.size(), p, imp);
         to_24k(imp, rx24);
         std::vector<frame_t> sl;
-        demod_frames(rx24, sl);
-        if ((int)sl.size() < nlsf)
-            continue;
-        uint8_t rec[54];
-        memset(rec, 0, sizeof rec);
-        bool lsf_ok = true;
-        for (int i = 0; i < nlsf; i++) {
-            uint8_t out[FEC_INFO_BYTES];
-            if (!c.m17.decode_hard(sl[static_cast<size_t>(i)].data() + 2,
-                                   out)) {
-                lsf_ok = false;
-                break;
+        HorseUnlockReason ur = HorseUnlockReason::None;
+        uint8_t um = 0;
+        demod_frames_attrib(rx24, sl, &ur, &um);
+
+        HorseFrameDecoder dec;
+        bool lsf_open = false;
+        bool lsf_ready = false;
+        bool lsf_frag = false;
+        bool saw_any_sync = false;
+        bool eot_seen = false;
+        bool false_eot = false;
+        int open_chunks = 0;
+        int sig_fn_mask = 0;
+        int tag_ok = 0;
+        int voice_ok = 0;
+        int voice_seen = 0;
+        int first_voice_fn = -1;
+        int last_good_fn = -1;
+        bool locked_phase = false;
+        bool lock_lost_mid = false;
+        HorseUnlockReason mid_reason = HorseUnlockReason::None;
+
+        /* Expected payload stream mirrors TX RNG. */
+        for (size_t fi = 0; fi < sl.size(); fi++) {
+            const frame_t &f = sl[fi];
+            bool is_lsf = match_sync(f, LSF_SYNC_WORD);
+            bool is_voice = match_sync(f, VOICE_SYNC_WORD);
+            bool is_eot = match_sync(f, EOT_SYNC_WORD);
+            if (is_lsf || is_voice || is_eot)
+                saw_any_sync = true;
+
+            auto ty = dec.decodeFrame(f);
+            if (dec.lsfReady()) {
+                if (!lsf_ready && open_chunks < (int)LSF_OPENING_FRAMES)
+                    lsf_frag = true;
+                lsf_ready = true;
+                locked_phase = true;
             }
-            memcpy(rec + i * 18, out, 18);
-        }
-        if (!lsf_ok)
-            continue;
-        uint16_t want = ((uint16_t)rec[46] << 8) | rec[47];
-        if (crc_m17(rec, 46) != want)
-            continue;
-        int vok = 0;
-        bool locked = true;
-        int missed = 0;
-        for (int i = 0; i < nlsf + nsig && locked; i++) {
-            const frame_t &f = sl[static_cast<size_t>(i)];
-            bool valid = match_sync(f, LSF_SYNC_WORD)
-                      || match_sync(f, VOICE_SYNC_WORD);
-            bool eot = match_sync(f, EOT_SYNC_WORD);
-            if (valid)
-                missed = 0;
-            else
-                missed++;
-            if (eot || missed > miss_limit)
-                locked = false;
-        }
-        unsigned rng = seed;
-        for (int i = 0; i < nvoice && locked; i++) {
-            size_t idx = (size_t)(nlsf + nsig + i);
-            if (idx >= sl.size())
-                break;
-            const frame_t &f = sl[idx];
-            bool valid = match_sync(f, LSF_SYNC_WORD)
-                      || match_sync(f, VOICE_SYNC_WORD);
-            bool eot = match_sync(f, EOT_SYNC_WORD);
-            uint8_t info[FEC_INFO_BYTES];
-            uint8_t exp[FEC_INFO_BYTES];
-            if (mode == 2) {
-                memset(exp, 0x11, sizeof exp);
-                exp[0] = (uint8_t)(i >> 8);
-                exp[1] = (uint8_t)i;
-            } else {
-                for (size_t b = 0; b < FEC_INFO_BYTES; b++) {
-                    rng = rng * 1103515245u + 12345u;
-                    exp[b] = (uint8_t)(rng >> 16);
+            if (ty == HorseFrameType::LINK_SETUP) {
+                open_chunks++;
+                if (dec.lsfReady() && open_chunks <= (int)LSF_OPENING_FRAMES)
+                    lsf_open = true;
+            } else if (ty == HorseFrameType::EOT) {
+                if (!lsf_ready && voice_ok == 0)
+                    false_eot = true;
+                eot_seen = true;
+            } else if (ty == HorseFrameType::VOICE) {
+                uint8_t mel[12], tg[4];
+                uint16_t fn = 0;
+                dec.getVoicePayload(f, mel, tg, &fn);
+                if (fn >= SIG_FRAME_BASE
+                    && fn < SIG_FRAME_BASE + SIG_FRAME_COUNT) {
+                    sig_fn_mask |= 1 << (fn - SIG_FRAME_BASE);
+                    continue;
+                }
+                if (!voice_fn_in_session(fn))
+                    continue;
+                voice_seen++;
+                bool tag_match = memcmp(tg, tag, 4) == 0;
+                if (tag_match)
+                    tag_ok++;
+                if (!lsf_ready || !tag_match)
+                    continue;
+                if (first_voice_fn < 0)
+                    first_voice_fn = (int)fn;
+                uint8_t exp[12];
+                if (mode == 2)
+                    memset(exp, 0x11, sizeof exp);
+                else {
+                    unsigned rng = seed + (unsigned)fn * 13u;
+                    for (size_t b = 0; b < sizeof exp; b++) {
+                        rng = rng * 1103515245u + 12345u;
+                        exp[b] = (uint8_t)(rng >> 16);
+                    }
+                }
+                if (memcmp(mel, exp, 12) == 0) {
+                    voice_ok++;
+                    last_good_fn = (int)fn;
                 }
             }
-            if (c.m17.decode_hard(f.data() + 2, info)
-                && memcmp(info, exp, FEC_INFO_BYTES) == 0)
-                vok++;
-            if (valid)
-                missed = 0;
-            else
-                missed++;
-            if (eot || missed > miss_limit)
-                locked = false;
         }
-        *got_voice += vok;
-        if (vok >= nvoice)
-            (*ok)++;
+        bool lsf_frag_final = lsf_frag || (lsf_ready && !lsf_open);
+        uint8_t sig_assem[SIG_BYTES];
+        bool sig_frag = dec.getSigFragments(sig_assem)
+                      && memcmp(sig_assem, sig64, SIG_BYTES) == 0;
+        bool sig_frames = (sig_fn_mask == ((1 << SIG_FRAME_COUNT) - 1));
+        bool sig_ok = !want_sig || sig_frames || sig_frag;
+
+        if (locked_phase && ur == HorseUnlockReason::MissedSyncCoast
+            && last_good_fn >= 0 && last_good_fn < nvoice - 1) {
+            lock_lost_mid = true;
+            mid_reason = ur;
+        }
+        if (ur == HorseUnlockReason::EotSeen && !eot_seen
+            && last_good_fn < nvoice - 1) {
+            /* Demod saw EOT sync while voice still expected. */
+            false_eot = true;
+        }
+
+        const int voice_lost = nvoice - voice_ok;
+        const int need_usable = (nvoice * 95 + 99) / 100; /* ceil 95% */
+        /*
+         * Strict: LSF ready (opening or fragments) before audio, voice
+         * from FN 0 with all 300 verified, tag+sig+EOT, no mid unlock.
+         * Usable: key (LSF CRC) + tag + sig if required + >=95% voice.
+         */
+        bool strict = lsf_ready && tag_ok > 0 && sig_ok && voice_ok >= nvoice
+                    && eot_seen && !lock_lost_mid && !false_eot
+                    && first_voice_fn == 0;
+        bool usable = lsf_ready && tag_ok > 0 && sig_ok
+                    && voice_ok >= need_usable;
+        int start_fn = first_voice_fn < 0 ? -1 : first_voice_fn;
+
+        int cause;
+        if (!saw_any_sync || sl.empty())
+            cause = FAIL_NO_ACQ;
+        else if (!lsf_ready)
+            cause = FAIL_LSF;
+        else if (tag_ok == 0)
+            cause = FAIL_TAG;
+        else if (!sig_ok)
+            cause = FAIL_SIG;
+        else if (lock_lost_mid)
+            cause = FAIL_LOCK;
+        else if (false_eot && voice_ok < nvoice)
+            cause = FAIL_EOT;
+        else if (strict)
+            cause = FAIL_NONE;
+        else if (usable && start_fn > 0)
+            cause = FAIL_LATE;
+        else if (voice_ok < nvoice)
+            cause = FAIL_VOICE;
+        else if (!eot_seen)
+            cause = FAIL_EOT;
+        else
+            cause = FAIL_VOICE; /* unreachable guard */
+
+        hist[cause]++;
+        sum->strict_ok += strict ? 1 : 0;
+        sum->usable_ok += usable ? 1 : 0;
+        sum->voice_ok += voice_ok;
+        sum->voice_lost += voice_lost;
+        if (usable && start_fn >= 0) {
+            sum->start_fn += start_fn;
+            sum->start_n += 1;
+        }
+        sum->got_frames += (int)sl.size();
+        sum->eot_seen += eot_seen ? 1 : 0;
+        sum->lsf_open += lsf_open ? 1 : 0;
+        sum->lsf_frag += lsf_frag_final ? 1 : 0;
+        sum->tag_ok += tag_ok > 0 ? 1 : 0;
+        sum->sig_ok += sig_ok ? 1 : 0;
+        if (cause == FAIL_LOCK) {
+            sum->unlock += (int)ur;
+            sum->unlock_miss += um;
+        }
+        (void)mid_reason;
+        (void)um;
     }
+    sum->cause = ntx;
     return 0;
 }
 
@@ -1571,13 +1734,48 @@ int main(int argc, char **argv)
         unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
         int miss = argc > 5 ? atoi(argv[5]) : 4;
         int md = argc > 6 ? atoi(argv[6]) : 1;
-        int ok = 0, gv = 0;
-        if (run_complete_v2(c, noise, seed, ntx, miss, md, &ok, &gv) != 0)
+        AttribTrial sum{};
+        int hist[FAIL_N];
+        if (run_complete_attrib(noise, seed, ntx, md, miss, &sum, hist) != 0)
             return 1;
         const char *mn[] = { "?", "encrypt", "sign", "both" };
-        std::printf("complete_v2 mode=%s miss_limit=%d noise=%.0f ok=%d/%d "
-                    "voice_ok=%d\n",
-                    mn[md], miss, noise, ok, ntx, gv);
+        std::printf("complete_v2 mode=%s miss_limit=%d noise=%.0f seed=%u "
+                    "strict=%d/%d usable=%d/%d voice_ok_sum=%d "
+                    "mean_start_fn=%.1f\n",
+                    mn[md], miss, noise, seed, sum.strict_ok, ntx,
+                    sum.usable_ok, ntx, sum.voice_ok,
+                    sum.start_n ? (double)sum.start_fn / sum.start_n : 0.0);
+        std::printf("attrib");
+        for (int i = 0; i < FAIL_N; i++)
+            std::printf(" %s=%d", fail_name(i), hist[i]);
+        std::printf("\n");
+        /* hist[ok] must equal strict */
+        if (hist[FAIL_NONE] != sum.strict_ok) {
+            std::printf("attrib ERROR: ok hist %d != strict %d\n",
+                        hist[FAIL_NONE], sum.strict_ok);
+            return 1;
+        }
+        return 0;
+    }
+    if (mode == "attrib") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int ntx = argc > 3 ? atoi(argv[3]) : 200;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        int md = argc > 5 ? atoi(argv[5]) : 1;
+        AttribTrial sum{};
+        int hist[FAIL_N];
+        if (run_complete_attrib(noise, seed, ntx, md, 4, &sum, hist) != 0)
+            return 1;
+        const char *mn[] = { "?", "encrypt", "sign", "both" };
+        std::printf("attrib mode=%s noise=%.0f seed=%u ntx=%d "
+                    "strict=%d usable=%d\n",
+                    mn[md], noise, seed, ntx, sum.strict_ok, sum.usable_ok);
+        for (int i = 0; i < FAIL_N; i++)
+            std::printf("  %s %d\n", fail_name(i), hist[i]);
+        std::printf("  lsf_open=%d lsf_frag=%d tag_trials=%d sig_ok=%d "
+                    "eot=%d voice_lost_sum=%d\n",
+                    sum.lsf_open, sum.lsf_frag, sum.tag_ok, sum.sig_ok,
+                    sum.eot_seen, sum.voice_lost);
         return 0;
     }
     if (mode == "lsf_cmp") {
@@ -1620,8 +1818,206 @@ int main(int argc, char **argv)
                     OPT_C_SPARE_BITS);
         return 0;
     }
+    if (mode == "syncmeas") {
+        /*
+         * Compare sync-word families on the real demodulator.
+         * argv: syncmeas <family 0=v2 1=v1 2=alt> [noise] [ntx] [seed]
+         * family 2 proposes alternate HD>=6 from v1.
+         */
+        int fam = argc > 2 ? atoi(argv[2]) : 0;
+        float noise = argc > 3 ? strtof(argv[3], nullptr) : 10000.f;
+        int ntx = argc > 4 ? atoi(argv[4]) : 200;
+        unsigned seed = argc > 5 ? (unsigned)atoi(argv[5]) : 1u;
+        syncw_t lsf_w, voice_w, eot_w;
+        const char *fname;
+        if (fam == 1) {
+            lsf_w = LSF_SYNC_WORD_V1;
+            voice_w = VOICE_SYNC_WORD_V1;
+            eot_w = EOT_SYNC_WORD_V1;
+            fname = "v1";
+        } else if (fam == 2) {
+            /* Alternate proposal: HD>=6 from v1 and mutual. */
+            lsf_w = { 0x2B, 0xE1 };
+            voice_w = { 0x96, 0x4C };
+            eot_w = { 0xC3, 0x1A };
+            fname = "alt";
+        } else {
+            lsf_w = LSF_SYNC_WORD;
+            voice_w = VOICE_SYNC_WORD;
+            eot_w = EOT_SYNC_WORD;
+            fname = "v2";
+        }
+        auto acorr = [](const syncw_t &w) {
+            int8_t sym[8];
+            for (int i = 0; i < 8; i++) {
+                int b = (i < 4) ? ((w[0] >> (6 - 2 * i)) & 3)
+                                : ((w[1] >> (6 - 2 * (i - 4))) & 3);
+                /* dibit -> level like Horse: 00=+1 01=+3 10=-1 11=-3 */
+                static const int8_t lut[4] = { +1, +3, -1, -3 };
+                sym[i] = lut[b];
+            }
+            int peak = 0, worst_side = 0;
+            for (int lag = 0; lag < 8; lag++) {
+                int s = 0;
+                for (int i = 0; i < 8; i++)
+                    s += (int)sym[i] * (int)sym[(i + lag) % 8];
+                if (lag == 0)
+                    peak = s;
+                else if (std::abs(s) > worst_side)
+                    worst_side = std::abs(s);
+            }
+            return std::make_pair(peak, worst_side);
+        };
+        auto pL = acorr(lsf_w), pV = acorr(voice_w), pE = acorr(eot_w);
+        std::printf("syncmeas family=%s words LSF=%02X%02X VOICE=%02X%02X "
+                    "EOT=%02X%02X\n",
+                    fname, lsf_w[0], lsf_w[1], voice_w[0], voice_w[1],
+                    eot_w[0], eot_w[1]);
+        std::printf("  acorr peak/worst_side LSF=%d/%d VOICE=%d/%d EOT=%d/%d\n",
+                    pL.first, pL.second, pV.first, pV.second, pE.first,
+                    pE.second);
+        /* HD matrix vs v1 */
+        auto hd16 = [](const syncw_t &a, const syncw_t &b) {
+            return __builtin_popcount(a[0] ^ b[0])
+                 + __builtin_popcount(a[1] ^ b[1]);
+        };
+        std::printf("  HD vs v1: LSF=%d VOICE=%d EOT=%d; mutual L-V=%d L-E=%d "
+                    "V-E=%d\n",
+                    hd16(lsf_w, LSF_SYNC_WORD_V1),
+                    hd16(voice_w, VOICE_SYNC_WORD_V1),
+                    hd16(eot_w, EOT_SYNC_WORD_V1), hd16(lsf_w, voice_w),
+                    hd16(lsf_w, eot_w), hd16(voice_w, eot_w));
+
+        /* Acquisition: 3 LSF + EOT rendered with forced sync bytes. */
+        int acq = 0;
+        HorseFrameEncoder enc;
+        call_t src = { { 1, 2, 3, 4, 5, 6 } };
+        call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+        frame_t lsf3[LSF_OPENING_FRAMES];
+        enc.encodeLsf(src, dst, nullptr, 0, lsf3);
+        for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+            lsf3[i][0] = lsf_w[0];
+            lsf3[i][1] = lsf_w[1];
+        }
+        std::vector<frame_t> tx(lsf3, lsf3 + LSF_OPENING_FRAMES);
+        { frame_t ef; enc.encodeEotFrame(ef); ef[0] = eot_w[0]; ef[1] = eot_w[1];
+          tx.push_back(ef); }
+        std::vector<int16_t> bb48;
+        if (render_frames(tx, bb48, true) != 0)
+            return 1;
+        for (int t = 0; t < ntx; t++) {
+            std::vector<int16_t> imp, rx24;
+            impair_t p{};
+            p.noise = noise;
+            p.gain = 1.0f;
+            p.seed = seed + (unsigned)t * 17u;
+            impair_48k(bb48.data(), bb48.size(), p, imp);
+            to_24k(imp, rx24);
+            /* Demod with patched sync: use correlator path via temporary
+             * overwrite of constants is not possible; measure Hamming-0
+             * match rate on demodulated frames against the forced word. */
+            std::vector<frame_t> sl;
+            demod_frames(rx24, sl);
+            bool got = false;
+            for (const auto &f : sl) {
+                if (hd_sync(f, lsf_w) == 0) {
+                    got = true;
+                    break;
+                }
+            }
+            /* When family != firmware sync, demod will not lock; fall back
+             * to ideal slice acquisition as a correlator-independent metric. */
+            if (fam != 0) {
+                std::vector<frame_t> ideal;
+                slice_ideal(rx24, true, ideal);
+                got = false;
+                for (const auto &f : ideal) {
+                    if (hd_sync(f, lsf_w) == 0) {
+                        got = true;
+                        break;
+                    }
+                }
+            }
+            if (got)
+                acq++;
+        }
+        std::printf("  acq_rate noise=%.0f %d/%d (%s)\n", noise, acq, ntx,
+                    fam == 0 ? "real_demod" : "ideal_slice");
+
+        /* Tracking misses: 300 voice, firmware sync only for fam=0. */
+        if (fam == 0) {
+            std::vector<frame_t> vtx;
+            for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+                vtx.push_back(lsf3[i]);
+            uint8_t pay[12], tag[4] = { 1, 2, 3, 4 };
+            memset(pay, 0x11, sizeof pay);
+            for (int i = 0; i < 1000; i++) {
+                frame_t vf{};
+                enc.encodeVoiceFrameWithFn(pay, tag, (uint16_t)i, vf, false,
+                                           12);
+                vtx.push_back(vf);
+            }
+            { frame_t ef; enc.encodeEotFrame(ef); vtx.push_back(ef); }
+            std::vector<int16_t> bb2;
+            if (render_frames(vtx, bb2, true) != 0)
+                return 1;
+            int misses = 0, gotf = 0;
+            std::vector<int16_t> imp, rx24;
+            impair_t p{};
+            p.noise = noise;
+            p.gain = 1.0f;
+            p.seed = seed;
+            impair_48k(bb2.data(), bb2.size(), p, imp);
+            to_24k(imp, rx24);
+            std::vector<frame_t> sl;
+            demod_frames(rx24, sl);
+            for (const auto &f : sl) {
+                if (match_sync(f, VOICE_SYNC_WORD)
+                    || match_sync(f, LSF_SYNC_WORD))
+                    gotf++;
+                else if (!match_sync(f, EOT_SYNC_WORD))
+                    misses++;
+            }
+            std::printf("  track_misses_per_1000frames noise=%.0f misses=%d "
+                        "got=%d\n",
+                        noise, misses, gotf);
+        }
+
+        /* False locks / minute on FM-open noise (Hamming-0). */
+        {
+            HorseDemodulator demod;
+            demod.init();
+            demod.resetImmediate();
+            demod.setSkipDcBlock(true);
+            const size_t samples = 24000 * 10; /* 10 s */
+            unsigned rng = seed + 99u;
+            int locks = 0;
+            for (size_t i = 0; i < samples; i++) {
+                rng = rng * 1103515245u + 12345u;
+                int16_t s = (int16_t)((int)(rng & 0xFFFF) - 32768);
+                /* scale to ~sigma 10000 open noise magnitude */
+                s = (int16_t)((int)s * 10000 / 32768);
+                demod.feedSample(s, false);
+                frame_t f{};
+                if (demod.takeFrame(f)) {
+                    if (fam == 0 && (match_sync(f, LSF_SYNC_WORD)
+                                     || match_sync(f, VOICE_SYNC_WORD)))
+                        locks++;
+                    else if (fam != 0
+                             && (hd_sync(f, lsf_w) == 0
+                                 || hd_sync(f, voice_w) == 0))
+                        locks++;
+                }
+            }
+            demod.terminate();
+            std::printf("  false_lock_per_min ~%.1f (10s Hamming-0 count=%d, "
+                        "firmware_sync_only_meaningful_for_v2)\n",
+                        locks * 6.0, locks);
+        }
+        return 0;
+    }
     std::printf("usage: horse_fec_v2_sim selftest|voice|burst|complete_v1|"
                 "study|hist|lockstat|clktrace|eot_notice|polar_prof|"
-                "complete_v2|lsf_cmp|lsf_frag\n");
+                "complete_v2|attrib|syncmeas|lsf_cmp|lsf_frag\n");
     return 1;
 }

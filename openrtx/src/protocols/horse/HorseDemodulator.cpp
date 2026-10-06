@@ -50,6 +50,8 @@ HorseDemodulator::HorseDemodulator()
     , framesWithoutTag(0)
     , haveValidTag(false)
     , lastLockCorr(0)
+    , unlockReason(HorseUnlockReason::None)
+    , unlockMissedSyncs(0)
     , sampleFilter(sfNum, sfDen)
 {
     dsp_resetState(dcBlock);
@@ -291,6 +293,8 @@ void HorseDemodulator::reset()
     missedSyncs = 0;
     framesWithoutTag = 0;
     haveValidTag = false;
+    unlockReason = HorseUnlockReason::None;
+    unlockMissedSyncs = 0;
     lastSyncOk = true;
     clockHold = 0;
     clockAccum = 0;
@@ -516,6 +520,8 @@ void HorseDemodulator::lockedState(int16_t sample)
         updateSampPoint = true;
         framesWithoutTag += 1;
         if (dropWithoutTag && (framesWithoutTag > LOCK_NO_TAG_FRAMES)) {
+            unlockReason = HorseUnlockReason::NoTagTimeout;
+            unlockMissedSyncs = missedSyncs;
             demodState = DemodState::UNLOCKED;
             return;
         }
@@ -540,9 +546,15 @@ void HorseDemodulator::syncUpdateState()
         missedSyncs += 1;
         lastSyncOk = false;
     }
-    if ((missedSyncs > missUnlock) || eot)
+    if (eot) {
+        unlockReason = HorseUnlockReason::EotSeen;
+        unlockMissedSyncs = missedSyncs;
         demodState = DemodState::UNLOCKED;
-    else
+    } else if (missedSyncs > missUnlock) {
+        unlockReason = HorseUnlockReason::MissedSyncCoast;
+        unlockMissedSyncs = missedSyncs;
+        demodState = DemodState::UNLOCKED;
+    } else
         demodState = DemodState::LOCKED;
 }
 

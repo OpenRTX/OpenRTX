@@ -1,0 +1,131 @@
+# Horse complete_v2 failure attribution (diagnosis)
+
+Date: 2026-10-06
+Branch: upstream-sync
+Harness: `horse_fec_v2_sim complete_v2` (strict + usable + first-cause)
+
+## Complete definitions
+
+- **Strict:** LSF CRC ready (opening or fragments), tag match on voice,
+  signature ready if signed, voice FN starts at 0, all 300 voice payloads
+  verified, EOT seen, no mid-TX coast unlock. (Does not replace older
+  study `ok` metric.)
+- **Usable:** LSF CRC ready, tag match, signature if required, and at
+  least 95 % of voice frames verified (ceil 285/300), with mean start FN
+  among usable trials.
+
+Tag check is the known 4-byte payload tag in the modem campaign (not
+libsodium). Signature check is dedicated FN frames or fragment rebuild.
+
+## Attribution tables (200 TX each)
+
+Causes a--h are mutually exclusive first causes. `ok` hist == strict.
+
+### noise 8000
+
+| seed | mode | strict | usable | a | b | c | d | e | f | g | h |
+|------|------|-------:|-------:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 1 | encrypt | 179 | 198 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 8 |
+| 1 | sign | 186 | 198 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 8 |
+| 1 | both | 179 | 198 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 8 |
+| 11000 | encrypt | 183 | 195 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 7 |
+| 11000 | sign | 183 | 198 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 10 |
+| 11000 | both | 182 | 195 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 7 |
+
+### noise 10000
+
+| seed | mode | strict | usable | a | b | c | d | e | f | g | h |
+|------|------|-------:|-------:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 1 | encrypt | 93 | 168 | 0 | 0 | 0 | 0 | 0 | 89 | 0 | 18 |
+| 1 | sign | 102 | 173 | 0 | 1 | 0 | 6 | 0 | 69 | 0 | 22 |
+| 1 | both | 93 | 166 | 0 | 0 | 0 | 7 | 0 | 83 | 0 | 17 |
+| 11000 | encrypt | 83 | 161 | 0 | 0 | 0 | 0 | 0 | 104 | 0 | 13 |
+| 11000 | sign | 99 | 159 | 0 | 3 | 0 | 6 | 0 | 81 | 0 | 11 |
+| 11000 | both | 88 | 160 | 0 | 0 | 0 | 9 | 0 | 91 | 0 | 12 |
+
+### noise 11000
+
+| seed | mode | strict | usable | a | b | c | d | e | f | g | h |
+|------|------|-------:|-------:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 1 | encrypt | 38 | 117 | 0 | 6 | 0 | 0 | 0 | 139 | 1 | 16 |
+| 1 | sign | 44 | 125 | 0 | 6 | 0 | 10 | 0 | 122 | 1 | 17 |
+| 1 | both | 37 | 114 | 0 | 5 | 0 | 9 | 0 | 134 | 1 | 14 |
+| 11000 | encrypt | 36 | 120 | 0 | 10 | 0 | 0 | 0 | 143 | 0 | 11 |
+| 11000 | sign | 53 | 121 | 0 | 9 | 0 | 11 | 0 | 116 | 0 | 11 |
+| 11000 | both | 37 | 120 | 0 | 9 | 0 | 12 | 0 | 131 | 0 | 11 |
+
+**Dominant first cause at noise 10000:** `f_voice` (lost/rejected voice
+frames under hard Viterbi). Acquisition (`a`) is zero. LSF (`b`) and
+signature (`d`) are secondary on signed modes. Late start (`h`) is
+measurable but smaller than `f`.
+
+## Like-with-like vs commit 390a4f0e (pre-118cb0c2)
+
+Same seeds, noise, miss_limit=4, real demod, `setSkipDcBlock(true)`.
+
+Study-era `complete_v2` (index-aligned M17 chunks, v1 sync words in
+firmware at that commit):
+
+| noise | seed | encrypt | sign | both |
+|------:|------|--------:|-----:|-----:|
+| 10000 | 1 | 144 | 152 | 144 |
+| 10000 | 11000 | 140 | 145 | 140 |
+| 8000 | 1 | 195 | 195 | 195 |
+| 11000 | 1 | 97 | 104 | 97 |
+
+That reproduces the study's **144/200** (seed 1, encrypt, noise 10000).
+
+Current v2 attrib **strict** at the same point is **93/200**; **usable**
+is **168/200**. Difference from 144: (1) counting is FN/tag/EOT-based
+not index-aligned; (2) v2 sync words and 3-frame opening + fragments;
+(3) strict requires EOT and FN0. The old campaign's 144 is closest in
+spirit to usable-without-95%-rule "all 300 voice after LSF", not to
+today's strict.
+
+## Sync words
+
+| family | LSF peak/side | VOICE peak/side | EOT peak/side | acq@10000 |
+|--------|--------------:|----------------:|--------------:|----------:|
+| v2 (firmware) | 64/36 | 64/24 | 64/48 | 199/200 real demod |
+| v1 | 40/12 | 48/16 | 40/16 | 200/200 ideal slice only |
+| alt proposal | 32/24 | 40/20 | 32/16 | 200/200 ideal slice |
+
+v2 has **higher** mainlobe energy (E2=64) than v1. Tracking misses at
+noise 10000: 0/1000 frames. False locks in 10 s open noise: 0.
+**New sync words are not the cause of the strict shortfall.** No
+replacement recommended for correlation reasons; alt has weaker peaks.
+
+## Gate arithmetic
+
+Hard voice FER at noise 10000 on locked single frames was ~1e-4 in the
+FEC study. For 300 independent frames,
+`(1-p)^300 >= 198/200 = 0.99` needs `p <= ~3.3e-5`. Measured effective
+loss under complete TX (timing + hard decisions) is higher: strict
+~0.46 success => effective p ~0.0026 per frame.
+
+**198/200 strict at noise 10000 with hard decisions is not achievable**
+from the measured per-stage rates (LSF almost free; voice dominates).
+
+Proposed gates for owner approval (do not change without approval):
+
+1. Keep 198/200 as an **aspirational** soft-decision / future-FEC target.
+2. Operational hard-decision gate: **strict >= 180/200 at noise 8000**
+   (measured 179--186) and **usable >= 165/200 at noise 10000**
+   (measured 159--173), or
+3. **usable >= 198/200 at noise 8000** (measured 195--198; nearly met).
+
+## Stack (host -fstack-usage, limit 512 B)
+
+After moving `HardViterbi` into `HorseVoiceCodec` / `HorseFrameDecoder`:
+
+| Function | bytes | limit |
+|----------|------:|------:|
+| `HorseVoiceCodec::decode` | 64 | 512 |
+| `HorseFrameDecoder::decodeFrame` | 96 | 512 |
+| `OpMode_Horse::rxState` | 192 | 512 |
+| `OpMode_Horse::txState` | **720** | 512 |
+| free `voice_decode` wrapper | 32 | 512 |
+
+`sizeof(HorseFrameDecoder)=2624` (was ~454; +~2 KiB Viterbi/buffers in
+BSS via OpMode member). Still unverified on MD-3x0. `txState` remains
+over the 512 B RTX limit (large locals); open non-format follow-up.

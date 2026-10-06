@@ -31,6 +31,14 @@
 namespace horse
 {
 
+/** Why the demodulator left LOCKED / SYNC_UPDATE (host diagnosis). */
+enum class HorseUnlockReason : uint8_t {
+    None = 0,
+    MissedSyncCoast, /**< missedSyncs > missUnlock (coast expiry) */
+    EotSeen,         /**< EOT sync matched while locked */
+    NoTagTimeout,    /**< dropWithoutTag and LOCK_NO_TAG_FRAMES */
+};
+
 class HorseDemodulator
 {
 public:
@@ -61,6 +69,18 @@ public:
     bool lockAuthenticated() const
     {
         return haveValidTag;
+    }
+    HorseUnlockReason lastUnlockReason() const
+    {
+        return unlockReason;
+    }
+    uint8_t lastUnlockMissedSyncs() const
+    {
+        return unlockMissedSyncs;
+    }
+    uint8_t debugMissedSyncs() const
+    {
+        return missedSyncs;
     }
     uint32_t debugSamplingPoint() const
     {
@@ -134,6 +154,8 @@ private:
     uint8_t framesWithoutTag;
     bool haveValidTag;
     int32_t lastLockCorr;
+    HorseUnlockReason unlockReason;
+    uint8_t unlockMissedSyncs;
     struct dcBlock dcBlock;
 
     Correlator<SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL> correlator;
