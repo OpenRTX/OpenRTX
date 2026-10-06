@@ -1407,8 +1407,7 @@ static int run_stream_loss(float noise, unsigned seed, int ntx, bool use_soft,
                                     tydec.decodeFrame(snaps[si].f,
                                                       snaps[si].soft.data()) :
                                     tydec.decodeFrame(snaps[si].f);
-            if (tagdec && ty == HorseFrameType::LINK_SETUP
-                && tydec.lsfReady())
+            if (tagdec && ty == HorseFrameType::LINK_SETUP && tydec.lsfReady())
                 tydec.setAuthenticated(true);
             if (ty == HorseFrameType::UNKNOWN)
                 nunknown++;
@@ -1554,8 +1553,8 @@ static int run_stream_loss(float noise, unsigned seed, int ntx, bool use_soft,
                 "miss=%d decode=%d tag=%d fn_rule=%d near_step=%d/%d "
                 "fn_cascade_events=%d sync_ok_on_bad=%d snaps/tx=%.1f "
                 "unknown=%ld voice_ty=%ld\n",
-                noise, ntx, (int)use_soft, (int)clock_track, (int)tagdec, nloss, kind_n[1],
-                kind_n[2], kind_n[3], kind_n[4], nnear_step, nloss,
+                noise, ntx, (int)use_soft, (int)clock_track, (int)tagdec, nloss,
+                kind_n[1], kind_n[2], kind_n[3], kind_n[4], nnear_step, nloss,
                 n_fn_cascade, n_sync_ok, ntx ? (double)snaps_sum / ntx : 0.0,
                 nunknown, nvoice_ty);
     std::printf("  lost_per_tx_hist");

@@ -21,8 +21,7 @@ extern "C" {
 
 #define HORSE_PEER_MAX 64
 
-typedef struct
-{
+typedef struct {
     uint8_t address[6];
     uint8_t x25519_pk[HORSE_X25519_PUBLICKEY_BYTES];
     uint8_t ed25519_pk[HORSE_ED25519_PUBLICKEY_BYTES];

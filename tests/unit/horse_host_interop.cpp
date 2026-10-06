@@ -63,11 +63,12 @@ int main()
 
     const char *pass = "host-interop-pass";
     std::string py = HORSE_PROVISION_PY;
-    std::string cmd = std::string("python3 \"") + py +
-                      "\" --passphrase \"" + pass + "\" generate interop";
+    std::string cmd = std::string("python3 \"") + py + "\" --passphrase \""
+                    + pass + "\" generate interop";
     std::string gen_out;
     if (run_cmd(cmd, gen_out) != 0) {
-        std::printf("horse_host_interop: generate failed\n%s\n", gen_out.c_str());
+        std::printf("horse_host_interop: generate failed\n%s\n",
+                    gen_out.c_str());
         return -1;
     }
 
@@ -95,9 +96,9 @@ int main()
         return -1;
     }
 
-    cmd = std::string("python3 \"") + py +
-          "\" export-peer 3 --address 010203040506 --x25519 " + x_hex +
-          " --ed25519 " + ed_hex;
+    cmd = std::string("python3 \"") + py
+        + "\" export-peer 3 --address 010203040506 --x25519 " + x_hex
+        + " --ed25519 " + ed_hex;
     if (run_cmd(cmd, unused) != 0) {
         std::printf("horse_host_interop: export-peer failed\n");
         return -1;
@@ -118,9 +119,9 @@ int main()
     uint8_t ed_pk[32], x_pk[32];
     if (parse_hex(ed_hex, ed_pk, 32) != 0 || parse_hex(x_hex, x_pk, 32) != 0)
         return -1;
-    if (!horse_keystore_copy_identity(&id) ||
-        memcmp(id.ed25519_pk, ed_pk, 32) != 0 ||
-        memcmp(id.x25519_pk, x_pk, 32) != 0) {
+    if (!horse_keystore_copy_identity(&id)
+        || memcmp(id.ed25519_pk, ed_pk, 32) != 0
+        || memcmp(id.x25519_pk, x_pk, 32) != 0) {
         std::printf("horse_host_interop: C identity mismatch\n");
         return -1;
     }
@@ -128,17 +129,17 @@ int main()
     horse_peer_t peer;
     memset(&peer, 0, sizeof peer);
     uint8_t addr[6] = { 1, 2, 3, 4, 5, 6 };
-    if (!horse_peer_read(3, &peer) ||
-        memcmp(peer.address, addr, 6) != 0 ||
-        memcmp(peer.ed25519_pk, ed_pk, 32) != 0 ||
-        memcmp(peer.x25519_pk, x_pk, 32) != 0) {
+    if (!horse_peer_read(3, &peer) || memcmp(peer.address, addr, 6) != 0
+        || memcmp(peer.ed25519_pk, ed_pk, 32) != 0
+        || memcmp(peer.x25519_pk, x_pk, 32) != 0) {
         std::printf("horse_host_interop: C peer table mismatch\n");
         return -1;
     }
 
     horse_crypto_memzero(&id, sizeof id);
     horse_keystore_lock();
-    std::printf("horse_host_interop: python blobs read by C, wrong pass rejected\n");
+    std::printf(
+        "horse_host_interop: python blobs read by C, wrong pass rejected\n");
     return 0;
 #endif
 }

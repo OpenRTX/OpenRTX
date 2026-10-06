@@ -70,8 +70,8 @@ void HorseFrameEncoder::fillFragment(uint16_t fn,
     std::memcpy(spare, sigBytes + off, n);
 }
 
-void HorseFrameEncoder::encodeLsf(const call_t& src, const call_t& dst,
-                                  const uint8_t* eph_pk, uint8_t flags,
+void HorseFrameEncoder::encodeLsf(const call_t &src, const call_t &dst,
+                                  const uint8_t *eph_pk, uint8_t flags,
                                   frame_t out[LSF_OPENING_FRAMES])
 {
     uint8_t pad[LSF_CHUNK_BYTES * LSF_OPENING_FRAMES];
@@ -99,9 +99,9 @@ void HorseFrameEncoder::encodeLsf(const call_t& src, const call_t& dst,
     }
 }
 
-uint16_t HorseFrameEncoder::encodeVoiceFrame(const uint8_t* melpe96bits,
-                                            const uint8_t* tag32bits,
-                                            frame_t& output, bool isLast)
+uint16_t HorseFrameEncoder::encodeVoiceFrame(const uint8_t *melpe96bits,
+                                             const uint8_t *tag32bits,
+                                             frame_t &output, bool isLast)
 {
     uint16_t fn = voiceFrameNumber & 0x7FFF;
     if (fn > VOICE_FN_MAX)
@@ -115,10 +115,10 @@ uint16_t HorseFrameEncoder::encodeVoiceFrame(const uint8_t* melpe96bits,
     return out_fn;
 }
 
-uint16_t HorseFrameEncoder::encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
-                                                   const uint8_t* tag32bits,
+uint16_t HorseFrameEncoder::encodeVoiceFrameWithFn(const uint8_t *melpe96bits,
+                                                   const uint8_t *tag32bits,
                                                    uint16_t frame_num,
-                                                   frame_t& output, bool isLast,
+                                                   frame_t &output, bool isLast,
                                                    size_t payload_len)
 {
     uint8_t info[HORSE_VOICE_INFO_BYTES];
@@ -142,7 +142,7 @@ uint16_t HorseFrameEncoder::encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
     return fn & 0x7FFF;
 }
 
-void HorseFrameEncoder::encodeEotFrame(frame_t& output)
+void HorseFrameEncoder::encodeEotFrame(frame_t &output)
 {
     std::copy(EOT_SYNC_WORD.begin(), EOT_SYNC_WORD.end(), output.begin());
     std::fill(output.begin() + 2, output.end(), 0);
@@ -153,4 +153,4 @@ uint16_t HorseFrameEncoder::currentVoiceFrameNumber() const
     return voiceFrameNumber & 0x7FFF;
 }
 
-}  // namespace horse
+} // namespace horse

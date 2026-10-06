@@ -17,20 +17,19 @@
 namespace horse
 {
 
-using call_t     = std::array<uint8_t, 6>;
-using frame_t    = std::array<uint8_t, 48>;
-using syncw_t    = std::array<uint8_t, 2>;
-using lsf_raw_t  = std::array<uint8_t, 46>;
+using call_t = std::array<uint8_t, 6>;
+using frame_t = std::array<uint8_t, 48>;
+using syncw_t = std::array<uint8_t, 2>;
+using lsf_raw_t = std::array<uint8_t, 46>;
 using voice_raw_t = std::array<uint8_t, 23>;
 
-enum class HorseFrameType : uint8_t
-{
+enum class HorseFrameType : uint8_t {
     LINK_SETUP = 0,
-    VOICE      = 1,
-    EOT        = 2,
-    UNKNOWN    = 3
+    VOICE = 1,
+    EOT = 2,
+    UNKNOWN = 3
 };
 
-}  // namespace horse
+} // namespace horse
 
-#endif  // HORSE_DATATYPES_H
+#endif // HORSE_DATATYPES_H

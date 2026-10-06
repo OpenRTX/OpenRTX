@@ -26,36 +26,31 @@ int main()
 
     memset(frame, 0xA5, sizeof frame);
     r = melpe_horse_encode_20ms(blk, frame);
-    if (r != 0)
-    {
+    if (r != 0) {
         std::printf("horse_codec_test: first 20 ms emitted a frame\n");
         return -1;
     }
-    for (i = 0; i < sizeof frame; i++)
-    {
-        if (frame[i] != 0xA5)
-        {
-            std::printf("horse_codec_test: first 20 ms wrote the frame buffer\n");
+    for (i = 0; i < sizeof frame; i++) {
+        if (frame[i] != 0xA5) {
+            std::printf(
+                "horse_codec_test: first 20 ms wrote the frame buffer\n");
             return -1;
         }
     }
 
     r = melpe_horse_encode_20ms(blk, frame);
-    if (r != 1)
-    {
+    if (r != 1) {
         std::printf("horse_codec_test: second 20 ms did not emit a frame\n");
         return -1;
     }
     memcpy(sent, frame, sizeof frame);
     {
         bool all_zero = true;
-        for (i = 0; i < sizeof frame; i++)
-        {
+        for (i = 0; i < sizeof frame; i++) {
             if (frame[i] != 0)
                 all_zero = false;
         }
-        if (all_zero)
-        {
+        if (all_zero) {
             std::printf("horse_codec_test: encode emitted a zero frame\n");
             return -1;
         }
@@ -66,10 +61,8 @@ int main()
         return -1;
     {
         uint8_t *p = (uint8_t *)(out + MELPE_HORSE_SAMPLES_20MS);
-        for (i = 0; i < 8 * sizeof(int16_t); i++)
-        {
-            if (p[i] != 0x5A)
-            {
+        for (i = 0; i < 8 * sizeof(int16_t); i++) {
+            if (p[i] != 0x5A) {
                 std::printf("horse_codec_test: decode overwrote past 20 ms\n");
                 return -1;
             }
@@ -81,11 +74,10 @@ int main()
         return -1;
     {
         uint8_t *p = (uint8_t *)(out + MELPE_HORSE_SAMPLES_20MS);
-        for (i = 0; i < 8 * sizeof(int16_t); i++)
-        {
-            if (p[i] != 0x5A)
-            {
-                std::printf("horse_codec_test: second decode overwrote past 20 ms\n");
+        for (i = 0; i < 8 * sizeof(int16_t); i++) {
+            if (p[i] != 0x5A) {
+                std::printf(
+                    "horse_codec_test: second decode overwrote past 20 ms\n");
                 return -1;
             }
         }

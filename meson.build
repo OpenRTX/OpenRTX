@@ -148,17 +148,24 @@ if meson.is_cross_build()
   sodium_script = find_program('scripts/build_libsodium_cm4.sh')
   if not fsmod.exists(sodium_prefix / 'lib' / 'libsodium.a')
     message('Cross-building libsodium 1.0.20 for Cortex-M4')
-    run_command(sodium_script, sodium_prefix, check: true)
+    sodium_rc = run_command(sodium_script, sodium_prefix, check: false)
+    if sodium_rc.returncode() != 0
+      warning('libsodium Cortex-M4 prebuild failed; MD-3x0 Horse crypto disabled')
+    endif
   endif
-  cc_host = meson.get_compiler('c')
-  sodium_lib = cc_host.find_library('sodium',
-                                    dirs: [sodium_prefix / 'lib'],
-                                    static: true,
-                                    required: true)
-  horse_cm4_sodium_dep = [declare_dependency(
-      dependencies: sodium_lib,
-      compile_args: ['-I' + sodium_prefix / 'include', '-DSODIUM_STATIC'])]
-  horse_crypto_args += ['-DHAVE_LIBSODIUM', '-DSODIUM_STATIC']
+  if fsmod.exists(sodium_prefix / 'lib' / 'libsodium.a')
+    cc_host = meson.get_compiler('c')
+    sodium_lib = cc_host.find_library('sodium',
+                                      dirs: [sodium_prefix / 'lib'],
+                                      static: true,
+                                      required: false)
+    if sodium_lib.found()
+      horse_cm4_sodium_dep = [declare_dependency(
+          dependencies: sodium_lib,
+          compile_args: ['-I' + sodium_prefix / 'include', '-DSODIUM_STATIC'])]
+      horse_crypto_args += ['-DHAVE_LIBSODIUM', '-DSODIUM_STATIC']
+    endif
+  endif
 elif sodium_dep.found()
   horse_deps += sodium_dep
   horse_crypto_args += '-DHAVE_LIBSODIUM'
@@ -1392,7 +1399,8 @@ horse_randombytes_test = executable('horse_randombytes_test',
                                     dependencies : linux_deps + [threads_dep],
                                     c_args : linux_c_args + ['-DHORSE_RANDOMBYTES_TEST'],
                                     cpp_args : linux_cpp_args + ['-DHORSE_RANDOMBYTES_TEST'],
-                                    link_args : linux_l_args)
+                                    link_args : linux_l_args,
+                                    override_options : ['b_coverage=false'])
 
 horse_fec_v2_sim = executable('horse_fec_v2_sim',
                               sources : unit_test_src + ['tests/unit/horse_fec_v2_sim.cpp'],
@@ -1426,10 +1434,8 @@ test('Horse Provision Pack Test', py3,
      args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'],
      env : horse_test_env,
      timeout : 30)
-test('Horse settings.h matches upstream',
-     find_program('git'),
-     args : ['diff', '--exit-code', 'upstream/master', '--',
-             'openrtx/include/core/settings.h'],
+test('Horse settings.h matches upstream', py3,
+     args : [meson.project_source_root() / 'tests/unit/horse_settings_upstream.py'],
      workdir : meson.project_source_root(),
      timeout : 30)
 

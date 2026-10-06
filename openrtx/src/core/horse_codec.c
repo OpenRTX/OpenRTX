@@ -99,8 +99,7 @@ int horse_codec_popFrame(uint8_t *frame, const bool blocking)
         return -EPERM;
 
     pthread_mutex_lock(&horse_data_mutex);
-    if (horse_numElements == 0 && !blocking)
-    {
+    if (horse_numElements == 0 && !blocking) {
         pthread_mutex_unlock(&horse_data_mutex);
         return -EAGAIN;
     }
@@ -108,8 +107,7 @@ int horse_codec_popFrame(uint8_t *frame, const bool blocking)
     while (horse_numElements == 0 && horse_running)
         pthread_cond_wait(&horse_wakeup_cond, &horse_data_mutex);
 
-    if (!horse_running || horse_numElements == 0)
-    {
+    if (!horse_running || horse_numElements == 0) {
         pthread_mutex_unlock(&horse_data_mutex);
         return -EPERM;
     }
@@ -130,10 +128,8 @@ int horse_codec_pushFrame(const uint8_t *frame, const bool blocking)
     while (horse_numElements >= HORSE_BUF_SIZE && horse_running && blocking)
         pthread_cond_wait(&horse_wakeup_cond, &horse_data_mutex);
 
-    if (horse_numElements >= HORSE_BUF_SIZE)
-    {
-        if (!blocking)
-        {
+    if (horse_numElements >= HORSE_BUF_SIZE) {
+        if (!blocking) {
             pthread_mutex_unlock(&horse_data_mutex);
             return -EAGAIN;
         }
@@ -141,8 +137,7 @@ int horse_codec_pushFrame(const uint8_t *frame, const bool blocking)
             pthread_cond_wait(&horse_wakeup_cond, &horse_data_mutex);
     }
 
-    if (!horse_running)
-    {
+    if (!horse_running) {
         pthread_mutex_unlock(&horse_data_mutex);
         return -EPERM;
     }
@@ -159,16 +154,15 @@ static void *horse_encodeFunc(void *arg)
 {
     pathId iPath = *((pathId *)arg);
     stream_sample_t audioBuf[MELPE_HORSE_SAMPLES_20MS];
-    streamId iStream = audioStream_start(iPath, audioBuf, MELPE_HORSE_SAMPLES_20MS,
-                                         8000, STREAM_INPUT | BUF_CIRC_DOUBLE);
-    if (iStream < 0)
-    {
+    streamId iStream = audioStream_start(iPath, audioBuf,
+                                         MELPE_HORSE_SAMPLES_20MS, 8000,
+                                         STREAM_INPUT | BUF_CIRC_DOUBLE);
+    if (iStream < 0) {
         horse_running = false;
         return NULL;
     }
 
-    while (!horse_reqStop)
-    {
+    while (!horse_reqStop) {
         if (audioPath_getStatus(iPath) != PATH_OPEN)
             break;
 
@@ -187,12 +181,12 @@ static void *horse_encodeFunc(void *arg)
             continue;
 
         pthread_mutex_lock(&horse_data_mutex);
-        if (horse_numElements >= HORSE_BUF_SIZE)
-        {
+        if (horse_numElements >= HORSE_BUF_SIZE) {
             horse_readPos = (horse_readPos + 1) % HORSE_BUF_SIZE;
             horse_numElements -= 1;
         }
-        memcpy(horse_dataBuffer[horse_writePos], frame, HORSE_CODEC_FRAME_BYTES);
+        memcpy(horse_dataBuffer[horse_writePos], frame,
+               HORSE_CODEC_FRAME_BYTES);
         horse_writePos = (horse_writePos + 1) % HORSE_BUF_SIZE;
         if (horse_numElements < HORSE_BUF_SIZE)
             horse_numElements += 1;
@@ -210,10 +204,10 @@ static void *horse_decodeFunc(void *arg)
     pathId oPath = *((pathId *)arg);
     stream_sample_t audioBuf[MELPE_HORSE_SAMPLES_20MS];
     memset(audioBuf, 0, sizeof(audioBuf));
-    streamId oStream = audioStream_start(oPath, audioBuf, MELPE_HORSE_SAMPLES_20MS,
-                                         8000, STREAM_OUTPUT | BUF_CIRC_DOUBLE);
-    if (oStream < 0)
-    {
+    streamId oStream = audioStream_start(oPath, audioBuf,
+                                         MELPE_HORSE_SAMPLES_20MS, 8000,
+                                         STREAM_OUTPUT | BUF_CIRC_DOUBLE);
+    if (oStream < 0) {
         horse_running = false;
         return NULL;
     }
@@ -222,8 +216,7 @@ static void *horse_decodeFunc(void *arg)
 
     bool have_second = false;
 
-    while (!horse_reqStop)
-    {
+    while (!horse_reqStop) {
         if (audioPath_getStatus(oPath) != PATH_OPEN)
             break;
 
@@ -234,18 +227,17 @@ static void *horse_decodeFunc(void *arg)
         uint8_t frame[HORSE_CODEC_FRAME_BYTES];
         bool newData = false;
 
-        if (have_second)
-        {
-            if (melpe_horse_decode_20ms_next(outBuf, MELPE_HORSE_SAMPLES_20MS) < 0)
-                memset(outBuf, 0, MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
+        if (have_second) {
+            if (melpe_horse_decode_20ms_next(outBuf, MELPE_HORSE_SAMPLES_20MS)
+                < 0)
+                memset(outBuf, 0,
+                       MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
             have_second = false;
-        }
-        else
-        {
+        } else {
             pthread_mutex_lock(&horse_data_mutex);
-            if (horse_numElements != 0)
-            {
-                memcpy(frame, horse_dataBuffer[horse_readPos], HORSE_CODEC_FRAME_BYTES);
+            if (horse_numElements != 0) {
+                memcpy(frame, horse_dataBuffer[horse_readPos],
+                       HORSE_CODEC_FRAME_BYTES);
                 horse_readPos = (horse_readPos + 1) % HORSE_BUF_SIZE;
                 horse_numElements -= 1;
                 pthread_cond_signal(&horse_wakeup_cond);
@@ -253,18 +245,17 @@ static void *horse_decodeFunc(void *arg)
             }
             pthread_mutex_unlock(&horse_data_mutex);
 
-            if (newData)
-            {
+            if (newData) {
                 if (melpe_horse_decode_20ms_start(frame, outBuf,
-                                                  MELPE_HORSE_SAMPLES_20MS) < 0)
+                                                  MELPE_HORSE_SAMPLES_20MS)
+                    < 0)
                     memset(outBuf, 0,
                            MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
                 else
                     have_second = true;
-            }
-            else
-            {
-                memset(outBuf, 0, MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
+            } else {
+                memset(outBuf, 0,
+                       MELPE_HORSE_SAMPLES_20MS * sizeof(stream_sample_t));
             }
         }
 
@@ -282,10 +273,8 @@ static bool horse_startThread(const pathId path, void *(*func)(void *))
         return false;
 
     pthread_mutex_lock(&horse_init_mutex);
-    if (horse_running)
-    {
-        if (path == horse_audioPath)
-        {
+    if (horse_running) {
+        if (path == horse_audioPath) {
             pthread_mutex_unlock(&horse_init_mutex);
             return true;
         }
@@ -315,7 +304,8 @@ static bool horse_startThread(const pathId path, void *(*func)(void *))
                               CODEC2_THREAD_STKSIZE);
     }
 #endif
-    int ret = pthread_create(&horse_codecThread, &horse_codecAttr, func, &horse_audioPath);
+    int ret = pthread_create(&horse_codecThread, &horse_codecAttr, func,
+                             &horse_audioPath);
     if (ret != 0)
         horse_running = false;
 

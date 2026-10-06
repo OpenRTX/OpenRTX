@@ -359,8 +359,7 @@ struct PolarLsfCodec {
         uint8_t kbits[POLAR_LSF_K];
         memcpy(kbits, ib, POLAR_LSF_INFO);
         for (int i = 0; i < 24; i++)
-            kbits[POLAR_LSF_INFO + (size_t)i] = (uint8_t)((c >> (23 - i))
-                                                          & 1u);
+            kbits[POLAR_LSF_INFO + (size_t)i] = (uint8_t)((c >> (23 - i)) & 1u);
         uint8_t u[POLAR_LSF_N];
         memset(u, 0, sizeof u);
         for (size_t i = 0; i < POLAR_LSF_K; i++)

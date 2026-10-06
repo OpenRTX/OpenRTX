@@ -19,8 +19,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     std::memset(coded, 0, sizeof coded);
     if (size > 0)
-        std::memcpy(coded, data,
-                    size < sizeof coded ? size : sizeof coded);
+        std::memcpy(coded, data, size < sizeof coded ? size : sizeof coded);
     horse::voice_decode(coded, info);
     horse::voice_extract_spare(coded, spare);
     horse::voice_encode(info, coded);

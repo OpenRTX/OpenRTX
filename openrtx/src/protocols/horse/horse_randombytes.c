@@ -9,8 +9,12 @@
 
 #include "protocols/horse/horse_randombytes.h"
 
-#include <pthread.h>
 #include <string.h>
+
+#if defined(HORSE_RANDOMBYTES_TEST) \
+    || (defined(HAVE_LIBSODIUM) && defined(PLATFORM_MD3x0))
+#include <pthread.h>
+#endif
 
 #if defined(HAVE_LIBSODIUM) && defined(PLATFORM_MD3x0) \
     && !defined(HORSE_RANDOMBYTES_TEST)
@@ -23,11 +27,14 @@
 #include <sodium.h>
 #endif
 
+#if defined(HORSE_RANDOMBYTES_TEST) \
+    || (defined(HAVE_LIBSODIUM) && defined(PLATFORM_MD3x0))
 static pthread_mutex_t rng_mu = PTHREAD_MUTEX_INITIALIZER;
 static int rng_failed;
 static int rng_have_last;
 static uint32_t rng_last;
 static int rng_discarded;
+#endif
 
 #if defined(HORSE_RANDOMBYTES_TEST)
 

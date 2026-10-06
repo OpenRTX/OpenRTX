@@ -85,9 +85,10 @@ static void run_op(void)
             job.ok = horse_crypto_x25519_keypair(job.pk, job.sk);
             break;
         case OP_DERIVE:
-            job.ok = horse_crypto_derive_session_keys(
-                job.sk, job.pk, job.src, job.dst, job.eph, job.flags, job.ver,
-                job.kenc, job.ktag);
+            job.ok = horse_crypto_derive_session_keys(job.sk, job.pk, job.src,
+                                                      job.dst, job.eph,
+                                                      job.flags, job.ver,
+                                                      job.kenc, job.ktag);
             break;
         case OP_SIGN:
             job.ok = horse_crypto_sign(job.edsk, job.msg, job.msg_len, job.sig);

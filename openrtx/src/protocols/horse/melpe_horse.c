@@ -17,7 +17,7 @@
 #endif
 
 #define CODEC2_2400_FRAME_SAMPLES 160
-#define CODEC2_2400_FRAME_BYTES   6
+#define CODEC2_2400_FRAME_BYTES 6
 
 static struct CODEC2 *c2_encoder;
 static struct CODEC2 *c2_decoder;
@@ -35,8 +35,7 @@ void melpe_horse_encoder_init(void)
 
 void melpe_horse_encoder_terminate(void)
 {
-    if (c2_encoder != NULL)
-    {
+    if (c2_encoder != NULL) {
         codec2_destroy(c2_encoder);
         c2_encoder = NULL;
     }
@@ -62,10 +61,8 @@ int melpe_horse_encode_20ms(const int16_t *pcm160, uint8_t *bits_96)
     if (pcm160 == NULL || bits_96 == NULL || c2_encoder == NULL)
         return -1;
 
-    if (!enc_have_pending)
-    {
-        memcpy(enc_pending, pcm160,
-               MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
+    if (!enc_have_pending) {
+        memcpy(enc_pending, pcm160, MELPE_HORSE_SAMPLES_20MS * sizeof(int16_t));
         enc_have_pending = true;
         return 0;
     }
@@ -87,14 +84,14 @@ void melpe_horse_decoder_init(void)
 
 void melpe_horse_decoder_terminate(void)
 {
-    if (c2_decoder != NULL)
-    {
+    if (c2_decoder != NULL) {
         codec2_destroy(c2_decoder);
         c2_decoder = NULL;
     }
 }
 
-void melpe_horse_decode(const uint8_t *bits_96, int16_t *pcm, size_t *n_samples_out)
+void melpe_horse_decode(const uint8_t *bits_96, int16_t *pcm,
+                        size_t *n_samples_out)
 {
     if (bits_96 == NULL || pcm == NULL || c2_decoder == NULL)
         return;

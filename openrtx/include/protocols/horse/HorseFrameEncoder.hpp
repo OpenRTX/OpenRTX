@@ -31,7 +31,7 @@ public:
      * \brief Encode a three-frame opening LSF (CRC-16 + M17 DATA_PUNCTURE).
      *        Also stores the 48-byte LSF||CRC for voice-frame fragments.
      */
-    void encodeLsf(const call_t& src, const call_t& dst, const uint8_t* eph_pk,
+    void encodeLsf(const call_t &src, const call_t &dst, const uint8_t *eph_pk,
                    uint8_t flags, frame_t out[LSF_OPENING_FRAMES]);
 
     /**
@@ -40,15 +40,17 @@ public:
      */
     void setSignatureFragments(const uint8_t *sig64);
 
-    uint16_t encodeVoiceFrame(const uint8_t* melpe96bits, const uint8_t* tag32bits,
-                              frame_t& output, bool isLast = false);
+    uint16_t encodeVoiceFrame(const uint8_t *melpe96bits,
+                              const uint8_t *tag32bits, frame_t &output,
+                              bool isLast = false);
 
-    uint16_t encodeVoiceFrameWithFn(const uint8_t* melpe96bits,
-                                    const uint8_t* tag32bits, uint16_t frame_num,
-                                    frame_t& output, bool isLast = false,
+    uint16_t encodeVoiceFrameWithFn(const uint8_t *melpe96bits,
+                                    const uint8_t *tag32bits,
+                                    uint16_t frame_num, frame_t &output,
+                                    bool isLast = false,
                                     size_t payload_len = 12);
 
-    void encodeEotFrame(frame_t& output);
+    void encodeEotFrame(frame_t &output);
 
     uint16_t currentVoiceFrameNumber() const;
 
@@ -62,6 +64,6 @@ private:
     bool haveSigFrag;
 };
 
-}  // namespace horse
+} // namespace horse
 
-#endif  // HORSE_FRAME_ENCODER_H
+#endif // HORSE_FRAME_ENCODER_H

@@ -58,7 +58,7 @@ int main()
 {
 #ifndef HAVE_LIBSODIUM
     std::printf("horse_keystore_test: skipped (no libsodium)\n");
-    return 0;
+    return 77;
 #else
     if (sodium_init() < 0)
         return -1;
@@ -83,21 +83,17 @@ int main()
         return -1;
     }
 
-    const char *old_xdg = getenv("XDG_STATE_HOME");
-    mkdir(
-        "/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/.tmp",
-        0700);
-    mkdir(
-        "/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/.tmp/horse_ks",
-        0700);
-    mkdir(
-        "/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/.tmp/horse_ks/OpenRTX",
-        0700);
-    setenv(
-        "XDG_STATE_HOME",
-        "/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/.tmp/horse_ks",
-        1);
-    (void)old_xdg;
+    char xdg[64];
+    snprintf(xdg, sizeof xdg, "/tmp/horse_ksXXXXXX");
+    if (mkdtemp(xdg) == NULL) {
+        std::printf("horse_keystore_test: mkdtemp failed\n");
+        horse_crypto_memzero(&id, sizeof id);
+        return -1;
+    }
+    char appdir[96];
+    snprintf(appdir, sizeof appdir, "%s/OpenRTX", xdg);
+    mkdir(appdir, 0700);
+    setenv("XDG_STATE_HOME", xdg, 1);
 
     if (!horse_keystore_store_plaintext(&id, "test-pass", 9)) {
         std::printf("horse_keystore_test: store failed\n");
@@ -106,9 +102,9 @@ int main()
     }
 
     {
-        int fd = open(
-            "/mnt/2e9a1e9f-2097-408c-ab9a-a01b32f11d28/github-projects/OpenRTX/.tmp/horse_ks/OpenRTX/horse_identity.bin",
-            O_RDONLY);
+        char ident[128];
+        snprintf(ident, sizeof ident, "%s/OpenRTX/horse_identity.bin", xdg);
+        int fd = open(ident, O_RDONLY);
         unsigned char hdr[16];
         uint32_t ops = 0, mem = 0;
         if (fd < 0 || read(fd, hdr, sizeof hdr) != (ssize_t)sizeof hdr) {

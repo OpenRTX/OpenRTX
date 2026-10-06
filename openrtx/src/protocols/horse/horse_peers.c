@@ -27,8 +27,7 @@ static bool peer_nonzero(const uint8_t *p, size_t n)
 
     if (p == NULL)
         return false;
-    for (i = 0; i < n; i++)
-    {
+    for (i = 0; i < n; i++) {
         if (p[i] != 0)
             return true;
     }
@@ -61,8 +60,7 @@ static int horse_peers_ensure_file(const char *path)
     uint16_t i;
 
     fd = open(path, O_RDWR);
-    if (fd >= 0)
-    {
+    if (fd >= 0) {
         close(fd);
         return 0;
     }
@@ -71,10 +69,8 @@ static int horse_peers_ensure_file(const char *path)
     fd = open(path, O_WRONLY | O_CREAT | O_EXCL, 0600);
     if (fd < 0)
         return -1;
-    for (i = 0; i < HORSE_PEER_MAX; i++)
-    {
-        if (write(fd, &zero, sizeof zero) != (ssize_t)sizeof zero)
-        {
+    for (i = 0; i < HORSE_PEER_MAX; i++) {
+        if (write(fd, &zero, sizeof zero) != (ssize_t)sizeof zero) {
             close(fd);
             return -1;
         }
@@ -102,9 +98,8 @@ bool horse_peer_read(uint16_t index, horse_peer_t *out)
     if (fd < 0)
         return false;
     off = (off_t)(index - 1) * (off_t)sizeof(horse_peer_t);
-    if (lseek(fd, off, SEEK_SET) != off ||
-        read(fd, out, sizeof *out) != (ssize_t)sizeof *out)
-    {
+    if (lseek(fd, off, SEEK_SET) != off
+        || read(fd, out, sizeof *out) != (ssize_t)sizeof *out) {
         close(fd);
         return false;
     }
@@ -112,9 +107,10 @@ bool horse_peer_read(uint16_t index, horse_peer_t *out)
     return true;
 #else
     return nvm_read(0, 0,
-                    HORSE_PEERS_NVM_OFFSET +
-                        (uint32_t)(index - 1) * sizeof(horse_peer_t),
-                    out, sizeof *out) == 0;
+                    HORSE_PEERS_NVM_OFFSET
+                        + (uint32_t)(index - 1) * sizeof(horse_peer_t),
+                    out, sizeof *out)
+        == 0;
 #endif
 }
 
@@ -149,9 +145,8 @@ bool horse_peer_write(uint16_t index, const horse_peer_t *in)
     if (fd < 0)
         return false;
     off = (off_t)(index - 1) * (off_t)sizeof(horse_peer_t);
-    if (lseek(fd, off, SEEK_SET) != off ||
-        write(fd, in, sizeof *in) != (ssize_t)sizeof *in)
-    {
+    if (lseek(fd, off, SEEK_SET) != off
+        || write(fd, in, sizeof *in) != (ssize_t)sizeof *in) {
         close(fd);
         return false;
     }
@@ -159,9 +154,10 @@ bool horse_peer_write(uint16_t index, const horse_peer_t *in)
     return true;
 #else
     return nvm_write(0, 0,
-                     HORSE_PEERS_NVM_OFFSET +
-                         (uint32_t)(index - 1) * sizeof(horse_peer_t),
-                     in, sizeof *in) == 0;
+                     HORSE_PEERS_NVM_OFFSET
+                         + (uint32_t)(index - 1) * sizeof(horse_peer_t),
+                     in, sizeof *in)
+        == 0;
 #endif
 }
 

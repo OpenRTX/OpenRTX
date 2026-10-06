@@ -417,7 +417,7 @@ def main():
     exp.add_argument("--address", required=True, help="12 hex chars (6 bytes)")
     exp.add_argument("--x25519", required=True, help="64 hex chars")
     exp.add_argument("--ed25519", required=True, help="64 hex chars")
-    args = parser.parse_args()
+    args, _unknown = parser.parse_known_args()
     if not args.command:
         parser.print_help()
         return 1

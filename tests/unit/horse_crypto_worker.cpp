@@ -98,7 +98,8 @@ static void *probe_thread(void *arg)
 
 static int measure_fn(const char *name, void (*fn)(void), size_t empty)
 {
-    struct probe_job j{};
+    struct probe_job j {
+    };
     pthread_attr_t attr;
     pthread_t th;
     void *stk = NULL;
@@ -138,8 +139,8 @@ static int measure_fn(const char *name, void (*fn)(void), size_t empty)
 static int test_stack_hwm(void)
 {
     if (!horse_crypto_available()) {
-        std::printf("horse_crypto_worker_test: sodium missing\n");
-        return -1;
+        std::printf("horse_crypto_worker_test: skipped (no libsodium)\n");
+        return 77;
     }
     memset(g_pt, 0x11, sizeof g_pt);
     memset(g_salt, 0x22, sizeof g_salt);
@@ -161,7 +162,8 @@ static int test_stack_hwm(void)
 
     size_t empty_used = 0;
     {
-        struct probe_job j{};
+        struct probe_job j {
+        };
         pthread_attr_t attr;
         pthread_t th;
         void *stk = NULL;
@@ -226,7 +228,8 @@ static int test_handoff_and_cancel(void)
         || horse_crypto_wait() != HORSE_CRYPTO_ST_DONE
         || !horse_crypto_take_keypair(pk2, sk2))
         return -1;
-    if (!horse_crypto_req_derive(sk, pk2, g_src, g_dst, pk, 1, HORSE_LSF_VERSION)
+    if (!horse_crypto_req_derive(sk, pk2, g_src, g_dst, pk, 1,
+                                 HORSE_LSF_VERSION)
         || horse_crypto_wait() != HORSE_CRYPTO_ST_DONE
         || !horse_crypto_take_session(kenc, ktag))
         return -1;
@@ -251,8 +254,7 @@ static int test_handoff_and_cancel(void)
     if (!horse_crypto_req_voice_dec(kenc, ktag, HORSE_VOICE_DIR_FORWARD, 3,
                                     nonce, ct, 12, tag)
         || horse_crypto_wait() != HORSE_CRYPTO_ST_DONE
-        || !horse_crypto_take_voice_dec(out, 12)
-        || memcmp(out, pt, 12) != 0)
+        || !horse_crypto_take_voice_dec(out, 12) || memcmp(out, pt, 12) != 0)
         return -1;
 
     memset(salt, 7, sizeof salt);

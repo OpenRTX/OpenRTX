@@ -33,15 +33,15 @@
 
 using namespace horse;
 
-static void push_lsf(HorseFrameEncoder &enc, const call_t &src, const call_t &dst,
-                     const uint8_t *eph, uint8_t flags, std::vector<frame_t> &frames)
+static void push_lsf(HorseFrameEncoder &enc, const call_t &src,
+                     const call_t &dst, const uint8_t *eph, uint8_t flags,
+                     std::vector<frame_t> &frames)
 {
     frame_t lsf[LSF_OPENING_FRAMES];
     enc.encodeLsf(src, dst, eph, flags, lsf);
     for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
         frames.push_back(lsf[i]);
 }
-
 
 static constexpr size_t SPS_48 = 48000 / SYMBOL_RATE;
 static constexpr size_t SPS_24 = 24000 / SYMBOL_RATE;
@@ -294,8 +294,16 @@ static int test_layer_c_demod_timing()
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(melpe, 0x11, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
 
     std::vector<int16_t> bb48, rx24;
     if (render_frames(frames, bb48, true) != 0)
@@ -348,7 +356,11 @@ static int test_late_entry_voice_rebuilds_lsf()
         enc.encodeVoiceFrameWithFn(melpe, tag, fn, vf, false, 12);
         frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     std::vector<int16_t> bb48, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -376,8 +388,8 @@ static int test_late_entry_voice_rebuilds_lsf()
     }
     demod.terminate();
     if (!locked || !ready || voice_n < 4) {
-        std::printf("late-entry: lock=%d ready=%d voice=%d\n",
-                    (int)locked, (int)ready, voice_n);
+        std::printf("late-entry: lock=%d ready=%d voice=%d\n", (int)locked,
+                    (int)ready, voice_n);
         return -1;
     }
     call_t outSrc, outDst;
@@ -494,8 +506,16 @@ static int test_corr_peak_distributions()
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(melpe, 0x11, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
 
     std::vector<int16_t> bb48;
     if (render_frames(frames, bb48, true) != 0)
@@ -630,8 +650,16 @@ static int test_tx_during_false_lock()
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(melpe, 0x22, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
     std::vector<int16_t> bb48, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -716,9 +744,21 @@ static int run_lsf_into_false_lock(unsigned frames_in)
     uint8_t tag[4] = { 9, 8, 7, 6 };
     memset(melpe, 0x55, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, true); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, true);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
     std::vector<int16_t> bb48;
     std::vector<int16_t> rx24;
     if (render_frames(frames, bb48, true) != 0) {
@@ -785,8 +825,16 @@ static int test_layer_dc_block()
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(melpe, 0x11, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
 
     std::vector<int16_t> bb48, rx24;
     if (render_frames(frames, bb48, true) != 0)
@@ -844,7 +892,11 @@ static int test_layer_d_full_tx()
         enc.encodeVoiceFrame(melpe, tag, vf, i == 299);
         frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
 
     std::vector<int16_t> bb48, rx24;
     if (render_frames(frames, bb48, true) != 0)
@@ -897,8 +949,16 @@ static int count_good_frames(const impair_t &p, bool demod_invert)
     uint8_t tag[4] = { 0 };
     memset(melpe, 0x44, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
     std::vector<int16_t> bb48, imp48, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -980,8 +1040,16 @@ static int test_lsf_intact_under_noise()
     uint8_t tag[4] = { 0 };
     memset(melpe, 0x44, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
     std::vector<int16_t> bb48;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -1058,8 +1126,16 @@ static int test_c20_multiseed()
     uint8_t tag[4] = { 0 };
     memset(melpe, 0x44, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, frames);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); frames.push_back(_v); }
-    { frame_t _e; enc.encodeEotFrame(_e); frames.push_back(_e); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        frames.push_back(_v);
+    }
+    {
+        frame_t _e;
+        enc.encodeEotFrame(_e);
+        frames.push_back(_e);
+    }
     std::vector<int16_t> bb48;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -1189,7 +1265,11 @@ static int test_frame_index_stall()
         enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i, vf, false, 12);
         frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     std::vector<int16_t> bb48, imp48, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -1239,7 +1319,11 @@ static int count_stream_frames(float noise, int nvoice, unsigned seed,
         enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i, vf, false, 12);
         frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     std::vector<int16_t> bb48, imp48, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -1326,8 +1410,8 @@ static int test_coast_and_sp_protect()
     int auth = count_stream_frames(12000.f, 300, 1u, COAST_MISS_UNLOCK, true);
     int auth125 = count_stream_frames(12500.f, 300, 1u, COAST_MISS_UNLOCK,
                                       true);
-    std::printf("coast/sp: noise12000 auth=%d/%d noise12500 auth=%d/%d\n",
-                auth, (int)LSF_OPENING_FRAMES + 300 + 1, auth125,
+    std::printf("coast/sp: noise12000 auth=%d/%d noise12500 auth=%d/%d\n", auth,
+                (int)LSF_OPENING_FRAMES + 300 + 1, auth125,
                 (int)LSF_OPENING_FRAMES + 300 + 1);
     if (auth < 290 || auth125 < 290) {
         std::printf("coast/sp: authenticated long lock failed\n");
@@ -1343,8 +1427,16 @@ static int test_coast_and_sp_protect()
     uint8_t tag[4] = { 1, 2, 3, 4 };
     memset(melpe, 0x33, sizeof melpe);
     push_lsf(enc, src, dst, nullptr, 0, tx);
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); tx.push_back(_v); }
-    { frame_t _v; enc.encodeVoiceFrame(melpe, tag, _v, false); tx.push_back(_v); }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        tx.push_back(_v);
+    }
+    {
+        frame_t _v;
+        enc.encodeVoiceFrame(melpe, tag, _v, false);
+        tx.push_back(_v);
+    }
     push_lsf(enc, src, dst, nullptr, 0, tx);
     std::vector<int16_t> bb48, rx24;
     if (render_frames(tx, bb48, true) != 0)
@@ -1395,7 +1487,11 @@ static int test_coast_and_sp_protect()
         HorseFrameDecoder decoder2;
         std::vector<frame_t> tx2;
         push_lsf(enc2, src, dst, nullptr, 0, tx2);
-        { frame_t _v; enc2.encodeVoiceFrame(melpe, tag, _v, false); tx2.push_back(_v); }
+        {
+            frame_t _v;
+            enc2.encodeVoiceFrame(melpe, tag, _v, false);
+            tx2.push_back(_v);
+        }
         std::vector<int16_t> bb2, rx2;
         if (render_frames(tx2, bb2, true) != 0)
             return -1;
@@ -1518,11 +1614,15 @@ static int render_long_voice(int nvoice, std::vector<int16_t> &bb48)
     uint8_t tag[4] = { 5, 6, 7, 8 };
     memset(melpe, 0x5A, sizeof melpe);
     for (int i = 0; i < nvoice; i++) {
-            frame_t vf{};
-            enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i, vf, false, 12);
-            frames.push_back(vf);
-        }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, (uint16_t)i, vf, false, 12);
+        frames.push_back(vf);
+    }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     return render_frames(frames, bb48, true);
 }
 
@@ -1560,8 +1660,8 @@ static int test_long_clock_tracking()
         if (render_long_voice(nvoice, bb48) != 0)
             return -1;
         for (bool tracking : { false, true }) {
-            std::printf("long-clock tracking=%d nvoice=%d:\n",
-                        tracking ? 1 : 0, nvoice);
+            std::printf("long-clock tracking=%d nvoice=%d:\n", tracking ? 1 : 0,
+                        nvoice);
             std::fflush(stdout);
             for (float noise : noises) {
                 for (float ppm : ppms) {

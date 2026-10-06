@@ -35,42 +35,40 @@ static int test_voice_encrypt_decrypt_roundtrip()
         plaintext[i] = (uint8_t)(i * 3);
 
     /* Encrypt. */
-    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, plaintext,
-                               sizeof plaintext, ciphertext, tag);
+    horse_crypto_voice_encrypt(session_key, session_key,
+                               HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit,
+                               plaintext, sizeof plaintext, ciphertext, tag);
 
     /* Verify ciphertext changed. */
-    if (memcmp(ciphertext, plaintext, sizeof plaintext) == 0)
-    {
-        std::printf("horse_crypto_test: ciphertext unchanged (encryption may not be active)\n");
+    if (memcmp(ciphertext, plaintext, sizeof plaintext) == 0) {
+        std::printf(
+            "horse_crypto_test: ciphertext unchanged (encryption may not be active)\n");
         return -1;
     }
 
     /* Verify tag is non-zero (if libsodium is active). */
     bool tag_all_zero = true;
-    for (size_t i = 0; i < sizeof tag; i++)
-    {
-        if (tag[i] != 0)
-        {
+    for (size_t i = 0; i < sizeof tag; i++) {
+        if (tag[i] != 0) {
             tag_all_zero = false;
             break;
         }
     }
-    if (tag_all_zero)
-    {
-        std::printf("horse_crypto_test: tag is all zeros (MAC may not be active)\n");
+    if (tag_all_zero) {
+        std::printf(
+            "horse_crypto_test: tag is all zeros (MAC may not be active)\n");
     }
 
     /* Decrypt. */
-    if (!horse_crypto_voice_decrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, ciphertext,
-                                     sizeof ciphertext, tag, decrypted))
-    {
+    if (!horse_crypto_voice_decrypt(
+            session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit,
+            ciphertext, sizeof ciphertext, tag, decrypted)) {
         std::printf("horse_crypto_test: decrypt failed\n");
         return -1;
     }
 
     /* Verify plaintext matches. */
-    if (memcmp(decrypted, plaintext, sizeof plaintext) != 0)
-    {
+    if (memcmp(decrypted, plaintext, sizeof plaintext) != 0) {
         std::printf("horse_crypto_test: decrypted plaintext mismatch\n");
         return -1;
     }
@@ -94,16 +92,17 @@ static int test_voice_decrypt_bad_tag()
     for (size_t i = 0; i < sizeof plaintext; i++)
         plaintext[i] = (uint8_t)(i * 5);
 
-    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, plaintext,
-                               sizeof plaintext, ciphertext, tag);
+    horse_crypto_voice_encrypt(session_key, session_key,
+                               HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit,
+                               plaintext, sizeof plaintext, ciphertext, tag);
 
     /* Corrupt tag. */
     tag[0] ^= 0xFF;
 
     /* Decrypt should fail. */
-    if (horse_crypto_voice_decrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, ciphertext,
-                                    sizeof ciphertext, tag, decrypted))
-    {
+    if (horse_crypto_voice_decrypt(
+            session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit,
+            ciphertext, sizeof ciphertext, tag, decrypted)) {
         std::printf("horse_crypto_test: decrypt accepted corrupted tag\n");
         return -1;
     }
@@ -127,17 +126,19 @@ static int test_voice_decrypt_bad_ciphertext()
     for (size_t i = 0; i < sizeof plaintext; i++)
         plaintext[i] = (uint8_t)(i * 7);
 
-    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, plaintext,
-                               sizeof plaintext, ciphertext, tag);
+    horse_crypto_voice_encrypt(session_key, session_key,
+                               HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit,
+                               plaintext, sizeof plaintext, ciphertext, tag);
 
     /* Corrupt ciphertext. */
     ciphertext[10] ^= 0x55;
 
     /* Decrypt should fail (MAC verification should catch this). */
-    if (horse_crypto_voice_decrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit, ciphertext,
-                                    sizeof ciphertext, tag, decrypted))
-    {
-        std::printf("horse_crypto_test: decrypt accepted corrupted ciphertext\n");
+    if (horse_crypto_voice_decrypt(
+            session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce_96bit,
+            ciphertext, sizeof ciphertext, tag, decrypted)) {
+        std::printf(
+            "horse_crypto_test: decrypt accepted corrupted ciphertext\n");
         return -1;
     }
 
@@ -147,8 +148,8 @@ static int test_voice_decrypt_bad_ciphertext()
 static int test_voice_nonce_independence()
 {
     uint8_t session_key[HORSE_SESSION_KEY_BYTES];
-    uint8_t nonce1[12] = {0};
-    uint8_t nonce2[12] = {0};
+    uint8_t nonce1[12] = { 0 };
+    uint8_t nonce2[12] = { 0 };
     uint8_t plaintext[12];
     uint8_t ciphertext1[12], ciphertext2[12];
     uint8_t tag1[HORSE_VOICE_TAG_BYTES], tag2[HORSE_VOICE_TAG_BYTES];
@@ -160,15 +161,17 @@ static int test_voice_nonce_independence()
     for (size_t i = 0; i < sizeof plaintext; i++)
         plaintext[i] = (uint8_t)(i * 11);
 
-    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce1, plaintext,
+    horse_crypto_voice_encrypt(session_key, session_key,
+                               HORSE_VOICE_DIR_FORWARD, 0, nonce1, plaintext,
                                sizeof plaintext, ciphertext1, tag1);
-    horse_crypto_voice_encrypt(session_key, session_key, HORSE_VOICE_DIR_FORWARD, 0, nonce2, plaintext,
+    horse_crypto_voice_encrypt(session_key, session_key,
+                               HORSE_VOICE_DIR_FORWARD, 0, nonce2, plaintext,
                                sizeof plaintext, ciphertext2, tag2);
 
     /* Different nonces should produce different ciphertexts. */
-    if (memcmp(ciphertext1, ciphertext2, sizeof ciphertext1) == 0)
-    {
-        std::printf("horse_crypto_test: nonce independence failed (same ciphertext for different nonces)\n");
+    if (memcmp(ciphertext1, ciphertext2, sizeof ciphertext1) == 0) {
+        std::printf(
+            "horse_crypto_test: nonce independence failed (same ciphertext for different nonces)\n");
         return -1;
     }
 
@@ -193,8 +196,7 @@ static int test_sign_verify_roundtrip()
     memset(ed25519_sk, 0, sizeof ed25519_sk);
 
     /* Sign. */
-    if (!horse_crypto_sign(ed25519_sk, message, sizeof message, signature))
-    {
+    if (!horse_crypto_sign(ed25519_sk, message, sizeof message, signature)) {
         std::printf("horse_crypto_test: sign failed\n");
         return -1;
     }
@@ -225,8 +227,7 @@ static int test_sign_verify_bad_signature()
     signature[0] ^= 0xFF;
 
     /* Verify should fail. */
-    if (horse_crypto_verify(ed25519_pk, message, sizeof message, signature))
-    {
+    if (horse_crypto_verify(ed25519_pk, message, sizeof message, signature)) {
         std::printf("horse_crypto_test: verify accepted corrupted signature\n");
         return -1;
     }
@@ -248,9 +249,9 @@ static int test_session_keys_and_signed_message()
     uint8_t flags = horse::LSF_FLAG_SIGNED;
     uint8_t msg[HORSE_SESSION_MSG_BYTES];
 
-    if (!horse_crypto_x25519_keypair(alice_pk, alice_sk) ||
-        !horse_crypto_x25519_keypair(bob_pk, bob_sk) ||
-        !horse_crypto_x25519_keypair(eph_pk, eph_sk))
+    if (!horse_crypto_x25519_keypair(alice_pk, alice_sk)
+        || !horse_crypto_x25519_keypair(bob_pk, bob_sk)
+        || !horse_crypto_x25519_keypair(eph_pk, eph_sk))
         return -1;
     if (!horse_crypto_derive_session_keys(eph_sk, bob_pk, src, dst, eph_pk,
                                           flags, HORSE_LSF_VERSION, k_enc_tx,
@@ -260,8 +261,8 @@ static int test_session_keys_and_signed_message()
                                           flags, HORSE_LSF_VERSION, k_enc_rx,
                                           k_tag_rx))
         return -1;
-    if (memcmp(k_enc_tx, k_enc_rx, 32) != 0 ||
-        memcmp(k_tag_tx, k_tag_rx, 32) != 0)
+    if (memcmp(k_enc_tx, k_enc_rx, 32) != 0
+        || memcmp(k_tag_tx, k_tag_rx, 32) != 0)
         return -1;
     if (memcmp(k_enc_tx, k_tag_tx, 32) == 0)
         return -1;
@@ -299,8 +300,8 @@ static int test_signed_only_recording_cannot_forge_voice()
     uint8_t good_tag[4], attacker_tag[4];
 
     crypto_sign_ed25519_keypair(alice_ed_pk, alice_ed_sk);
-    if (!horse_crypto_x25519_keypair(bob_pk, bob_sk) ||
-        !horse_crypto_x25519_keypair(eph_pk, eph_sk))
+    if (!horse_crypto_x25519_keypair(bob_pk, bob_sk)
+        || !horse_crypto_x25519_keypair(eph_pk, eph_sk))
         return -1;
     if (!horse_crypto_derive_session_keys(eph_sk, bob_pk, src, dst, eph_pk,
                                           flags, HORSE_LSF_VERSION, k_enc,
@@ -315,7 +316,7 @@ static int test_signed_only_recording_cannot_forge_voice()
 
     memset(orig, 0x11, sizeof orig);
     if (!horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 0, orig,
-                                    good_tag))
+                                     good_tag))
         return -1;
     if (!horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0, orig,
                                         good_tag))
@@ -327,11 +328,10 @@ static int test_signed_only_recording_cannot_forge_voice()
     crypto_generichash(from_sig, sizeof from_sig, signature, sizeof signature,
                        (const unsigned char *)"HORSE-FAUTH", 11);
     if (!horse_crypto_voice_auth_tag(from_sig, HORSE_VOICE_DIR_FORWARD, 0,
-                                    forged, attacker_tag))
+                                     forged, attacker_tag))
         return -1;
-    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0, forged,
-                                       attacker_tag))
-    {
+    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0,
+                                       forged, attacker_tag)) {
         std::printf("horse_crypto_test: signature-derived tag forged voice\n");
         return -1;
     }
@@ -339,9 +339,8 @@ static int test_signed_only_recording_cannot_forge_voice()
     uint8_t hvt[32];
     crypto_generichash(hvt, sizeof hvt, forged, sizeof forged,
                        (const unsigned char *)"HVOICETAG", 9);
-    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0, forged,
-                                       hvt))
-    {
+    if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0,
+                                       forged, hvt)) {
         std::printf("horse_crypto_test: HVOICETAG forged voice\n");
         return -1;
     }
@@ -349,15 +348,13 @@ static int test_signed_only_recording_cannot_forge_voice()
     uint8_t pub_only[32], unused[32];
     if (horse_crypto_derive_session_keys(bob_pk, eph_pk, src, dst, eph_pk,
                                          flags, HORSE_LSF_VERSION, pub_only,
-                                         unused))
-    {
+                                         unused)) {
         uint8_t t[4];
-        horse_crypto_voice_auth_tag(pub_only, HORSE_VOICE_DIR_FORWARD, 0, forged,
-                                    t);
+        horse_crypto_voice_auth_tag(pub_only, HORSE_VOICE_DIR_FORWARD, 0,
+                                    forged, t);
         if (horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 0,
-                                           forged, t) &&
-            memcmp(pub_only, k_tag, 32) != 0)
-        {
+                                           forged, t)
+            && memcmp(pub_only, k_tag, 32) != 0) {
             std::printf("horse_crypto_test: public-only ECDH forged voice\n");
             return -1;
         }
@@ -386,7 +383,7 @@ static int test_tag_binds_dir_fn_payload()
     memset(payload, 0x5A, sizeof payload);
 
     if (!horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 7, payload,
-                                    tag))
+                                     tag))
         return -1;
     if (!horse_crypto_voice_auth_verify(k_tag, HORSE_VOICE_DIR_FORWARD, 7,
                                         payload, tag))
@@ -404,7 +401,7 @@ static int test_tag_binds_dir_fn_payload()
 
     /* Last-frame bit is not part of the tag. */
     if (!horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 7 | 0x8000,
-                                    payload, other))
+                                     payload, other))
         return -1;
     if (memcmp(tag, other, 4) != 0)
         return -1;
@@ -484,8 +481,8 @@ static int test_lsf_kdf_bind()
     uint8_t payload[12];
     uint8_t tag[4];
 
-    if (!horse_crypto_x25519_keypair(bob_pk, bob_sk) ||
-        !horse_crypto_x25519_keypair(eph_pk, eph_sk))
+    if (!horse_crypto_x25519_keypair(bob_pk, bob_sk)
+        || !horse_crypto_x25519_keypair(eph_pk, eph_sk))
         return -1;
     if (!horse_crypto_derive_session_keys(eph_sk, bob_pk, src, dst, eph_pk,
                                           flags, HORSE_LSF_VERSION, k_enc,
@@ -493,7 +490,7 @@ static int test_lsf_kdf_bind()
         return -1;
     memset(payload, 0x33, sizeof payload);
     if (!horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD, 1, payload,
-                                    tag))
+                                     tag))
         return -1;
 
     uint8_t src2[6], dst2[6], eph2[32];
@@ -518,27 +515,29 @@ static int test_lsf_kdf_bind()
         return -1;
     eph2[0] ^= 1;
     if (horse_crypto_derive_session_keys(bob_sk, eph2, src, dst, eph2, flags,
-                                         HORSE_LSF_VERSION, k2_enc, k2_tag) &&
-        horse_crypto_voice_auth_verify(k2_tag, HORSE_VOICE_DIR_FORWARD, 1,
-                                       payload, tag))
+                                         HORSE_LSF_VERSION, k2_enc, k2_tag)
+        && horse_crypto_voice_auth_verify(k2_tag, HORSE_VOICE_DIR_FORWARD, 1,
+                                          payload, tag))
         return -1;
     if (!horse_crypto_derive_session_keys(bob_sk, eph_pk, src, dst, eph_pk,
-                                          (uint8_t)(flags ^ horse::LSF_FLAG_SIGNED),
+                                          (uint8_t)(flags
+                                                    ^ horse::LSF_FLAG_SIGNED),
                                           HORSE_LSF_VERSION, k2_enc, k2_tag))
         return -1;
     if (horse_crypto_voice_auth_verify(k2_tag, HORSE_VOICE_DIR_FORWARD, 1,
                                        payload, tag))
         return -1;
-    if (!horse_crypto_derive_session_keys(bob_sk, eph_pk, src, dst, eph_pk,
-                                          (uint8_t)(flags ^ horse::LSF_FLAG_ENCRYPTED),
-                                          HORSE_LSF_VERSION, k2_enc, k2_tag))
+    if (!horse_crypto_derive_session_keys(
+            bob_sk, eph_pk, src, dst, eph_pk,
+            (uint8_t)(flags ^ horse::LSF_FLAG_ENCRYPTED), HORSE_LSF_VERSION,
+            k2_enc, k2_tag))
         return -1;
     if (horse_crypto_voice_auth_verify(k2_tag, HORSE_VOICE_DIR_FORWARD, 1,
                                        payload, tag))
         return -1;
-    if (!horse_crypto_derive_session_keys(bob_sk, eph_pk, src, dst, eph_pk,
-                                          flags, (uint8_t)(HORSE_LSF_VERSION ^ 1),
-                                          k2_enc, k2_tag))
+    if (!horse_crypto_derive_session_keys(
+            bob_sk, eph_pk, src, dst, eph_pk, flags,
+            (uint8_t)(HORSE_LSF_VERSION ^ 1), k2_enc, k2_tag))
         return -1;
     if (horse_crypto_voice_auth_verify(k2_tag, HORSE_VOICE_DIR_FORWARD, 1,
                                        payload, tag))
@@ -561,8 +560,7 @@ static int test_memzero()
     uint8_t buf[8];
     memset(buf, 0xA5, sizeof buf);
     horse_crypto_memzero(buf, sizeof buf);
-    for (size_t i = 0; i < sizeof buf; i++)
-    {
+    for (size_t i = 0; i < sizeof buf; i++) {
         if (buf[i] != 0)
             return -1;
     }
@@ -571,6 +569,10 @@ static int test_memzero()
 
 int main()
 {
+    if (!horse_crypto_available()) {
+        std::printf("horse_crypto_test: skipped (no libsodium)\n");
+        return 77;
+    }
     if (test_voice_encrypt_decrypt_roundtrip() != 0)
         return -1;
     if (test_voice_decrypt_bad_tag() != 0)

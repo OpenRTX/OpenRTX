@@ -158,8 +158,8 @@ static int run_mode(bool enc, bool sign, mut_t mut)
         flags |= LSF_FLAG_SIGNED;
     if (crypto_sign_ed25519_keypair(ed_pk, ed_sk) != 0)
         return -1;
-    if (!horse_crypto_x25519_keypair(bob_pk, bob_sk) ||
-        !horse_crypto_x25519_keypair(eph_pk, eph_sk))
+    if (!horse_crypto_x25519_keypair(bob_pk, bob_sk)
+        || !horse_crypto_x25519_keypair(eph_pk, eph_sk))
         return -1;
     uint8_t tx_flags = flags;
     if (mut == mut_t::FLAGS)
@@ -200,9 +200,9 @@ static int run_mode(bool enc, bool sign, mut_t mut)
             memcpy(chunk, signature + i * SIG_CHUNK_BYTES, sig_chunk_bytes(i));
             uint8_t ztag[4] = { 0, 0, 0, 0 };
             frame_t vf{};
-            encf.encodeVoiceFrameWithFn(chunk, ztag,
-                                        static_cast<uint16_t>(SIG_FRAME_BASE + i),
-                                        vf, false);
+            encf.encodeVoiceFrameWithFn(
+                chunk, ztag, static_cast<uint16_t>(SIG_FRAME_BASE + i), vf,
+                false);
             frames.push_back(vf);
         }
     } else
