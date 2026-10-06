@@ -840,7 +840,10 @@ static int run_eot_notice(float noise, unsigned seed, int nvoice,
         enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
         frames.push_back(vf);
     }
-    {
+    const int skip_eot = miss_limit < 0;
+    if (skip_eot)
+        miss_limit = -miss_limit;
+    if (!skip_eot) {
         frame_t ef;
         enc.encodeEotFrame(ef);
         frames.push_back(ef);
@@ -861,7 +864,7 @@ static int run_eot_notice(float noise, unsigned seed, int nvoice,
     to_24k(imp, rx24);
     std::vector<frame_t> sl;
     slice_ideal(rx24, true, sl);
-    int eot_i = nvoice + 1;
+    int eot_i = skip_eot ? ((int)LSF_OPENING_FRAMES + nvoice - 1) : nvoice + 1;
     TrackStat t = track_frames(sl, miss_limit, eot_i);
     const char *ds[] = { "none", "eot", "miss", "never" };
     std::printf("eot_notice miss_limit=%d noise=%.0f delivered=%d drop=%s "
@@ -1342,7 +1345,7 @@ enum {
 };
 
 static int run_stream_loss(float noise, unsigned seed, int ntx, bool use_soft,
-                           bool clock_track)
+                           bool clock_track, bool tagdec)
 {
     const int nvoice = 300;
     HorseFrameEncoder enc;
@@ -1404,6 +1407,9 @@ static int run_stream_loss(float noise, unsigned seed, int ntx, bool use_soft,
                                     tydec.decodeFrame(snaps[si].f,
                                                       snaps[si].soft.data()) :
                                     tydec.decodeFrame(snaps[si].f);
+            if (tagdec && ty == HorseFrameType::LINK_SETUP
+                && tydec.lsfReady())
+                tydec.setAuthenticated(true);
             if (ty == HorseFrameType::UNKNOWN)
                 nunknown++;
             if (ty == HorseFrameType::VOICE)
@@ -1423,6 +1429,8 @@ static int run_stream_loss(float noise, unsigned seed, int ntx, bool use_soft,
             HorseFrameType ty =
                 use_soft ? dec.decodeFrame(snaps[si].f, snaps[si].soft.data()) :
                            dec.decodeFrame(snaps[si].f);
+            if (tagdec && ty == HorseFrameType::LINK_SETUP && dec.lsfReady())
+                dec.setAuthenticated(true);
             if (ty != HorseFrameType::VOICE)
                 continue;
             uint8_t mel[12], tg[4];
@@ -1541,11 +1549,12 @@ static int run_stream_loss(float noise, unsigned seed, int ntx, bool use_soft,
         int hb = lost > 15 ? 15 : lost;
         hist_lost[hb]++;
     }
-    std::printf("streamloss noise=%.0f ntx=%d soft=%d track=%d nloss=%d "
+    std::printf("streamloss noise=%.0f ntx=%d soft=%d track=%d tagdec=%d "
+                "nloss=%d "
                 "miss=%d decode=%d tag=%d fn_rule=%d near_step=%d/%d "
                 "fn_cascade_events=%d sync_ok_on_bad=%d snaps/tx=%.1f "
                 "unknown=%ld voice_ty=%ld\n",
-                noise, ntx, (int)use_soft, (int)clock_track, nloss, kind_n[1],
+                noise, ntx, (int)use_soft, (int)clock_track, (int)tagdec, nloss, kind_n[1],
                 kind_n[2], kind_n[3], kind_n[4], nnear_step, nloss,
                 n_fn_cascade, n_sync_ok, ntx ? (double)snaps_sum / ntx : 0.0,
                 nunknown, nvoice_ty);
@@ -2511,7 +2520,9 @@ int main(int argc, char **argv)
         unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
         int use_soft = argc > 5 ? atoi(argv[5]) : 0;
         int track = argc > 6 ? atoi(argv[6]) : 1;
-        return run_stream_loss(noise, seed, ntx, use_soft != 0, track != 0);
+        int tagdec = argc > 7 ? atoi(argv[7]) : 1;
+        return run_stream_loss(noise, seed, ntx, use_soft != 0, track != 0,
+                               tagdec != 0);
     }
     if (mode == "voice_hs") {
         float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
@@ -2564,17 +2575,19 @@ int main(int argc, char **argv)
         unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
         int miss = argc > 5 ? atoi(argv[5]) : 4;
         int md = argc > 6 ? atoi(argv[6]) : 1;
+        int use_soft = argc > 7 ? atoi(argv[7]) : 0;
+        int check_targets = argc > 8 ? atoi(argv[8]) : 0;
         AttribTrial sum{};
         int hist[FAIL_N];
-        if (run_complete_attrib(noise, seed, ntx, md, miss, &sum, hist, false,
-                                false)
+        if (run_complete_attrib(noise, seed, ntx, md, miss, &sum, hist,
+                                use_soft != 0, false)
             != 0)
             return 1;
         const char *mn[] = { "?", "encrypt", "sign", "both" };
         std::printf("complete_v2 mode=%s miss_limit=%d noise=%.0f seed=%u "
-                    "strict=%d/%d usable=%d/%d voice_ok_sum=%d "
+                    "soft=%d strict=%d/%d usable=%d/%d voice_ok_sum=%d "
                     "mean_start_fn=%.1f\n",
-                    mn[md], miss, noise, seed, sum.strict_ok, ntx,
+                    mn[md], miss, noise, seed, use_soft, sum.strict_ok, ntx,
                     sum.usable_ok, ntx, sum.voice_ok,
                     sum.start_n ? (double)sum.start_fn / sum.start_n : 0.0);
         std::printf("attrib");
@@ -2587,7 +2600,7 @@ int main(int argc, char **argv)
                         hist[FAIL_NONE], sum.strict_ok);
             return 1;
         }
-        /* Regression floors, not performance targets. */
+        /* Regression floors, not performance targets (hard decisions). */
         std::printf("floor (not a target) strict>=180/200 @8000 "
                     "usable>=165/200 @10000\n");
         if (ntx == 200 && noise >= 7999.f && noise <= 8001.f
@@ -2601,6 +2614,35 @@ int main(int argc, char **argv)
             std::printf("FLOOR FAIL usable %d < 165 at noise 10000\n",
                         sum.usable_ok);
             return 1;
+        }
+        /* Owner-approved soft-decision targets (both seeds). */
+        if (check_targets && use_soft && ntx == 200) {
+            std::printf("target strict>=190 usable>=195 @8000 "
+                        "strict>=150 usable>=180 @10000 (soft)\n");
+            if (noise >= 7999.f && noise <= 8001.f) {
+                if (sum.strict_ok < 190) {
+                    std::printf("TARGET FAIL strict %d < 190 at noise 8000\n",
+                                sum.strict_ok);
+                    return 1;
+                }
+                if (sum.usable_ok < 195) {
+                    std::printf("TARGET FAIL usable %d < 195 at noise 8000\n",
+                                sum.usable_ok);
+                    return 1;
+                }
+            }
+            if (noise >= 9999.f && noise <= 10001.f) {
+                if (sum.strict_ok < 150) {
+                    std::printf("TARGET FAIL strict %d < 150 at noise 10000\n",
+                                sum.strict_ok);
+                    return 1;
+                }
+                if (sum.usable_ok < 180) {
+                    std::printf("TARGET FAIL usable %d < 180 at noise 10000\n",
+                                sum.usable_ok);
+                    return 1;
+                }
+            }
         }
         return 0;
     }

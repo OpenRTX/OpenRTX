@@ -76,6 +76,7 @@ horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
              'openrtx/src/protocols/horse/HorseDemodulator.cpp',
              'openrtx/src/protocols/horse/melpe_horse.c',
              'openrtx/src/protocols/horse/horse_crypto.c',
+             'openrtx/src/protocols/horse/horse_crypto_worker.c',
              'openrtx/src/protocols/horse/horse_keystore.c',
              'openrtx/src/protocols/horse/horse_peers.c',
              'openrtx/src/protocols/horse/horse_provision.c',
@@ -1285,6 +1286,16 @@ horse_crypto_test = executable('horse_crypto_test',
                                cpp_args : linux_cpp_args,
                                link_args : linux_l_args)
 
+horse_crypto_worker_test = executable('horse_crypto_worker_test',
+                                      sources : ['openrtx/src/protocols/horse/horse_crypto.c',
+                                                 'openrtx/src/protocols/horse/horse_crypto_worker.c',
+                                                 'tests/unit/horse_crypto_worker.cpp'],
+                                      include_directories : openrtx_inc,
+                                      dependencies : linux_deps + [threads_dep],
+                                      c_args : linux_c_args,
+                                      cpp_args : linux_cpp_args,
+                                      link_args : linux_l_args)
+
 horse_info_test = executable('horse_info_test',
                              sources : ['tests/unit/horse_info.cpp'],
                              include_directories : openrtx_inc,
@@ -1350,6 +1361,18 @@ test('Horse FEC v2 floor strict 8000 (not a target)', horse_fec_v2_sim,
 test('Horse FEC v2 floor usable 10000 (not a target)', horse_fec_v2_sim,
      args : ['gates', '10000', '200', '1', '4', '1'],
      env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 8000 seed 1', horse_fec_v2_sim,
+     args : ['gates', '8000', '200', '1', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 8000 seed 2', horse_fec_v2_sim,
+     args : ['gates', '8000', '200', '2', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 10000 seed 1', horse_fec_v2_sim,
+     args : ['gates', '10000', '200', '1', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 10000 seed 2', horse_fec_v2_sim,
+     args : ['gates', '10000', '200', '2', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
 test('Horse Provision Pack Test', py3,
      args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'],
      env : horse_test_env,
@@ -1412,6 +1435,8 @@ test('Horse Frame Unit Test',  horse_frame_test,
      env : horse_test_env, timeout : 30)
 test('Horse Crypto Unit Test', horse_crypto_test,
      env : horse_test_env, timeout : 30)
+test('Horse Crypto Worker Test', horse_crypto_worker_test,
+     env : horse_test_env, timeout : 120)
 test('Horse Info Reset Test', horse_info_test,
      env : horse_test_env, timeout : 30)
 test('Horse Codec 20ms Test', horse_codec_test,

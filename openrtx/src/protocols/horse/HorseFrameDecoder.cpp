@@ -23,6 +23,7 @@ HorseFrameDecoder::HorseFrameDecoder()
     : lsfNextChunk(0)
     , lsfComplete(false)
     , haveVoiceFrame(false)
+    , authenticated(false)
     , lastVoiceFrameNum(0)
 {
     lsfSrc.fill(0);
@@ -47,6 +48,7 @@ void HorseFrameDecoder::reset()
     lsfDst.fill(0);
     lastVoiceFrameNum = 0;
     haveVoiceFrame = false;
+    authenticated = false;
     lsfNextChunk = 0;
     lsfComplete = false;
     std::memset(lsfAssembled, 0, sizeof lsfAssembled);
@@ -133,8 +135,15 @@ void HorseFrameDecoder::ingestFragmentSoft(
     const size_t slot = horse_frag_slot(fn);
     if (slot >= HORSE_FRAG_CYCLE)
         return;
-    for (size_t i = 0; i < HORSE_VOICE_SPARE_BITS; i++)
-        fragSoftAcc[slot][i] += static_cast<int32_t>(spare96[i]) - 32767;
+    for (size_t i = 0; i < HORSE_VOICE_SPARE_BITS; i++) {
+        int32_t d = (static_cast<int32_t>(spare96[i]) - 32767) / 3;
+        int32_t s = static_cast<int32_t>(fragSoftAcc[slot][i]) + d;
+        if (s > 32767)
+            s = 32767;
+        if (s < -32768)
+            s = -32768;
+        fragSoftAcc[slot][i] = static_cast<int16_t>(s);
+    }
     if (fragCount[slot] < HORSE_FRAG_MAJORITY)
         fragCount[slot] = static_cast<uint8_t>(fragCount[slot] + 1);
     if (slot < HORSE_FRAG_LSF_SLOTS)
@@ -162,6 +171,11 @@ void HorseFrameDecoder::acceptVoice(const frame_t &frame,
     }
 }
 
+void HorseFrameDecoder::setAuthenticated(bool authed)
+{
+    authenticated = authed;
+}
+
 HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
 {
     return decodeFrame(frame, nullptr);
@@ -176,6 +190,17 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame,
                     + hammingDistance(frame[1], VOICE_SYNC_WORD[1]);
     uint8_t eotHd = hammingDistance(frame[0], EOT_SYNC_WORD[0])
                   + hammingDistance(frame[1], EOT_SYNC_WORD[1]);
+
+    if (authenticated) {
+        if (eotHd <= HAMMING_SYNC_MAX)
+            return HorseFrameType::EOT;
+        if (lsfHd <= HAMMING_SYNC_MAX) {
+            /* keep LSF path for a replacement lock */
+        } else {
+            acceptVoice(frame, soft384);
+            return HorseFrameType::VOICE;
+        }
+    }
 
     if (lsfHd <= HAMMING_SYNC_MAX) {
         if (!lsfComplete && frame.size() >= 2 + HORSE_VOICE_CODED_BYTES

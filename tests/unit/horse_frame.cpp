@@ -666,6 +666,90 @@ static int test_locked_sync_flywheel()
     return 0;
 }
 
+static int test_tag_decided_after_auth(void)
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    std::memset(melpe, 0x5A, sizeof melpe);
+    frame_t f0{}, f1{};
+    enc.encodeVoiceFrameWithFn(melpe, tag, 0, f0, false, 12);
+    enc.encodeVoiceFrameWithFn(melpe, tag, 1, f1, false, 12);
+    if (dec.decodeFrame(f0) != HorseFrameType::VOICE)
+        return -1;
+    dec.setAuthenticated(true);
+    f1[0] = 0x00;
+    f1[1] = 0x00;
+    uint8_t eotHd = 0;
+    for (int b = 0; b < 8; b++)
+        eotHd += (uint8_t)((f1[0] ^ EOT_SYNC_WORD[0]) >> b) & 1u;
+    for (int b = 0; b < 8; b++)
+        eotHd += (uint8_t)((f1[1] ^ EOT_SYNC_WORD[1]) >> b) & 1u;
+    if (eotHd <= HAMMING_SYNC_MAX)
+        return -1;
+    if (dec.decodeFrame(f1) != HorseFrameType::VOICE) {
+        std::printf("horse_frame_test: tag-decided voice missed\n");
+        return -1;
+    }
+    HorseFrameDecoder before;
+    if (before.decodeFrame(f1) != HorseFrameType::UNKNOWN)
+        return -1;
+    frame_t eot{};
+    enc.encodeEotFrame(eot);
+    if (dec.decodeFrame(eot) != HorseFrameType::EOT)
+        return -1;
+    return 0;
+}
+
+static int16_t sat16(int32_t s)
+{
+    if (s > 32767)
+        s = 32767;
+    if (s < -32768)
+        s = -32768;
+    return (int16_t)s;
+}
+
+static int test_frag_soft_int16_matches_int32(void)
+{
+    const int nbit = 32;
+    int32_t a32[nbit];
+    int16_t a16[nbit];
+    std::memset(a32, 0, sizeof a32);
+    std::memset(a16, 0, sizeof a16);
+    uint16_t copies[4][nbit];
+    unsigned rng = 1;
+    for (int c = 0; c < 4; c++) {
+        for (int b = 0; b < nbit; b++) {
+            rng = rng * 1103515245u + 12345u;
+            copies[c][b] = (uint16_t)(rng >> 16);
+        }
+    }
+    copies[0][0] = 65535;
+    copies[1][0] = 65535;
+    copies[2][0] = 0;
+    copies[3][0] = 65535;
+    for (int c = 0; c < 4; c++) {
+        for (int b = 0; b < nbit; b++) {
+            a32[b] += (int32_t)copies[c][b] - 32767;
+            int32_t d = ((int32_t)copies[c][b] - 32767) / 3;
+            a16[b] = sat16((int32_t)a16[b] + d);
+        }
+    }
+    for (int b = 0; b < nbit; b++) {
+        int s32 = a32[b] > 0 ? 1 : 0;
+        int s16 = a16[b] > 0 ? 1 : 0;
+        if (s32 != s16) {
+            std::printf("horse_frame_test: frag acc sign mismatch bit %d "
+                        "i32=%d i16=%d\n",
+                        b, a32[b], (int)a16[b]);
+            return -1;
+        }
+    }
+    return 0;
+}
+
 int main()
 {
     if (test_lsf_roundtrip() != 0)
@@ -716,6 +800,12 @@ int main()
         return -1;
     if (test_locked_sync_flywheel() != 0)
         return -1;
+    if (test_tag_decided_after_auth() != 0)
+        return -1;
+    if (test_frag_soft_int16_matches_int32() != 0)
+        return -1;
+    std::printf("horse_frame_test: sizeof decoder=%zu\n",
+                sizeof(HorseFrameDecoder));
     std::printf("horse_frame_test: all tests passed\n");
     return 0;
 }

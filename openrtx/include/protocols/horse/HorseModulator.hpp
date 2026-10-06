@@ -72,7 +72,7 @@ private:
     size_t captureLen;
 
 #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-    M17::PwmCompensator pwmComp;
+    PwmCompensator pwmComp;
 #endif
 };
 

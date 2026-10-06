@@ -30,6 +30,7 @@ public:
     HorseFrameType decodeFrame(const frame_t &frame);
     HorseFrameType decodeFrame(const frame_t &frame,
                                const uint16_t soft384[FRAME_BITS]);
+    void setAuthenticated(bool authed);
 
     /** True after opening chunks or fragment majority pass crc_m17. */
     bool lsfReady() const
@@ -66,12 +67,13 @@ private:
     uint8_t lsfNextChunk;
     bool lsfComplete;
     bool haveVoiceFrame;
+    bool authenticated;
     uint16_t lastVoiceFrameNum;
 
     uint8_t fragCopy[HORSE_FRAG_CYCLE][HORSE_FRAG_MAJORITY][HORSE_FRAG_BYTES];
     uint8_t fragCount[HORSE_FRAG_CYCLE];
     uint8_t fragHead[HORSE_FRAG_CYCLE];
-    int32_t fragSoftAcc[HORSE_FRAG_CYCLE][HORSE_VOICE_SPARE_BITS];
+    int16_t fragSoftAcc[HORSE_FRAG_CYCLE][HORSE_VOICE_SPARE_BITS];
     HorseVoiceCodec voiceCodec;
     uint8_t lastInfo[HORSE_VOICE_INFO_BYTES];
     uint16_t lastSpareSoft[HORSE_VOICE_SPARE_BITS];
