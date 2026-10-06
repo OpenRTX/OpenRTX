@@ -54,9 +54,14 @@ TEST_CASE("Viterbi decode recovers punctured convolutional encoding",
 
     generateErrors(punctured);
 
+    // Hard bits as fully confident soft values
+    array<uint16_t, 34 * 8> soft;
+    for (size_t i = 0; i < soft.size(); i++)
+        soft[i] = M17::getBit(punctured, i) ? 0xFFFF : 0x0000;
+
     array<uint8_t, 18> result;
-    M17::HardViterbi decoder;
-    decoder.decodePunctured(punctured, result, M17::DATA_PUNCTURE);
+    M17::SoftViterbi decoder;
+    decoder.decodePunctured(soft, result, M17::DATA_PUNCTURE);
 
     for (size_t i = 0; i < result.size(); i++) {
         INFO("Position " << i << ": got 0x" << hex
