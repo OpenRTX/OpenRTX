@@ -94,6 +94,16 @@ private:
     uint16_t rxSoft[horse::FRAME_BITS];
     horse_peer_t txPeer;
     horse_identity_keys_t txId;
+    horse_identity_keys_t rxId;
+    horse_peer_t rxPeer;
+    uint8_t rxSessionMsg[HORSE_SESSION_MSG_BYTES];
+    uint8_t rxNonce[12];
+    uint8_t rxPlain[HORSE_CODEC_FRAME_BYTES];
+    uint8_t rxMelpe[HORSE_CODEC_FRAME_BYTES];
+    uint8_t rxTag[HORSE_VOICE_TAG_BYTES];
+    uint8_t txNonce[12];
+    uint8_t txCipher[HORSE_CODEC_FRAME_BYTES];
+    uint8_t txPayload[HORSE_CODEC_FRAME_BYTES];
 };
 
 #endif // OPMODE_HORSE_H

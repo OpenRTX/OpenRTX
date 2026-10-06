@@ -222,8 +222,8 @@ bool horse_crypto_derive_session_keys(
         return false;
 
 #ifdef HAVE_LIBSODIUM
-    unsigned char shared[crypto_scalarmult_BYTES];
-    unsigned char ikm[crypto_scalarmult_BYTES + 6 + 6 + 32 + 2];
+    static unsigned char shared[crypto_scalarmult_BYTES];
+    static unsigned char ikm[crypto_scalarmult_BYTES + 6 + 6 + 32 + 2];
 
     if (horse_sodium_init() != 0)
         return false;

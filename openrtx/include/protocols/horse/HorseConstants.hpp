@@ -79,8 +79,7 @@ static inline size_t horse_frag_slot(uint16_t fn)
     if (fn <= VOICE_FN_MAX)
         return static_cast<size_t>(fn % HORSE_FRAG_CYCLE);
     if (fn >= SIG_FRAME_BASE && fn < SIG_FRAME_BASE + SIG_FRAME_COUNT)
-        return HORSE_FRAG_LSF_SLOTS
-             + static_cast<size_t>(fn - SIG_FRAME_BASE);
+        return HORSE_FRAG_LSF_SLOTS + static_cast<size_t>(fn - SIG_FRAME_BASE);
     return HORSE_FRAG_CYCLE;
 }
 
@@ -129,6 +128,13 @@ static constexpr size_t VOICE_TAG_BITS = 32;
 
 /* Max Hamming distance when matching a 16-bit sync word (two bytes). */
 static constexpr uint8_t HAMMING_SYNC_MAX = 2;
+/*
+ * After at least one voice frame in this lock, still decode as voice
+ * when the sync word is the nearest of the three and HD is at most
+ * this. Sync words are Hamming-6 apart, so 4 cannot alias another
+ * type. Receiver-only; does not change the on-air format.
+ */
+static constexpr uint8_t HAMMING_LOCKED_MAX = 4;
 /*
  * Acquisition Hamming (LSF and voice). Hamming 0 has the fewest false
  * locks on open-FM Gaussian noise and still passes clean/impaired

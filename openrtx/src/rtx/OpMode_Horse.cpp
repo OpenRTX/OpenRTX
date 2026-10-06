@@ -20,7 +20,6 @@
 #include "protocols/horse/horse_crypto.h"
 #include "rtx/rtx.h"
 #include <cstring>
-#include <string>
 
 static bool horse_is_sig_frame(uint16_t fn)
 {
@@ -76,6 +75,16 @@ OpMode_Horse::OpMode_Horse()
     , rxSoft{}
     , txPeer{}
     , txId{}
+    , rxId{}
+    , rxPeer{}
+    , rxSessionMsg{}
+    , rxNonce{}
+    , rxPlain{}
+    , rxMelpe{}
+    , rxTag{}
+    , txNonce{}
+    , txCipher{}
+    , txPayload{}
 {
 }
 
@@ -110,18 +119,17 @@ void OpMode_Horse::tryFinalizeRxSessionSig()
     if (rxSigChunks < SIG_FRAME_COUNT)
         return;
 
-    horse_peer_t peer;
+    horse_peer_t &peer = rxPeer;
     memset(&peer, 0, sizeof peer);
     if (state.channel.horse.contact_index == 0
         || !horse_peer_read(state.channel.horse.contact_index, &peer)
         || !horse_peer_has_ed25519(&peer))
         return;
 
-    uint8_t session_msg[HORSE_SESSION_MSG_BYTES];
     horse_crypto_build_session_message(rxLsfSrc.data(), rxLsfDst.data(),
                                        rxLsfEphPk, rxLsfFlags, rxLsfVersion,
-                                       session_msg);
-    if (!horse_crypto_verify(peer.ed25519_pk, session_msg, sizeof session_msg,
+                                       rxSessionMsg);
+    if (!horse_crypto_verify(peer.ed25519_pk, rxSessionMsg, sizeof rxSessionMsg,
                              rxSessionSig))
         return;
 
@@ -132,10 +140,8 @@ void OpMode_Horse::tryFinalizeRxSigFragments()
 {
     if (rxSigReady || !signRx)
         return;
-    uint8_t sig[HORSE_ED25519_SIGNATURE_BYTES];
-    if (!decoder.getSigFragments(sig))
+    if (!decoder.getSigFragments(rxSessionSig))
         return;
-    memcpy(rxSessionSig, sig, sizeof rxSessionSig);
     rxSigChunks = SIG_FRAME_COUNT;
     tryFinalizeRxSessionSig();
 }
@@ -167,21 +173,21 @@ bool OpMode_Horse::applyLsfIfReady(rtxStatus_t *const status)
     resetRxCrypto();
     dataValid = true;
     decoder.getLsfCallsigns(rxLsfSrc, rxLsfDst);
-    std::string srcStr = M17::Callsign(rxLsfSrc);
-    std::string dstStr = M17::Callsign(rxLsfDst);
-    strncpy(status->horse_src, srcStr.c_str(), 9);
-    status->horse_src[9] = '\0';
-    strncpy(status->horse_dst, dstStr.c_str(), 9);
-    status->horse_dst[9] = '\0';
+    {
+        M17::Callsign srcCs(rxLsfSrc);
+        M17::Callsign dstCs(rxLsfDst);
+        strncpy(status->horse_src, srcCs, 9);
+        status->horse_src[9] = '\0';
+        strncpy(status->horse_dst, dstCs, 9);
+        status->horse_dst[9] = '\0';
+    }
 
-    uint8_t eph_pk[HORSE_X25519_PUBLICKEY_BYTES];
     uint8_t flags = 0;
     uint8_t version = 0;
-    if (!decoder.getLsfCrypto(eph_pk, &flags, &version))
+    if (!decoder.getLsfCrypto(rxLsfEphPk, &flags, &version))
         return false;
     rxLsfFlags = flags;
     rxLsfVersion = version;
-    memcpy(rxLsfEphPk, eph_pk, sizeof rxLsfEphPk);
 
     if (!horse_crypto_lsf_version_ok(version))
         return false;
@@ -189,11 +195,11 @@ bool OpMode_Horse::applyLsfIfReady(rtxStatus_t *const status)
     demodulator.noteValidTag();
 
     if (horse_keystore_is_unlocked()) {
-        horse_identity_keys_t id;
+        horse_identity_keys_t &id = rxId;
         if (horse_keystore_copy_identity(&id)
             && horse_crypto_derive_session_keys(
-                id.x25519_sk, eph_pk, rxLsfSrc.data(), rxLsfDst.data(), eph_pk,
-                flags, version, sessionKey, frameAuthKey)) {
+                id.x25519_sk, rxLsfEphPk, rxLsfSrc.data(), rxLsfDst.data(),
+                rxLsfEphPk, flags, version, sessionKey, frameAuthKey)) {
             sessionValid = true;
             if (flags & LSF_FLAG_ENCRYPTED)
                 encryptRx = true;
@@ -213,24 +219,22 @@ void OpMode_Horse::sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
                                     horse::frame_t &outFrame)
 {
     uint8_t voiceTag[HORSE_VOICE_TAG_BYTES] = { 0 };
-    uint8_t payload[HORSE_CODEC_FRAME_BYTES];
-    memcpy(payload, melpe, sizeof payload);
+    memcpy(txPayload, melpe, sizeof txPayload);
 
     uint16_t fn = encoder.currentVoiceFrameNumber();
     if (encryptTx && sessionValid) {
-        uint8_t nonce[12];
-        uint8_t cipher[HORSE_CODEC_FRAME_BYTES];
-        horse_crypto_voice_nonce_from_fn(fn, nonce);
+        horse_crypto_voice_nonce_from_fn(fn, txNonce);
         horse_crypto_voice_encrypt(sessionKey, frameAuthKey,
-                                   HORSE_VOICE_DIR_FORWARD, fn, nonce, payload,
-                                   HORSE_CODEC_FRAME_BYTES, cipher, voiceTag);
-        encoder.encodeVoiceFrame(cipher, voiceTag, outFrame, isLast);
+                                   HORSE_VOICE_DIR_FORWARD, fn, txNonce,
+                                   txPayload, HORSE_CODEC_FRAME_BYTES, txCipher,
+                                   voiceTag);
+        encoder.encodeVoiceFrame(txCipher, voiceTag, outFrame, isLast);
     } else if (sessionValid) {
         horse_crypto_voice_auth_tag(frameAuthKey, HORSE_VOICE_DIR_FORWARD, fn,
-                                    payload, voiceTag);
-        encoder.encodeVoiceFrame(payload, voiceTag, outFrame, isLast);
+                                    txPayload, voiceTag);
+        encoder.encodeVoiceFrame(txPayload, voiceTag, outFrame, isLast);
     } else
-        encoder.encodeVoiceFrame(payload, voiceTag, outFrame, isLast);
+        encoder.encodeVoiceFrame(txPayload, voiceTag, outFrame, isLast);
 }
 
 void OpMode_Horse::enable()
@@ -375,10 +379,8 @@ void OpMode_Horse::rxState(rtxStatus_t *const status)
             HorseFrameType type = decoder.decodeFrame(frame, rxSoft);
             (void)applyLsfIfReady(status);
             if (type == HorseFrameType::VOICE) {
-                uint8_t melpe[HORSE_CODEC_FRAME_BYTES];
-                uint8_t tag[4];
-                uint16_t fn;
-                decoder.getVoicePayload(frame, melpe, tag, &fn);
+                uint16_t fn = 0;
+                decoder.getVoicePayload(frame, rxMelpe, rxTag, &fn);
                 tryFinalizeRxSigFragments();
 
                 bool drop_voice = false;
@@ -386,7 +388,7 @@ void OpMode_Horse::rxState(rtxStatus_t *const status)
                     uint16_t chunk = fn - SIG_FRAME_BASE;
                     if (chunk < SIG_FRAME_COUNT) {
                         horse::horse_sig_store_chunk(rxSessionSig, chunk,
-                                                     melpe);
+                                                     rxMelpe);
                         rxSigChunks++;
                         tryFinalizeRxSessionSig();
                         maybeStartRxAudio();
@@ -400,22 +402,20 @@ void OpMode_Horse::rxState(rtxStatus_t *const status)
                                state.channel.horse.sign_en)) {
                     drop_voice = true;
                 } else if (encryptRx && sessionValid) {
-                    uint8_t nonce[12];
-                    uint8_t plain[HORSE_CODEC_FRAME_BYTES];
-                    horse_crypto_voice_nonce_from_fn(fn, nonce);
+                    horse_crypto_voice_nonce_from_fn(fn, rxNonce);
                     if (!horse_crypto_voice_decrypt(
                             sessionKey, frameAuthKey, HORSE_VOICE_DIR_FORWARD,
-                            fn, nonce, melpe, HORSE_CODEC_FRAME_BYTES, tag,
-                            plain))
+                            fn, rxNonce, rxMelpe, HORSE_CODEC_FRAME_BYTES,
+                            rxTag, rxPlain))
                         drop_voice = true;
                     else {
-                        memcpy(melpe, plain, sizeof melpe);
+                        memcpy(rxMelpe, rxPlain, sizeof rxMelpe);
                         demodulator.noteValidTag();
                     }
                 } else if (sessionValid) {
                     if (!horse_crypto_voice_auth_verify(frameAuthKey,
                                                         HORSE_VOICE_DIR_FORWARD,
-                                                        fn, melpe, tag))
+                                                        fn, rxMelpe, rxTag))
                         drop_voice = true;
                     else
                         demodulator.noteValidTag();
@@ -432,7 +432,7 @@ void OpMode_Horse::rxState(rtxStatus_t *const status)
                 }
 
                 if (!drop_voice && rxAudioPath >= 0 && horse_codec_running())
-                    horse_codec_pushFrame(melpe, false);
+                    horse_codec_pushFrame(rxMelpe, false);
             }
         }
     }

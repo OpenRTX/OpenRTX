@@ -40,6 +40,9 @@ HorseDemodulator::HorseDemodulator()
     , clockAccum(0)
     , clockAgree(0)
     , lastClockDelta(0)
+    , lastAppliedClock(0)
+    , lastAppliedLatch(0)
+    , lastOuter(1)
     , clockTracking(true)
     , initCount(0)
     , corrThreshold(0.0f)
@@ -70,6 +73,14 @@ void HorseDemodulator::init()
     demodSoft = std::make_unique<uint16_t[]>(FRAME_BITS);
     readySoft = std::make_unique<uint16_t[]>(FRAME_BITS);
     lastSoft = std::make_unique<uint16_t[]>(FRAME_BITS);
+#ifdef PLATFORM_LINUX
+    demodSamp = std::make_unique<int16_t[]>(FRAME_SYMBOLS);
+    readySamp = std::make_unique<int16_t[]>(FRAME_SYMBOLS);
+    lastSamp = std::make_unique<int16_t[]>(FRAME_SYMBOLS);
+    std::memset(demodSamp.get(), 0, FRAME_SYMBOLS * sizeof(int16_t));
+    std::memset(readySamp.get(), 0, FRAME_SYMBOLS * sizeof(int16_t));
+    std::memset(lastSamp.get(), 0, FRAME_SYMBOLS * sizeof(int16_t));
+#endif
     std::memset(demodSoft.get(), 0, FRAME_BITS * sizeof(uint16_t));
     std::memset(readySoft.get(), 0, FRAME_BITS * sizeof(uint16_t));
     std::memset(lastSoft.get(), 0, FRAME_BITS * sizeof(uint16_t));
@@ -87,6 +98,9 @@ void HorseDemodulator::terminate()
     demodSoft.reset();
     readySoft.reset();
     lastSoft.reset();
+    demodSamp.reset();
+    readySamp.reset();
+    lastSamp.reset();
 }
 
 void HorseDemodulator::startBasebandSampling()
@@ -109,7 +123,12 @@ const frame_t &HorseDemodulator::getFrame()
     if (lastSoft && readySoft)
         std::memcpy(lastSoft.get(), readySoft.get(),
                     FRAME_BITS * sizeof(uint16_t));
+    if (lastSamp && readySamp)
+        std::memcpy(lastSamp.get(), readySamp.get(),
+                    FRAME_SYMBOLS * sizeof(int16_t));
     newFrame = false;
+    lastAppliedLatch = lastAppliedClock;
+    lastAppliedClock = 0;
     return *readyFrame;
 }
 
@@ -151,7 +170,12 @@ bool HorseDemodulator::takeFrame(frame_t &out)
     if (lastSoft && readySoft)
         std::memcpy(lastSoft.get(), readySoft.get(),
                     FRAME_BITS * sizeof(uint16_t));
+    if (lastSamp && readySamp)
+        std::memcpy(lastSamp.get(), readySamp.get(),
+                    FRAME_SYMBOLS * sizeof(int16_t));
     newFrame = false;
+    lastAppliedLatch = lastAppliedClock;
+    lastAppliedClock = 0;
     return true;
 }
 
@@ -161,6 +185,14 @@ void HorseDemodulator::takeSoftBits(uint16_t out[FRAME_BITS]) const
         std::memcpy(out, lastSoft.get(), FRAME_BITS * sizeof(uint16_t));
     else
         std::memset(out, 0, FRAME_BITS * sizeof(uint16_t));
+}
+
+void HorseDemodulator::takeSymbolSamples(int16_t out[FRAME_SYMBOLS]) const
+{
+    if (lastSamp)
+        std::memcpy(out, lastSamp.get(), FRAME_SYMBOLS * sizeof(int16_t));
+    else
+        std::memset(out, 0, FRAME_SYMBOLS * sizeof(int16_t));
 }
 
 void HorseDemodulator::setSkipDcBlock(bool skip)
@@ -252,6 +284,7 @@ bool HorseDemodulator::feedSample(int16_t sample, bool invertPhase)
                 const int apply = clockAccum > 0 ? 1 : -1;
                 samplingPoint = static_cast<uint32_t>(
                     (static_cast<int>(samplingPoint) + apply + sps) % sps);
+                lastAppliedClock = static_cast<int8_t>(apply);
                 clockAccum = 0;
                 clockAgree = 0;
                 clockHold = 1;
@@ -295,6 +328,9 @@ void HorseDemodulator::quantize(int16_t sample)
     auto outerDeviation = devEstimator.outerDeviation();
     int16_t op = static_cast<int16_t>(outerDeviation.first);
     int16_t on = static_cast<int16_t>(outerDeviation.second);
+    int32_t a = ((op > 0 ? op : 1) + (on < 0 ? -on : 1)) / 2;
+    if (a < 1)
+        a = 1;
     int8_t symbol;
     if (sample > (2 * outerDeviation.first) / 3)
         symbol = +3;
@@ -311,6 +347,9 @@ void HorseDemodulator::quantize(int16_t sample)
         demodSoft[2 * frameIndex + 1] = lsb;
     }
     horse::setSymbol(*demodFrame, frameIndex, symbol);
+    if (demodSamp)
+        demodSamp[frameIndex] = sample;
+    lastOuter = a > 0 ? a : 1;
     frameIndex += 1;
 }
 
@@ -330,6 +369,8 @@ void HorseDemodulator::reset()
     clockAccum = 0;
     clockAgree = 0;
     lastClockDelta = 0;
+    lastAppliedClock = 0;
+    lastOuter = 1;
     demodState = DemodState::INIT;
     initCount = RX_SAMPLE_RATE / 50;
     dsp_resetState(dcBlock);
@@ -547,6 +588,8 @@ void HorseDemodulator::lockedState(int16_t sample)
         std::swap(readyFrame, demodFrame);
         if (readySoft && demodSoft)
             std::swap(readySoft, demodSoft);
+        if (readySamp && demodSamp)
+            std::swap(readySamp, demodSamp);
         frameIndex = 0;
         newFrame = true;
         updateSampPoint = true;

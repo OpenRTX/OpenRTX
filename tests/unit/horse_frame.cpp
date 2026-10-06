@@ -606,9 +606,19 @@ static int test_soft_saturate_clip()
         return -1;
     }
     symbol_soft(0, 1, -1, msb, lsb);
-    if (msb < 32768) {
-        std::printf("horse_frame_test: zero sample MSB not >=0.5 (%u)\n", msb);
+    if (msb != 32767) {
+        std::printf("horse_frame_test: zero sample MSB not erasure (%u)\n",
+                    msb);
         return -1;
+    }
+    uint16_t prev = pack_soft_bit(20000, 20000);
+    for (int y = 19999; y >= -20000; y -= 2000) {
+        uint16_t cur = pack_soft_bit(y, 20000);
+        if (cur < prev) {
+            std::printf("horse_frame_test: MSB not monotonic at y=%d\n", y);
+            return -1;
+        }
+        prev = cur;
     }
     uint16_t p = pack_soft_bit(1000000, 1);
     uint16_t n = pack_soft_bit(-1000000, 1);
@@ -617,6 +627,42 @@ static int test_soft_saturate_clip()
                     n);
         return -1;
     }
+    return 0;
+}
+
+static int test_locked_sync_flywheel()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 9, 8, 7, 6 };
+    uint8_t got_m[12], got_t[4];
+    uint16_t fn = 0;
+    std::memset(melpe, 0xA5, sizeof melpe);
+    frame_t f0{}, f1{};
+    enc.encodeVoiceFrameWithFn(melpe, tag, 0, f0, false, 12);
+    enc.encodeVoiceFrameWithFn(melpe, tag, 1, f1, false, 12);
+    if (dec.decodeFrame(f0) != HorseFrameType::VOICE)
+        return -1;
+    f1[0] ^= 0x07;
+    uint8_t hd = 0;
+    for (int b = 0; b < 8; b++)
+        hd += (uint8_t)((f1[0] ^ VOICE_SYNC_WORD[0]) >> b) & 1u;
+    for (int b = 0; b < 8; b++)
+        hd += (uint8_t)((f1[1] ^ VOICE_SYNC_WORD[1]) >> b) & 1u;
+    if (hd <= HAMMING_SYNC_MAX || hd > HAMMING_LOCKED_MAX)
+        return -1;
+    if (dec.decodeFrame(f1) != HorseFrameType::VOICE) {
+        std::printf("horse_frame_test: locked flywheel missed HD=%u\n", hd);
+        return -1;
+    }
+    dec.getVoicePayload(f1, got_m, got_t, &fn);
+    if (fn != 1 || std::memcmp(got_m, melpe, 12) != 0
+        || std::memcmp(got_t, tag, 4) != 0)
+        return -1;
+    HorseFrameDecoder fresh;
+    if (fresh.decodeFrame(f1) != HorseFrameType::UNKNOWN)
+        return -1;
     return 0;
 }
 
@@ -667,6 +713,8 @@ int main()
     if (test_soft_decode_not_worse() != 0)
         return -1;
     if (test_soft_saturate_clip() != 0)
+        return -1;
+    if (test_locked_sync_flywheel() != 0)
         return -1;
     std::printf("horse_frame_test: all tests passed\n");
     return 0;

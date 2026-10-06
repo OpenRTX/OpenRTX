@@ -52,6 +52,7 @@ public:
     bool getSigFragments(uint8_t sig64[SIG_BYTES]) const;
 
 private:
+    void acceptVoice(const frame_t &frame, const uint16_t *soft384);
     void ingestFragment(uint16_t fn, const uint8_t spare[HORSE_FRAG_BYTES]);
     void ingestFragmentSoft(uint16_t fn,
                             const uint16_t spare96[HORSE_VOICE_SPARE_BITS]);
@@ -64,6 +65,7 @@ private:
     uint8_t lsfChunkOk[LSF_OPENING_FRAMES];
     uint8_t lsfNextChunk;
     bool lsfComplete;
+    bool haveVoiceFrame;
     uint16_t lastVoiceFrameNum;
 
     uint8_t fragCopy[HORSE_FRAG_CYCLE][HORSE_FRAG_MAJORITY][HORSE_FRAG_BYTES];

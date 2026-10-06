@@ -20,7 +20,10 @@ static uint8_t hammingDistance(uint8_t x, uint8_t y)
 }
 
 HorseFrameDecoder::HorseFrameDecoder()
-    : lsfNextChunk(0), lsfComplete(false), lastVoiceFrameNum(0)
+    : lsfNextChunk(0)
+    , lsfComplete(false)
+    , haveVoiceFrame(false)
+    , lastVoiceFrameNum(0)
 {
     lsfSrc.fill(0);
     lsfDst.fill(0);
@@ -43,6 +46,7 @@ void HorseFrameDecoder::reset()
     lsfSrc.fill(0);
     lsfDst.fill(0);
     lastVoiceFrameNum = 0;
+    haveVoiceFrame = false;
     lsfNextChunk = 0;
     lsfComplete = false;
     std::memset(lsfAssembled, 0, sizeof lsfAssembled);
@@ -137,6 +141,27 @@ void HorseFrameDecoder::ingestFragmentSoft(
         tryAssembleLsfFromFrags();
 }
 
+void HorseFrameDecoder::acceptVoice(const frame_t &frame,
+                                    const uint16_t *soft384)
+{
+    if (frame.size() < 2 + HORSE_VOICE_CODED_BYTES)
+        return;
+    if (soft384 != nullptr)
+        voiceCodec.decode_soft(soft384 + SYNCWORD_BITS, lastInfo);
+    else
+        voiceCodec.decode(frame.data() + 2, lastInfo);
+    lastVoiceFrameNum = (static_cast<uint16_t>(lastInfo[0]) << 8) | lastInfo[1];
+    haveVoiceFrame = true;
+    if (soft384 != nullptr) {
+        voiceCodec.extract_spare_soft(soft384 + SYNCWORD_BITS, lastSpareSoft);
+        ingestFragmentSoft(lastVoiceFrameNum & 0x7FFF, lastSpareSoft);
+    } else {
+        uint8_t spare[HORSE_FRAG_BYTES];
+        voiceCodec.extract_spare(frame.data() + 2, spare);
+        ingestFragment(lastVoiceFrameNum & 0x7FFF, spare);
+    }
+}
+
 HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
 {
     return decodeFrame(frame, nullptr);
@@ -182,27 +207,16 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame,
         return HorseFrameType::LINK_SETUP;
     }
     if (voiceHd <= HAMMING_SYNC_MAX) {
-        if (frame.size() >= 2 + HORSE_VOICE_CODED_BYTES) {
-            if (soft384 != nullptr)
-                voiceCodec.decode_soft(soft384 + SYNCWORD_BITS, lastInfo);
-            else
-                voiceCodec.decode(frame.data() + 2, lastInfo);
-            lastVoiceFrameNum = (static_cast<uint16_t>(lastInfo[0]) << 8)
-                              | lastInfo[1];
-            if (soft384 != nullptr) {
-                voiceCodec.extract_spare_soft(soft384 + SYNCWORD_BITS,
-                                              lastSpareSoft);
-                ingestFragmentSoft(lastVoiceFrameNum & 0x7FFF, lastSpareSoft);
-            } else {
-                uint8_t spare[HORSE_FRAG_BYTES];
-                voiceCodec.extract_spare(frame.data() + 2, spare);
-                ingestFragment(lastVoiceFrameNum & 0x7FFF, spare);
-            }
-        }
+        acceptVoice(frame, soft384);
         return HorseFrameType::VOICE;
     }
     if (eotHd <= HAMMING_SYNC_MAX)
         return HorseFrameType::EOT;
+    if (haveVoiceFrame && voiceHd <= HAMMING_LOCKED_MAX && voiceHd <= lsfHd
+        && voiceHd <= eotHd) {
+        acceptVoice(frame, soft384);
+        return HorseFrameType::VOICE;
+    }
     return HorseFrameType::UNKNOWN;
 }
 

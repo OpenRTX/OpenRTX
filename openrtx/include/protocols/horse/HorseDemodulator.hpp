@@ -67,6 +67,7 @@ public:
      *        scaled by the current outer-deviation estimate.
      */
     void takeSoftBits(uint16_t out[FRAME_BITS]) const;
+    void takeSymbolSamples(int16_t out[FRAME_SYMBOLS]) const;
     /* Skip the upstream DC-block (negative left-shift UB). Still applies RRC. */
     void setSkipDcBlock(bool skip);
     void setAcquireHamming(uint8_t hd);
@@ -103,6 +104,22 @@ public:
     int8_t debugLastClockDelta() const
     {
         return lastClockDelta;
+    }
+    int8_t debugLastAppliedClock() const
+    {
+        return lastAppliedLatch;
+    }
+    uint8_t debugClockHold() const
+    {
+        return clockHold;
+    }
+    bool debugLastSyncOk() const
+    {
+        return lastSyncOk;
+    }
+    int32_t lastOuterAbs() const
+    {
+        return lastOuter;
     }
 
 private:
@@ -143,6 +160,9 @@ private:
     std::unique_ptr<uint16_t[]> demodSoft;
     std::unique_ptr<uint16_t[]> readySoft;
     std::unique_ptr<uint16_t[]> lastSoft;
+    std::unique_ptr<int16_t[]> demodSamp;
+    std::unique_ptr<int16_t[]> readySamp;
+    std::unique_ptr<int16_t[]> lastSamp;
     bool newFrame;
     bool resetClockRec;
     bool updateSampPoint;
@@ -157,6 +177,9 @@ private:
     int8_t clockAccum;
     uint8_t clockAgree;
     int8_t lastClockDelta;
+    int8_t lastAppliedClock;
+    int8_t lastAppliedLatch;
+    int32_t lastOuter;
     bool clockTracking;
     uint32_t initCount;
     float corrThreshold;
