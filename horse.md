@@ -114,6 +114,10 @@ not claim it, or the reverse, there is no audio. Same for encryption.
 
 Identities: `horse_identity_keys_t` (Ed25519 32/64, X25519 32/32), wrapped
 with Argon2id (`opslimit=2`, `memlimit=16384`) plus XChaCha20-Poly1305.
+The passphrase must be 8 to 32 bytes inclusive (`HORSE_PASSPHRASE_MIN` /
+`HORSE_PASSPHRASE_MAX`). Empty and shorter strings are rejected in
+`horse_provision.py` and in firmware unlock/store. 8 bytes is the
+chosen keypad-feasible floor, not a high-entropy policy.
 Passphrase is RAM-only. Linux files are
 `$XDG_STATE_HOME/OpenRTX/horse_identity.bin` mode 0600. Peer public keys
 are a sidecar table (`horse_peer_t`, 64 slots), not `contact_t`.

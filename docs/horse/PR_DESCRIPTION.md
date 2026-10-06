@@ -31,6 +31,10 @@ This branch:
   `ebb65ef6ca439333c2bb41a0c1990587288da07f6c7fd07cb3a18cc18d30ce19`)
   via `scripts/build_libsodium_cm4.sh`. `randombytes` is the STM32F405
   HASH_RNG. Linux still uses the host package.
+- HASH_RNG: seed/clock flags every read, discard first word after
+  enable, reject consecutive identical words, mutex for the crypto
+  worker. Failure is `HORSE_ERR_RNG` (`Horse: RNG`); no TX. Host mock:
+  `horse_randombytes_test`.
 - Hardware steps: `docs/horse/HARDWARE_TEST_PLAN.md`.
 - Soft Viterbi on the host path; fragment accumulator `int16_t`.
 - Tests: analog loopback, three-mode + late entry, long-clock, cps
@@ -88,13 +92,18 @@ One list. None of these is claimed done:
 - Runtime heap high-water vs 16+16+16 KiB on the device
 - Identity NVM offset versus the MD-3x0 partition map
 - Provisioning FIFO on device
-- Empty-passphrase unlock of an identity stored with `""`
 
 MD-3x0 map with real sodium (gcc 9.2.0-mp3.2): flash 350000 B / 848 KiB
 (40.31%); CCM 30800 B / 64 KiB (47.00%); largeram framebuffer 40 KiB;
 heap 89600 B. RTX `txState` 128 B; sodium worker deepest 4120 B
-(Argon2id). Non-Horse mduv3x0/gd77 differ from `upstream/master` by
-`GIT_VERSION` and the 24 B Horse overlay on `rtxStatus_t`.
+(Argon2id). Non-Horse `openrtx_mduv3x0` / `openrtx_gd77` rebuilt with
+`-Dgit_version=v0.4.5` against `upstream/master` at `v0.4.5`: flash
+images (`objcopy -O binary`) are byte-identical. Object files may
+still differ in DWARF compile paths.
+
+Passphrase minimum length is 8 bytes (`HORSE_PASSPHRASE_MIN`); empty
+and shorter strings are rejected in firmware unlock/store and in
+`horse_provision.py`.
 
 ## Known limits
 
@@ -112,9 +121,10 @@ meson compile -C build_linux linux \
   m17_demodulator_test m17_rrc_test cps_test minmea_conversion_test \
   horse_frame_test horse_crypto_test horse_info_test horse_codec_test \
   horse_peers_test horse_keystore_test horse_host_interop_test \
-  horse_loopback_test ui_check_standby_test m17_packet_test \
-  dsp_oversampling_test gfx_text_test m17_replay_test cps_layout_test \
-  horse_fec_v2_sim horse_crypto_worker_test horse_tx_fail_test
+          horse_loopback_test ui_check_standby_test m17_packet_test \
+          dsp_oversampling_test gfx_text_test m17_replay_test cps_layout_test \
+          horse_fec_v2_sim horse_crypto_worker_test horse_tx_fail_test \
+          horse_randombytes_test
 meson test -C build_linux --no-rebuild
 
 meson setup build_linux_address -Dasan=true

@@ -20,7 +20,7 @@ work list. Finding status:
 | C5 20 ms DMA vs 40 ms codec | fixed in `8b965e29` |
 | C6 FN / nonce layout | fixed in `08e6c3cb` / `4e789cbf` |
 | C7 Argon2 RAM / PBKDF2 | 16 KiB Argon2id heap; remaining largeram heap 89600 B vs 16+16+16 KiB |
-| C8 passphrase in `settings_t` | fixed in `4015daa2` (RAM-only) |
+| C8 passphrase in `settings_t` | fixed in `4015daa2` (RAM-only); empty/short rejected (`HORSE_PASSPHRASE_MIN` 8) |
 | C9 `contact_t` growth | fixed in `1b79bbdb` (sidecar peers) |
 | C10 Ed25519 seed padded to 64 | fixed in `80404ce2` |
 | C11 keyring hex/JSON | fixed in `80404ce2` / `31495ec7` |
@@ -369,8 +369,11 @@ Autotools: `--disable-shared --enable-static --disable-ssp --disable-pie
 float, `RANDOMBYTES_CUSTOM_IMPLEMENTATION`. Not `--enable-minimal`
 (drops `crypto_stream_xchacha20`). Unused objects dropped by
 `--gc-sections`. Randomness: STM32F405 HASH_RNG (PLL48 / PLL_Q=7),
-`rng_init`/`rng_get`, registered with `randombytes_set_implementation`
-before `sodium_init`. Not a software CSPRNG.
+Horse `horse_randombytes` (not `rng_get`): SECS/CECS/SEIS/CEIS on every
+read, discard first word after enable, reject consecutive identical
+words, pthread mutex for the crypto worker. Failure is sticky;
+`HORSE_ERR_RNG` and no TX. Mocked in `horse_randombytes_test`. Platform
+`rng.c` is unchanged so non-Horse radios can match `upstream/master`.
 
 | Region | Before sodium | After sodium |
 |--------|--------------:|-------------:|
@@ -417,11 +420,12 @@ TX encrypt failure now encodes EOT, unkeys, `HORSE_ERR_TX_CRYPTO`
 (host test `horse_tx_fail_test`).
 
 Non-Horse `openrtx_mduv3x0` / `openrtx_gd77` vs `upstream/master`
-v0.4.5: not byte-identical. Flash +64 B / +32 B. Causes: (1)
-`GIT_VERSION` (`v0.4.5` vs `v0.4.5-95-g…-dirty`); (2) `rtxStatus_t`
-Horse overlay 0x8c to 0xa4 (+24 B BSS) compiled on every radio even
-without `CONFIG_HORSE`. No Horse UI strings in those binaries. Sodium
-is not linked.
+v0.4.5 (`34052ea7`) with the same `GIT_VERSION` string `v0.4.5`
+(`-Dgit_version=v0.4.5` on this branch; `git describe` on master):
+flash images are byte-identical (`objcopy -O binary`). `rtxStatus_t`
+Horse overlay and `horseInfo_t` are behind `CONFIG_HORSE`. ELF
+relocatable objects can still differ in DWARF compile directories.
+Sodium is not linked on those radios.
 
 First failing layer before the demod fix was **c**. Commits:
 
@@ -481,7 +485,6 @@ session-keyed voice MAC (C1).
 - Host `dependency('libsodium')` applied to **md3x0_opts**: native
   sodium on an ARM link is likely wrong; cross builds may compile
   without `HAVE_LIBSODIUM`.
-- Empty passphrase unlock if identity was stored with `""`.
 - Fingerprint hashes the entire identity including secrets
   (`horse_crypto.c`); CONFIRM sends only the hash.
 - MDx `data[1024]` overlay vs 128 KB sector 11: likely pre-existing;

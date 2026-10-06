@@ -11,21 +11,19 @@ attenuators. Do not key a transmitter into an antenna until step 4.
 ## 1. Provisioning and passphrase unlock
 
 **Do:** Flash firmware. Provision an identity with
-`scripts/horse_provision.py` (non-empty passphrase). Power on, enter
-Horse, unlock. Repeat with an identity stored with passphrase `""` if
-that path is still claimed.
+`scripts/horse_provision.py` (passphrase 8 to 32 bytes). Power on,
+enter Horse, unlock. Confirm that an empty or shorter-than-8-byte
+passphrase is rejected by the tool and by the radio unlock path.
 
-**Observe:** UI accepts the passphrase or reports a Horse error; the
-radio does not crash or reboot; unlock completes in a few seconds.
+**Observe:** UI accepts a valid passphrase or reports a Horse error;
+the radio does not crash or reboot; unlock completes in a few seconds.
 
 **Pass:** Unlock succeeds for the provisioned identity; a wrong
 passphrase fails closed (no TX, `Horse: no keys` or equivalent, not
-cleartext). Empty-passphrase case either unlocks as specified or is
-recorded as a known failure.
+cleartext). Empty and short passphrases never unlock.
 
 **Closes:** identity NVM offset vs MD-3x0 partition map; provisioning
-path on device; Argon2id 16 KiB heap vs remaining SRAM at unlock;
-empty-passphrase unlock if that case is run.
+path on device; Argon2id 16 KiB heap vs remaining SRAM at unlock.
 
 ## 2. RX of a recorded baseband file (if the hardware allows injection)
 
@@ -50,10 +48,12 @@ PA enable / C5000 TX path. PTT in encrypt mode with a valid peer.
 
 **Observe:** Time from PTT to `radio_enableTx` / PA bias; LSF then
 voice; PTT release sends EOT then unkey (not zeros). Display shows
-destination, not `Horse: TX crypto`.
+destination, not `Horse: TX crypto`. A HASH_RNG seed/clock/repeat
+failure must show `Horse: RNG` and must not key the PA.
 
 **Pass:** Transmitter keys only after X25519 (and sign, if enabled)
-finish; EOT then unkey on release; no keying on crypto refuse.
+finish; EOT then unkey on release; no keying on crypto refuse or RNG
+failure.
 
 **Closes:** C13 C5000 TX enable; PTT-to-key delay vs the estimates in
 `HORSE_AUDIT.md`; TX not keyed until key agreement.
