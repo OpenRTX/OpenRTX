@@ -37,15 +37,28 @@ public:
     void decode(const uint8_t coded[HORSE_VOICE_CODED_BYTES],
                 uint8_t info[HORSE_VOICE_INFO_BYTES]);
 
+    /**
+     * \brief Soft-input decode of 368 payload bits (uint16, 0=strong 0).
+     */
+    void decode_soft(const uint16_t payload368[HORSE_VOICE_CODED_BITS],
+                     uint8_t info[HORSE_VOICE_INFO_BYTES]);
+
     void extract_spare(const uint8_t coded[HORSE_VOICE_CODED_BYTES],
                        uint8_t spare12[HORSE_VOICE_SPARE_BYTES]);
 
+    void extract_spare_soft(const uint16_t payload368[HORSE_VOICE_CODED_BITS],
+                            uint16_t spare96[HORSE_VOICE_SPARE_BITS]);
+
 private:
     M17::HardViterbi vit;
+    M17::SoftViterbi vitSoft;
     std::array<uint8_t, HORSE_VOICE_CODED_BYTES> frameBuf;
     std::array<uint8_t, HORSE_VOICE_PUNCT_BYTES> punctBuf;
     std::array<uint8_t, HORSE_VOICE_INFO_BYTES> infoBuf;
     std::array<uint8_t, 37> convBuf;
+    std::array<uint16_t, HORSE_VOICE_CODED_BITS> softBuf;
+    std::array<uint16_t, HORSE_VOICE_PUNCT_BYTES * 8> punctSoft;
+    std::array<uint16_t, HORSE_VOICE_CODED_BITS> deintTmp;
 };
 
 /* Free-function wrappers for unit tests / FEC sim (static instance). */

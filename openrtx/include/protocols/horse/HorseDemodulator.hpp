@@ -19,6 +19,7 @@
 #include "HorseDatatypes.hpp"
 #include "HorseConstants.hpp"
 #include "HorseUtils.hpp"
+#include "HorseSoft.hpp"
 #include "protocols/M17/Correlator.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "protocols/M17/ClockRecovery.hpp"
@@ -57,6 +58,15 @@ public:
     void resetImmediate();
     bool feedSample(int16_t sample, bool invertPhase);
     bool takeFrame(frame_t &out);
+    /**
+     * \brief Copy 384 uint16 soft bits for the last takeFrame() .
+     *        Mapping (see HorseSoft.hpp): 0 = strong 0, 32767 = erasure,
+     *        65535 = strong 1. Per 4-FSK symbol, bit0 is the sign bit
+     *        (positive sample -> 0) and bit1 is inner/outer
+     *        (|y| vs (2/3)|A|). Confidence is |distance to threshold|
+     *        scaled by the current outer-deviation estimate.
+     */
+    void takeSoftBits(uint16_t out[FRAME_BITS]) const;
     /* Skip the upstream DC-block (negative left-shift UB). Still applies RRC. */
     void setSkipDcBlock(bool skip);
     void setAcquireHamming(uint8_t hd);
@@ -130,6 +140,9 @@ private:
     pathId basebandPath;
     std::unique_ptr<frame_t> demodFrame;
     std::unique_ptr<frame_t> readyFrame;
+    std::unique_ptr<uint16_t[]> demodSoft;
+    std::unique_ptr<uint16_t[]> readySoft;
+    std::unique_ptr<uint16_t[]> lastSoft;
     bool newFrame;
     bool resetClockRec;
     bool updateSampPoint;

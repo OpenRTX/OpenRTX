@@ -12,7 +12,9 @@
 #include "protocols/horse/HorseDemodulator.hpp"
 #include "protocols/horse/HorseModulator.hpp"
 #include "protocols/horse/horse_crypto.h"
+#include "protocols/horse/horse_peers.h"
 #include "core/audio_path.h"
+#include "core/horse_codec.h"
 #include "OpMode.hpp"
 
 #ifndef __cplusplus
@@ -82,6 +84,16 @@ private:
     bool rxSigReady;
     bool haveRxVoiceFn;
     uint16_t rxLastVoiceFn;
+    horse::frame_t txOutFrame;
+    horse::frame_t txLsfFrames[horse::LSF_OPENING_FRAMES];
+    uint8_t txEphPk[HORSE_X25519_PUBLICKEY_BYTES];
+    uint8_t txEphSk[HORSE_X25519_SECRETKEY_BYTES];
+    uint8_t txMelpe[HORSE_CODEC_FRAME_BYTES];
+    uint8_t txSessionMsg[HORSE_SESSION_MSG_BYTES];
+    uint8_t txZeroTag[HORSE_VOICE_TAG_BYTES];
+    uint16_t rxSoft[horse::FRAME_BITS];
+    horse_peer_t txPeer;
+    horse_identity_keys_t txId;
 };
 
 #endif // OPMODE_HORSE_H

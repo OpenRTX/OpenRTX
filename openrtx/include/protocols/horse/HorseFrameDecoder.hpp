@@ -28,6 +28,8 @@ public:
     void reset();
 
     HorseFrameType decodeFrame(const frame_t &frame);
+    HorseFrameType decodeFrame(const frame_t &frame,
+                               const uint16_t soft384[FRAME_BITS]);
 
     /** True after opening chunks or fragment majority pass crc_m17. */
     bool lsfReady() const
@@ -51,6 +53,8 @@ public:
 
 private:
     void ingestFragment(uint16_t fn, const uint8_t spare[HORSE_FRAG_BYTES]);
+    void ingestFragmentSoft(uint16_t fn,
+                            const uint16_t spare96[HORSE_VOICE_SPARE_BITS]);
     void majoritySlot(size_t slot, uint8_t out[HORSE_FRAG_BYTES]) const;
     void tryAssembleLsfFromFrags();
 
@@ -65,7 +69,10 @@ private:
     uint8_t fragCopy[HORSE_FRAG_CYCLE][HORSE_FRAG_MAJORITY][HORSE_FRAG_BYTES];
     uint8_t fragCount[HORSE_FRAG_CYCLE];
     uint8_t fragHead[HORSE_FRAG_CYCLE];
+    int32_t fragSoftAcc[HORSE_FRAG_CYCLE][HORSE_VOICE_SPARE_BITS];
     HorseVoiceCodec voiceCodec;
+    uint8_t lastInfo[HORSE_VOICE_INFO_BYTES];
+    uint16_t lastSpareSoft[HORSE_VOICE_SPARE_BITS];
 };
 
 } // namespace horse

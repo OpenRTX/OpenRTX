@@ -5,6 +5,7 @@
  */
 
 #include "protocols/horse/HorseVoiceCodec.hpp"
+#include "protocols/horse/HorseSoft.hpp"
 #include "protocols/M17/ConvolutionalEncoder.hpp"
 #include "protocols/M17/CodePuncturing.hpp"
 #include "protocols/M17/Interleaver.hpp"
@@ -57,6 +58,19 @@ void HorseVoiceCodec::decode(const uint8_t coded[HORSE_VOICE_CODED_BYTES],
     std::memcpy(info, infoBuf.data(), HORSE_VOICE_INFO_BYTES);
 }
 
+void HorseVoiceCodec::decode_soft(
+    const uint16_t payload368[HORSE_VOICE_CODED_BITS],
+    uint8_t info[HORSE_VOICE_INFO_BYTES])
+{
+    std::memcpy(softBuf.data(), payload368, sizeof(softBuf));
+    soft_decorrelate(softBuf.data());
+    soft_deinterleave(softBuf.data(), deintTmp.data());
+    for (size_t i = 0; i < HORSE_VOICE_PUNCT_BYTES * 8; i++)
+        punctSoft[i] = softBuf[i];
+    vitSoft.decodePunctured(punctSoft, infoBuf, M17::DATA_PUNCTURE);
+    std::memcpy(info, infoBuf.data(), HORSE_VOICE_INFO_BYTES);
+}
+
 void HorseVoiceCodec::extract_spare(const uint8_t coded[HORSE_VOICE_CODED_BYTES],
                                     uint8_t spare12[HORSE_VOICE_SPARE_BYTES])
 {
@@ -69,6 +83,18 @@ void HorseVoiceCodec::extract_spare(const uint8_t coded[HORSE_VOICE_CODED_BYTES]
         if (M17::getBit(frameBuf, punct_bits + i))
             spare12[i / 8] |= static_cast<uint8_t>(0x80u >> (i % 8));
     }
+}
+
+void HorseVoiceCodec::extract_spare_soft(
+    const uint16_t payload368[HORSE_VOICE_CODED_BITS],
+    uint16_t spare96[HORSE_VOICE_SPARE_BITS])
+{
+    std::memcpy(softBuf.data(), payload368, sizeof(softBuf));
+    soft_decorrelate(softBuf.data());
+    soft_deinterleave(softBuf.data(), deintTmp.data());
+    const size_t punct_bits = HORSE_VOICE_PUNCT_BYTES * 8;
+    for (size_t i = 0; i < HORSE_VOICE_SPARE_BITS; i++)
+        spare96[i] = softBuf[punct_bits + i];
 }
 
 static HorseVoiceCodec &voice_codec_instance()

@@ -6,6 +6,7 @@
 
 #include "protocols/horse/HorseFrameDecoder.hpp"
 #include "protocols/horse/HorseVoiceCodec.hpp"
+#include "protocols/horse/HorseSoft.hpp"
 #include "protocols/horse/horse_crypto.h"
 #include "core/crc.h"
 #include <cstring>
@@ -28,6 +29,9 @@ HorseFrameDecoder::HorseFrameDecoder()
     std::memset(fragCopy, 0, sizeof fragCopy);
     std::memset(fragCount, 0, sizeof fragCount);
     std::memset(fragHead, 0, sizeof fragHead);
+    std::memset(fragSoftAcc, 0, sizeof fragSoftAcc);
+    std::memset(lastInfo, 0, sizeof lastInfo);
+    std::memset(lastSpareSoft, 0, sizeof lastSpareSoft);
 }
 
 HorseFrameDecoder::~HorseFrameDecoder()
@@ -46,6 +50,9 @@ void HorseFrameDecoder::reset()
     std::memset(fragCopy, 0, sizeof fragCopy);
     std::memset(fragCount, 0, sizeof fragCount);
     std::memset(fragHead, 0, sizeof fragHead);
+    std::memset(fragSoftAcc, 0, sizeof fragSoftAcc);
+    std::memset(lastInfo, 0, sizeof lastInfo);
+    std::memset(lastSpareSoft, 0, sizeof lastSpareSoft);
 }
 
 void HorseFrameDecoder::majoritySlot(size_t slot,
@@ -54,6 +61,20 @@ void HorseFrameDecoder::majoritySlot(size_t slot,
     std::memset(out, 0, HORSE_FRAG_BYTES);
     if (slot >= HORSE_FRAG_CYCLE || fragCount[slot] == 0)
         return;
+    bool any_soft = false;
+    for (size_t bit = 0; bit < HORSE_VOICE_SPARE_BITS; bit++) {
+        if (fragSoftAcc[slot][bit] != 0) {
+            any_soft = true;
+            break;
+        }
+    }
+    if (any_soft) {
+        for (size_t bit = 0; bit < HORSE_VOICE_SPARE_BITS; bit++) {
+            if (fragSoftAcc[slot][bit] > 0)
+                out[bit / 8] |= static_cast<uint8_t>(0x80u >> (bit % 8));
+        }
+        return;
+    }
     const unsigned n = fragCount[slot];
     for (size_t bit = 0; bit < HORSE_FRAG_BYTES * 8; bit++) {
         unsigned ones = 0;
@@ -62,7 +83,6 @@ void HorseFrameDecoder::majoritySlot(size_t slot,
             if ((copy[bit / 8] >> (7 - (bit % 8))) & 1u)
                 ones++;
         }
-        /* Ties count as 0. Need strict majority (> n/2). */
         if (ones * 2 > n)
             out[bit / 8] |= static_cast<uint8_t>(0x80u >> (bit % 8));
     }
@@ -103,7 +123,27 @@ void HorseFrameDecoder::ingestFragment(uint16_t fn,
         tryAssembleLsfFromFrags();
 }
 
+void HorseFrameDecoder::ingestFragmentSoft(
+    uint16_t fn, const uint16_t spare96[HORSE_VOICE_SPARE_BITS])
+{
+    const size_t slot = horse_frag_slot(fn);
+    if (slot >= HORSE_FRAG_CYCLE)
+        return;
+    for (size_t i = 0; i < HORSE_VOICE_SPARE_BITS; i++)
+        fragSoftAcc[slot][i] += static_cast<int32_t>(spare96[i]) - 32767;
+    if (fragCount[slot] < HORSE_FRAG_MAJORITY)
+        fragCount[slot] = static_cast<uint8_t>(fragCount[slot] + 1);
+    if (slot < HORSE_FRAG_LSF_SLOTS)
+        tryAssembleLsfFromFrags();
+}
+
 HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
+{
+    return decodeFrame(frame, nullptr);
+}
+
+HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame,
+                                              const uint16_t *soft384)
 {
     uint8_t lsfHd = hammingDistance(frame[0], LSF_SYNC_WORD[0])
                   + hammingDistance(frame[1], LSF_SYNC_WORD[1]);
@@ -116,7 +156,10 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
         if (!lsfComplete && frame.size() >= 2 + HORSE_VOICE_CODED_BYTES
             && lsfNextChunk < LSF_OPENING_FRAMES) {
             uint8_t chunk[HORSE_VOICE_INFO_BYTES];
-            voiceCodec.decode(frame.data() + 2, chunk);
+            if (soft384 != nullptr)
+                voiceCodec.decode_soft(soft384 + SYNCWORD_BITS, chunk);
+            else
+                voiceCodec.decode(frame.data() + 2, chunk);
             const size_t slot = lsfNextChunk;
             std::memcpy(lsfAssembled + slot * LSF_CHUNK_BYTES, chunk,
                         LSF_CHUNK_BYTES);
@@ -140,12 +183,21 @@ HorseFrameType HorseFrameDecoder::decodeFrame(const frame_t &frame)
     }
     if (voiceHd <= HAMMING_SYNC_MAX) {
         if (frame.size() >= 2 + HORSE_VOICE_CODED_BYTES) {
-            uint8_t info[HORSE_VOICE_INFO_BYTES];
-            voiceCodec.decode(frame.data() + 2, info);
-            lastVoiceFrameNum = (static_cast<uint16_t>(info[0]) << 8) | info[1];
-            uint8_t spare[HORSE_FRAG_BYTES];
-            voiceCodec.extract_spare(frame.data() + 2, spare);
-            ingestFragment(lastVoiceFrameNum & 0x7FFF, spare);
+            if (soft384 != nullptr)
+                voiceCodec.decode_soft(soft384 + SYNCWORD_BITS, lastInfo);
+            else
+                voiceCodec.decode(frame.data() + 2, lastInfo);
+            lastVoiceFrameNum = (static_cast<uint16_t>(lastInfo[0]) << 8)
+                              | lastInfo[1];
+            if (soft384 != nullptr) {
+                voiceCodec.extract_spare_soft(soft384 + SYNCWORD_BITS,
+                                              lastSpareSoft);
+                ingestFragmentSoft(lastVoiceFrameNum & 0x7FFF, lastSpareSoft);
+            } else {
+                uint8_t spare[HORSE_FRAG_BYTES];
+                voiceCodec.extract_spare(frame.data() + 2, spare);
+                ingestFragment(lastVoiceFrameNum & 0x7FFF, spare);
+            }
         }
         return HorseFrameType::VOICE;
     }
@@ -181,8 +233,12 @@ void HorseFrameDecoder::getVoicePayload(const frame_t &frame,
 {
     if (frame.size() < 2 + HORSE_VOICE_CODED_BYTES)
         return;
-    uint8_t info[HORSE_VOICE_INFO_BYTES];
-    voiceCodec.decode(frame.data() + 2, info);
+    const uint8_t *info = lastInfo;
+    uint8_t tmp[HORSE_VOICE_INFO_BYTES];
+    if (lastVoiceFrameNum == 0 && lastInfo[0] == 0 && lastInfo[1] == 0) {
+        voiceCodec.decode(frame.data() + 2, tmp);
+        info = tmp;
+    }
     if (frameNum != nullptr) {
         *frameNum = (static_cast<uint16_t>(info[0]) << 8) | info[1];
         *frameNum &= 0x7FFF;
