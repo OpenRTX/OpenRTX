@@ -29,6 +29,9 @@ path = [
     "tests/unit/assets/**/*",
     "README.md",
     "CONTRIBUTING.md",
+    "horse.md",
+    "FUZZING.md",
+    "docs/horse/**/*",
     "99-openrtx.rules",
     ".github/**/*",
     ".devcontainer/**/*",
@@ -39,8 +42,12 @@ path = [
     "subprojects/radio_tool.wrap",
     "subprojects/codec2.wrap",
     "subprojects/XPowersLib.wrap",
+    "subprojects/libsodium.wrap",
     "scripts/uf2families.json",
     "scripts/generate_symbols.py",
+    "tests/fuzz/corpus/**/*",
+    "tests/fuzz/dict/**/*",
+    "tests/unit/horse_fec_v2_*.txt",
 ]
 SPDX-License-Identifier = "GPL-3.0-or-later"
 SPDX-FileCopyrightText = "OpenRTX Contributors"

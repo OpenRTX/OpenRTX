@@ -124,6 +124,12 @@ void vp_announceRadioMode(const uint8_t mode, const enum vpQueueFlags flags)
         case OPMODE_M17:
             vp_queueStringTableEntry(&currentLanguage->m17);
             break;
+
+#ifdef CONFIG_HORSE
+        case OPMODE_HORSE:
+            vp_queueString("Horse", vpAnnounceCommonSymbols);
+            break;
+#endif
     }
 
     playIfNeeded(flags);

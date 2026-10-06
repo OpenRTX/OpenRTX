@@ -69,6 +69,28 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/FrameDecoder.cpp',
                'openrtx/src/protocols/M17/LinkSetupFrame.cpp']
 
+horse_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
+             'openrtx/src/protocols/horse/HorseFrameDecoder.cpp',
+             'openrtx/src/protocols/horse/HorseVoiceCodec.cpp',
+             'openrtx/src/protocols/horse/HorseModulator.cpp',
+             'openrtx/src/protocols/horse/HorseDemodulator.cpp',
+             'openrtx/src/protocols/horse/melpe_horse.c',
+             'openrtx/src/protocols/horse/horse_crypto.c',
+             'openrtx/src/protocols/horse/horse_crypto_worker.c',
+             'openrtx/src/protocols/horse/horse_randombytes.c',
+             'openrtx/src/protocols/horse/horse_keystore.c',
+             'openrtx/src/protocols/horse/horse_peers.c',
+             'openrtx/src/protocols/horse/horse_provision.c',
+             'openrtx/src/core/horse_codec.c',
+             'openrtx/src/rtx/OpMode_Horse.cpp']
+
+horse_frame_test_src = ['openrtx/src/protocols/horse/HorseFrameEncoder.cpp',
+                        'openrtx/src/protocols/horse/HorseFrameDecoder.cpp',
+                        'openrtx/src/protocols/horse/HorseVoiceCodec.cpp',
+                        'openrtx/src/core/crc.c',
+                        'openrtx/src/protocols/horse/horse_crypto.c',
+                        'openrtx/src/protocols/horse/horse_randombytes.c']
+
 openrtx_inc = ['openrtx/include', 'platform']
 
 ##
@@ -108,6 +130,46 @@ openrtx_inc += ['lib/QRCode/include']
 
 # QDEC, a very simple, header only, quadrature decoding library
 openrtx_inc += ['lib/qdec/include']
+
+# libsodium: native builds use the host package. Cortex-M4 Horse
+# targets use a pinned Autotools prebuilt (1.0.20, see
+# scripts/build_libsodium_cm4.sh and subprojects/libsodium.wrap).
+# Meson's external_project wrap injects a relative --includedir that
+# Autotools rejects, so the library is built by the script. Other
+# radios must not link it.
+sodium_dep = dependency('libsodium', required: false)
+
+horse_crypto_args = []
+horse_deps = []
+horse_cm4_sodium_dep = []
+if meson.is_cross_build()
+  fsmod = import('fs')
+  sodium_prefix = meson.current_build_dir() / 'sodium-cm4'
+  sodium_script = find_program('scripts/build_libsodium_cm4.sh')
+  if not fsmod.exists(sodium_prefix / 'lib' / 'libsodium.a')
+    message('Cross-building libsodium 1.0.20 for Cortex-M4')
+    sodium_rc = run_command(sodium_script, sodium_prefix, check: false)
+    if sodium_rc.returncode() != 0
+      warning('libsodium Cortex-M4 prebuild failed; MD-3x0 Horse crypto disabled')
+    endif
+  endif
+  if fsmod.exists(sodium_prefix / 'lib' / 'libsodium.a')
+    cc_host = meson.get_compiler('c')
+    sodium_lib = cc_host.find_library('sodium',
+                                      dirs: [sodium_prefix / 'lib'],
+                                      static: true,
+                                      required: false)
+    if sodium_lib.found()
+      horse_cm4_sodium_dep = [declare_dependency(
+          dependencies: sodium_lib,
+          compile_args: ['-I' + sodium_prefix / 'include', '-DSODIUM_STATIC'])]
+      horse_crypto_args += ['-DHAVE_LIBSODIUM', '-DSODIUM_STATIC']
+    endif
+  endif
+elif sodium_dep.found()
+  horse_deps += sodium_dep
+  horse_crypto_args += '-DHAVE_LIBSODIUM'
+endif
 
 # CODEC2, open source speech codec, compile from source on embedded
 # Always download the subproject — the Zephyr/CMake build needs the source
@@ -149,11 +211,16 @@ subdir('lib/miosix-kernel')
 ##
 ## Current git commit or tag
 ##
-r = run_command('git', 'describe', '--tags', '--dirty', '--always')
-if r.returncode() != 0
-  # it failed
+git_version_opt = get_option('git_version')
+if git_version_opt != ''
+  git_version = '"' + git_version_opt + '"'
+else
+  r = run_command('git', 'describe', '--tags', '--dirty', '--always')
+  if r.returncode() != 0
+    # it failed
+  endif
+  git_version = '"' + r.stdout().strip() + '"'
 endif
-git_version  = '"'+r.stdout().strip()+'"'
 openrtx_def += {'GIT_VERSION': git_version}
 
 ##
@@ -365,11 +432,11 @@ linux_inc = ['platform/targets/linux',
              'platform/drivers/audio',
              'platform/drivers/tones']
 
-linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':''}
+linux_def = {'PLATFORM_LINUX': '', 'VP_USE_FILESYSTEM':'', 'CONFIG_HORSE': ''}
 
 sdl_dep     = dependency('SDL2',     required: false)
 threads_dep = dependency('threads',  required: false)
-linux_src  += openrtx_src
+linux_src  += openrtx_src + horse_src
 linux_inc  += openrtx_inc
 linux_def  += openrtx_def
 linux_def  += {'sniprintf':'snprintf', 'vsniprintf':'vsnprintf'}
@@ -414,6 +481,15 @@ if get_option('ubsan')
   linux_l_args   += '-fsanitize=undefined'
 endif
 
+# dsp.cpp:19 left-shift of a negative sample is UB (see
+# docs/horse/UPSTREAM_ISSUE_dsp.md).
+# Do not change dsp.cpp; skip the shift sanitizer so Horse DC-block loopback
+# can complete under -Db_sanitize=address,undefined.
+if get_option('b_sanitize') != 'none' or get_option('asan') or get_option('ubsan')
+  linux_c_args   += '-fno-sanitize=shift'
+  linux_cpp_args += '-fno-sanitize=shift'
+endif
+
 
 ##
 ## TYT MD-3x0 family
@@ -431,9 +507,9 @@ md3x0_src = ['platform/drivers/CPS/cps_io_native_MD3x0.c',
              'platform/targets/MD-3x0/hwconfig.c']
 
 md3x0_inc = ['platform/targets/MD-3x0']
-md3x0_def = {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_def = {'PLATFORM_MD3x0': '', 'CONFIG_HORSE': '', 'timegm': 'mktime'}
 
-md3x0_src += openrtx_src + stm32f405_src + ui_src_default + mdx_src
+md3x0_src += openrtx_src + horse_src + stm32f405_src + ui_src_default + mdx_src
 md3x0_inc += openrtx_inc + stm32f405_inc
 md3x0_def += openrtx_def + stm32f405_def
 
@@ -684,6 +760,7 @@ foreach k, v : md3x0_def
     md3x0_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
+md3x0_args += ['-fstack-usage', '-Wstack-usage=16384']
 
 mduv3x0_args = []
 foreach k, v : mduv3x0_def
@@ -766,10 +843,17 @@ foreach k, v : rt4d_def
   endif
 endforeach
 
+linux_deps = [sdl_dep, threads_dep, codec2_dep]
+if sodium_dep.found()
+  linux_deps += sodium_dep
+  linux_c_args += '-DHAVE_LIBSODIUM'
+  linux_cpp_args += '-DHAVE_LIBSODIUM'
+endif
+
 linux_opts = {
   'sources'            : linux_default_src,
   'include_directories': linux_inc,
-  'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
+  'dependencies'       : linux_deps,
   'c_args'             : linux_c_args,
   'cpp_args'           : linux_cpp_args,
   'link_args'          : linux_l_args
@@ -778,7 +862,7 @@ linux_opts = {
 linux_small_opts = {
     'sources'            : linux_default_src,
     'include_directories': linux_inc,
-    'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
+    'dependencies'       : linux_deps,
     'c_args'             : linux_small_c_args,
     'cpp_args'           : linux_small_cpp_args,
     'link_args'          : linux_l_args
@@ -787,7 +871,7 @@ linux_small_opts = {
 linux_mod17_opts = {
     'sources'            : linux_mod17_src,
     'include_directories': linux_inc,
-    'dependencies'       : [sdl_dep, threads_dep, codec2_dep],
+    'dependencies'       : linux_deps,
     'c_args'             : linux_mod17_c_args,
     'cpp_args'           : linux_mod17_cpp_args,
     'link_args'          : linux_l_args
@@ -796,9 +880,9 @@ linux_mod17_opts = {
 md3x0_opts = {
   'sources'            : md3x0_src,
   'include_directories': md3x0_inc,
-  'dependencies'       : [codec2_dep],
-  'c_args'             : md3x0_args,
-  'cpp_args'           : md3x0_args,
+  'dependencies'       : [codec2_dep] + horse_deps + horse_cm4_sodium_dep,
+  'c_args'             : md3x0_args + horse_crypto_args,
+  'cpp_args'           : md3x0_args + horse_crypto_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_MDx.ld']
 }
 
@@ -1177,7 +1261,7 @@ linux = alias_target('linux', linux_targets)
 unit_test_opts = {'c_args'             : linux_c_args,
                   'cpp_args'           : linux_cpp_args,
                   'include_directories': linux_inc,
-                  'dependencies'       : [sdl_dep, threads_dep, codec2_dep, catch2_dep],
+                  'dependencies'       : linux_deps + [catch2_dep],
                   'link_args'          : linux_l_args}
 
 unit_test_src = linux_src + ui_src_default
@@ -1210,6 +1294,12 @@ cps_test = executable('cps_test',
                       sources : unit_test_src + ['tests/unit/cps.cpp'],
                       kwargs  : unit_test_opts)
 
+cps_layout_test = executable('cps_layout_test',
+                             sources : ['tests/unit/cps_layout.c'],
+                             include_directories : openrtx_inc,
+                             c_args : linux_c_args,
+                             link_args : linux_l_args)
+
 linux_inputStream_test = executable('linux_inputStream_test',
                                     sources : unit_test_src + ['tests/unit/linux_inputStream_test.cpp'],
                                     kwargs  : unit_test_opts)
@@ -1217,6 +1307,137 @@ linux_inputStream_test = executable('linux_inputStream_test',
 minmea_conversion_test = executable('minmea_conversion_test',
                                      sources : unit_test_src + ['tests/unit/convert_minmea_coord.cpp'],
                                      kwargs  : unit_test_opts)
+
+horse_frame_test = executable('horse_frame_test',
+                              sources : horse_frame_test_src + ['tests/unit/horse_frame.cpp'],
+                              include_directories : openrtx_inc,
+                              c_args : linux_c_args,
+                              cpp_args : linux_cpp_args,
+                              link_args : linux_l_args)
+
+horse_crypto_test_src = ['openrtx/src/protocols/horse/horse_crypto.c',
+                         'openrtx/src/protocols/horse/horse_randombytes.c']
+horse_crypto_test = executable('horse_crypto_test',
+                               sources : horse_crypto_test_src + ['tests/unit/horse_crypto.cpp'],
+                               include_directories : openrtx_inc,
+                               dependencies : linux_deps,
+                               c_args : linux_c_args,
+                               cpp_args : linux_cpp_args,
+                               link_args : linux_l_args)
+
+horse_crypto_worker_test = executable('horse_crypto_worker_test',
+                                      sources : ['openrtx/src/protocols/horse/horse_crypto.c',
+                                                 'openrtx/src/protocols/horse/horse_crypto_worker.c',
+                                                 'openrtx/src/protocols/horse/horse_randombytes.c',
+                                                 'tests/unit/horse_crypto_worker.cpp'],
+                                      include_directories : openrtx_inc,
+                                      dependencies : linux_deps + [threads_dep],
+                                      c_args : linux_c_args,
+                                      cpp_args : linux_cpp_args,
+                                      link_args : linux_l_args)
+
+horse_info_test = executable('horse_info_test',
+                             sources : ['tests/unit/horse_info.cpp'],
+                             include_directories : openrtx_inc,
+                             c_args : linux_c_args,
+                             cpp_args : linux_cpp_args,
+                             link_args : linux_l_args)
+
+horse_codec_test = executable('horse_codec_test',
+                              sources : ['openrtx/src/protocols/horse/melpe_horse.c',
+                                         'tests/unit/horse_codec.cpp'],
+                              include_directories : openrtx_inc,
+                              dependencies : linux_deps,
+                              c_args : linux_c_args,
+                              cpp_args : linux_cpp_args,
+                              link_args : linux_l_args)
+
+horse_peers_test = executable('horse_peers_test',
+                              sources : unit_test_src + ['tests/unit/horse_peers.cpp'],
+                              kwargs : unit_test_opts)
+
+horse_keystore_test = executable('horse_keystore_test',
+                                 sources : ['openrtx/src/protocols/horse/horse_keystore.c',
+                                            'openrtx/src/protocols/horse/horse_crypto.c',
+                                            'openrtx/src/protocols/horse/horse_randombytes.c',
+                                            'tests/unit/horse_keystore.cpp'],
+                                 include_directories : openrtx_inc,
+                                 dependencies : linux_deps + [threads_dep],
+                                 c_args : linux_c_args,
+                                 cpp_args : linux_cpp_args,
+                                 link_args : linux_l_args)
+
+horse_host_interop_test = executable('horse_host_interop_test',
+                                     sources : ['openrtx/src/protocols/horse/horse_keystore.c',
+                                                'openrtx/src/protocols/horse/horse_crypto.c',
+                                                'openrtx/src/protocols/horse/horse_randombytes.c',
+                                                'openrtx/src/protocols/horse/horse_peers.c',
+                                                'tests/unit/horse_host_interop.cpp'],
+                                     include_directories : openrtx_inc,
+                                     dependencies : linux_deps + [threads_dep],
+                                     c_args : linux_c_args + ['-DPLATFORM_LINUX'],
+                                     cpp_args : linux_cpp_args + [
+                                       '-DPLATFORM_LINUX',
+                                       '-DHORSE_PROVISION_PY="' + meson.project_source_root() / 'scripts/horse_provision.py' + '"'
+                                     ],
+                                     link_args : linux_l_args)
+
+horse_loopback_test = executable('horse_loopback_test',
+                                 sources : unit_test_src + ['tests/unit/horse_loopback.cpp',
+                                                            'tests/unit/horse_session_modem.cpp'],
+                                 kwargs : unit_test_opts)
+
+horse_tx_fail_test = executable('horse_tx_fail_test',
+                                sources : unit_test_src + ['tests/unit/horse_tx_fail.cpp'],
+                                kwargs : unit_test_opts)
+
+horse_randombytes_test = executable('horse_randombytes_test',
+                                    sources : ['openrtx/src/protocols/horse/horse_randombytes.c',
+                                               'openrtx/src/protocols/horse/horse_crypto.c',
+                                               'tests/unit/horse_randombytes.cpp'],
+                                    include_directories : openrtx_inc,
+                                    dependencies : linux_deps + [threads_dep],
+                                    c_args : linux_c_args + ['-DHORSE_RANDOMBYTES_TEST'],
+                                    cpp_args : linux_cpp_args + ['-DHORSE_RANDOMBYTES_TEST'],
+                                    link_args : linux_l_args,
+                                    override_options : ['b_coverage=false'])
+
+horse_fec_v2_sim = executable('horse_fec_v2_sim',
+                              sources : unit_test_src + ['tests/unit/horse_fec_v2_sim.cpp'],
+                              kwargs : unit_test_opts)
+
+py3 = find_program('python3', required : true)
+horse_test_env = environment()
+horse_test_env.set('ASAN_OPTIONS', 'detect_leaks=0')
+test('Horse FEC v2 sim selftest', horse_fec_v2_sim,
+     args : ['selftest'],
+     env : horse_test_env, timeout : 60)
+test('Horse FEC v2 floor strict 8000 (not a target)', horse_fec_v2_sim,
+     args : ['gates', '8000', '200', '11000', '4', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 floor usable 10000 (not a target)', horse_fec_v2_sim,
+     args : ['gates', '10000', '200', '1', '4', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 8000 seed 1', horse_fec_v2_sim,
+     args : ['gates', '8000', '200', '1', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 8000 seed 2', horse_fec_v2_sim,
+     args : ['gates', '8000', '200', '2', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 10000 seed 1', horse_fec_v2_sim,
+     args : ['gates', '10000', '200', '1', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 target 10000 seed 2', horse_fec_v2_sim,
+     args : ['gates', '10000', '200', '2', '4', '1', '1', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse Provision Pack Test', py3,
+     args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'],
+     env : horse_test_env,
+     timeout : 30)
+test('Horse settings.h matches upstream', py3,
+     args : [meson.project_source_root() / 'tests/unit/horse_settings_upstream.py'],
+     workdir : meson.project_source_root(),
+     timeout : 30)
 
 ui_check_standby_test = executable('ui_check_standby_test',
                                     sources : unit_test_src + ['tests/unit/ui_check_standby.cpp'],
@@ -1245,7 +1466,7 @@ m17_replay_tool = executable('m17_replay_tool',
                              c_args              : linux_c_args,
                              cpp_args            : linux_cpp_args,
                              include_directories : m17_replay_inc,
-                             dependencies        : [sdl_dep, threads_dep, codec2_dep],
+                             dependencies        : linux_deps,
                              link_args           : linux_l_args)
 
 m17_replay_test_opts = unit_test_opts + {'include_directories' : m17_replay_inc,
@@ -1262,10 +1483,59 @@ test('M17 RRC Test',          m17_rrc_test)
 test('M17 Callsign Unit Test',          m17_callsign_test)
 test('M17 Meta Text Unit Test',         m17_metatext_test)
 test('Codeplug Test',         cps_test)
+test('CPS layout vs upstream', cps_layout_test)
 ## test('Linux InputStream Test', linux_inputStream_test)
 test('minmea conversion Test', minmea_conversion_test)
+test('Horse Frame Unit Test',  horse_frame_test,
+     env : horse_test_env, timeout : 30)
+test('Horse Crypto Unit Test', horse_crypto_test,
+     env : horse_test_env, timeout : 30)
+test('Horse Crypto Worker Test', horse_crypto_worker_test,
+     env : horse_test_env, timeout : 120)
+test('Horse Info Reset Test', horse_info_test,
+     env : horse_test_env, timeout : 30)
+test('Horse Codec 20ms Test', horse_codec_test,
+     env : horse_test_env, timeout : 30)
+test('Horse Peers Test', horse_peers_test,
+     env : horse_test_env, timeout : 30)
+test('Horse Keystore Test', horse_keystore_test,
+     env : horse_test_env, timeout : 60)
+test('Horse Host Interop Test', horse_host_interop_test,
+     env : horse_test_env, timeout : 60)
+test('Horse Loopback Test', horse_loopback_test,
+     env : horse_test_env, timeout : 600)
+test('Horse TX Crypto Fail Test', horse_tx_fail_test,
+     env : horse_test_env, timeout : 30)
+test('Horse Randombytes Fail Test', horse_randombytes_test,
+     env : horse_test_env, timeout : 30)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('M17 Baseband Replay Test', m17_replay_test)
+
+##
+## ----------------------------------- LibFuzzer targets (optional) ------------------------------
+## Build with: meson setup build -Dfuzzing=true (requires clang)
+## Run each: ./build/fuzz_<name> [corpus_dir] [artifacts_dir]
+## Run Horse: ./scripts/run_all_fuzzers_3h.sh build
+##
+if get_option('fuzzing')
+  fuzz_sanitizer_args = ['-fsanitize=fuzzer,address,undefined', '-fno-omit-frame-pointer', '-g']
+  fuzz_inc = openrtx_inc
+
+  fuzz_horse_frame = executable('fuzz_horse_frame',
+                                sources : horse_frame_test_src + ['tests/fuzz/fuzz_horse_frame.cpp'],
+                                include_directories : fuzz_inc,
+                                c_args : fuzz_sanitizer_args,
+                                cpp_args : fuzz_sanitizer_args,
+                                link_args : fuzz_sanitizer_args)
+
+  fuzz_horse_voice = executable('fuzz_horse_voice',
+                              sources : horse_frame_test_src +
+                                        ['tests/fuzz/fuzz_horse_voice.cpp'],
+                              include_directories : fuzz_inc,
+                              c_args : fuzz_sanitizer_args,
+                              cpp_args : fuzz_sanitizer_args,
+                              link_args : fuzz_sanitizer_args)
+endif

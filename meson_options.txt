@@ -1,3 +1,6 @@
 option('asan', type : 'boolean', value : false, description : 'Compile the software with AddressSanitizer')
 option('ubsan', type : 'boolean', value : false, description : 'Compile the software with Undefined Behaviour Sanitizer')
+option('fuzzing', type : 'boolean', value : false, description : 'Build libFuzzer fuzz targets (requires clang)')
 option('test', type: 'string', description: 'Replace the main OpenRTX source file with a specialized test')
+option('git_version', type: 'string', value: '',
+       description: 'Override GIT_VERSION (empty: git describe)')
