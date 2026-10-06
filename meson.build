@@ -1344,6 +1344,12 @@ horse_test_env.set('ASAN_OPTIONS', 'detect_leaks=0')
 test('Horse FEC v2 sim selftest', horse_fec_v2_sim,
      args : ['selftest'],
      env : horse_test_env, timeout : 60)
+test('Horse FEC v2 floor strict 8000 (not a target)', horse_fec_v2_sim,
+     args : ['gates', '8000', '200', '11000', '4', '1'],
+     env : horse_test_env, timeout : 600)
+test('Horse FEC v2 floor usable 10000 (not a target)', horse_fec_v2_sim,
+     args : ['gates', '10000', '200', '1', '4', '1'],
+     env : horse_test_env, timeout : 600)
 test('Horse Provision Pack Test', py3,
      args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'],
      env : horse_test_env,

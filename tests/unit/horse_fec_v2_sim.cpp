@@ -12,7 +12,12 @@
 #include "protocols/horse/HorseFrameDecoder.hpp"
 #include "protocols/horse/HorseModulator.hpp"
 #include "protocols/horse/HorseDemodulator.hpp"
+#include "protocols/horse/HorseVoiceCodec.hpp"
 #include "protocols/horse/HorseConstants.hpp"
+#include "protocols/horse/horse_crypto.h"
+#ifdef HAVE_LIBSODIUM
+#include <sodium.h>
+#endif
 #include "protocols/horse/HorseUtils.hpp"
 #include "protocols/M17/DSP.hpp"
 #include "core/fir.hpp"
@@ -34,7 +39,6 @@ static void push_lsf_sim(HorseFrameEncoder &enc, const call_t &src,
     for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
         frames.push_back(lsf[i]);
 }
-
 
 static constexpr size_t SPS_48 = 48000 / SYMBOL_RATE;
 static constexpr size_t SPS_24 = 24000 / SYMBOL_RATE;
@@ -100,7 +104,8 @@ static void to_24k(const std::vector<int16_t> &bb48, std::vector<int16_t> &rx24)
 }
 
 static int demod_frames(const std::vector<int16_t> &rx24,
-                        std::vector<frame_t> &out)
+                        std::vector<frame_t> &out,
+                        std::vector<std::array<uint16_t, FRAME_BITS>> *softs)
 {
     HorseDemodulator demod;
     HorseFrameDecoder decoder;
@@ -108,6 +113,8 @@ static int demod_frames(const std::vector<int16_t> &rx24,
     demod.resetImmediate();
     demod.setSkipDcBlock(true);
     out.clear();
+    if (softs)
+        softs->clear();
     for (int16_t s : rx24) {
         demod.feedSample(s, false);
         frame_t f{};
@@ -116,9 +123,20 @@ static int demod_frames(const std::vector<int16_t> &rx24,
         if (decoder.decodeFrame(f) == HorseFrameType::LINK_SETUP)
             demod.noteValidTag();
         out.push_back(f);
+        if (softs) {
+            std::array<uint16_t, FRAME_BITS> sb{};
+            demod.takeSoftBits(sb.data());
+            softs->push_back(sb);
+        }
     }
     demod.terminate();
     return 0;
+}
+
+static int demod_frames(const std::vector<int16_t> &rx24,
+                        std::vector<frame_t> &out)
+{
+    return demod_frames(rx24, out, nullptr);
 }
 
 static void pack_voice(const uint8_t coded46[FEC_CODED_BYTES], frame_t &out)
@@ -260,9 +278,15 @@ static int run_voice_fer(Codecs &c, int id, float noise, unsigned seed,
         refs[static_cast<size_t>(i)][1] = (uint8_t)i;
         uint8_t cw[FEC_CODED_BYTES];
         encode_cid(c, id, refs[static_cast<size_t>(i)].data(), cw);
-        frame_t vf; pack_voice(cw, vf); frames.push_back(vf);
+        frame_t vf;
+        pack_voice(cw, vf);
+        frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
 
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
@@ -468,9 +492,9 @@ static int decode_voice_ok(Codecs &c, int id, const frame_t &f,
     return memcmp(out, ref, FEC_INFO_BYTES) == 0 ? 1 : 0;
 }
 
-static int decode_voice_fn(Codecs &c, int id, const frame_t &f, int nframes,
-                           const std::vector<std::array<uint8_t, FEC_INFO_BYTES>>
-                               &refs)
+static int
+decode_voice_fn(Codecs &c, int id, const frame_t &f, int nframes,
+                const std::vector<std::array<uint8_t, FEC_INFO_BYTES>> &refs)
 {
     float llr[FEC_CODED_BITS];
     llr_from_frame_hard(f, llr);
@@ -548,9 +572,15 @@ static int run_voice_study(Codecs &c, int id, float noise, unsigned seed,
         memcpy(refs[static_cast<size_t>(i)].data(), info, FEC_INFO_BYTES);
         uint8_t cw[FEC_CODED_BYTES];
         encode_cid(c, id, info, cw);
-        frame_t vf; pack_voice(cw, vf); frames.push_back(vf);
+        frame_t vf;
+        pack_voice(cw, vf);
+        frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -679,7 +709,11 @@ static int run_lockstat(float noise, unsigned seed, int nframes)
         enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
         frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -730,7 +764,11 @@ static int run_clktrace(float noise, unsigned seed, int nframes, int auth)
         enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
         frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     std::vector<int16_t> bb48, imp, rx24;
     if (render_frames(frames, bb48, true) != 0)
         return -1;
@@ -772,11 +810,9 @@ static int run_clktrace(float noise, unsigned seed, int nframes, int auth)
         have_sp = true;
         if (got < 25 || got + 25 >= nframes || ad >= 2 || !demod.isLocked()) {
             std::printf("%d %u %d %d %d %d %d %d\n", got, sp, (int)dlt,
-                        hd_sync(f, VOICE_SYNC_WORD),
-                        hd_sync(f, EOT_SYNC_WORD),
+                        hd_sync(f, VOICE_SYNC_WORD), hd_sync(f, EOT_SYNC_WORD),
                         demod.lockAuthenticated() ? 1 : 0,
-                        demod.isLocked() ? 1 : 0,
-                        (int)demod.debugFrameIndex());
+                        demod.isLocked() ? 1 : 0, (int)demod.debugFrameIndex());
         }
         got++;
     }
@@ -803,7 +839,11 @@ static int run_eot_notice(float noise, unsigned seed, int nvoice,
         enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
         frames.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
     for (int i = 0; i < 20; i++) {
         frame_t z{};
         memset(z.data(), 0, z.size());
@@ -844,21 +884,21 @@ static void m17_encode_chunk(Codecs &c, const uint8_t *info18, frame_t &out,
 
 enum FailCause : int {
     FAIL_NONE = 0,
-    FAIL_NO_ACQ = 1,       /* a */
-    FAIL_LSF = 2,           /* b */
-    FAIL_TAG = 3,          /* c */
-    FAIL_SIG = 4,          /* d */
-    FAIL_LOCK = 5,         /* e */
-    FAIL_VOICE = 6,        /* f */
-    FAIL_EOT = 7,          /* g */
-    FAIL_LATE = 8,         /* h */
+    FAIL_NO_ACQ = 1, /* a */
+    FAIL_LSF = 2,    /* b */
+    FAIL_TAG = 3,    /* c */
+    FAIL_SIG = 4,    /* d */
+    FAIL_LOCK = 5,   /* e */
+    FAIL_VOICE = 6,  /* f */
+    FAIL_EOT = 7,    /* g */
+    FAIL_LATE = 8,   /* h */
     FAIL_N = 9
 };
 
 static const char *fail_name(int c)
 {
-    static const char *n[] = { "ok", "a_no_acq", "b_lsf", "c_tag", "d_sig",
-                               "e_lock", "f_voice", "g_eot", "h_late" };
+    static const char *n[] = { "ok",     "a_no_acq", "b_lsf", "c_tag", "d_sig",
+                               "e_lock", "f_voice",  "g_eot", "h_late" };
     if (c < 0 || c >= FAIL_N)
         return "?";
     return n[c];
@@ -886,9 +926,10 @@ struct AttribTrial {
  * Demod one RX stream while recording unlock reason. noteValidTag on LSF
  * CRC so coast tag-drop stays off the diagnosis path (modem campaign).
  */
-static int demod_frames_attrib(const std::vector<int16_t> &rx24,
-                               std::vector<frame_t> &out,
-                               HorseUnlockReason *unlock, uint8_t *umiss)
+static int
+demod_frames_attrib(const std::vector<int16_t> &rx24, std::vector<frame_t> &out,
+                    std::vector<std::array<uint16_t, FRAME_BITS>> &softs,
+                    HorseUnlockReason *unlock, uint8_t *umiss, bool use_soft)
 {
     HorseDemodulator demod;
     HorseFrameDecoder decoder;
@@ -897,15 +938,23 @@ static int demod_frames_attrib(const std::vector<int16_t> &rx24,
     demod.setSkipDcBlock(true);
     demod.setMissUnlock(COAST_MISS_UNLOCK);
     out.clear();
+    softs.clear();
     for (int16_t s : rx24) {
         demod.feedSample(s, false);
         frame_t f{};
         if (!demod.takeFrame(f))
             continue;
-        auto ty = decoder.decodeFrame(f);
+        std::array<uint16_t, FRAME_BITS> sb{};
+        demod.takeSoftBits(sb.data());
+        HorseFrameType ty;
+        if (use_soft)
+            ty = decoder.decodeFrame(f, sb.data());
+        else
+            ty = decoder.decodeFrame(f);
         if (ty == HorseFrameType::LINK_SETUP && decoder.lsfReady())
             demod.noteValidTag();
         out.push_back(f);
+        softs.push_back(sb);
     }
     if (unlock)
         *unlock = demod.lastUnlockReason();
@@ -916,7 +965,8 @@ static int demod_frames_attrib(const std::vector<int16_t> &rx24,
 }
 
 static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
-                               int miss_limit, AttribTrial *sum, int *hist)
+                               int miss_limit, AttribTrial *sum, int *hist,
+                               bool use_soft, bool real_crypto)
 {
     (void)miss_limit;
     memset(hist, 0, FAIL_N * sizeof(int));
@@ -936,10 +986,44 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
     uint8_t tag[4] = { 0x11, 0x22, 0x33, 0x44 };
     uint8_t payload[12];
     memset(payload, 0x55, sizeof payload);
+    uint8_t k_enc[32], k_tag[32], rx_pk[32], rx_sk[32], tx_sk[32];
+    uint8_t ed_pk[32], ed_sk[64];
+    memset(k_enc, 0, sizeof k_enc);
+    memset(k_tag, 0, sizeof k_tag);
+    memset(rx_pk, 0, sizeof rx_pk);
+    memset(rx_sk, 0, sizeof rx_sk);
+    memset(tx_sk, 0, sizeof tx_sk);
+    memset(ed_pk, 0, sizeof ed_pk);
+    memset(ed_sk, 0, sizeof ed_sk);
+    const bool enc_voice = (mode == 1 || mode == 3);
 
     HorseFrameEncoder enc;
     call_t src = { { 1, 2, 3, 4, 5, 6 } };
     call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    if (real_crypto) {
+        if (!horse_crypto_available()
+            || !horse_crypto_x25519_keypair(rx_pk, rx_sk)
+            || !horse_crypto_x25519_keypair(eph, tx_sk)
+            || !horse_crypto_derive_session_keys(
+                tx_sk, rx_pk, src.data(), dst.data(), eph, flags,
+                HORSE_LSF_VERSION, k_enc, k_tag))
+            return -1;
+        horse_crypto_memzero(tx_sk, sizeof tx_sk);
+        if (want_sig) {
+#ifdef HAVE_LIBSODIUM
+            if (crypto_sign_keypair(ed_pk, ed_sk) != 0)
+                return -1;
+#else
+            return -1;
+#endif
+            uint8_t smsg[HORSE_SESSION_MSG_BYTES];
+            horse_crypto_build_session_message(src.data(), dst.data(), eph,
+                                               flags, HORSE_LSF_VERSION, smsg);
+            if (!horse_crypto_sign(ed_sk, smsg, sizeof smsg, sig64))
+                return -1;
+            horse_crypto_memzero(ed_sk, sizeof ed_sk);
+        }
+    }
     std::vector<frame_t> tx;
     frame_t lsf[LSF_OPENING_FRAMES];
     enc.encodeLsf(src, dst, eph, flags, lsf);
@@ -949,28 +1033,55 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
         enc.setSignatureFragments(sig64);
     else
         enc.setSignatureFragments(nullptr);
+    uint8_t zeroTag[4] = { 0, 0, 0, 0 };
+    uint8_t dummyPay[12];
+    memset(dummyPay, 0x55, sizeof dummyPay);
     for (int i = 0; i < (int)SIG_FRAME_COUNT; i++) {
         frame_t vf{};
-        enc.encodeVoiceFrameWithFn(payload, tag,
-                                   (uint16_t)(SIG_FRAME_BASE + i), vf, false,
-                                   12);
+        if (real_crypto)
+            enc.encodeVoiceFrameWithFn(sig64 + i * SIG_CHUNK_BYTES, zeroTag,
+                                       (uint16_t)(SIG_FRAME_BASE + i), vf,
+                                       false, sig_chunk_bytes((uint16_t)i));
+        else
+            enc.encodeVoiceFrameWithFn(
+                dummyPay, tag, (uint16_t)(SIG_FRAME_BASE + i), vf, false, 12);
         tx.push_back(vf);
     }
     for (int i = 0; i < nvoice; i++) {
         frame_t vf{};
+        uint8_t plain[12];
         if (mode == 2)
-            memset(payload, 0x11, sizeof payload);
+            memset(plain, 0x11, sizeof plain);
         else {
             unsigned rng = seed + (unsigned)i * 13u;
-            for (size_t b = 0; b < sizeof payload; b++) {
+            for (size_t b = 0; b < sizeof plain; b++) {
                 rng = rng * 1103515245u + 12345u;
-                payload[b] = (uint8_t)(rng >> 16);
+                plain[b] = (uint8_t)(rng >> 16);
             }
         }
-        enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false, 12);
+        uint8_t air[12];
+        memcpy(air, plain, 12);
+        uint8_t frtag[4];
+        memcpy(frtag, tag, 4);
+        if (real_crypto) {
+            uint8_t nonce[12];
+            horse_crypto_voice_nonce_from_fn((uint16_t)i, nonce);
+            if (enc_voice)
+                horse_crypto_voice_encrypt(k_enc, k_tag,
+                                           HORSE_VOICE_DIR_FORWARD, (uint16_t)i,
+                                           nonce, plain, 12, air, frtag);
+            else
+                horse_crypto_voice_auth_tag(k_tag, HORSE_VOICE_DIR_FORWARD,
+                                            (uint16_t)i, air, frtag);
+        }
+        enc.encodeVoiceFrameWithFn(air, frtag, (uint16_t)i, vf, false, 12);
         tx.push_back(vf);
     }
-    { frame_t ef; enc.encodeEotFrame(ef); tx.push_back(ef); }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        tx.push_back(ef);
+    }
     std::vector<int16_t> bb48;
     if (render_frames(tx, bb48, true) != 0)
         return -1;
@@ -984,9 +1095,10 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
         impair_48k(bb48.data(), bb48.size(), p, imp);
         to_24k(imp, rx24);
         std::vector<frame_t> sl;
+        std::vector<std::array<uint16_t, FRAME_BITS>> softs;
         HorseUnlockReason ur = HorseUnlockReason::None;
         uint8_t um = 0;
-        demod_frames_attrib(rx24, sl, &ur, &um);
+        demod_frames_attrib(rx24, sl, softs, &ur, &um, use_soft);
 
         HorseFrameDecoder dec;
         bool lsf_open = false;
@@ -1015,7 +1127,11 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
             if (is_lsf || is_voice || is_eot)
                 saw_any_sync = true;
 
-            auto ty = dec.decodeFrame(f);
+            HorseFrameType ty;
+            if (use_soft && fi < softs.size())
+                ty = dec.decodeFrame(f, softs[fi].data());
+            else
+                ty = dec.decodeFrame(f);
             if (dec.lsfReady()) {
                 if (!lsf_ready && open_chunks < (int)LSF_OPENING_FRAMES)
                     lsf_frag = true;
@@ -1043,6 +1159,21 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
                     continue;
                 voice_seen++;
                 bool tag_match = memcmp(tg, tag, 4) == 0;
+                uint8_t plain[12];
+                memcpy(plain, mel, 12);
+                if (real_crypto) {
+                    uint8_t nonce[12];
+                    horse_crypto_voice_nonce_from_fn(fn, nonce);
+                    if (enc_voice) {
+                        tag_match = horse_crypto_voice_decrypt(
+                            k_enc, k_tag, HORSE_VOICE_DIR_FORWARD, fn, nonce,
+                            mel, 12, tg, plain);
+                    } else {
+                        tag_match = horse_crypto_voice_auth_verify(
+                            k_tag, HORSE_VOICE_DIR_FORWARD, fn, mel, tg);
+                        memcpy(plain, mel, 12);
+                    }
+                }
                 if (tag_match)
                     tag_ok++;
                 if (!lsf_ready || !tag_match)
@@ -1059,7 +1190,7 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
                         exp[b] = (uint8_t)(rng >> 16);
                     }
                 }
-                if (memcmp(mel, exp, 12) == 0) {
+                if (memcmp(plain, exp, 12) == 0) {
                     voice_ok++;
                     last_good_fn = (int)fn;
                 }
@@ -1068,7 +1199,7 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
         bool lsf_frag_final = lsf_frag || (lsf_ready && !lsf_open);
         uint8_t sig_assem[SIG_BYTES];
         bool sig_frag = dec.getSigFragments(sig_assem)
-                      && memcmp(sig_assem, sig64, SIG_BYTES) == 0;
+                     && memcmp(sig_assem, sig64, SIG_BYTES) == 0;
         bool sig_frames = (sig_fn_mask == ((1 << SIG_FRAME_COUNT) - 1));
         bool sig_ok = !want_sig || sig_frames || sig_frag;
 
@@ -1091,10 +1222,10 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
          * Usable: key (LSF CRC) + tag + sig if required + >=95% voice.
          */
         bool strict = lsf_ready && tag_ok > 0 && sig_ok && voice_ok >= nvoice
-                    && eot_seen && !lock_lost_mid && !false_eot
-                    && first_voice_fn == 0;
+                   && eot_seen && !lock_lost_mid && !false_eot
+                   && first_voice_fn == 0;
         bool usable = lsf_ready && tag_ok > 0 && sig_ok
-                    && voice_ok >= need_usable;
+                   && voice_ok >= need_usable;
         int start_fn = first_voice_fn < 0 ? -1 : first_voice_fn;
 
         int cause;
@@ -1147,15 +1278,185 @@ static int run_complete_attrib(float noise, unsigned seed, int ntx, int mode,
     return 0;
 }
 
+static int run_voice_cmp(Codecs &c, float noise, unsigned seed, int nframes)
+{
+    HorseFrameEncoder enc;
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    unsigned rng = seed;
+    std::vector<std::array<uint8_t, FEC_INFO_BYTES>> refs(
+        static_cast<size_t>(nframes));
+    for (int i = 0; i < nframes; i++) {
+        for (size_t b = 0; b < FEC_INFO_BYTES; b++) {
+            rng = rng * 1103515245u + 12345u;
+            refs[static_cast<size_t>(i)][b] = (uint8_t)(rng >> 16);
+        }
+        refs[static_cast<size_t>(i)][0] = (uint8_t)(i >> 8);
+        refs[static_cast<size_t>(i)][1] = (uint8_t)i;
+    }
+    auto run_kind = [&](int kind, int *ok, int *got) -> int {
+        std::vector<frame_t> frames;
+        HorseFrameEncoder e2;
+        push_lsf_sim(e2, src, dst, frames);
+        for (int i = 0; i < nframes; i++) {
+            frame_t vf{};
+            if (kind == 0) {
+                uint8_t cw[FEC_CODED_BYTES];
+                encode_cid(c, CID_M17H, refs[static_cast<size_t>(i)].data(),
+                           cw);
+                pack_voice(cw, vf);
+            } else {
+                e2.encodeVoiceFrameWithFn(
+                    refs[static_cast<size_t>(i)].data() + 2,
+                    refs[static_cast<size_t>(i)].data() + 14, (uint16_t)i, vf,
+                    false, 12);
+            }
+            frames.push_back(vf);
+        }
+        {
+            frame_t ef;
+            e2.encodeEotFrame(ef);
+            frames.push_back(ef);
+        }
+        std::vector<int16_t> bb48, imp, rx24;
+        if (render_frames(frames, bb48, true) != 0)
+            return -1;
+        impair_t p{};
+        p.noise = noise;
+        p.gain = 1.0f;
+        p.seed = seed;
+        impair_48k(bb48.data(), bb48.size(), p, imp);
+        to_24k(imp, rx24);
+        std::vector<frame_t> gotf;
+        demod_frames(rx24, gotf);
+        *ok = 0;
+        *got = 0;
+        HorseFrameDecoder dec;
+        for (const auto &f : gotf) {
+            if (dec.decodeFrame(f) != HorseFrameType::VOICE)
+                continue;
+            if (*got >= nframes)
+                break;
+            uint8_t out[FEC_INFO_BYTES];
+            if (kind == 0) {
+                float llr[FEC_CODED_BITS];
+                llr_from_frame_hard(f, llr);
+                if (!decode_cid(c, CID_M17H, llr, f.data() + 2, out))
+                    continue;
+            } else {
+                horse::voice_decode(f.data() + 2, out);
+            }
+            unsigned fn = ((unsigned)out[0] << 8) | out[1];
+            if (fn < (unsigned)nframes
+                && memcmp(out, refs[fn].data(), FEC_INFO_BYTES) == 0)
+                (*ok)++;
+            (*got)++;
+        }
+        return 0;
+    };
+    int ok_a = 0, got_a = 0, ok_b = 0, got_b = 0;
+    if (run_kind(0, &ok_a, &got_a) != 0 || run_kind(1, &ok_b, &got_b) != 0)
+        return -1;
+    std::printf("voice_cmp noise=%.0f n=%d study_optC ok=%d got=%d fer=%.6f "
+                "v2_frag ok=%d got=%d fer=%.6f DATA_PUNCTURE=12 coded=272 "
+                "spare=96 extra_puncture=no\n",
+                noise, nframes, ok_a, got_a,
+                nframes ? 1.0 - (double)ok_a / nframes : 1.0, ok_b, got_b,
+                nframes ? 1.0 - (double)ok_b / nframes : 1.0);
+    return 0;
+}
+
+static int run_voice_hs(float noise, unsigned seed, int nframes)
+{
+    HorseFrameEncoder enc;
+    HorseVoiceCodec codec;
+    call_t src = { { 1, 2, 3, 4, 5, 6 } };
+    call_t dst = { { 6, 5, 4, 3, 2, 1 } };
+    std::vector<frame_t> frames;
+    push_lsf_sim(enc, src, dst, frames);
+    std::vector<std::array<uint8_t, FEC_INFO_BYTES>> refs(
+        static_cast<size_t>(nframes));
+    unsigned rng = seed;
+    for (int i = 0; i < nframes; i++) {
+        for (size_t b = 0; b < FEC_INFO_BYTES; b++) {
+            rng = rng * 1103515245u + 12345u;
+            refs[static_cast<size_t>(i)][b] = (uint8_t)(rng >> 16);
+        }
+        refs[static_cast<size_t>(i)][0] = (uint8_t)(i >> 8);
+        refs[static_cast<size_t>(i)][1] = (uint8_t)i;
+        frame_t vf{};
+        enc.encodeVoiceFrameWithFn(refs[static_cast<size_t>(i)].data() + 2,
+                                   refs[static_cast<size_t>(i)].data() + 14,
+                                   (uint16_t)i, vf, false, 12);
+        frames.push_back(vf);
+    }
+    {
+        frame_t ef;
+        enc.encodeEotFrame(ef);
+        frames.push_back(ef);
+    }
+    std::vector<int16_t> bb48, imp, rx24;
+    if (render_frames(frames, bb48, true) != 0)
+        return -1;
+    impair_t p{};
+    p.noise = noise;
+    p.gain = 1.0f;
+    p.seed = seed;
+    impair_48k(bb48.data(), bb48.size(), p, imp);
+    to_24k(imp, rx24);
+    std::vector<frame_t> gotf;
+    std::vector<std::array<uint16_t, FRAME_BITS>> softs;
+    demod_frames(rx24, gotf, &softs);
+    int ok_h = 0, ok_s = 0, got = 0, worse = 0;
+    double us_h = 0, us_s = 0;
+    HorseFrameDecoder dec;
+    for (size_t i = 0; i < gotf.size(); i++) {
+        if (dec.decodeFrame(gotf[i]) != HorseFrameType::VOICE)
+            continue;
+        if (got >= nframes)
+            break;
+        uint8_t oh[FEC_INFO_BYTES], os[FEC_INFO_BYTES];
+        auto t0 = std::chrono::steady_clock::now();
+        codec.decode(gotf[i].data() + 2, oh);
+        auto t1 = std::chrono::steady_clock::now();
+        us_h += std::chrono::duration<double, std::micro>(t1 - t0).count();
+        t0 = std::chrono::steady_clock::now();
+        codec.decode_soft(softs[i].data() + SYNCWORD_BITS, os);
+        t1 = std::chrono::steady_clock::now();
+        us_s += std::chrono::duration<double, std::micro>(t1 - t0).count();
+        unsigned fnh = ((unsigned)oh[0] << 8) | oh[1];
+        unsigned fns = ((unsigned)os[0] << 8) | os[1];
+        int good_h = (fnh < (unsigned)nframes
+                      && memcmp(oh, refs[fnh].data(), FEC_INFO_BYTES) == 0);
+        int good_s = (fns < (unsigned)nframes
+                      && memcmp(os, refs[fns].data(), FEC_INFO_BYTES) == 0);
+        if (good_h)
+            ok_h++;
+        if (good_s)
+            ok_s++;
+        if (good_h && !good_s)
+            worse++;
+        got++;
+    }
+    std::printf("voice_hs noise=%.0f n=%d got=%d hard_ok=%d fer=%.6f "
+                "soft_ok=%d fer=%.6f soft_worse=%d us_hard=%.1f us_soft=%.1f "
+                "sizeof_decoder=%zu\n",
+                noise, nframes, got, ok_h,
+                nframes ? 1.0 - (double)ok_h / nframes : 1.0, ok_s,
+                nframes ? 1.0 - (double)ok_s / nframes : 1.0, worse,
+                got ? us_h / got : 0, got ? us_s / got : 0,
+                sizeof(HorseFrameDecoder));
+    return 0;
+}
+
 static void pack_lsf_payload(const uint8_t *cw46, frame_t &out)
 {
     std::copy(LSF_SYNC_WORD.begin(), LSF_SYNC_WORD.end(), out.begin());
     memcpy(out.data() + 2, cw46, FEC_CODED_BYTES);
 }
 
-static int run_lsf_cmp(Codecs &c, int kind, int nfr, float noise,
-                       unsigned seed, int ntx, int *ok, double *us,
-                       size_t *ram)
+static int run_lsf_cmp(Codecs &c, int kind, int nfr, float noise, unsigned seed,
+                       int ntx, int *ok, double *us, size_t *ram)
 {
     *ok = 0;
     *us = 0;
@@ -1297,7 +1598,8 @@ static int run_lsf_cmp(Codecs &c, int kind, int nfr, float noise,
 
 /* Option C spare after DATA_PUNCTURE: 368 - 272 = 96 bits (12 bytes). */
 static constexpr size_t OPT_C_PUNCT_BYTES = 34;
-static constexpr size_t OPT_C_SPARE_BITS = FEC_CODED_BITS - OPT_C_PUNCT_BYTES * 8;
+static constexpr size_t OPT_C_SPARE_BITS = FEC_CODED_BITS
+                                         - OPT_C_PUNCT_BYTES * 8;
 static constexpr size_t OPT_C_SPARE_BYTES = OPT_C_SPARE_BITS / 8;
 static constexpr size_t LSF_FRAG_COUNT = 4;
 
@@ -1426,7 +1728,7 @@ static int run_lsf_frag(Codecs &c, int nfr, int erase_open, float noise,
         }
         uint16_t want = ((uint16_t)rec[46] << 8) | rec[47];
         open_ok = okc[0] && okc[1] && okc[2] && crc_m17(rec, 46) == want
-            && memcmp(rec, lsf48, 48) == 0;
+               && memcmp(rec, lsf48, 48) == 0;
         if (open_ok)
             (*ok_open)++;
 
@@ -1479,18 +1781,21 @@ static int run_complete_v1(float noise, unsigned seed, int ntx, int *ok)
         memset(payload, 0x11, sizeof payload);
         for (int i = 0; i < 6; i++) {
             frame_t vf{};
-            enc.encodeVoiceFrameWithFn(payload, tag,
-                                       (uint16_t)(SIG_FRAME_BASE + i),
-                                       vf, false, 12);
+            enc.encodeVoiceFrameWithFn(
+                payload, tag, (uint16_t)(SIG_FRAME_BASE + i), vf, false, 12);
             frames.push_back(vf);
         }
         for (int i = 0; i < 300; i++) {
             frame_t vf{};
-            enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i,
-                                       vf, false, 12);
+            enc.encodeVoiceFrameWithFn(payload, tag, (uint16_t)i, vf, false,
+                                       12);
             frames.push_back(vf);
         }
-        { frame_t ef; enc.encodeEotFrame(ef); frames.push_back(ef); }
+        {
+            frame_t ef;
+            enc.encodeEotFrame(ef);
+            frames.push_back(ef);
+        }
         std::vector<int16_t> bb48, imp, rx24;
         if (render_frames(frames, bb48, true) != 0)
             return -1;
@@ -1577,7 +1882,8 @@ int main(int argc, char **argv)
             pack_voice(cw, voice);
             enc.encodeEotFrame(eot);
             std::vector<int16_t> bb48, rx24;
-            lsfv.push_back(voice); lsfv.push_back(eot);
+            lsfv.push_back(voice);
+            lsfv.push_back(eot);
             if (render_frames(lsfv, bb48, true) != 0)
                 return 1;
             to_24k(bb48, rx24);
@@ -1636,6 +1942,27 @@ int main(int argc, char **argv)
         if (run_complete_v1(noise, seed, ntx, &ok) != 0)
             return 1;
         std::printf("complete_v1 noise=%.0f ok=%d/%d\n", noise, ok, ntx);
+        return 0;
+    }
+    if (mode == "complete_v2") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int ntx = argc > 3 ? atoi(argv[3]) : 200;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        int miss = argc > 5 ? atoi(argv[5]) : 4;
+        int md = argc > 6 ? atoi(argv[6]) : 1;
+        AttribTrial sum{};
+        int hist[FAIL_N];
+        if (run_complete_attrib(noise, seed, ntx, md, miss, &sum, hist, false,
+                                false)
+            != 0)
+            return 1;
+        const char *mn[] = { "?", "encrypt", "sign", "both" };
+        std::printf("complete_v2 mode=%s miss_limit=%d noise=%.0f seed=%u "
+                    "strict=%d/%d usable=%d/%d voice_ok_sum=%d "
+                    "mean_start_fn=%.1f\n",
+                    mn[md], miss, noise, seed, sum.strict_ok, ntx,
+                    sum.usable_ok, ntx, sum.voice_ok,
+                    sum.start_n ? (double)sum.start_fn / sum.start_n : 0.0);
         return 0;
     }
     if (mode == "study") {
@@ -1715,20 +2042,64 @@ int main(int argc, char **argv)
                 }
             }
             auto t1 = std::chrono::steady_clock::now();
-            double us = std::chrono::duration<double, std::micro>(t1 - t0)
-                            .count()
-                      / n;
+            double us =
+                std::chrono::duration<double, std::micro>(t1 - t0).count() / n;
             std::printf("polar_prof L=%zu n=%d us/frame=%.1f "
                         "path_copy/frame=%.0f encode_n/frame=%.0f "
                         "fcomb/frame=%.0f leaf/frame=%.0f sizeof_path=%zu\n",
                         L, n, us, (double)c.polar.n_path_copy / n,
                         (double)c.polar.n_encode_n / n,
-                        (double)c.polar.n_fcomb / n,
-                        (double)c.polar.n_leaf / n, sizeof(PolarCodec::SclPath));
+                        (double)c.polar.n_fcomb / n, (double)c.polar.n_leaf / n,
+                        sizeof(PolarCodec::SclPath));
         }
         return 0;
     }
-    if (mode == "complete_v2") {
+    if (mode == "voice_cmp") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int n = argc > 3 ? atoi(argv[3]) : 10000;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        return run_voice_cmp(c, noise, seed, n);
+    }
+    if (mode == "voice_hs") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int n = argc > 3 ? atoi(argv[3]) : 2000;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        return run_voice_hs(noise, seed, n);
+    }
+    if (mode == "soft") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int ntx = argc > 3 ? atoi(argv[3]) : 200;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        int md = argc > 5 ? atoi(argv[5]) : 1;
+        AttribTrial sum{};
+        int hist[FAIL_N];
+        if (run_complete_attrib(noise, seed, ntx, md, 4, &sum, hist, true,
+                                false)
+            != 0)
+            return 1;
+        std::printf("soft mode=%d noise=%.0f seed=%u strict=%d/%d usable=%d/%d "
+                    "lsf_open=%d lsf_frag=%d\n",
+                    md, noise, seed, sum.strict_ok, ntx, sum.usable_ok, ntx,
+                    sum.lsf_open, sum.lsf_frag);
+        return 0;
+    }
+    if (mode == "crypto") {
+        float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
+        int ntx = argc > 3 ? atoi(argv[3]) : 50;
+        unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
+        int md = argc > 5 ? atoi(argv[5]) : 1;
+        AttribTrial sum{};
+        int hist[FAIL_N];
+        if (run_complete_attrib(noise, seed, ntx, md, 4, &sum, hist, false,
+                                true)
+            != 0)
+            return 1;
+        std::printf("crypto mode=%d noise=%.0f seed=%u ntx=%d strict=%d "
+                    "usable=%d\n",
+                    md, noise, seed, ntx, sum.strict_ok, sum.usable_ok);
+        return 0;
+    }
+    if (mode == "gates") {
         float noise = argc > 2 ? strtof(argv[2], nullptr) : 10000.f;
         int ntx = argc > 3 ? atoi(argv[3]) : 200;
         unsigned seed = argc > 4 ? (unsigned)atoi(argv[4]) : 1u;
@@ -1736,7 +2107,9 @@ int main(int argc, char **argv)
         int md = argc > 6 ? atoi(argv[6]) : 1;
         AttribTrial sum{};
         int hist[FAIL_N];
-        if (run_complete_attrib(noise, seed, ntx, md, miss, &sum, hist) != 0)
+        if (run_complete_attrib(noise, seed, ntx, md, miss, &sum, hist, false,
+                                false)
+            != 0)
             return 1;
         const char *mn[] = { "?", "encrypt", "sign", "both" };
         std::printf("complete_v2 mode=%s miss_limit=%d noise=%.0f seed=%u "
@@ -1755,6 +2128,21 @@ int main(int argc, char **argv)
                         hist[FAIL_NONE], sum.strict_ok);
             return 1;
         }
+        /* Regression floors, not performance targets. */
+        std::printf("floor (not a target) strict>=180/200 @8000 "
+                    "usable>=165/200 @10000\n");
+        if (ntx == 200 && noise >= 7999.f && noise <= 8001.f
+            && sum.strict_ok < 180) {
+            std::printf("FLOOR FAIL strict %d < 180 at noise 8000\n",
+                        sum.strict_ok);
+            return 1;
+        }
+        if (ntx == 200 && noise >= 9999.f && noise <= 10001.f
+            && sum.usable_ok < 165) {
+            std::printf("FLOOR FAIL usable %d < 165 at noise 10000\n",
+                        sum.usable_ok);
+            return 1;
+        }
         return 0;
     }
     if (mode == "attrib") {
@@ -1764,7 +2152,9 @@ int main(int argc, char **argv)
         int md = argc > 5 ? atoi(argv[5]) : 1;
         AttribTrial sum{};
         int hist[FAIL_N];
-        if (run_complete_attrib(noise, seed, ntx, md, 4, &sum, hist) != 0)
+        if (run_complete_attrib(noise, seed, ntx, md, 4, &sum, hist, false,
+                                false)
+            != 0)
             return 1;
         const char *mn[] = { "?", "encrypt", "sign", "both" };
         std::printf("attrib mode=%s noise=%.0f seed=%u ntx=%d "
@@ -1850,8 +2240,8 @@ int main(int argc, char **argv)
         auto acorr = [](const syncw_t &w) {
             int8_t sym[8];
             for (int i = 0; i < 8; i++) {
-                int b = (i < 4) ? ((w[0] >> (6 - 2 * i)) & 3)
-                                : ((w[1] >> (6 - 2 * (i - 4))) & 3);
+                int b = (i < 4) ? ((w[0] >> (6 - 2 * i)) & 3) :
+                                  ((w[1] >> (6 - 2 * (i - 4))) & 3);
                 /* dibit -> level like Horse: 00=+1 01=+3 10=-1 11=-3 */
                 static const int8_t lut[4] = { +1, +3, -1, -3 };
                 sym[i] = lut[b];
@@ -1871,8 +2261,8 @@ int main(int argc, char **argv)
         auto pL = acorr(lsf_w), pV = acorr(voice_w), pE = acorr(eot_w);
         std::printf("syncmeas family=%s words LSF=%02X%02X VOICE=%02X%02X "
                     "EOT=%02X%02X\n",
-                    fname, lsf_w[0], lsf_w[1], voice_w[0], voice_w[1],
-                    eot_w[0], eot_w[1]);
+                    fname, lsf_w[0], lsf_w[1], voice_w[0], voice_w[1], eot_w[0],
+                    eot_w[1]);
         std::printf("  acorr peak/worst_side LSF=%d/%d VOICE=%d/%d EOT=%d/%d\n",
                     pL.first, pL.second, pV.first, pV.second, pE.first,
                     pE.second);
@@ -1900,8 +2290,13 @@ int main(int argc, char **argv)
             lsf3[i][1] = lsf_w[1];
         }
         std::vector<frame_t> tx(lsf3, lsf3 + LSF_OPENING_FRAMES);
-        { frame_t ef; enc.encodeEotFrame(ef); ef[0] = eot_w[0]; ef[1] = eot_w[1];
-          tx.push_back(ef); }
+        {
+            frame_t ef;
+            enc.encodeEotFrame(ef);
+            ef[0] = eot_w[0];
+            ef[1] = eot_w[1];
+            tx.push_back(ef);
+        }
         std::vector<int16_t> bb48;
         if (render_frames(tx, bb48, true) != 0)
             return 1;
@@ -1957,7 +2352,11 @@ int main(int argc, char **argv)
                                            12);
                 vtx.push_back(vf);
             }
-            { frame_t ef; enc.encodeEotFrame(ef); vtx.push_back(ef); }
+            {
+                frame_t ef;
+                enc.encodeEotFrame(ef);
+                vtx.push_back(ef);
+            }
             std::vector<int16_t> bb2;
             if (render_frames(vtx, bb2, true) != 0)
                 return 1;
@@ -2000,8 +2399,9 @@ int main(int argc, char **argv)
                 demod.feedSample(s, false);
                 frame_t f{};
                 if (demod.takeFrame(f)) {
-                    if (fam == 0 && (match_sync(f, LSF_SYNC_WORD)
-                                     || match_sync(f, VOICE_SYNC_WORD)))
+                    if (fam == 0
+                        && (match_sync(f, LSF_SYNC_WORD)
+                            || match_sync(f, VOICE_SYNC_WORD)))
                         locks++;
                     else if (fam != 0
                              && (hd_sync(f, lsf_w) == 0

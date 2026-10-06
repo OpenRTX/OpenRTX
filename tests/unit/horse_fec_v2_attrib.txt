@@ -126,6 +126,112 @@ After moving `HardViterbi` into `HorseVoiceCodec` / `HorseFrameDecoder`:
 | `OpMode_Horse::txState` | **720** | 512 |
 | free `voice_decode` wrapper | 32 | 512 |
 
-`sizeof(HorseFrameDecoder)=2624` (was ~454; +~2 KiB Viterbi/buffers in
-BSS via OpMode member). Still unverified on MD-3x0. `txState` remains
-over the 512 B RTX limit (large locals); open non-format follow-up.
+`sizeof(HorseFrameDecoder)=10792` (Hard+Soft Viterbi, fragment soft
+accumulators). Still unverified on MD-3x0.
+
+After moving `txState` scratch (`lsfFrames`, keys, peer, identity,
+melpe, session message, rx soft bits) onto `OpMode_Horse` members,
+host `-O2 -fstack-usage` (limit 512 B):
+
+| Function | bytes | limit |
+|----------|------:|------:|
+| `HorseVoiceCodec::decode` | 112 | 512 |
+| `HorseVoiceCodec::decode_soft` | 56 | 512 |
+| `HorseFrameDecoder::decodeFrame` (soft ptr) | 96 | 512 |
+| `OpMode_Horse::rxState` | 176 | 512 |
+| `OpMode_Horse::txState` | 224 | 512 |
+| `OpMode_Horse::applyLsfIfReady` | 432 | 512 |
+| `OpMode_Horse::sendTxVoiceFrame` | 160 | 512 |
+| `HorseDemodulator::acquireSync` | 240 | 512 |
+| free `voice_decode` wrapper | 32 | 512 |
+
+All RTX-reachable Horse functions are under 512 B on the host. MD-3x0
+toolchain still missing.
+
+## Voice FER reconcile (10 000 isolated frames, same harness)
+
+Both encodings use M17 `DATA_PUNCTURE` `{1,1,1,1,1,1, 1,1,1,1,1,0}`:
+272 coded bits after puncture, then 96 spare bits, then interleave and
+decorrelate. Decoder takes the first 34 bytes after deinterleave.
+**No extra puncturing was added to carry 96 fragment bits.** Option C
+repeats puncture bits in the spare; v2 overlays LSF/signature
+fragments. Host 10 000-frame `voice_cmp` seed 1:
+
+| noise | study option C FER | v2 fragment FER | got |
+|------:|-------------------:|----------------:|----:|
+| 9000 | 0.000000 | 0.000000 | 10000 |
+| 10000 | 0.000400 | 0.000400 | 10000 |
+| 11000 | 0.003700 | 0.003700 | 9981 |
+
+The 0.0001 vs ~0.0026 gap is **not** puncturing. Isolated-frame FER at
+noise 10000 is 4e-4 for both. `complete_v2` ~0.0026 is the **stream**
+metric: 300 voice frames, clock/lock, FN/tag, any miss fails strict.
+`(1-0.0004)^300 ~ 0.89` already below 198/200; measured strict ~93/200
+also includes late start and residual tracking.
+
+Fragment-size trade-off was **not** run: extra puncturing is not the
+cause, and changing fragment size would change the on-air format.
+
+## Soft decisions (receiver only)
+
+Mapping (`HorseSoft.hpp` / `HorseDemodulator::quantize`): 4-FSK
+00=+1, 01=+3, 10=-1, 11=-3. Soft bit 0=strong 0, 32767=erasure,
+65535=strong 1. MSB = sign (sample>0 -> 0) with |y|/|A| confidence.
+LSB = inner/outer vs (2/3)|outer| using the same thresholds as the
+hard slicer. Decode uses in-tree `M17::SoftViterbi` (Horse files only).
+Fragments accumulate `int32` (soft-32767) instead of hard majority.
+
+Host `voice_hs` n=2000 seed 1, same impaired samples:
+
+| noise | hard FER | soft FER | us hard | us soft | soft_worse |
+|------:|---------:|---------:|--------:|--------:|-----------:|
+| 8000 | 0.0000 | 0.0000 | 80 | 86 | 0 |
+| 10000 | 0.0000 | 0.0000 | 83 | 88 | 0 |
+| 12000 | 0.0055 | 0.0015 | 80 | 87 | 0 |
+| 12500 | 0.0135 | 0.0035 | 81 | 97 | 0 |
+| 13000 | 0.0205 | 0.0050 | 77 | 85 | 0 |
+| 13500 | 0.0375 | 0.0095 | 78 | 87 | 0 |
+| 14000 | 0.0575 | 0.0115 | 84 | 89 | 0 |
+| 16000 | 0.2515 | 0.0475 | 79 | 87 | 5 |
+
+Gain at 1 % voice FER: hard ~12280 noise, soft ~13600 noise
+=> about **0.9 dB** (`20*log10(13600/12280)`).
+
+Attrib 50 TX encrypt seed 1:
+
+| noise | path | strict | usable | lsf_open | lsf_frag |
+|------:|------|-------:|-------:|---------:|---------:|
+| 8000 | hard | 45 | 49 | 48 | 50 |
+| 8000 | soft | 47 | 49 | 48 | 50 |
+| 10000 | hard | 26 | 42 | 41 | 50 |
+| 10000 | soft | 32 | 46 | 41 | 50 |
+
+Proposed **target** gates after soft (owner approval; floors stay):
+strict >= 185/200 at noise 8000; usable >= 175/200 at noise 10000;
+strict >= 120/200 at noise 10000 (scaled from 50 TX, not a 200 TX
+measurement).
+
+Cost: decode_soft ~87 us/frame vs ~80 us hard on this host.
+`sizeof(HorseFrameDecoder)=10792`. decode_soft stack 56 B.
+
+## Real crypto campaign (50 TX)
+
+Stand-in vs libsodium ECDH + BLAKE2b tags + Ed25519, seed 1:
+
+| noise | mode | stand-in strict/usable | real strict/usable |
+|------:|------|------------------------:|-------------------:|
+| 8000 | encrypt | 45/49 | 46/49 |
+| 10000 | encrypt | 26/42 | 24/42 |
+| 10000 | sign | 28/44 | 26/42 |
+| 10000 | both | 26/42 | 22/43 |
+| 11000 | encrypt | (not 50) | 9/31 |
+
+Agreement is within binomial n=50 scatter. Encrypt/both differ slightly
+because ciphertext and real signatures change on-air bits versus the
+constant stand-in tag `0x11..44` and dummy signature bytes.
+
+## Regression floors in meson (not targets)
+
+- strict >= 180/200 at noise 8000 (seed 11000 encrypt; 183/200)
+- usable >= 165/200 at noise 10000 (seed 1 encrypt; 168/200)
+
