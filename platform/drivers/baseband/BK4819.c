@@ -7,132 +7,115 @@
 #include "drivers/baseband/BK4819.h"
 #include "interfaces/delays.h"
 
-static void spi_write_byte(const struct BK4819 *dev, uint8_t data)
-{
-    gpioPin_clear(&dev->sck);
-    gpioPin_setMode(&dev->sda, OUTPUT);
-    for (uint8_t i = 0; i < 8; i++) {
-        if (data & 0x80)
-            gpioPin_set(&dev->sda);
-        else
-            gpioPin_clear(&dev->sda);
-        gpioPin_set(&dev->sck);
-        delayUs(1);
-        gpioPin_clear(&dev->sck);
-        delayUs(1);
-        data <<= 1;
-    }
-}
-
-static void spi_write_half_word(const struct BK4819 *dev, uint16_t data)
-{
-    spi_write_byte(dev, (data >> 8) & 0xFF);
-    spi_write_byte(dev, data & 0xFF);
-}
-
-static uint16_t spi_read_half_word(const struct BK4819 *dev)
-{
-    uint16_t data = 0;
-    gpioPin_setMode(&dev->sda, INPUT);
-    gpioPin_clear(&dev->sck);
-    for (uint8_t i = 0; i < 16; i++) {
-        data <<= 1;
-        gpioPin_clear(&dev->sck);
-        delayUs(1);
-        gpioPin_set(&dev->sck);
-        delayUs(1);
-        data |= gpioPin_read(&dev->sda) ? 1 : 0;
-    }
-    return data;
-}
-
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg)
 {
-    uint16_t data;
+    const uint8_t cmd = reg | BK4819_REG_READ;
+    uint8_t rx[2];
+
+    spi_acquire(dev->spi);
     gpioPin_clear(&dev->scn);
     delayUs(1);
 
-    spi_write_byte(dev, reg | BK4819_REG_READ);
-    data = spi_read_half_word(dev);
+    spi_send(dev->spi, &cmd, 1);
+    spi_receive(dev->spi, rx, sizeof(rx));
 
     delayUs(1);
     gpioPin_set(&dev->scn);
-    return data;
+    spi_release(dev->spi);
+
+    return ((uint16_t)rx[0] << 8) | rx[1];
 }
 
 void BK4819_writeReg(const struct BK4819 *dev, bk4819_reg_t reg, uint16_t data)
 {
+    const uint8_t cmd = reg | BK4819_REG_WRITE;
+    const uint8_t tx[2] = { (data >> 8) & 0xFF, data & 0xFF };
+
+    spi_acquire(dev->spi);
     gpioPin_clear(&dev->scn);
     delayUs(1);
 
-    spi_write_byte(dev, reg | BK4819_REG_WRITE);
-    spi_write_half_word(dev, data);
+    spi_send(dev->spi, &cmd, 1);
+    spi_send(dev->spi, tx, sizeof(tx));
 
     delayUs(1);
     gpioPin_set(&dev->scn);
+    spi_release(dev->spi);
 }
 
 void bk4819_init(const struct BK4819 *dev)
 {
-    gpioPin_setMode(&dev->sda, OUTPUT);
-    gpioPin_set(&dev->sda);
-    /* Configure CS and CLK as outputs, CS idle high */
+    /* Configure CS as output, idle high */
     gpioPin_setMode(&dev->scn, OUTPUT);
     gpioPin_set(&dev->scn);
-    gpioPin_setMode(&dev->sck, OUTPUT);
 
     uint16_t uVar1;
-    BK4819_writeReg(dev, 0, 0x8000);
-    BK4819_writeReg(dev, 0, 0);
-    BK4819_writeReg(dev, 0x37, 0x1d0f);
-    BK4819_writeReg(dev, 0x13, 0x3be);
-    BK4819_writeReg(dev, 0x12, 0x37b);
-    BK4819_writeReg(dev, 0x11, 0x27b);
-    BK4819_writeReg(dev, 0x10, 0x7a);
-    BK4819_writeReg(dev, 0x14, 0x19);
-    BK4819_writeReg(dev, 0x49, 0x2a38);
-    BK4819_writeReg(dev, 0x7b, 0x8420);
-    BK4819_writeReg(dev, 0x7d, 0xe959);
-    BK4819_writeReg(dev, 0x48, 0xb3c1);
-    BK4819_writeReg(dev, 0x1e, 0x4c58);
-    BK4819_writeReg(dev, 0x1f, 0xa656);
-    BK4819_writeReg(dev, 0x3e, 0xa037);
-    BK4819_writeReg(dev, 0x3f, 0x7fe);
-    BK4819_writeReg(dev, 0x2a, 0x7fff);
-    BK4819_writeReg(dev, 0x28, 0x6b00);
-    BK4819_writeReg(dev, 0x53, 59000);
-    BK4819_writeReg(dev, 0x2c, 0x5705);
-    BK4819_writeReg(dev, 0x4b, 0x7102);
-    uVar1 = BK4819_readReg(dev, 0x40);
-    BK4819_writeReg(dev, 0x40, (uVar1 & 0xf000) | 0x4d2);
-    BK4819_writeReg(dev, 0x77, 0x88ef);
-    BK4819_writeReg(dev, 0x26, 0x13a0);
-    BK4819_writeReg(dev, 0x4e, 0x6f15);
-    BK4819_writeReg(dev, 0x4f, 0x3f3e);
-    BK4819_writeReg(dev, 9, 0x6f);
-    BK4819_writeReg(dev, 9, 0x106b);
-    BK4819_writeReg(dev, 9, 0x2067);
-    BK4819_writeReg(dev, 9, 0x3062);
-    BK4819_writeReg(dev, 9, 0x4050);
-    BK4819_writeReg(dev, 9, 0x5047);
-    BK4819_writeReg(dev, 9, 0x603a);
-    BK4819_writeReg(dev, 9, 0x702c);
-    BK4819_writeReg(dev, 9, 0x8041);
-    BK4819_writeReg(dev, 9, 0x9037);
-    BK4819_writeReg(dev, 9, 0xa025);
-    BK4819_writeReg(dev, 9, 0xb017);
-    BK4819_writeReg(dev, 9, 0xc0e4);
-    BK4819_writeReg(dev, 9, 0xd0cb);
-    BK4819_writeReg(dev, 9, 0xe0b5);
-    BK4819_writeReg(dev, 9, 0xf09f);
-    BK4819_writeReg(dev, 0x74, 0xfa02);
-    BK4819_writeReg(dev, 0x44, 0x8f88);
-    BK4819_writeReg(dev, 0x45, 0x3201);
-    uVar1 = BK4819_readReg(dev, 0x31);
-    BK4819_writeReg(dev, 0x31, uVar1 & 0xfffffff7);
-    BK4819_writeReg(dev, 0x28, 0x6b38);
-    BK4819_writeReg(dev, 0x29, 0xb4cb);
-    BK4819_writeReg(dev, BK4819_REG_36, 0xdfbf);
+    BK4819_writeReg(dev, BK4819_REG_00, BIT(15)); // Soft Reset
+    BK4819_writeReg(dev, BK4819_REG_00, 0);       // Normal operation
+    BK4819_writeReg(dev, BK4819_REG_37, 0x1d0f);  // Power mode
+
+    /* Rx AGC Gain */
+    BK4819_writeReg(dev, BK4819_REG_13, 0x3be);
+    BK4819_writeReg(dev, BK4819_REG_12, 0x37b);
+    BK4819_writeReg(dev, BK4819_REG_11, 0x27b);
+    BK4819_writeReg(dev, BK4819_REG_10, 0x7a);
+    BK4819_writeReg(dev, BK4819_REG_14, 0x19);
+
+    BK4819_writeReg(dev, BK4819_REG_49, 0x2a38);
+    BK4819_writeReg(dev, BK4819_REG_7B, 0x8420);
+    BK4819_writeReg(dev, BK4819_REG_7D, 0xe959); // Mic sensitivity
+    BK4819_writeReg(dev, BK4819_REG_48, 0xb3c1); // AF Gains
+    BK4819_writeReg(dev, BK4819_REG_1E, 0x4c58);
+    BK4819_writeReg(dev, BK4819_REG_1F, 0xa656);
+    BK4819_writeReg(dev, BK4819_REG_3E, 0xa037); // Band selection threshold
+    BK4819_writeReg(dev, BK4819_REG_3F, 0x07fe); // Interrupt enable
+    BK4819_writeReg(dev, BK4819_REG_2A, 0x7fff);
+    BK4819_writeReg(dev, BK4819_REG_28, 0x6b00); // Expander
+    BK4819_writeReg(dev, BK4819_REG_53, 59000);
+    BK4819_writeReg(dev, BK4819_REG_2C, 0x5705);
+    BK4819_writeReg(dev, BK4819_REG_4B, 0x7102); // ALC
+    uVar1 = BK4819_readReg(dev, BK4819_REG_40);
+    BK4819_writeReg(dev, BK4819_REG_40,
+                    (uVar1 & 0xf000) | 0x4d2); // RF Tx Deviation
+    BK4819_writeReg(dev, BK4819_REG_77, 0x88ef);
+    BK4819_writeReg(dev, BK4819_REG_26, 0x13a0);
+    BK4819_writeReg(dev, BK4819_REG_4E, 0x6f15); // Squelch
+    BK4819_writeReg(dev, BK4819_REG_4F,
+                    0x3f3e); // Ex-noise threhold for Squelch
+
+    /* DTMF Symbol 0 - 15 Coefficient */
+    BK4819_writeReg(dev, BK4819_REG_09, 0x006f);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x106b);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x2067);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x3062);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x4050);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x5047);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x603a);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x702c);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x8041);
+    BK4819_writeReg(dev, BK4819_REG_09, 0x9037);
+    BK4819_writeReg(dev, BK4819_REG_09, 0xa025);
+    BK4819_writeReg(dev, BK4819_REG_09, 0xb017);
+    BK4819_writeReg(dev, BK4819_REG_09, 0xc0e4);
+    BK4819_writeReg(dev, BK4819_REG_09, 0xd0cb);
+    BK4819_writeReg(dev, BK4819_REG_09, 0xe0b5);
+    BK4819_writeReg(dev, BK4819_REG_09, 0xf09f);
+
+    BK4819_writeReg(dev, BK4819_REG_74,
+                    0xfa02); // 3000Hz AF Response coefficient for Tx
+    BK4819_writeReg(dev, BK4819_REG_44,
+                    0x8f88); // 300Hz AF Response coefficient for Tx
+    BK4819_writeReg(dev, BK4819_REG_45,
+                    0x3201); // 300Hz AF Response coefficient for Rx
+    uVar1 = BK4819_readReg(dev, BK4819_REG_31);
+    BK4819_writeReg(dev, BK4819_REG_31,
+                    uVar1 & 0xfffffff7);         // Disable Compander Function
+    BK4819_writeReg(dev, BK4819_REG_28, 0x6b38); // Expander
+    BK4819_writeReg(dev, BK4819_REG_29, 0xb4cb); // Compress
+    BK4819_writeReg(
+        dev, BK4819_REG_36,
+        0xdfbf); // Tx Output power Bias 0xdf = 2,8V PA Tuning 0xbf = Enable PACTKoutput + 7,26dBm
+    BK4819_writeReg(dev, BK4819_REG_47, 0x6040); // AF
 }
 
 uint8_t bk4819_int_get(const struct BK4819 *dev, bk4819_int_t interrupt)
@@ -164,15 +147,15 @@ void bk4819_set_freq(const struct BK4819 *dev, uint32_t freq)
 
 void bk4819_rx_on(const struct BK4819 *dev)
 {
-    BK4819_writeReg(dev, 0x37, 0x1F0F);
+    BK4819_writeReg(dev, BK4819_REG_37, 0x1F0F);
     delayUs(1);
-    BK4819_writeReg(dev, 0x30, 0x0200);
-    BK4819_writeReg(dev, 0x30, 0xBFF1);
+    BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG30_AF_DAC_ENABLE);
+    BK4819_writeReg(dev, BK4819_REG_30, 0xBFF1);
 }
 
 void bk4819_set_modulation(const struct BK4819 *dev, bool is_FM)
 {
-    BK4819_SetAF(dev, is_FM ? 1 : 7);
+    BK4819_SetAF(dev, is_FM ? BK4819_AF_TYPE_FM : BK4819_AF_TYPE_AM);
 }
 
 void bk4819_tx_on(const struct BK4819 *dev)
@@ -194,11 +177,11 @@ void bk4819_rtx_off(const struct BK4819 *dev)
 
 void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
 {
-    uint16_t Value = BK4819_readReg(dev, 0x43);
+    uint16_t Value = BK4819_readReg(dev, BK4819_REG_43);
     if (bandwidth) { /* 25kHz */
-        BK4819_writeReg(dev, 0x43, (Value & ~0x30) | 32);
+        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 32);
     } else {         /* 12.5kHz */
-        BK4819_writeReg(dev, 0x43, (Value & ~0x30) | 0);
+        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 0);
     }
 }
 
@@ -293,9 +276,15 @@ void bk4819_set_Squelch(const struct BK4819 *dev, uint8_t RTSO, uint8_t RTSC,
                         uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC)
 {
     BK4819_writeReg(dev, BK4819_REG_78, (RTSO << 8) | RTSC);
-    BK4819_writeReg(dev, BK4819_REG_4F, (ETSC << 8) | ETSO);
-    BK4819_writeReg(dev, BK4819_REG_4D, GTSC);
-    BK4819_writeReg(dev, BK4819_REG_4E, GTSO);
+
+    // Only change threshold fields; preserve timing and reserved bits.
+    uint16_t value = BK4819_readReg(dev, BK4819_REG_4F);
+    BK4819_writeReg(dev, BK4819_REG_4F,
+                    (value & 0x8080) | ((ETSC & 0x7f) << 8) | (ETSO & 0x7f));
+    value = BK4819_readReg(dev, BK4819_REG_4D);
+    BK4819_writeReg(dev, BK4819_REG_4D, (value & 0xff00) | GTSC);
+    value = BK4819_readReg(dev, BK4819_REG_4E);
+    BK4819_writeReg(dev, BK4819_REG_4E, (value & 0xff00) | GTSO);
 }
 
 int16_t bk4819_get_rssi(const struct BK4819 *dev)
@@ -337,8 +326,10 @@ uint32_t bk4819_get_scan_freq(const struct BK4819 *dev)
 
 void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF)
 {
-    /* AF Output Inverse Mode = Inverse, undocumented bits 0x2040 */
-    BK4819_writeReg(dev, BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6));
+    /* Preserve polarity and TX filter bypass when muting/unmuting RX. */
+    uint16_t value = BK4819_readReg(dev, BK4819_REG_47);
+    BK4819_writeReg(dev, BK4819_REG_47,
+                    (value & ~0x0f00u) | ((AF & 0x0fu) << 8));
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)

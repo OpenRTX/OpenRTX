@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "peripherals/gpio.h"
+#include "peripherals/spi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,6 +153,14 @@ typedef enum {
     BK4819_REG_7E = 0x7E,
 } bk4819_reg_t;
 
+enum BK4819_AF_Type_t {
+    BK4819_AF_TYPE_MUTE = 0u,
+    BK4819_AF_TYPE_FM = 1u,
+    BK4819_AF_TYPE_BEEP = 3u,
+    BK4819_AF_TYPE_AM = 7u,
+    BK4819_AF_TYPE_BYPASS = 9u
+};
+
 typedef enum {
     BK4819_INT_FSKTF = BIT(15),
     BK4819_INT_FSKFFAE = BIT(14),
@@ -182,13 +191,18 @@ typedef enum {
 /**
  * BK4819 device data.
  *
- * The three pins implement the bit-banged serial interface towards the
- * chip: clock, bidirectional data and chip select (active low).
+ * Register access happens over the chip's 3-wire, SPI-like serial bus
+ * (clock and bidirectional data), accessed through the generic struct
+ * spiDevice interface of peripherals/spi.h. This makes the driver hardware
+ * agnostic: any target can provide its own SPI implementation (e.g. a
+ * bitbang driver) as long as it conforms to the spiDevice interface.
+ *
+ * Chip select is toggled directly by this driver, since the generic SPI
+ * transfer function does not manage it.
  */
 struct BK4819 {
-    struct gpioPin sck; ///< Serial clock
-    struct gpioPin sda; ///< Serial data, bidirectional
-    struct gpioPin scn; ///< Chip select, active low
+    const struct spiDevice *spi; ///< SPI bus device
+    struct gpioPin scn;          ///< Chip select, active low
 };
 
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg);
