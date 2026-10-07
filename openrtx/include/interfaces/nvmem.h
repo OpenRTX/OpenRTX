@@ -178,6 +178,8 @@ void nvm_readCalibData(void *buf);
 void nvm_readHwInfo(hwInfo_t *info);
 
 /**
+ * !! WARNING: DEPRECATED FUNCTION TO BE REMOVED IN NEXT RELEASES !!
+ *
  * Read from storage the channel data corresponding to the VFO channel A.
  *
  * @param channel: pointer to the channel_t data structure to be populated.
@@ -186,6 +188,8 @@ void nvm_readHwInfo(hwInfo_t *info);
 int nvm_readVfoChannelData(channel_t *channel);
 
 /**
+ * !! WARNING: DEPRECATED FUNCTION TO BE REMOVED IN NEXT RELEASES !!
+ *
  * Read OpenRTX settings from storage.
  *
  * @param settings: pointer to the settings_t data structure to be populated.
@@ -194,6 +198,8 @@ int nvm_readVfoChannelData(channel_t *channel);
 int nvm_readSettings(settings_t *settings);
 
 /**
+ * !! WARNING: DEPRECATED FUNCTION TO BE REMOVED IN NEXT RELEASES !!
+ *
  * Write OpenRTX settings to storage.
  *
  * @param settings: pointer to the settings_t data structure to be written.
@@ -202,6 +208,8 @@ int nvm_readSettings(settings_t *settings);
 int nvm_writeSettings(const settings_t *settings);
 
 /**
+ * !! WARNING: DEPRECATED FUNCTION TO BE REMOVED IN NEXT RELEASES !!
+ *
  * Write OpenRTX settings and VFO channel configuration to storage.
  *
  * @param settings: pointer to the settings_t data structure to be written.
