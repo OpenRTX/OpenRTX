@@ -90,6 +90,21 @@
             gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
         };
     };
+
+	/*
+	 * BK4819 3-wire serial bus (shared, bidirectional data line), driven
+	 * through Zephyr's built-in SPI bitbang driver. Chip select is not
+	 * listed here (no "cs-gpios" property) since it is toggled directly
+	 * by the BK4819 driver itself, see platform/targets/c62/hwconfig.c.
+	 */
+	bk4819_spi: bk4819-spi {
+		compatible = "zephyr,spi-bitbang";
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clk-gpios  = <&gpioa 13 GPIO_ACTIVE_HIGH>;
+		mosi-gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
+	};
 	
 	buttons: buttons  {
 		compatible = "gpio-keys";

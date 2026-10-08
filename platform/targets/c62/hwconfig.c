@@ -11,14 +11,22 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/device.h>
 #include "drivers/GPIO/gpio_zephyr.h"
+#include "drivers/SPI/spi_zephyr.h"
 
 /*
  * Pin mapping, must match platform/targets/c62/c62.dts:
  * BK4819: SCLK gpioa 13, SDATA gpioa 7, SCN gpioa 8 (active low)
  * BK1080: SCLK gpioa 5, SDATA gpioa 6, PWR gpiob 2 (active low)
  */
-const struct BK4819 c62_bk4819 = { .sck = { &GpioA, 13 },
-                                   .sda = { &GpioA, 7 },
+static const struct spiZephyrCfg c62_bk4819_spiCfg = {
+    .bus = DEVICE_DT_GET(DT_NODELABEL(bk4819_spi)),
+    .frequency = 200000,
+    .flags = SPI_HALF_DUPLEX
+};
+
+SPI_ZEPHYR_DEVICE_DEFINE(c62_bk4819_spi, c62_bk4819_spiCfg, NULL)
+
+const struct BK4819 c62_bk4819 = { .spi = &c62_bk4819_spi,
                                    .scn = { &GpioA, 8 } };
 
 const struct BK1080 c62_bk1080 = { .sck = { &GpioA, 5 },
