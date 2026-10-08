@@ -39,6 +39,21 @@ TEST_CASE("M17 voice transmission joined late is heard at every symbol phase",
     }
 }
 
+TEST_CASE("M17 voice transmission joined late is heard past a fake packet sync",
+          "[m17][replay][!shouldfail]")
+{
+    // 3 s in, a frame ending in 0x75 plus the stream syncword reads as the
+    // packet one. 591 frames remain; rebuilding the LSF takes up to 12.
+    for (int phase = 0; phase < 5; phase++) {
+        M17Replay replay(false, false);
+        REQUIRE(replay.replay(ASSET, 48000, 3.0 + phase / 24000.0));
+
+        const M17Replay::Counts &c = replay.counts();
+        REQUIRE(c.locks == 1);
+        REQUIRE(c.streamWithLsf >= 579);
+    }
+}
+
 TEST_CASE("Reference M17 voice baseband is rejected with inverted polarity",
           "[m17][replay]")
 {
