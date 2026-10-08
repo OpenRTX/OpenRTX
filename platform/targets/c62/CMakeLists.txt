@@ -16,6 +16,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/SPI/spi_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/SPI/spi_zephyr_bus.c
+    ${OPENRTX_ROOT}/platform/drivers/I2C/i2c_bitbang.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK4819.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK1080.c
 
