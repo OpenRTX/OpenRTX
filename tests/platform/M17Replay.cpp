@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <cmath>
 #include <cstring>
 #include <string>
 
@@ -31,7 +32,8 @@ M17Replay::~M17Replay()
 {
 }
 
-bool M17Replay::replay(const char *path, const uint32_t sampleRate)
+bool M17Replay::replay(const char *path, const uint32_t sampleRate,
+                       const double start)
 {
     if ((sampleRate != SAMPLE_RATE) && (sampleRate != 2 * SAMPLE_RATE))
         return false;
@@ -39,6 +41,12 @@ bool M17Replay::replay(const char *path, const uint32_t sampleRate)
     FILE *file = std::fopen(path, "rb");
     if (file == nullptr)
         return false;
+
+    long offset = std::lround(start * sampleRate) * sizeof(int16_t);
+    if (std::fseek(file, offset, SEEK_SET) != 0) {
+        std::fclose(file);
+        return false;
+    }
 
     count = Counts{};
     locked = false;
@@ -145,6 +153,11 @@ void M17Replay::handleStream(const double time)
 {
     (void)time;
     count.streamFrames++;
+
+    // The radio plays a stream frame only once the LSF is known, either from
+    // the link setup frame or rebuilt from the LICH of the stream frames.
+    if (decoder.getLsf().valid())
+        count.streamWithLsf++;
 
     // Frame numbers count up modulo 0x8000 within one lock; a small forward
     // gap means frames were lost while locked. A repeated or backward number
