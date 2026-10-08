@@ -40,7 +40,7 @@ TEST_CASE("M17 voice transmission joined late is heard at every symbol phase",
 }
 
 TEST_CASE("M17 voice transmission joined late is heard past a fake packet sync",
-          "[m17][replay][!shouldfail]")
+          "[m17][replay]")
 {
     // 3 s in, a frame ending in 0x75 plus the stream syncword reads as the
     // packet one. 591 frames remain; rebuilding the LSF takes up to 12.
