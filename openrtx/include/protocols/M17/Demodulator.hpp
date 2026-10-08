@@ -183,6 +183,7 @@ private:
     uint16_t                       frameIndex;      ///< Index for filling the raw frame.
     uint32_t                       sampleIndex;     ///< Sample index, from 0 to (SAMPLES_PER_SYMBOL - 1)
     uint32_t                       samplingPoint;   ///< Symbol sampling point
+    int8_t                         syncSign;        ///< Sign of the last syncword correlation peak
     uint32_t                       sampleCount;     ///< Free-running sample counter
     uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
     uint32_t                       initCount;       ///< Downcounter for initialization
@@ -191,7 +192,6 @@ private:
 
     Correlator   < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
     Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +3, +3, +3, +3, -3, -3, +3, -3 }};
-    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > packetSync{{ +3, -3, +3, +3, -3, -3, -3, -3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
     ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;

@@ -328,6 +328,7 @@ void Demodulator::reset()
     frameIndex      = 0;
     sampleCount     = 0;
     samplingPoint   = 0;
+    syncSign        = 0;
     missedSyncs     = 0;
     corrThreshold   = 0.0f;
     newFrame        = false;
@@ -340,7 +341,6 @@ void Demodulator::reset()
     rrc_24k.reset();
     correlator.reset();
     lsfSync.reset();
-    packetSync.reset();
     sampleFilter.reset();
     devEstimator.init({0, 0});
     clockRec.reset();
@@ -352,17 +352,10 @@ void Demodulator::unlockedState()
 
     // The stream syncword is the LSF one inverted: the LSF synchronizer
     // detects both, as a positive or a negative correlation peak.
-    int8_t syncStatus = lsfSync.update(correlator, syncThresh, -syncThresh);
-    if(syncStatus != 0) {
+    // Not on the packet syncword: packets need the LSF, and voice mimics it
+    syncSign = lsfSync.update(correlator, syncThresh, -syncThresh);
+    if(syncSign != 0) {
         samplingPoint = lsfSync.samplingIndex();
-        demodState = DemodState::SYNCED;
-        return;
-    }
-
-    // If no LSF or stream, try packet sync
-    syncStatus = packetSync.update(correlator, syncThresh, -syncThresh);
-    if(syncStatus != 0) {
-        samplingPoint = packetSync.samplingIndex();
         demodState = DemodState::SYNCED;
     }
 }
@@ -389,13 +382,11 @@ void Demodulator::quantizeSyncword(const uint32_t samplePoint)
 
 void Demodulator::syncedState()
 {
-    // Use the sampling point of the synchronizer that fired: the others have
-    // not seen this correlation peak.
     quantizeSyncword(samplingPoint);
 
-    bool valid = compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 0)
-              || compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0)
-              || compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 0);
+    // Positive correlation peak: LSF syncword, negative: stream syncword
+    const syncw_t &syncword = (syncSign > 0) ? LSF_SYNC_WORD : STREAM_SYNC_WORD;
+    bool valid = compareSyncwords(demodFrame->data(), syncword, 0);
 
     if(valid)
         demodState = DemodState::LOCKED;
