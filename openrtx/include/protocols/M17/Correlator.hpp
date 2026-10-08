@@ -23,12 +23,27 @@ public:
     /**
      * Constructor.
      */
-    Correlator() : sampIdx(0) { }
+    Correlator()
+    {
+        reset();
+    }
 
     /**
      * Destructor.
      */
     ~Correlator() { }
+
+    /**
+     * Clear the correlator memory.
+     */
+    void reset()
+    {
+        for(auto& sample : samples)
+            sample = 0;
+
+        sampIdx = 0;
+        prevIdx = 0;
+    }
 
     /**
      * Append a new sample to the correlator memory.
