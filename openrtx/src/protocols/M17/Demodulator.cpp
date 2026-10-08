@@ -337,7 +337,6 @@ void Demodulator::reset()
     rrc_24k.reset();
     correlator.reset();
     lsfSync.reset();
-    streamSync.reset();
     packetSync.reset();
     sampleFilter.reset();
     devEstimator.init({0, 0});
@@ -346,12 +345,10 @@ void Demodulator::reset()
 
 void Demodulator::unlockedState()
 {
-    // Three synchronizers are checked per sample (LSF, stream, packet).
-    // Each convolve() is O(SYNCW_SIZE) = 8 MACs; the total overhead is ~50
-    // cycles per sample on the slowest supported target.
     int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
 
-    // Try LSF sync first
+    // The stream syncword is the LSF one inverted: the LSF synchronizer
+    // detects both, as a positive or a negative correlation peak.
     int8_t syncStatus = lsfSync.update(correlator, syncThresh, -syncThresh);
     if(syncStatus != 0) {
         samplingPoint = lsfSync.samplingIndex();
@@ -359,15 +356,7 @@ void Demodulator::unlockedState()
         return;
     }
 
-    // If no LSF, try stream sync
-    syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
-    if(syncStatus != 0) {
-        samplingPoint = streamSync.samplingIndex();
-        demodState = DemodState::SYNCED;
-        return;
-    }
-
-    // If no stream, try packet sync
+    // If no LSF or stream, try packet sync
     syncStatus = packetSync.update(correlator, syncThresh, -syncThresh);
     if(syncStatus != 0) {
         samplingPoint = packetSync.samplingIndex();
