@@ -15,11 +15,9 @@
  * between a stream of signed 16-bit samples and a known syncword.
  * The correlator has its internal storage for past samples.
  */
-template < size_t SYNCW_SIZE, size_t SAMPLES_PER_SYM >
-class Correlator
+template <size_t SYNCW_SIZE, size_t SAMPLES_PER_SYM> class Correlator
 {
 public:
-
     /**
      * Constructor.
      */
@@ -31,7 +29,9 @@ public:
     /**
      * Destructor.
      */
-    ~Correlator() { }
+    ~Correlator()
+    {
+    }
 
     /**
      * Clear the correlator memory.
@@ -62,15 +62,14 @@ public:
      * @param syncword: syncword symbols.
      * @return convolution product.
      */
-    int32_t convolve(const std::array< int8_t, SYNCW_SIZE >& syncword)
+    int32_t convolve(const std::array<int8_t, SYNCW_SIZE> &syncword)
     {
         int32_t conv = 0;
-        size_t  pos  = prevIdx + SAMPLES_PER_SYM;
+        size_t pos = prevIdx + SAMPLES_PER_SYM;
 
-        for(auto& sym : syncword)
-        {
-            conv += (int32_t) sym * (int32_t) samples[pos % SYNCWORD_SAMPLES];
-            pos  += SAMPLES_PER_SYM;
+        for (auto &sym : syncword) {
+            conv += (int32_t)sym * (int32_t)samples[pos % SYNCWORD_SAMPLES];
+            pos += SAMPLES_PER_SYM;
         }
 
         return conv;
@@ -88,36 +87,32 @@ public:
      * @return a std::pair carrying the maximum deviation. First element is
      * positive deviation, second element is negative deviation.
      */
-    std::pair< int32_t, int32_t > maxDeviation(const uint8_t samplePoint)
+    std::pair<int32_t, int32_t> maxDeviation(const uint8_t samplePoint)
     {
         int32_t maxSum = 0;
         int32_t minSum = 0;
         int32_t maxCnt = 0;
         int32_t minCnt = 0;
 
-        for(size_t i = 0; i < SYNCWORD_SAMPLES; i++)
-        {
-            if(((prevIdx + i) % SAMPLES_PER_SYM) == samplePoint)
-            {
+        for (size_t i = 0; i < SYNCWORD_SAMPLES; i++) {
+            if (((prevIdx + i) % SAMPLES_PER_SYM) == samplePoint) {
                 int16_t sample = samples[(prevIdx + i) % SYNCWORD_SAMPLES];
-                if(sample > 0)
-                {
+                if (sample > 0) {
                     maxSum += sample;
                     maxCnt += 1;
                 }
 
-                if(sample < 0)
-                {
+                if (sample < 0) {
                     minSum += sample;
                     minCnt += 1;
                 }
             }
         }
 
-        if((maxCnt == 0) || (minCnt == 0))
+        if ((maxCnt == 0) || (minCnt == 0))
             return std::make_pair(0, 0);
 
-        return std::make_pair(maxSum/maxCnt, minSum/minCnt);
+        return std::make_pair(maxSum / maxCnt, minSum / minCnt);
     }
 
     /**
@@ -153,12 +148,11 @@ public:
     }
 
 private:
-
     static constexpr size_t SYNCWORD_SAMPLES = SYNCW_SIZE * SAMPLES_PER_SYM;
 
-    std::array< int16_t, SYNCWORD_SAMPLES > samples; ///< Samples' storage
-    size_t  sampIdx;                    ///< Index of the next sample to write
-    size_t  prevIdx;                    ///< Index of the last written sample
+    std::array<int16_t, SYNCWORD_SAMPLES> samples; ///< Samples' storage
+    size_t sampIdx; ///< Index of the next sample to write
+    size_t prevIdx; ///< Index of the last written sample
 };
 
 #endif
