@@ -321,14 +321,27 @@ void Demodulator::quantize(stream_sample_t sample)
 
 void Demodulator::reset()
 {
-    sampleIndex = 0;
-    frameIndex  = 0;
-    sampleCount = 0;
-    newFrame    = false;
-    demodState  = DemodState::INIT;
-    initCount   = RX_SAMPLE_RATE / 50;  // 50ms of init time
+    sampleIndex     = 0;
+    frameIndex      = 0;
+    sampleCount     = 0;
+    samplingPoint   = 0;
+    missedSyncs     = 0;
+    corrThreshold   = 0.0f;
+    newFrame        = false;
+    resetClockRec   = false;
+    updateSampPoint = false;
+    demodState      = DemodState::INIT;
+    initCount       = RX_SAMPLE_RATE / 50;  // 50ms of init time
 
     dsp_resetState(dcBlock);
+    rrc_24k.reset();
+    correlator.reset();
+    lsfSync.reset();
+    streamSync.reset();
+    packetSync.reset();
+    sampleFilter.reset();
+    devEstimator.init({0, 0});
+    clockRec.reset();
 }
 
 void Demodulator::unlockedState()
