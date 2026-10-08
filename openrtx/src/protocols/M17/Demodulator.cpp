@@ -354,6 +354,7 @@ void Demodulator::unlockedState()
     // Try LSF sync first
     int8_t syncStatus = lsfSync.update(correlator, syncThresh, -syncThresh);
     if(syncStatus != 0) {
+        samplingPoint = lsfSync.samplingIndex();
         demodState = DemodState::SYNCED;
         return;
     }
@@ -361,14 +362,17 @@ void Demodulator::unlockedState()
     // If no LSF, try stream sync
     syncStatus = streamSync.update(correlator, syncThresh, -syncThresh);
     if(syncStatus != 0) {
+        samplingPoint = streamSync.samplingIndex();
         demodState = DemodState::SYNCED;
         return;
     }
 
     // If no stream, try packet sync
     syncStatus = packetSync.update(correlator, syncThresh, -syncThresh);
-    if(syncStatus != 0)
+    if(syncStatus != 0) {
+        samplingPoint = packetSync.samplingIndex();
         demodState = DemodState::SYNCED;
+    }
 }
 
 void Demodulator::quantizeSyncword(const uint32_t samplePoint)
@@ -393,23 +397,15 @@ void Demodulator::quantizeSyncword(const uint32_t samplePoint)
 
 void Demodulator::syncedState()
 {
-    samplingPoint = lsfSync.samplingIndex();
+    // Use the sampling point of the synchronizer that fired: the others have
+    // not seen this correlation peak.
     quantizeSyncword(samplingPoint);
-    if (compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 0)) {
-        demodState = DemodState::LOCKED;
-        return;
-    }
 
-    samplingPoint = streamSync.samplingIndex();
-    quantizeSyncword(samplingPoint);
-    if (compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0)) {
-        demodState = DemodState::LOCKED;
-        return;
-    }
+    bool valid = compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 0)
+              || compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0)
+              || compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 0);
 
-    samplingPoint = packetSync.samplingIndex();
-    quantizeSyncword(samplingPoint);
-    if (compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 0))
+    if(valid)
         demodState = DemodState::LOCKED;
     else
         demodState = DemodState::UNLOCKED;

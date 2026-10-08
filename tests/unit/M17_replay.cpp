@@ -28,7 +28,7 @@ TEST_CASE("Reference M17 voice baseband decodes through the receive chain",
 }
 
 TEST_CASE("M17 voice transmission joined late is heard at every symbol phase",
-          "[m17][replay][!shouldfail]")
+          "[m17][replay]")
 {
     // Join 2 s in, after the LSF, at each sampling phase of a symbol. 615
     // frames remain; rebuilding the LSF from the LICH takes up to 12.
