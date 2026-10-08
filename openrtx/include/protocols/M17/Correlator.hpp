@@ -38,9 +38,7 @@ public:
      */
     void reset()
     {
-        for(auto& sample : samples)
-            sample = 0;
-
+        samples.fill(0);
         sampIdx = 0;
         prevIdx = 0;
     }
@@ -129,7 +127,7 @@ public:
      */
     const int16_t *data()
     {
-        return samples;
+        return samples.data();
     }
 
     /**
@@ -158,7 +156,7 @@ private:
 
     static constexpr size_t SYNCWORD_SAMPLES = SYNCW_SIZE * SAMPLES_PER_SYM;
 
-    int16_t samples[SYNCWORD_SAMPLES];  ///< Samples' storage
+    std::array< int16_t, SYNCWORD_SAMPLES > samples; ///< Samples' storage
     size_t  sampIdx;                    ///< Index of the next sample to write
     size_t  prevIdx;                    ///< Index of the last written sample
 };
