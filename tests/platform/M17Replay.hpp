@@ -56,6 +56,7 @@ public:
         uint32_t lsfValid;       ///< Link setup frames with a valid CRC.
         uint32_t lsfInvalid;     ///< Link setup frames with a bad CRC.
         uint32_t streamFrames;   ///< Stream frames decoded.
+        uint32_t streamWithLsf;  ///< Stream frames decoded with a valid LSF.
         uint32_t streamMissed;   ///< Frame numbers skipped while locked.
         uint32_t streamEnds;     ///< Stream frames with the end-of-stream bit.
         uint32_t packetFrames;   ///< Packet frames decoded.
@@ -78,7 +79,8 @@ public:
     ~M17Replay();
 
     /**
-     * Replay a recording from start to end. The counters are cleared first;
+     * Replay a recording from a given time to its end. The counters are
+     * cleared first;
      * the demodulator keeps its state across calls, so for independent
      * measurements use one object per recording.
      *
@@ -86,10 +88,12 @@ public:
      * @param sampleRate: sample rate of the file, 24000 or 48000 Hz. A 48 kHz
      * file is decimated 2:1, which is enough since the transmit filter limits
      * the baseband well below 12 kHz.
+     * @param start: time in seconds at which to start reading the file.
      * @return true if the file was read to its end, false if it could not be
      * opened or the sample rate is not supported.
      */
-    bool replay(const char *path, const uint32_t sampleRate);
+    bool replay(const char *path, const uint32_t sampleRate,
+                const double start = 0.0);
 
     /**
      * Get the counters of the last replay.

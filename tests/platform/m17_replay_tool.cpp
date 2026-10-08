@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
     printf("  lsfValid         %u\n", c.lsfValid);
     printf("  lsfInvalid       %u\n", c.lsfInvalid);
     printf("  streamFrames     %u\n", c.streamFrames);
+    printf("  streamWithLsf    %u\n", c.streamWithLsf);
     printf("  streamMissed     %u\n", c.streamMissed);
     printf("  streamEnds       %u\n", c.streamEnds);
     printf("  packetFrames     %u\n", c.packetFrames);
