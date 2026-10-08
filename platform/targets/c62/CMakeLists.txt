@@ -17,6 +17,8 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/targets/c62/hwconfig.c
 
     ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_zephyr.c
+    ${OPENRTX_ROOT}/platform/drivers/SPI/spi_zephyr.c
+    ${OPENRTX_ROOT}/platform/drivers/SPI/spi_zephyr_bus.c
 
     ${OPENRTX_ROOT}/platform/drivers/stubs/nvmem_stub.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
