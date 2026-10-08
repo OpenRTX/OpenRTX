@@ -4,12 +4,20 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+/*
+ * Example initialization sequence for the BK1080 chip in case of C62
+ *   i2cBitbang_init(c62_bk1080.i2c); // Initialize the I2C bus for the BK1080 chip
+ *   BK1080_Init(&c62_bk1080, 99000000, 0); // Initialize the BK1080 chip with the desired frequency and band
+ *   gpio_pin_set_dt(&speaker_enable, 1); // Enable the hardware dependent speaker and audio output
+ */
+
 #ifndef BK1080_H
 #define BK1080_H
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "peripherals/gpio.h"
+#include "peripherals/i2c.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,14 +65,12 @@ typedef enum BK1080_Register_t BK1080_Register_t;
 /**
  * BK1080 device data.
  *
- * The serial interface towards the chip is bit-banged in software: clock
- * and bidirectional data implement the I2C-like protocol, while the power
- * pin switches the chip on and off.
+ * Register access happens over the chip's I2C-like serial bus, accessed
+ * through the generic struct i2cDevice interface of peripherals/i2c.h.
  */
 struct BK1080 {
-    struct gpioPin sck; ///< Serial clock
-    struct gpioPin sda; ///< Serial data, bidirectional
-    struct gpioPin pwr; ///< Power switch, active low
+    const struct i2cDevice *i2c; ///< I2C bus device
+    struct gpioPin pwr;          ///< Power switch, active low
 };
 
 /**
