@@ -132,7 +132,7 @@ static inline void pushLog(const log_entry_t& e)
 #endif
 
 
-Demodulator::Demodulator()
+Demodulator::Demodulator() : basebandId(-1), basebandPath(-1)
 {
 
 }
@@ -169,8 +169,7 @@ void Demodulator::init()
 void Demodulator::terminate()
 {
     // Ensure proper termination of baseband sampling
-    audioPath_release(basebandPath);
-    audioStream_terminate(basebandId);
+    stopBasebandSampling();
 
     // Delete the buffers and deallocate memory.
     baseband_buffer.reset();
@@ -196,6 +195,11 @@ void Demodulator::stopBasebandSampling()
 {
     audioStream_terminate(basebandId);
     audioPath_release(basebandPath);
+
+    // Both ids may be reused once released: forget them, so that a second
+    // call does not release a stream or path owned by someone else.
+    basebandId   = -1;
+    basebandPath = -1;
 }
 
 const frame_t& Demodulator::getFrame()
