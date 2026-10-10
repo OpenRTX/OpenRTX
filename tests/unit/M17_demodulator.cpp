@@ -348,3 +348,26 @@ TEST_CASE("Demodulator stays locked on a transmission following a faded one",
     REQUIRE(locks == 1);
     REQUIRE(unlocks == 0);
 }
+
+TEST_CASE("Demodulator releases the lock at the end of a transmission",
+          "[m17][demodulator]")
+{
+    std::vector<int8_t> symbols;
+    Transmission tx = appendTransmission(symbols, 10, true);
+    symbols.insert(symbols.end(), 400, 0);
+    std::vector<size_t> transitions = lockTransitions(rrcBaseband(symbols));
+
+    // First release after the start of the LSF
+    size_t release = 0;
+    for (size_t k = 1; k < transitions.size(); k += 2) {
+        if (transitions[k] > tx.lsfStart) {
+            release = transitions[k];
+            break;
+        }
+    }
+
+    // Released on the EOT frame, within half a frame of its end
+    REQUIRE(release != 0);
+    REQUIRE(release > tx.eotEnd);
+    REQUIRE(release - tx.eotEnd < FRAME_SAMPLES / 2);
+}
