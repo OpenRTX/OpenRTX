@@ -287,6 +287,25 @@ TEST_CASE("DevEstimator measures a negative outer deviation",
     REQUIRE(est.zeroOffset() == 0);
 }
 
+TEST_CASE("DevEstimator keeps the absolute levels of a signal with an offset",
+          "[m17][demodulator]")
+{
+    // Levels relative to this offset would read the +1 symbols as +3
+    static constexpr int32_t OFFSET = 1100;
+
+    DevEstimator est;
+    est.init({ 3 * SCALE + OFFSET, -3 * SCALE + OFFSET });
+
+    for (int frame = 0; frame < 2; frame++) {
+        feedLevels(est, SCALE, OFFSET);
+        est.update();
+    }
+
+    REQUIRE(est.outerDeviation().first == 3 * SCALE + OFFSET);
+    REQUIRE(est.outerDeviation().second == -3 * SCALE + OFFSET);
+    REQUIRE(est.zeroOffset() == OFFSET);
+}
+
 // A stream frame: the stream syncword followed by a random payload.
 static M17::frame_t randomStreamFrame(std::minstd_rand &rng)
 {
