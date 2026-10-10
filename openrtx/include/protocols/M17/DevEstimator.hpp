@@ -66,8 +66,8 @@ public:
         }
 
         if (value < negThresh) {
-            posAccum += value;
-            posCnt += 1;
+            negAccum += value;
+            negCnt += 1;
         }
     }
 
@@ -118,8 +118,8 @@ private:
     int32_t offset;
     int32_t posAccum;
     int32_t negAccum;
-    uint32_t posCnt;
-    uint32_t negCnt;
+    int32_t posCnt;
+    int32_t negCnt;
 };
 
 #endif
