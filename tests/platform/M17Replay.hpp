@@ -18,6 +18,7 @@
 #include "protocols/M17/Demodulator.hpp"
 #include "protocols/M17/FrameDecoder.hpp"
 #include "protocols/M17/PacketFrame.hpp"
+#include "protocols/M17/StreamFrame.hpp"
 
 /**
  * Replay of a recorded M17 baseband through the receive chain.
@@ -31,8 +32,10 @@
  * Counted for any M17 transmission:
  *  - lock acquisitions and, when verbose, the time of every lock and unlock;
  *  - link setup frames, split by CRC outcome;
- *  - stream frames (voice or data), the frame numbers skipped while locked
- *    and the end-of-stream frames seen. A clean stream has zero skipped;
+ *  - stream frames (voice or data), the frame numbers skipped while locked,
+ *    the frames the decoder rejected for errors (also skipped, unless first
+ *    after a lock) and the end-of-stream frames seen. A clean stream has none
+ *    skipped or rejected;
  *  - packets of every protocol, reassembled by frame counter up to the
  *    end-of-frame marker and CRC checked. When verbose the text of SMS
  *    packets is printed.
@@ -58,6 +61,7 @@ public:
         uint32_t streamFrames;   ///< Stream frames decoded.
         uint32_t streamWithLsf;  ///< Stream frames decoded with a valid LSF.
         uint32_t streamMissed;   ///< Frame numbers skipped while locked.
+        uint32_t streamRejected; ///< Stream frames rejected for errors.
         uint32_t streamEnds;     ///< Stream frames with the end-of-stream bit.
         uint32_t packetFrames;   ///< Packet frames decoded.
         uint32_t packetsOk;      ///< Packets completed with a valid CRC.
@@ -96,6 +100,17 @@ public:
                 const double start = 0.0);
 
     /**
+     * Replay samples held in memory, as replay() does for a file.
+     *
+     * @param samples: signed 16-bit mono samples.
+     * @param numSamples: number of samples.
+     * @param sampleRate: 24000 or 48000 Hz.
+     * @return false if the sample rate is not supported.
+     */
+    bool replay(const int16_t *samples, const size_t numSamples,
+                const uint32_t sampleRate);
+
+    /**
      * Get the counters of the last replay.
      *
      * @return a reference to the counters.
@@ -103,17 +118,6 @@ public:
     const Counts &counts() const;
 
 private:
-    /**
-     * Read one 20 ms block at the demodulator rate, keeping every step-th
-     * input sample.
-     *
-     * @param file: open recording.
-     * @param step: input samples per output sample, 1 or 2.
-     * @param block: destination for BLOCK_SAMPLES samples.
-     * @return true if a full block was read.
-     */
-    bool readBlock(FILE *file, const size_t step, int16_t *block);
-
     /**
      * Feed one block to the demodulator and handle lock changes and the
      * frame it may have completed, as OpMode_M17::rxState() does.
@@ -169,6 +173,7 @@ private:
     M17::Demodulator demod;
     M17::FrameDecoder decoder;
     M17::frame_t frame;
+    M17::StreamFrame lastStream; ///< Stream frame the decoder holds.
     std::array<uint8_t, MAX_PACKET> packet;
 };
 

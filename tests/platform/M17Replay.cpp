@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "core/crc.h"
 #include "protocols/M17/LinkSetupFrame.hpp"
@@ -35,9 +36,6 @@ M17Replay::~M17Replay()
 bool M17Replay::replay(const char *path, const uint32_t sampleRate,
                        const double start)
 {
-    if ((sampleRate != SAMPLE_RATE) && (sampleRate != 2 * SAMPLE_RATE))
-        return false;
-
     FILE *file = std::fopen(path, "rb");
     if (file == nullptr)
         return false;
@@ -48,40 +46,48 @@ bool M17Replay::replay(const char *path, const uint32_t sampleRate,
         return false;
     }
 
+    std::vector<int16_t> samples;
+    int16_t chunk[BLOCK_SAMPLES];
+    size_t len;
+
+    while ((len = std::fread(chunk, sizeof(int16_t), BLOCK_SAMPLES, file)) > 0)
+        samples.insert(samples.end(), chunk, chunk + len);
+
+    std::fclose(file);
+    return replay(samples.data(), samples.size(), sampleRate);
+}
+
+bool M17Replay::replay(const int16_t *samples, const size_t numSamples,
+                       const uint32_t sampleRate)
+{
+    if ((sampleRate != SAMPLE_RATE) && (sampleRate != 2 * SAMPLE_RATE))
+        return false;
+
     count = Counts{};
     locked = false;
     haveStreamFn = false;
     packetLen = 0;
     packetNext = 0;
     decoder.reset();
+    lastStream.clear();
 
     const size_t step = sampleRate / SAMPLE_RATE;
     int16_t block[BLOCK_SAMPLES];
 
-    for (size_t n = 0; readBlock(file, step, block); n++)
+    for (size_t n = 0; (n + 1) * BLOCK_SAMPLES * step <= numSamples; n++) {
+        for (size_t i = 0; i < BLOCK_SAMPLES; i++)
+            block[i] = samples[((n * BLOCK_SAMPLES) + i) * step];
+
         processBlock(block,
                      static_cast<double>(n * BLOCK_SAMPLES) / SAMPLE_RATE);
+    }
 
-    std::fclose(file);
     return true;
 }
 
 const M17Replay::Counts &M17Replay::counts() const
 {
     return count;
-}
-
-bool M17Replay::readBlock(FILE *file, const size_t step, int16_t *block)
-{
-    int16_t in[2];
-
-    for (size_t i = 0; i < BLOCK_SAMPLES; i++) {
-        if (std::fread(in, sizeof(int16_t), step, file) != step)
-            return false;
-        block[i] = in[0];
-    }
-
-    return true;
 }
 
 void M17Replay::processBlock(const int16_t *block, const double time)
@@ -100,6 +106,7 @@ void M17Replay::processBlock(const int16_t *block, const double time)
     bool lock = demod.isLocked();
     if (lock && !locked) {
         decoder.reset();
+        lastStream.clear();
         packetLen = 0;
         packetNext = 0;
         haveStreamFn = false;
@@ -159,11 +166,21 @@ void M17Replay::handleStream(const double time)
     if (decoder.getLsf().valid())
         count.streamWithLsf++;
 
+    // A rejected frame leaves the decoder's frame unchanged, or cleared after
+    // a lock: an all-zero frame 0 also reads as rejected.
+    StreamFrame sf = decoder.getStreamFrame();
+    if ((sf.getFrameNumber() == lastStream.getFrameNumber())
+        && (std::memcmp(sf.data(), lastStream.data(), sizeof(payload_t))
+            == 0)) {
+        count.streamRejected++;
+        return;
+    }
+
+    lastStream = sf;
+
     // Frame numbers count up modulo 0x8000 within one lock; a small forward
     // gap means frames were lost while locked. A repeated or backward number
-    // is a frame the decoder zeroed for excess errors, noise, or a new
-    // stream, and is not counted.
-    StreamFrame sf = decoder.getStreamFrame();
+    // is noise or a new stream, and is not counted.
     uint16_t fn = sf.getFrameNumber() & 0x7FFF;
 
     if (haveStreamFn) {

@@ -20,10 +20,10 @@
  *
  * To compare two receiver revisions, build this tool from each revision in
  * its own build directory and run both on the same recording. For packets
- * compare packetsOk and packetsCrc, for streams streamFrames and
- * streamMissed. Diff the -v outputs to find the transmissions whose outcome
- * changed and cut them out as a small reproducer, for example the four
- * seconds starting at 300 s of a 24 kHz file:
+ * compare packetsOk and packetsCrc, for streams streamFrames, streamMissed
+ * and streamRejected. Diff the -v outputs to find the transmissions whose
+ * outcome changed and cut them out as a small reproducer, for example the
+ * four seconds starting at 300 s of a 24 kHz file:
  *
  *     dd if=recording.raw of=clip.raw bs=2 \
  *        skip=$((300 * 24000)) count=$((4 * 24000))
@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
     printf("  streamFrames     %u\n", c.streamFrames);
     printf("  streamWithLsf    %u\n", c.streamWithLsf);
     printf("  streamMissed     %u\n", c.streamMissed);
+    printf("  streamRejected   %u\n", c.streamRejected);
     printf("  streamEnds       %u\n", c.streamEnds);
     printf("  packetFrames     %u\n", c.packetFrames);
     printf("  packetsOk        %u\n", c.packetsOk);
