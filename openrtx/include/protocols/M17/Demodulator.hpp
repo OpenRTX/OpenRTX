@@ -185,6 +185,7 @@ private:
     uint32_t                       samplingPoint;   ///< Symbol sampling point
     uint32_t                       sampleCount;     ///< Free-running sample counter
     uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
+    bool                           lastSyncValid;   ///< Signs of the last syncword are valid
     uint32_t                       initCount;       ///< Downcounter for initialization
     float                          corrThreshold;   ///< Correlation threshold
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter

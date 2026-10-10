@@ -78,14 +78,24 @@ public:
      */
     void update()
     {
-        if ((posCnt == 0) || (negCnt == 0))
+        if ((posCnt == 0) || (negCnt == 0)) {
+            discard();
             return;
+        }
 
         int32_t max = posAccum / posCnt;
         int32_t min = negAccum / negCnt;
         offset = (max + min) / 2;
         outerDev.first = max;
         outerDev.second = min;
+        discard();
+    }
+
+    /**
+     * Drop the samples since the last update, keeping the current estimation.
+     */
+    void discard()
+    {
         posAccum = 0;
         negAccum = 0;
         posCnt = 0;
