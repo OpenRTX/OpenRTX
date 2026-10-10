@@ -86,6 +86,14 @@ public:
         offset = (max + min) / 2;
         outerDev.first = max;
         outerDev.second = min;
+        reinit();
+    }
+
+    /**
+     * Start a new acquisition cycle, keeping the current estimation.
+     */
+    void reinit()
+    {
         posAccum = 0;
         negAccum = 0;
         posCnt = 0;

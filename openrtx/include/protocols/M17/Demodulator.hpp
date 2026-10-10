@@ -144,6 +144,14 @@ private:
     void quantizeSyncword(const uint32_t samplePoint);
 
     /**
+     * Check a syncword by its symbol signs, independent of the deviation.
+     *
+     * @param frame: frame starting with the syncword.
+     * @return true if the signs match an LSF, stream or packet syncword.
+     */
+    bool validSyncSigns(const frame_t &frame);
+
+    /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
      * at each update of the demodulator.
      */
@@ -186,6 +194,7 @@ private:
     int8_t                         syncSign;        ///< Sign of the last syncword correlation peak
     uint32_t                       sampleCount;     ///< Free-running sample counter
     uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
+    bool                           lastSyncValid;   ///< Signs of the last syncword are valid
     uint32_t                       initCount;       ///< Downcounter for initialization
     float                          corrThreshold;   ///< Correlation threshold
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
