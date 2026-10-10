@@ -1198,9 +1198,13 @@ m17_metatext_test = executable('m17_metatext_test',
                       sources : unit_test_src + ['tests/unit/M17_metatext.cpp'],
                       kwargs  : unit_test_opts)
                  
+# Test signals shared by the M17 tests (tests/platform/M17Signal.hpp)
+m17_signal_src = ['tests/platform/Channel.cpp', 'tests/platform/M17Signal.cpp']
+m17_signal_inc = linux_inc + ['tests/platform']
+
 m17_demodulator_test = executable('m17_demodulator_test',
-                            sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
-                            kwargs: unit_test_opts)
+                            sources: unit_test_src + m17_signal_src + ['tests/unit/M17_demodulator.cpp'],
+                            kwargs: unit_test_opts + {'include_directories' : m17_signal_inc})
 
 m17_rrc_test = executable('m17_rrc_test',
                           sources: unit_test_src + ['tests/unit/M17_rrc.cpp'],
@@ -1252,7 +1256,7 @@ m17_replay_test_opts = unit_test_opts + {'include_directories' : m17_replay_inc,
                                          'cpp_args' : linux_cpp_args +
       ['-DREPLAY_ASSET_DIR="' + meson.project_source_root() / 'tests/unit/assets' + '"']}
 m17_replay_test = executable('m17_replay_test',
-                             sources : unit_test_src + m17_replay_src + ['tests/unit/M17_replay.cpp'],
+                             sources : unit_test_src + m17_replay_src + m17_signal_src + ['tests/unit/M17_replay.cpp'],
                              kwargs  : m17_replay_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)

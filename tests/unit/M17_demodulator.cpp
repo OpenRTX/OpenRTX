@@ -17,6 +17,7 @@
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "core/fir.hpp"
+#include "M17Signal.hpp"
 
 // M17 demodulation constants
 static constexpr size_t SAMPLES_PER_SYM = 5; // 24000 Hz / 4800 baud
@@ -180,49 +181,116 @@ TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
 // End-to-end demodulator lock tests
 // ---------------------------------------------------------------------------
 
-// Stream syncword symbols: 0xFF5D → dibits 11 11 11 11 01 01 11 01
-// Mapped to ±3/±1: +3→11, +1→01, -1→10, -3→00  →  -3,-3,-3,-3,+3,+3,-3,+3
-static constexpr std::array<int8_t, M17::SYNCWORD_SYMBOLS> STREAM_SW_SYMS = {
-    -3, -3, -3, -3, +3, +3, -3, +3
+static constexpr size_t FRAME_SAMPLES = M17::FRAME_SYMBOLS * SAMPLES_PER_SYM;
+
+// Sample indices of a transmission: start of its LSF, end of its last frame
+struct Transmission {
+    size_t lsfStart;
+    size_t end;
 };
 
-// Generate an RRC-shaped baseband signal from a sequence of M17 symbols.
-// Each symbol is placed at sample-rate position (one every SAMPLES_PER_SYM
-// samples) with zero-fill in between, then shaped by the RRC transmit filter.
-static std::vector<int16_t> rrcBaseband(const std::vector<int8_t> &symbols,
-                                        float amplitude = 2000.0f)
+static Transmission appendTransmission(std::vector<int8_t> &symbols,
+                                       const std::vector<M17::frame_t> &frames)
 {
-    static constexpr size_t SPS = SAMPLES_PER_SYM;
-    static constexpr size_t NTAPS = M17::rrc_taps_24k.size();
+    Transmission tx;
+    tx.lsfStart = (symbols.size() + M17::FRAME_SYMBOLS) * SAMPLES_PER_SYM;
 
-    Fir<NTAPS> txRrc(M17::rrc_taps_24k);
+    std::vector<int8_t> s = M17Signal::m17Symbols(frames);
+    symbols.insert(symbols.end(), s.begin(), s.end());
+    tx.end = symbols.size() * SAMPLES_PER_SYM;
 
-    std::vector<int16_t> out;
-    out.reserve(symbols.size() * SPS);
-
-    for (size_t i = 0; i < symbols.size(); i++) {
-        // First sample of the symbol period carries the impulse
-        float imp = static_cast<float>(symbols[i]) * amplitude;
-        out.push_back(static_cast<int16_t>(txRrc(imp) * SPS));
-
-        // Remaining SPS-1 samples are zero (interpolation)
-        for (size_t s = 1; s < SPS; s++)
-            out.push_back(static_cast<int16_t>(txRrc(0.0f) * SPS));
-    }
-
-    return out;
+    return tx;
 }
 
-// Build the symbol sequence for one complete M17 stream frame (192 symbols):
-// 8 sync-word symbols + 184 payload symbols (alternating +1/-1 pattern).
-static std::vector<int8_t> makeStreamFrame()
+// Sample indices of the lock changes: locks at even positions, unlocks at odd
+static std::vector<size_t> lockTransitions(const std::vector<int16_t> &baseband)
 {
-    std::vector<int8_t> syms(M17::FRAME_SYMBOLS);
-    for (size_t i = 0; i < STREAM_SW_SYMS.size(); i++)
-        syms[i] = STREAM_SW_SYMS[i];
-    for (size_t i = STREAM_SW_SYMS.size(); i < syms.size(); i++)
-        syms[i] = (i % 2 == 0) ? +1 : -1;
-    return syms;
+    M17::Demodulator demod;
+    demod.init();
+
+    std::vector<size_t> transitions;
+    bool locked = false;
+    for (size_t i = 0; i < baseband.size(); i++) {
+        demod.sample(baseband[i]);
+        if (demod.isLocked() != locked) {
+            locked = !locked;
+            transitions.push_back(i);
+        }
+    }
+
+    // The destructor terminates again, harmless as sampling never started
+    demod.terminate();
+    return transitions;
+}
+
+TEST_CASE("Demodulator stays locked on a transmission following a faded one",
+          "[m17][demodulator]")
+{
+    // The first transmission stops without an EOT frame, as when the station
+    // goes out of range; the next one starts 1 s later.
+    std::vector<int8_t> symbols;
+    appendTransmission(symbols, M17Signal::voiceFrames(20, false));
+    symbols.insert(symbols.end(), 4800, 0);
+    Transmission tx = appendTransmission(symbols, M17Signal::voiceFrames(20));
+    symbols.insert(symbols.end(), 200, 0);
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // Up to the end of the EOT frame: the filters delay the release on it
+    size_t locks = 0;
+    size_t unlocks = 0;
+    for (size_t k = 0; k < transitions.size(); k++) {
+        if ((transitions[k] < tx.lsfStart) || (transitions[k] >= tx.end))
+            continue;
+
+        if (k % 2 == 0)
+            locks++;
+        else
+            unlocks++;
+    }
+
+    REQUIRE(locks == 1);
+    REQUIRE(unlocks == 0);
+}
+
+TEST_CASE("Demodulator releases the lock at the end of a transmission",
+          "[m17][demodulator]")
+{
+    std::vector<int8_t> symbols;
+    Transmission tx = appendTransmission(symbols, M17Signal::voiceFrames(10));
+    symbols.insert(symbols.end(), 400, 0);
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // First release after the start of the LSF
+    size_t release = 0;
+    for (size_t k = 1; k < transitions.size(); k += 2) {
+        if (transitions[k] > tx.lsfStart) {
+            release = transitions[k];
+            break;
+        }
+    }
+
+    // Released on the EOT frame, within half a frame of its end
+    REQUIRE(release != 0);
+    REQUIRE(release > tx.end);
+    REQUIRE(release - tx.end < FRAME_SAMPLES / 2);
+}
+
+TEST_CASE("Demodulator stays locked through the packet frames of an SMS",
+          "[m17][demodulator]")
+{
+    // 12 packet frames, more than the five missed syncs ending a lock
+    std::vector<int8_t> symbols;
+    auto frames = M17Signal::smsFrames(12, 'a');
+    Transmission tx = appendTransmission(symbols, frames);
+    symbols.insert(symbols.end(), 400, 0);
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // Locked on the LSF, released on the EOT frame
+    REQUIRE(transitions.size() == 2);
+    REQUIRE(transitions[0] > tx.lsfStart);
+    REQUIRE(transitions[0] < tx.lsfStart + FRAME_SAMPLES);
+    REQUIRE(transitions[1] > tx.end);
+    REQUIRE(transitions[1] - tx.end < FRAME_SAMPLES / 2);
 }
 
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
@@ -237,19 +305,18 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
     std::vector<int8_t> allSyms;
 
     // Preamble: alternating +3/-3 to build up correlator energy
-    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
-        allSyms.push_back((i % 2 == 0) ? +3 : -3);
+    M17Signal::appendPreamble(allSyms, PREAMBLE_SYMS);
 
-    // Concatenate NUM_FRAMES complete stream frames
-    auto oneFrame = makeStreamFrame();
-    for (size_t f = 0; f < NUM_FRAMES; f++)
-        allSyms.insert(allSyms.end(), oneFrame.begin(), oneFrame.end());
+    // NUM_FRAMES encoded stream frames, without the LSF
+    auto frames = M17Signal::voiceFrames(NUM_FRAMES, false);
+    for (size_t f = 1; f <= NUM_FRAMES; f++)
+        M17Signal::appendFrame(allSyms, frames[f]);
 
     // Trailing silence so the last frame can finish processing
     for (size_t i = 0; i < PREAMBLE_SYMS; i++)
         allSyms.push_back(0);
 
-    std::vector<int16_t> baseband = rrcBaseband(allSyms);
+    std::vector<int16_t> baseband = M17Signal::rrcBaseband(allSyms);
 
     // --- Feed samples through the demodulator ---
     M17::Demodulator demod;

@@ -132,7 +132,7 @@ static inline void pushLog(const log_entry_t& e)
 #endif
 
 
-Demodulator::Demodulator()
+Demodulator::Demodulator() : basebandId(-1), basebandPath(-1)
 {
 
 }
@@ -169,8 +169,7 @@ void Demodulator::init()
 void Demodulator::terminate()
 {
     // Ensure proper termination of baseband sampling
-    audioPath_release(basebandPath);
-    audioStream_terminate(basebandId);
+    stopBasebandSampling();
 
     // Delete the buffers and deallocate memory.
     baseband_buffer.reset();
@@ -196,6 +195,10 @@ void Demodulator::stopBasebandSampling()
 {
     audioStream_terminate(basebandId);
     audioPath_release(basebandPath);
+
+    // Stream slots are reused once released: forget both ids
+    basebandId   = -1;
+    basebandPath = -1;
 }
 
 const frame_t& Demodulator::getFrame()
@@ -325,6 +328,7 @@ void Demodulator::reset()
     frameIndex      = 0;
     sampleCount     = 0;
     samplingPoint   = 0;
+    syncSign        = 0;
     missedSyncs     = 0;
     corrThreshold   = 0.0f;
     newFrame        = false;
@@ -337,7 +341,6 @@ void Demodulator::reset()
     rrc_24k.reset();
     correlator.reset();
     lsfSync.reset();
-    packetSync.reset();
     sampleFilter.reset();
     devEstimator.init({0, 0});
     clockRec.reset();
@@ -349,17 +352,11 @@ void Demodulator::unlockedState()
 
     // The stream syncword is the LSF one inverted: the LSF synchronizer
     // detects both, as a positive or a negative correlation peak.
-    int8_t syncStatus = lsfSync.update(correlator, syncThresh, -syncThresh);
-    if(syncStatus != 0) {
+    // Not on the packet syncword: packets need the LSF, and voice mimics it
+    syncSign = lsfSync.update(correlator, syncThresh, -syncThresh);
+    if(syncSign != 0) {
         samplingPoint = lsfSync.samplingIndex();
-        demodState = DemodState::SYNCED;
-        return;
-    }
-
-    // If no LSF or stream, try packet sync
-    syncStatus = packetSync.update(correlator, syncThresh, -syncThresh);
-    if(syncStatus != 0) {
-        samplingPoint = packetSync.samplingIndex();
+        missedSyncs   = 0;
         demodState = DemodState::SYNCED;
     }
 }
@@ -386,13 +383,11 @@ void Demodulator::quantizeSyncword(const uint32_t samplePoint)
 
 void Demodulator::syncedState()
 {
-    // Use the sampling point of the synchronizer that fired: the others have
-    // not seen this correlation peak.
     quantizeSyncword(samplingPoint);
 
-    bool valid = compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 0)
-              || compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0)
-              || compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 0);
+    // Positive correlation peak: LSF syncword, negative: stream syncword
+    const syncw_t &syncword = (syncSign > 0) ? LSF_SYNC_WORD : STREAM_SYNC_WORD;
+    bool valid = compareSyncwords(demodFrame->data(), syncword, 0);
 
     if(valid)
         demodState = DemodState::LOCKED;
@@ -421,18 +416,19 @@ void Demodulator::lockedState(int16_t sample)
 
 void Demodulator::syncUpdateState()
 {
-   bool valid = compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 1)
-              | compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 1)
-              | compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 1);
+    // Check the frame just completed, swapped into readyFrame
+    bool valid = compareSyncwords(readyFrame->data(), LSF_SYNC_WORD, 1)
+               | compareSyncwords(readyFrame->data(), STREAM_SYNC_WORD, 1)
+               | compareSyncwords(readyFrame->data(), PACKET_SYNC_WORD, 1);
 
-   bool eot = compareSyncwords(demodFrame->data(), EOT_SYNC_WORD, 1);
+    bool eot = compareSyncwords(readyFrame->data(), EOT_SYNC_WORD, 1);
 
     if(valid)
         missedSyncs = 0;
     else
         missedSyncs += 1;
 
-    // The lock is lost after four consecutive sync misses or an EOT frame.
+    // The lock is lost on the fifth consecutive sync miss or an EOT frame.
     if((missedSyncs > 4) || eot)
         demodState = DemodState::UNLOCKED;
     else
