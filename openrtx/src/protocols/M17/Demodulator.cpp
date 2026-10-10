@@ -394,10 +394,13 @@ void Demodulator::syncedState()
               || compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0)
               || compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 0);
 
-    if(valid)
-        demodState = DemodState::LOCKED;
-    else
+    if(valid) {
+        // Forget the symbol timing gathered before this lock
+        demodState    = DemodState::LOCKED;
+        resetClockRec = true;
+    } else {
         demodState = DemodState::UNLOCKED;
+    }
 }
 
 void Demodulator::lockedState(int16_t sample)
