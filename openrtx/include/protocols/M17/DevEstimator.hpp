@@ -66,25 +66,36 @@ public:
         }
 
         if (value < negThresh) {
-            posAccum += value;
-            posCnt += 1;
+            negAccum += value;
+            negCnt += 1;
         }
     }
 
     /**
      * Update the estimation of outer symbol deviation and zero-offset and
-     * start a new acquisition cycle.
+     * start a new acquisition cycle. As the reference given to init(), the
+     * outer deviation includes the zero-offset.
      */
     void update()
     {
-        if ((posCnt == 0) || (negCnt == 0))
+        if ((posCnt == 0) || (negCnt == 0)) {
+            discard();
             return;
+        }
 
         int32_t max = posAccum / posCnt;
         int32_t min = negAccum / negCnt;
         offset = (max + min) / 2;
-        outerDev.first = max - offset;
-        outerDev.second = min - offset;
+        outerDev.first = max;
+        outerDev.second = min;
+        discard();
+    }
+
+    /**
+     * Drop the samples since the last update, keeping the current estimation.
+     */
+    void discard()
+    {
         posAccum = 0;
         negAccum = 0;
         posCnt = 0;
@@ -94,7 +105,7 @@ public:
     /**
      * Get the estimated outer symbol deviation from the last update.
      * The function returns a std::pair where the first element is the positive
-     * deviation and the second the negative one.
+     * deviation and the second the negative one. Both include the zero-offset.
      *
      * @return outer deviation.
      */
@@ -118,8 +129,8 @@ private:
     int32_t offset;
     int32_t posAccum;
     int32_t negAccum;
-    uint32_t posCnt;
-    uint32_t negCnt;
+    int32_t posCnt;
+    int32_t negCnt;
 };
 
 #endif

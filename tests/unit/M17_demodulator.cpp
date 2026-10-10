@@ -9,14 +9,17 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <random>
 #include <vector>
 
 #include "protocols/M17/Correlator.hpp"
 #include "protocols/M17/Constants.hpp"
 #include "protocols/M17/Demodulator.hpp"
+#include "protocols/M17/DevEstimator.hpp"
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "core/fir.hpp"
+#include "M17Signal.hpp"
 
 // M17 demodulation constants
 static constexpr size_t SAMPLES_PER_SYM = 5; // 24000 Hz / 4800 baud
@@ -180,51 +183,6 @@ TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
 // End-to-end demodulator lock tests
 // ---------------------------------------------------------------------------
 
-// Stream syncword symbols: 0xFF5D → dibits 11 11 11 11 01 01 11 01
-// Mapped to ±3/±1: +3→11, +1→01, -1→10, -3→00  →  -3,-3,-3,-3,+3,+3,-3,+3
-static constexpr std::array<int8_t, M17::SYNCWORD_SYMBOLS> STREAM_SW_SYMS = {
-    -3, -3, -3, -3, +3, +3, -3, +3
-};
-
-// Generate an RRC-shaped baseband signal from a sequence of M17 symbols.
-// Each symbol is placed at sample-rate position (one every SAMPLES_PER_SYM
-// samples) with zero-fill in between, then shaped by the RRC transmit filter.
-static std::vector<int16_t> rrcBaseband(const std::vector<int8_t> &symbols,
-                                        float amplitude = 2000.0f)
-{
-    static constexpr size_t SPS = SAMPLES_PER_SYM;
-    static constexpr size_t NTAPS = M17::rrc_taps_24k.size();
-
-    Fir<NTAPS> txRrc(M17::rrc_taps_24k);
-
-    std::vector<int16_t> out;
-    out.reserve(symbols.size() * SPS);
-
-    for (size_t i = 0; i < symbols.size(); i++) {
-        // First sample of the symbol period carries the impulse
-        float imp = static_cast<float>(symbols[i]) * amplitude;
-        out.push_back(static_cast<int16_t>(txRrc(imp) * SPS));
-
-        // Remaining SPS-1 samples are zero (interpolation)
-        for (size_t s = 1; s < SPS; s++)
-            out.push_back(static_cast<int16_t>(txRrc(0.0f) * SPS));
-    }
-
-    return out;
-}
-
-// Build the symbol sequence for one complete M17 stream frame (192 symbols):
-// 8 sync-word symbols + 184 payload symbols (alternating +1/-1 pattern).
-static std::vector<int8_t> makeStreamFrame()
-{
-    std::vector<int8_t> syms(M17::FRAME_SYMBOLS);
-    for (size_t i = 0; i < STREAM_SW_SYMS.size(); i++)
-        syms[i] = STREAM_SW_SYMS[i];
-    for (size_t i = STREAM_SW_SYMS.size(); i < syms.size(); i++)
-        syms[i] = (i % 2 == 0) ? +1 : -1;
-    return syms;
-}
-
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
           "[m17][demodulator]")
 {
@@ -237,19 +195,18 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
     std::vector<int8_t> allSyms;
 
     // Preamble: alternating +3/-3 to build up correlator energy
-    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
-        allSyms.push_back((i % 2 == 0) ? +3 : -3);
+    M17Signal::appendPreamble(allSyms, PREAMBLE_SYMS);
 
-    // Concatenate NUM_FRAMES complete stream frames
-    auto oneFrame = makeStreamFrame();
-    for (size_t f = 0; f < NUM_FRAMES; f++)
-        allSyms.insert(allSyms.end(), oneFrame.begin(), oneFrame.end());
+    // NUM_FRAMES encoded stream frames, without the LSF
+    auto frames = M17Signal::voiceFrames(NUM_FRAMES, false);
+    for (size_t f = 1; f <= NUM_FRAMES; f++)
+        M17Signal::appendFrame(allSyms, frames[f]);
 
     // Trailing silence so the last frame can finish processing
     for (size_t i = 0; i < PREAMBLE_SYMS; i++)
         allSyms.push_back(0);
 
-    std::vector<int16_t> baseband = rrcBaseband(allSyms);
+    std::vector<int16_t> baseband = M17Signal::rrcBaseband(allSyms);
 
     // --- Feed samples through the demodulator ---
     M17::Demodulator demod;
@@ -288,4 +245,192 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
                                 << (lostSample - lockSample)
                                 << " samples after lock)");
     REQUIRE_FALSE(lostLock);
+}
+
+// ---------------------------------------------------------------------------
+// Symbol deviation estimator
+// ---------------------------------------------------------------------------
+
+// One frame of samples at the four symbol levels; scale is the +1 level
+static void feedLevels(DevEstimator &est, const int32_t scale,
+                       const int32_t offset = 0)
+{
+    static constexpr std::array<int8_t, 4> SYMBOLS = { +3, +1, -1, -3 };
+
+    for (size_t i = 0; i < M17::FRAME_SYMBOLS; i++)
+        est.sample(static_cast<int16_t>(SYMBOLS[i % 4] * scale + offset));
+}
+
+TEST_CASE("DevEstimator updates the outer deviation from a frame",
+          "[m17][demodulator]")
+{
+    // Initial estimate 20% low, as from a noisy syncword
+    DevEstimator est;
+    est.init({ 2400, -2400 });
+
+    feedLevels(est, SCALE);
+    est.update();
+
+    REQUIRE(est.outerDeviation().first == 3 * SCALE);
+}
+
+TEST_CASE("DevEstimator measures a negative outer deviation",
+          "[m17][demodulator]")
+{
+    DevEstimator est;
+    est.init({ 2400, -2400 });
+
+    feedLevels(est, SCALE);
+    est.update();
+
+    REQUIRE(est.outerDeviation().second == -3 * SCALE);
+    REQUIRE(est.zeroOffset() == 0);
+}
+
+TEST_CASE("DevEstimator keeps the absolute levels of a signal with an offset",
+          "[m17][demodulator]")
+{
+    // Levels relative to this offset would read the +1 symbols as +3
+    static constexpr int32_t OFFSET = 1100;
+
+    DevEstimator est;
+    est.init({ 3 * SCALE + OFFSET, -3 * SCALE + OFFSET });
+
+    for (int frame = 0; frame < 2; frame++) {
+        feedLevels(est, SCALE, OFFSET);
+        est.update();
+    }
+
+    REQUIRE(est.outerDeviation().first == 3 * SCALE + OFFSET);
+    REQUIRE(est.outerDeviation().second == -3 * SCALE + OFFSET);
+    REQUIRE(est.zeroOffset() == OFFSET);
+}
+
+// A stream frame: the stream syncword followed by a random payload.
+static M17::frame_t randomStreamFrame(std::minstd_rand &rng)
+{
+    M17::frame_t frame;
+
+    frame[0] = M17::STREAM_SYNC_WORD[0];
+    frame[1] = M17::STREAM_SYNC_WORD[1];
+    for (size_t i = 2; i < frame.size(); i++)
+        frame[i] = static_cast<uint8_t>(rng());
+
+    return frame;
+}
+
+// A synthetic stream: preamble, random stream frames, then silence.
+struct TestStream {
+    std::vector<M17::frame_t> frames; // Transmitted frames
+    std::vector<size_t> frameStart;   // First baseband sample of each frame
+    std::vector<int16_t> baseband;
+};
+
+static TestStream makeStream(const size_t numFrames, const float amplitude)
+{
+    static constexpr size_t PREAMBLE_SYMS = 200;
+    std::minstd_rand rng(1);
+    std::vector<int8_t> syms;
+    TestStream s;
+
+    M17Signal::appendPreamble(syms, PREAMBLE_SYMS);
+
+    for (size_t f = 0; f < numFrames; f++) {
+        M17::frame_t frame = randomStreamFrame(rng);
+
+        s.frames.push_back(frame);
+        s.frameStart.push_back(syms.size() * SAMPLES_PER_SYM);
+        M17Signal::appendFrame(syms, frame);
+    }
+
+    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
+        syms.push_back(0);
+
+    s.baseband = M17Signal::rrcBaseband(syms, amplitude);
+    return s;
+}
+
+// Transmitted frames received without errors
+static std::vector<bool> receivedFrames(const TestStream &s)
+{
+    std::vector<bool> received(s.frames.size(), false);
+    M17::Demodulator demod;
+    demod.init();
+
+    for (int16_t sample : s.baseband) {
+        if (demod.sample(sample) == false)
+            continue;
+
+        const M17::frame_t &frame = demod.getFrame();
+        for (size_t f = 0; f < s.frames.size(); f++) {
+            if (frame == s.frames[f])
+                received[f] = true;
+        }
+    }
+
+    return received;
+}
+
+TEST_CASE("Demodulator follows an increase of the signal level",
+          "[m17][demodulator]")
+{
+    // +8 dB in frame 4: inner symbols cross the lock-time outer threshold
+    static constexpr size_t NUM_FRAMES = 12;
+    static constexpr size_t STEP_FRAME = 4;
+    static constexpr float GAIN = 2.5f;
+
+    TestStream s = makeStream(NUM_FRAMES, 800.0f);
+    size_t step = (s.frameStart[STEP_FRAME] + s.frameStart[STEP_FRAME + 1]) / 2;
+    for (size_t i = step; i < s.baseband.size(); i++)
+        s.baseband[i] = static_cast<int16_t>(s.baseband[i] * GAIN);
+
+    auto received = receivedFrames(s);
+
+    // All but the frame with the step and the next one must be received
+    for (size_t f = 0; f < NUM_FRAMES; f++) {
+        INFO("Frame " << f);
+        if ((f < STEP_FRAME) || (f > STEP_FRAME + 1))
+            REQUIRE(received[f]);
+    }
+}
+
+TEST_CASE("Demodulator keeps the signal level through a dropout",
+          "[m17][demodulator]")
+{
+    // Noise from the dropout in frame 4 must not move the estimate
+    static constexpr size_t NUM_FRAMES = 12;
+    static constexpr size_t DROP_FRAME = 4;
+    static constexpr int32_t NOISE = 12000;
+
+    TestStream s = makeStream(NUM_FRAMES, 800.0f);
+    size_t dropStart = s.frameStart[DROP_FRAME];
+    size_t dropLength = 0;
+
+    SECTION("100 ms from the middle of a frame")
+    {
+        dropStart += (s.frameStart[DROP_FRAME + 1] - dropStart) / 2;
+        dropLength = 2400;
+    }
+
+    SECTION("60 ms from just after a syncword")
+    {
+        // The frame keeps a valid syncword, the rest of it is noise
+        dropStart += 12 * SAMPLES_PER_SYM;
+        dropLength = 1440;
+    }
+
+    size_t dropEnd = dropStart + dropLength;
+    std::minstd_rand rng(2);
+    for (size_t i = dropStart; i < dropEnd; i++)
+        s.baseband[i] = static_cast<int16_t>(
+            static_cast<int32_t>(rng() % (2 * NOISE + 1)) - NOISE);
+
+    auto received = receivedFrames(s);
+
+    // Every frame starting after the carrier is back is received.
+    for (size_t f = 0; f < NUM_FRAMES; f++) {
+        INFO("Frame " << f);
+        if ((f < DROP_FRAME) || (s.frameStart[f] >= dropEnd))
+            REQUIRE(received[f]);
+    }
 }
