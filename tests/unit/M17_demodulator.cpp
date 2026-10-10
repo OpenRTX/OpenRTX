@@ -181,12 +181,23 @@ TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
 // End-to-end demodulator lock tests
 // ---------------------------------------------------------------------------
 
-// Sample indices of a transmission: start of its LSF, end of its last frame
+static constexpr size_t FRAME_SAMPLES = M17::FRAME_SYMBOLS * SAMPLES_PER_SYM;
+
+/**
+ * Sample indices of a transmission.
+ */
 struct Transmission {
-    size_t lsfStart;
-    size_t end;
+    size_t lsfStart; ///< First sample of the LSF.
+    size_t end;      ///< End of the last frame.
 };
 
+/**
+ * Append a transmission: a 40 ms preamble, then the frames.
+ *
+ * @param symbols: symbols to append to.
+ * @param frames: encoded frames.
+ * @return the sample indices of the transmission.
+ */
 static Transmission appendTransmission(std::vector<int8_t> &symbols,
                                        const std::vector<M17::frame_t> &frames)
 {
@@ -200,7 +211,13 @@ static Transmission appendTransmission(std::vector<int8_t> &symbols,
     return tx;
 }
 
-// Sample indices of the lock changes: locks at even positions, unlocks at odd
+/**
+ * Demodulate a baseband and record where the lock changes.
+ *
+ * @param baseband: 24 kHz baseband.
+ * @return sample indices of the lock changes: locks at even positions,
+ * unlocks at odd ones.
+ */
 static std::vector<size_t> lockTransitions(const std::vector<int16_t> &baseband)
 {
     M17::Demodulator demod;
@@ -248,6 +265,29 @@ TEST_CASE("Demodulator stays locked on a transmission following a faded one",
 
     REQUIRE(locks == 1);
     REQUIRE(unlocks == 0);
+}
+
+TEST_CASE("Demodulator releases the lock at the end of a transmission",
+          "[m17][demodulator]")
+{
+    std::vector<int8_t> symbols;
+    Transmission tx = appendTransmission(symbols, M17Signal::voiceFrames(10));
+    symbols.insert(symbols.end(), 400, 0);
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // First release after the start of the LSF
+    size_t release = 0;
+    for (size_t k = 1; k < transitions.size(); k += 2) {
+        if (transitions[k] > tx.lsfStart) {
+            release = transitions[k];
+            break;
+        }
+    }
+
+    // Released on the EOT frame, within half a frame of its end
+    REQUIRE(release != 0);
+    REQUIRE(release > tx.end);
+    REQUIRE(release - tx.end < FRAME_SAMPLES / 2);
 }
 
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
