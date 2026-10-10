@@ -424,18 +424,19 @@ void Demodulator::lockedState(int16_t sample)
 
 void Demodulator::syncUpdateState()
 {
-   bool valid = compareSyncwords(demodFrame->data(), LSF_SYNC_WORD, 1)
-              | compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 1)
-              | compareSyncwords(demodFrame->data(), PACKET_SYNC_WORD, 1);
+    // Check the frame just completed, swapped into readyFrame
+    bool valid = compareSyncwords(readyFrame->data(), LSF_SYNC_WORD, 1)
+               | compareSyncwords(readyFrame->data(), STREAM_SYNC_WORD, 1)
+               | compareSyncwords(readyFrame->data(), PACKET_SYNC_WORD, 1);
 
-   bool eot = compareSyncwords(demodFrame->data(), EOT_SYNC_WORD, 1);
+    bool eot = compareSyncwords(readyFrame->data(), EOT_SYNC_WORD, 1);
 
     if(valid)
         missedSyncs = 0;
     else
         missedSyncs += 1;
 
-    // The lock is lost after four consecutive sync misses or an EOT frame.
+    // The lock is lost on the fifth consecutive sync miss or an EOT frame.
     if((missedSyncs > 4) || eot)
         demodState = DemodState::UNLOCKED;
     else
