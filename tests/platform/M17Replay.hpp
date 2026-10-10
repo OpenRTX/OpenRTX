@@ -96,6 +96,17 @@ public:
                 const double start = 0.0);
 
     /**
+     * Replay samples held in memory, as replay() does for a file.
+     *
+     * @param samples: signed 16-bit mono samples.
+     * @param numSamples: number of samples.
+     * @param sampleRate: 24000 or 48000 Hz.
+     * @return false if the sample rate is not supported.
+     */
+    bool replay(const int16_t *samples, const size_t numSamples,
+                const uint32_t sampleRate);
+
+    /**
      * Get the counters of the last replay.
      *
      * @return a reference to the counters.
@@ -103,17 +114,6 @@ public:
     const Counts &counts() const;
 
 private:
-    /**
-     * Read one 20 ms block at the demodulator rate, keeping every step-th
-     * input sample.
-     *
-     * @param file: open recording.
-     * @param step: input samples per output sample, 1 or 2.
-     * @param block: destination for BLOCK_SAMPLES samples.
-     * @return true if a full block was read.
-     */
-    bool readBlock(FILE *file, const size_t step, int16_t *block);
-
     /**
      * Feed one block to the demodulator and handle lock changes and the
      * frame it may have completed, as OpMode_M17::rxState() does.
