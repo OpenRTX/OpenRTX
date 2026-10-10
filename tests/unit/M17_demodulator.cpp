@@ -181,6 +181,75 @@ TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
 // End-to-end demodulator lock tests
 // ---------------------------------------------------------------------------
 
+// Sample indices of a transmission: start of its LSF, end of its last frame
+struct Transmission {
+    size_t lsfStart;
+    size_t end;
+};
+
+static Transmission appendTransmission(std::vector<int8_t> &symbols,
+                                       const std::vector<M17::frame_t> &frames)
+{
+    Transmission tx;
+    tx.lsfStart = (symbols.size() + M17::FRAME_SYMBOLS) * SAMPLES_PER_SYM;
+
+    std::vector<int8_t> s = M17Signal::m17Symbols(frames);
+    symbols.insert(symbols.end(), s.begin(), s.end());
+    tx.end = symbols.size() * SAMPLES_PER_SYM;
+
+    return tx;
+}
+
+// Sample indices of the lock changes: locks at even positions, unlocks at odd
+static std::vector<size_t> lockTransitions(const std::vector<int16_t> &baseband)
+{
+    M17::Demodulator demod;
+    demod.init();
+
+    std::vector<size_t> transitions;
+    bool locked = false;
+    for (size_t i = 0; i < baseband.size(); i++) {
+        demod.sample(baseband[i]);
+        if (demod.isLocked() != locked) {
+            locked = !locked;
+            transitions.push_back(i);
+        }
+    }
+
+    // The destructor terminates again, harmless as sampling never started
+    demod.terminate();
+    return transitions;
+}
+
+TEST_CASE("Demodulator stays locked on a transmission following a faded one",
+          "[m17][demodulator]")
+{
+    // The first transmission stops without an EOT frame, as when the station
+    // goes out of range; the next one starts 1 s later.
+    std::vector<int8_t> symbols;
+    appendTransmission(symbols, M17Signal::voiceFrames(20, false));
+    symbols.insert(symbols.end(), 4800, 0);
+    Transmission tx = appendTransmission(symbols, M17Signal::voiceFrames(20));
+    symbols.insert(symbols.end(), 200, 0);
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // Up to the end of the EOT frame: the filters delay the release on it
+    size_t locks = 0;
+    size_t unlocks = 0;
+    for (size_t k = 0; k < transitions.size(); k++) {
+        if ((transitions[k] < tx.lsfStart) || (transitions[k] >= tx.end))
+            continue;
+
+        if (k % 2 == 0)
+            locks++;
+        else
+            unlocks++;
+    }
+
+    REQUIRE(locks == 1);
+    REQUIRE(unlocks == 0);
+}
+
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
           "[m17][demodulator]")
 {
