@@ -15,6 +15,8 @@
 #include "protocols/M17/Constants.hpp"
 #include "protocols/M17/Demodulator.hpp"
 #include "protocols/M17/DSP.hpp"
+#include "protocols/M17/FrameEncoder.hpp"
+#include "protocols/M17/LinkSetupFrame.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "core/fir.hpp"
 
@@ -180,11 +182,7 @@ TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
 // End-to-end demodulator lock tests
 // ---------------------------------------------------------------------------
 
-// Stream syncword symbols: 0xFF5D → dibits 11 11 11 11 01 01 11 01
-// Mapped to ±3/±1: +3→11, +1→01, -1→10, -3→00  →  -3,-3,-3,-3,+3,+3,-3,+3
-static constexpr std::array<int8_t, M17::SYNCWORD_SYMBOLS> STREAM_SW_SYMS = {
-    -3, -3, -3, -3, +3, +3, -3, +3
-};
+static constexpr size_t FRAME_SAMPLES = M17::FRAME_SYMBOLS * SAMPLES_PER_SYM;
 
 // Generate an RRC-shaped baseband signal from a sequence of M17 symbols.
 // Each symbol is placed at sample-rate position (one every SAMPLES_PER_SYM
@@ -213,79 +211,109 @@ static std::vector<int16_t> rrcBaseband(const std::vector<int8_t> &symbols,
     return out;
 }
 
-// Build the symbol sequence for one complete M17 stream frame (192 symbols):
-// 8 sync-word symbols + 184 payload symbols (alternating +1/-1 pattern).
-static std::vector<int8_t> makeStreamFrame()
+// Append one frame of preamble, alternating +3 and -3 symbols.
+static void appendPreamble(std::vector<int8_t> &symbols)
 {
-    std::vector<int8_t> syms(M17::FRAME_SYMBOLS);
-    for (size_t i = 0; i < STREAM_SW_SYMS.size(); i++)
-        syms[i] = STREAM_SW_SYMS[i];
-    for (size_t i = STREAM_SW_SYMS.size(); i < syms.size(); i++)
-        syms[i] = (i % 2 == 0) ? +1 : -1;
-    return syms;
+    for (size_t i = 0; i < M17::FRAME_SYMBOLS; i++)
+        symbols.push_back((i % 2 == 0) ? +3 : -3);
+}
+
+// Append the symbols of an encoded frame, one symbol per dibit.
+static void appendFrame(std::vector<int8_t> &symbols, const M17::frame_t &frame)
+{
+    static constexpr int8_t DIBIT_SYMBOL[] = { +1, +3, -1, -3 };
+
+    for (uint8_t byte : frame) {
+        for (int shift = 6; shift >= 0; shift -= 2)
+            symbols.push_back(DIBIT_SYMBOL[(byte >> shift) & 0x03]);
+    }
+}
+
+// Sample indices of the boundaries of a transmission, as transmitted. The
+// transmit and receive filters delay them by about 40 samples on the way to
+// the demodulator.
+struct Transmission {
+    size_t lsfStart;  // Start of the link setup frame
+    size_t streamEnd; // End of the last stream frame
+    size_t eotEnd;    // End of the EOT frame, streamEnd if there is none
+};
+
+// Append a voice transmission: preamble, LSF, stream frames and, if eot is
+// set, the end of transmission frame.
+static Transmission appendTransmission(std::vector<int8_t> &symbols,
+                                       const size_t streamFrames,
+                                       const bool eot)
+{
+    M17::FrameEncoder encoder;
+    M17::LinkSetupFrame lsf;
+    M17::frame_t frame;
+    M17::payload_t payload;
+    M17::streamType_t type = {};
+    Transmission tx;
+
+    type.fields.dataMode = M17::DATAMODE_STREAM;
+    type.fields.dataType = M17::DATATYPE_VOICE;
+    lsf.clear();
+    lsf.setSource(M17::Callsign("N0CALL"));
+    lsf.setType(type);
+    encoder.reset();
+
+    appendPreamble(symbols);
+    tx.lsfStart = symbols.size() * SAMPLES_PER_SYM;
+    encoder.encodeLsf(lsf, frame);
+    appendFrame(symbols, frame);
+
+    for (size_t i = 0; i < streamFrames; i++) {
+        bool last = eot && (i == streamFrames - 1);
+        payload.fill(i);
+        encoder.encodeStreamFrame(payload, frame, last);
+        appendFrame(symbols, frame);
+    }
+
+    tx.streamEnd = symbols.size() * SAMPLES_PER_SYM;
+    if (eot) {
+        encoder.encodeEotFrame(frame);
+        appendFrame(symbols, frame);
+    }
+
+    tx.eotEnd = symbols.size() * SAMPLES_PER_SYM;
+    return tx;
+}
+
+// Demodulate a baseband signal and return the sample indices at which the
+// lock changes: locks are at even positions, unlocks at odd ones.
+static std::vector<size_t> lockTransitions(const std::vector<int16_t> &baseband)
+{
+    M17::Demodulator demod;
+    demod.init();
+
+    std::vector<size_t> transitions;
+    bool locked = false;
+    for (size_t i = 0; i < baseband.size(); i++) {
+        demod.sample(baseband[i]);
+        if (demod.isLocked() != locked) {
+            locked = !locked;
+            transitions.push_back(i);
+        }
+    }
+
+    // The destructor terminates the demodulator a second time
+    demod.terminate();
+    return transitions;
 }
 
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
           "[m17][demodulator]")
 {
-    // --- Build the synthetic baseband signal ---
-    // Preamble: silence long enough to pass the INIT state (480 samples)
-    // plus RRC filter settling time.
-    static constexpr size_t PREAMBLE_SYMS = 200; // 200 * 5 = 1000 samples
-    static constexpr size_t NUM_FRAMES = 10;
+    // The trailing silence is shorter than the five missed syncs that would
+    // release the lock.
+    std::vector<int8_t> symbols;
+    Transmission tx = appendTransmission(symbols, 10, false);
+    symbols.insert(symbols.end(), 200, 0);
+    std::vector<size_t> transitions = lockTransitions(rrcBaseband(symbols));
 
-    std::vector<int8_t> allSyms;
-
-    // Preamble: alternating +3/-3 to build up correlator energy
-    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
-        allSyms.push_back((i % 2 == 0) ? +3 : -3);
-
-    // Concatenate NUM_FRAMES complete stream frames
-    auto oneFrame = makeStreamFrame();
-    for (size_t f = 0; f < NUM_FRAMES; f++)
-        allSyms.insert(allSyms.end(), oneFrame.begin(), oneFrame.end());
-
-    // Trailing silence so the last frame can finish processing
-    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
-        allSyms.push_back(0);
-
-    std::vector<int16_t> baseband = rrcBaseband(allSyms);
-
-    // --- Feed samples through the demodulator ---
-    M17::Demodulator demod;
-    demod.init();
-
-    bool everLocked = false;
-    size_t lockSample = 0;
-    bool lostLock = false;
-    size_t lostSample = 0;
-
-    for (size_t i = 0; i < baseband.size(); i++) {
-        demod.sample(baseband[i]);
-
-        if (!everLocked && demod.isLocked()) {
-            everLocked = true;
-            lockSample = i;
-        }
-
-        // Once locked, the demodulator must stay locked for at least the
-        // duration of the remaining frames (until the signal ends).
-        // Allow a grace zone at the very end where the trailing silence
-        // causes a natural unlock (last ~3 frame-lengths).
-        size_t endGrace = baseband.size()
-                        - 3 * M17::FRAME_SYMBOLS * SAMPLES_PER_SYM;
-        if (everLocked && !demod.isLocked() && i < endGrace) {
-            lostLock = true;
-            lostSample = i;
-            break; // No need to keep going
-        }
-    }
-
-    INFO("Lock first acquired at sample " << lockSample);
-    REQUIRE(everLocked);
-
-    INFO("Lock lost at sample " << lostSample << " ("
-                                << (lostSample - lockSample)
-                                << " samples after lock)");
-    REQUIRE_FALSE(lostLock);
+    // Locked on the LSF, and still locked when the signal ends
+    REQUIRE(transitions.size() == 1);
+    REQUIRE(transitions[0] > tx.lsfStart);
+    REQUIRE(transitions[0] < tx.lsfStart + FRAME_SAMPLES);
 }
