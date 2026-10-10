@@ -317,3 +317,34 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
     REQUIRE(transitions[0] > tx.lsfStart);
     REQUIRE(transitions[0] < tx.lsfStart + FRAME_SAMPLES);
 }
+
+TEST_CASE("Demodulator stays locked on a transmission following a faded one",
+          "[m17][demodulator]")
+{
+    // The first transmission stops without an end of transmission frame, as
+    // when the station goes out of range. The next one starts 1 s later.
+    std::vector<int8_t> symbols;
+    appendTransmission(symbols, 20, false);
+    symbols.insert(symbols.end(), 4800, 0);
+    Transmission tx = appendTransmission(symbols, 20, true);
+    symbols.insert(symbols.end(), 200, 0);
+    std::vector<size_t> transitions = lockTransitions(rrcBaseband(symbols));
+
+    // Count the lock changes up to the end of the EOT frame: the filters
+    // delay the release on the EOT frame past it, but a release after the
+    // last stream frame falls before it.
+    size_t locks = 0;
+    size_t unlocks = 0;
+    for (size_t k = 0; k < transitions.size(); k++) {
+        if ((transitions[k] < tx.lsfStart) || (transitions[k] >= tx.eotEnd))
+            continue;
+
+        if (k % 2 == 0)
+            locks++;
+        else
+            unlocks++;
+    }
+
+    REQUIRE(locks == 1);
+    REQUIRE(unlocks == 0);
+}
