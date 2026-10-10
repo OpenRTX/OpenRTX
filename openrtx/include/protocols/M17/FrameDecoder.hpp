@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <string>
 #include <array>
+#include <memory>
 #include "LinkSetupFrame.hpp"
 #include "Viterbi.hpp"
 #include "StreamFrame.hpp"
@@ -53,8 +54,32 @@ public:
     void reset();
 
     /**
+     * Allocate the soft-decision scratch buffers. Call before decodeFrame().
+     */
+    void init();
+
+    /**
+     * Release the soft-decision scratch buffers allocated by init(). Call when
+     * the decoder is not going to be used for a while.
+     */
+    void terminate();
+
+    /**
      * Decode an M17 frame, identifying its type. Frame data must contain the
-     * sync word in the first two bytes.
+     * sync word in the first two bytes. The payload is decoded with a
+     * soft-decision Viterbi using the per-bit confidence values in @p soft,
+     * which are parallel to the coded bits of @p frame: 0x0000 is a confident
+     * 0, 0xFFFF a confident 1 (see Demodulator::getSoftFrame()).
+     *
+     * @param frame: byte array containing frame data.
+     * @param soft: soft bits, one per coded bit of the frame.
+     * @return the type of frame recognized.
+     */
+    FrameType decodeFrame(const frame_t &frame, const softFrame_t &soft);
+
+    /**
+     * Decode an M17 frame from hard bits only. Every bit is treated as fully
+     * confident, which makes the decoder behave as a hard-decision one.
      *
      * @param frame: byte array containing frame data.
      * @return the type of frame recognized.
@@ -70,6 +95,17 @@ public:
     const LinkSetupFrame &getLsf()
     {
         return lsf;
+    }
+
+    /**
+     * Get the number of coded bits corrected in the latest stream payload
+     * decode, see MAX_STREAM_BIT_ERRORS.
+     *
+     * @return corrected bit count of the latest stream payload decode.
+     */
+    uint16_t getStreamBitErrors() const
+    {
+        return streamBitErrors;
     }
 
     /**
@@ -92,6 +128,13 @@ public:
         return packetFrame;
     }
 
+    /**
+     * A stream payload whose decode corrected this many coded bits or more is
+     * not copied, keeping the previous frame. Stream frames carry no CRC, so
+     * this is the only check between the decoder and codec2.
+     */
+    static constexpr uint16_t MAX_STREAM_BIT_ERRORS = 17;
+
 private:
     /**
      * Determine frame type by searching which syncword among the standard M17
@@ -108,25 +151,28 @@ private:
      * Decode Link Setup Frame data and update the internal LSF field with
      * the new frame data.
      *
-     * @param data: byte array containing frame data, without sync word.
+     * @param soft: soft bits of the frame payload, decorrelated and
+     * deinterleaved, without sync word.
      */
-    void decodeLSF(const std::array<uint8_t, 46> &data);
+    void decodeLSF(const std::array<uint16_t, 368> &soft);
 
     /**
      * Decode stream data and update the internal LSF field with the new
      * frame data.
      *
-     * @param data: byte array containing frame data, without sync word.
+     * @param soft: soft bits of the frame payload, decorrelated and
+     * deinterleaved, without sync word.
      */
-    void decodeStream(const std::array<uint8_t, 46> &data);
+    void decodeStream(const std::array<uint16_t, 368> &soft);
 
     /**
      * Decode packet data and update the internal packet frame field with the
      * new frame data.
      *
-     * @param data: byte array containing frame data, without sync word.
+     * @param soft: soft bits of the frame payload, decorrelated and
+     * deinterleaved, without sync word.
      */
-    void decodePacket(const std::array<uint8_t, 46> &data);
+    void decodePacket(const std::array<uint16_t, 368> &soft);
 
     /**
      * Decode a LICH block.
@@ -138,18 +184,27 @@ private:
      */
     bool decodeLich(std::array<uint8_t, 6> &segment, const lich_t &lich);
 
+    /**
+     * Soft-decision scratch buffers. They are too large for the stack of the
+     * RTX thread, where frames are decoded, so init() allocates them on the
+     * heap and terminate() releases them while the decoder is not in use.
+     */
+    struct SoftScratch {
+        std::array<uint16_t, 368> payload; ///< Decorrelated, deinterleaved.
+        std::array<uint16_t, 272> stream;  ///< Stream payload after the LICH.
+    };
+
     uint8_t lsfSegmentMap;      ///< Bitmap for LSF reassembly from LICH
     LinkSetupFrame lsf;         ///< Latest LSF received.
     LinkSetupFrame lsfFromLich; ///< LSF assembled from LICH segments.
     StreamFrame streamFrame;    ///< Latest stream dat frame received.
     PacketFrame packetFrame;    ///< Latest packet data frame received.
-    HardViterbi viterbi;        ///< Viterbi decoder.
+    SoftViterbi viterbi;        ///< Soft-decision Viterbi decoder.
+    std::unique_ptr<SoftScratch> scratch; ///< Soft-decision scratch buffers.
+    uint16_t streamBitErrors = 0; ///< Corrected bits in the latest stream.
 
     ///< Maximum allowed hamming distance when determining the frame type.
     static constexpr uint8_t MAX_SYNC_HAMM_DISTANCE = 4;
-
-    ///< Maximum number of corrected bit errors allowed in a stream frame.
-    static constexpr uint16_t MAX_VITERBI_ERRORS = 15;
 };
 
 } // namespace M17

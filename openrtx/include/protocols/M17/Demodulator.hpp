@@ -96,6 +96,15 @@ public:
      */
     bool isLocked();
 
+    /**
+     * Get the soft bits of the last demodulated frame, one per coded bit and
+     * parallel to the frame returned by getFrame(): 0x0000 is a confident 0,
+     * 0xFFFF a confident 1. Valid for the same lifetime as getFrame().
+     *
+     * @return reference to the soft bits of the latest demodulated frame.
+     */
+    const softFrame_t& getSoftFrame();
+
 private:
 
     /**
@@ -177,6 +186,8 @@ private:
     pathId                         basebandPath;    ///< Id of the baseband input path.
     std::unique_ptr<frame_t >      demodFrame;      ///< Frame being demodulated.
     std::unique_ptr<frame_t >      readyFrame;      ///< Fully demodulated frame to be returned.
+    std::unique_ptr<softFrame_t >  softDemod;       ///< Soft bits, in progress.
+    std::unique_ptr<softFrame_t >  softReady;       ///< Soft bits, ready frame.
     bool                           newFrame;        ///< A new frame has been fully decoded.
     bool                           resetClockRec;   ///< Clock recovery reset request.
     bool                           updateSampPoint; ///< Sampling point update pending.
