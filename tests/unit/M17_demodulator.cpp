@@ -9,11 +9,13 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <random>
 #include <vector>
 
 #include "protocols/M17/Correlator.hpp"
 #include "protocols/M17/Constants.hpp"
 #include "protocols/M17/Demodulator.hpp"
+#include "protocols/M17/DevEstimator.hpp"
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "core/fir.hpp"
@@ -243,4 +245,132 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
                                 << (lostSample - lockSample)
                                 << " samples after lock)");
     REQUIRE_FALSE(lostLock);
+}
+
+// ---------------------------------------------------------------------------
+// Symbol deviation estimator
+// ---------------------------------------------------------------------------
+
+// One frame of samples at the four symbol levels; scale is the +1 level
+static void feedLevels(DevEstimator &est, const int32_t scale,
+                       const int32_t offset = 0)
+{
+    static constexpr std::array<int8_t, 4> SYMBOLS = { +3, +1, -1, -3 };
+
+    for (size_t i = 0; i < M17::FRAME_SYMBOLS; i++)
+        est.sample(static_cast<int16_t>(SYMBOLS[i % 4] * scale + offset));
+}
+
+TEST_CASE("DevEstimator updates the outer deviation from a frame",
+          "[m17][demodulator]")
+{
+    // Initial estimate 20% low, as from a noisy syncword
+    DevEstimator est;
+    est.init({ 2400, -2400 });
+
+    feedLevels(est, SCALE);
+    est.update();
+
+    REQUIRE(est.outerDeviation().first == 3 * SCALE);
+}
+
+TEST_CASE("DevEstimator measures a negative outer deviation",
+          "[m17][demodulator]")
+{
+    DevEstimator est;
+    est.init({ 2400, -2400 });
+
+    feedLevels(est, SCALE);
+    est.update();
+
+    REQUIRE(est.outerDeviation().second == -3 * SCALE);
+    REQUIRE(est.zeroOffset() == 0);
+}
+
+// A stream frame: the stream syncword followed by a random payload.
+static M17::frame_t randomStreamFrame(std::minstd_rand &rng)
+{
+    M17::frame_t frame;
+
+    frame[0] = M17::STREAM_SYNC_WORD[0];
+    frame[1] = M17::STREAM_SYNC_WORD[1];
+    for (size_t i = 2; i < frame.size(); i++)
+        frame[i] = static_cast<uint8_t>(rng());
+
+    return frame;
+}
+
+// A synthetic stream: preamble, random stream frames, then silence.
+struct TestStream {
+    std::vector<M17::frame_t> frames; // Transmitted frames
+    std::vector<size_t> frameStart;   // First baseband sample of each frame
+    std::vector<int16_t> baseband;
+};
+
+static TestStream makeStream(const size_t numFrames, const float amplitude)
+{
+    static constexpr size_t PREAMBLE_SYMS = 200;
+    std::minstd_rand rng(1);
+    std::vector<int8_t> syms;
+    TestStream s;
+
+    M17Signal::appendPreamble(syms, PREAMBLE_SYMS);
+
+    for (size_t f = 0; f < numFrames; f++) {
+        M17::frame_t frame = randomStreamFrame(rng);
+
+        s.frames.push_back(frame);
+        s.frameStart.push_back(syms.size() * SAMPLES_PER_SYM);
+        M17Signal::appendFrame(syms, frame);
+    }
+
+    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
+        syms.push_back(0);
+
+    s.baseband = M17Signal::rrcBaseband(syms, amplitude);
+    return s;
+}
+
+// Transmitted frames received without errors
+static std::vector<bool> receivedFrames(const TestStream &s)
+{
+    std::vector<bool> received(s.frames.size(), false);
+    M17::Demodulator demod;
+    demod.init();
+
+    for (int16_t sample : s.baseband) {
+        if (demod.sample(sample) == false)
+            continue;
+
+        const M17::frame_t &frame = demod.getFrame();
+        for (size_t f = 0; f < s.frames.size(); f++) {
+            if (frame == s.frames[f])
+                received[f] = true;
+        }
+    }
+
+    return received;
+}
+
+TEST_CASE("Demodulator follows an increase of the signal level",
+          "[m17][demodulator]")
+{
+    // +8 dB in frame 4: inner symbols cross the lock-time outer threshold
+    static constexpr size_t NUM_FRAMES = 12;
+    static constexpr size_t STEP_FRAME = 4;
+    static constexpr float GAIN = 2.5f;
+
+    TestStream s = makeStream(NUM_FRAMES, 800.0f);
+    size_t step = (s.frameStart[STEP_FRAME] + s.frameStart[STEP_FRAME + 1]) / 2;
+    for (size_t i = step; i < s.baseband.size(); i++)
+        s.baseband[i] = static_cast<int16_t>(s.baseband[i] * GAIN);
+
+    auto received = receivedFrames(s);
+
+    // All but the frame with the step and the next one must be received
+    for (size_t f = 0; f < NUM_FRAMES; f++) {
+        INFO("Frame " << f);
+        if ((f < STEP_FRAME) || (f > STEP_FRAME + 1))
+            REQUIRE(received[f]);
+    }
 }
