@@ -181,6 +181,8 @@ TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
 // End-to-end demodulator lock tests
 // ---------------------------------------------------------------------------
 
+static constexpr size_t FRAME_SAMPLES = M17::FRAME_SYMBOLS * SAMPLES_PER_SYM;
+
 // Sample indices of a transmission: start of its LSF, end of its last frame
 struct Transmission {
     size_t lsfStart;
@@ -248,6 +250,29 @@ TEST_CASE("Demodulator stays locked on a transmission following a faded one",
 
     REQUIRE(locks == 1);
     REQUIRE(unlocks == 0);
+}
+
+TEST_CASE("Demodulator releases the lock at the end of a transmission",
+          "[m17][demodulator]")
+{
+    std::vector<int8_t> symbols;
+    Transmission tx = appendTransmission(symbols, M17Signal::voiceFrames(10));
+    symbols.insert(symbols.end(), 400, 0);
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // First release after the start of the LSF
+    size_t release = 0;
+    for (size_t k = 1; k < transitions.size(); k += 2) {
+        if (transitions[k] > tx.lsfStart) {
+            release = transitions[k];
+            break;
+        }
+    }
+
+    // Released on the EOT frame, within half a frame of its end
+    REQUIRE(release != 0);
+    REQUIRE(release > tx.end);
+    REQUIRE(release - tx.end < FRAME_SAMPLES / 2);
 }
 
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
