@@ -275,6 +275,24 @@ TEST_CASE("Demodulator releases the lock at the end of a transmission",
     REQUIRE(release - tx.end < FRAME_SAMPLES / 2);
 }
 
+TEST_CASE("Demodulator stays locked through the packet frames of an SMS",
+          "[m17][demodulator]")
+{
+    // 12 packet frames, more than the five missed syncs ending a lock
+    std::vector<int8_t> symbols;
+    auto frames = M17Signal::smsFrames(12, 'a');
+    Transmission tx = appendTransmission(symbols, frames);
+    symbols.insert(symbols.end(), 400, 0);
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // Locked on the LSF, released on the EOT frame
+    REQUIRE(transitions.size() == 2);
+    REQUIRE(transitions[0] > tx.lsfStart);
+    REQUIRE(transitions[0] < tx.lsfStart + FRAME_SAMPLES);
+    REQUIRE(transitions[1] > tx.end);
+    REQUIRE(transitions[1] - tx.end < FRAME_SAMPLES / 2);
+}
+
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
           "[m17][demodulator]")
 {
