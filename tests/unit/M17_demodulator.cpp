@@ -17,6 +17,7 @@
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "core/fir.hpp"
+#include "M17Signal.hpp"
 
 // M17 demodulation constants
 static constexpr size_t SAMPLES_PER_SYM = 5; // 24000 Hz / 4800 baud
@@ -180,51 +181,6 @@ TEST_CASE("RRC 24kHz filter has unity DC gain", "[m17][demodulator]")
 // End-to-end demodulator lock tests
 // ---------------------------------------------------------------------------
 
-// Stream syncword symbols: 0xFF5D → dibits 11 11 11 11 01 01 11 01
-// Mapped to ±3/±1: +3→11, +1→01, -1→10, -3→00  →  -3,-3,-3,-3,+3,+3,-3,+3
-static constexpr std::array<int8_t, M17::SYNCWORD_SYMBOLS> STREAM_SW_SYMS = {
-    -3, -3, -3, -3, +3, +3, -3, +3
-};
-
-// Generate an RRC-shaped baseband signal from a sequence of M17 symbols.
-// Each symbol is placed at sample-rate position (one every SAMPLES_PER_SYM
-// samples) with zero-fill in between, then shaped by the RRC transmit filter.
-static std::vector<int16_t> rrcBaseband(const std::vector<int8_t> &symbols,
-                                        float amplitude = 2000.0f)
-{
-    static constexpr size_t SPS = SAMPLES_PER_SYM;
-    static constexpr size_t NTAPS = M17::rrc_taps_24k.size();
-
-    Fir<NTAPS> txRrc(M17::rrc_taps_24k);
-
-    std::vector<int16_t> out;
-    out.reserve(symbols.size() * SPS);
-
-    for (size_t i = 0; i < symbols.size(); i++) {
-        // First sample of the symbol period carries the impulse
-        float imp = static_cast<float>(symbols[i]) * amplitude;
-        out.push_back(static_cast<int16_t>(txRrc(imp) * SPS));
-
-        // Remaining SPS-1 samples are zero (interpolation)
-        for (size_t s = 1; s < SPS; s++)
-            out.push_back(static_cast<int16_t>(txRrc(0.0f) * SPS));
-    }
-
-    return out;
-}
-
-// Build the symbol sequence for one complete M17 stream frame (192 symbols):
-// 8 sync-word symbols + 184 payload symbols (alternating +1/-1 pattern).
-static std::vector<int8_t> makeStreamFrame()
-{
-    std::vector<int8_t> syms(M17::FRAME_SYMBOLS);
-    for (size_t i = 0; i < STREAM_SW_SYMS.size(); i++)
-        syms[i] = STREAM_SW_SYMS[i];
-    for (size_t i = STREAM_SW_SYMS.size(); i < syms.size(); i++)
-        syms[i] = (i % 2 == 0) ? +1 : -1;
-    return syms;
-}
-
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
           "[m17][demodulator]")
 {
@@ -237,19 +193,18 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
     std::vector<int8_t> allSyms;
 
     // Preamble: alternating +3/-3 to build up correlator energy
-    for (size_t i = 0; i < PREAMBLE_SYMS; i++)
-        allSyms.push_back((i % 2 == 0) ? +3 : -3);
+    M17Signal::appendPreamble(allSyms, PREAMBLE_SYMS);
 
-    // Concatenate NUM_FRAMES complete stream frames
-    auto oneFrame = makeStreamFrame();
-    for (size_t f = 0; f < NUM_FRAMES; f++)
-        allSyms.insert(allSyms.end(), oneFrame.begin(), oneFrame.end());
+    // NUM_FRAMES encoded stream frames, without the LSF
+    auto frames = M17Signal::voiceFrames(NUM_FRAMES, false);
+    for (size_t f = 1; f <= NUM_FRAMES; f++)
+        M17Signal::appendFrame(allSyms, frames[f]);
 
     // Trailing silence so the last frame can finish processing
     for (size_t i = 0; i < PREAMBLE_SYMS; i++)
         allSyms.push_back(0);
 
-    std::vector<int16_t> baseband = rrcBaseband(allSyms);
+    std::vector<int16_t> baseband = M17Signal::rrcBaseband(allSyms);
 
     // --- Feed samples through the demodulator ---
     M17::Demodulator demod;
