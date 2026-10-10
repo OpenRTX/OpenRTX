@@ -356,6 +356,7 @@ void Demodulator::unlockedState()
     syncSign = lsfSync.update(correlator, syncThresh, -syncThresh);
     if(syncSign != 0) {
         samplingPoint = lsfSync.samplingIndex();
+        missedSyncs   = 0;
         demodState = DemodState::SYNCED;
     }
 }
