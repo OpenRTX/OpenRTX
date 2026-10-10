@@ -69,6 +69,7 @@ bool M17Replay::replay(const int16_t *samples, const size_t numSamples,
     packetLen = 0;
     packetNext = 0;
     decoder.reset();
+    lastStream.clear();
 
     const size_t step = sampleRate / SAMPLE_RATE;
     int16_t block[BLOCK_SAMPLES];
@@ -105,6 +106,7 @@ void M17Replay::processBlock(const int16_t *block, const double time)
     bool lock = demod.isLocked();
     if (lock && !locked) {
         decoder.reset();
+        lastStream.clear();
         packetLen = 0;
         packetNext = 0;
         haveStreamFn = false;
@@ -164,11 +166,21 @@ void M17Replay::handleStream(const double time)
     if (decoder.getLsf().valid())
         count.streamWithLsf++;
 
+    // A rejected frame leaves the decoder's frame unchanged, or cleared after
+    // a lock: an all-zero frame 0 also reads as rejected.
+    StreamFrame sf = decoder.getStreamFrame();
+    if ((sf.getFrameNumber() == lastStream.getFrameNumber())
+        && (std::memcmp(sf.data(), lastStream.data(), sizeof(payload_t))
+            == 0)) {
+        count.streamRejected++;
+        return;
+    }
+
+    lastStream = sf;
+
     // Frame numbers count up modulo 0x8000 within one lock; a small forward
     // gap means frames were lost while locked. A repeated or backward number
-    // is a frame the decoder zeroed for excess errors, noise, or a new
-    // stream, and is not counted.
-    StreamFrame sf = decoder.getStreamFrame();
+    // is noise or a new stream, and is not counted.
     uint16_t fn = sf.getFrameNumber() & 0x7FFF;
 
     if (haveStreamFn) {
