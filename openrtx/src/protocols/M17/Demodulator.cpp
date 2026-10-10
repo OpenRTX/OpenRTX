@@ -330,6 +330,7 @@ void Demodulator::reset()
     samplingPoint   = 0;
     syncSign        = 0;
     missedSyncs     = 0;
+    lastSyncValid   = false;
     corrThreshold   = 0.0f;
     newFrame        = false;
     resetClockRec   = false;
@@ -381,6 +382,24 @@ void Demodulator::quantizeSyncword(const uint32_t samplePoint)
     }
 }
 
+bool Demodulator::validSyncSigns(const frame_t &frame)
+{
+    static constexpr uint8_t SIGNS = 0xAA;
+    const uint8_t signs[2] = { static_cast< uint8_t >(frame[0] & SIGNS),
+                               static_cast< uint8_t >(frame[1] & SIGNS) };
+
+    for(const syncw_t &sync :
+        { LSF_SYNC_WORD, STREAM_SYNC_WORD, PACKET_SYNC_WORD })
+    {
+        syncw_t target = { static_cast< uint8_t >(sync[0] & SIGNS),
+                           static_cast< uint8_t >(sync[1] & SIGNS) };
+        if(compareSyncwords(signs, target, 1))
+            return true;
+    }
+
+    return false;
+}
+
 void Demodulator::syncedState()
 {
     quantizeSyncword(samplingPoint);
@@ -393,6 +412,8 @@ void Demodulator::syncedState()
         demodState = DemodState::LOCKED;
     else
         demodState = DemodState::UNLOCKED;
+
+    lastSyncValid = valid;
 }
 
 void Demodulator::lockedState(int16_t sample)
@@ -403,8 +424,19 @@ void Demodulator::lockedState(int16_t sample)
     quantize(sample);
     devEstimator.sample(sample);
 
+    // Update only between two valid syncwords, so dropout noise is left out
+    if(frameIndex == SYNCWORD_SYMBOLS) {
+        bool valid = validSyncSigns(*demodFrame);
+
+        if(valid && lastSyncValid)
+            devEstimator.update();
+        else
+            devEstimator.reinit();
+
+        lastSyncValid = valid;
+    }
+
     if(frameIndex == FRAME_SYMBOLS) {
-        devEstimator.update();
         std::swap(readyFrame, demodFrame);
 
         frameIndex = 0;
