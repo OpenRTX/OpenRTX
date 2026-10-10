@@ -73,7 +73,8 @@ public:
 
     /**
      * Update the estimation of outer symbol deviation and zero-offset and
-     * start a new acquisition cycle.
+     * start a new acquisition cycle. As the reference given to init(), the
+     * outer deviation includes the zero-offset.
      */
     void update()
     {
@@ -83,8 +84,8 @@ public:
         int32_t max = posAccum / posCnt;
         int32_t min = negAccum / negCnt;
         offset = (max + min) / 2;
-        outerDev.first = max - offset;
-        outerDev.second = min - offset;
+        outerDev.first = max;
+        outerDev.second = min;
         posAccum = 0;
         negAccum = 0;
         posCnt = 0;
@@ -94,7 +95,7 @@ public:
     /**
      * Get the estimated outer symbol deviation from the last update.
      * The function returns a std::pair where the first element is the positive
-     * deviation and the second the negative one.
+     * deviation and the second the negative one. Both include the zero-offset.
      *
      * @return outer deviation.
      */
