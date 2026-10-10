@@ -393,3 +393,44 @@ TEST_CASE("Demodulator follows an increase of the signal level",
             REQUIRE(received[f]);
     }
 }
+
+TEST_CASE("Demodulator keeps the signal level through a dropout",
+          "[m17][demodulator]")
+{
+    // Noise from the dropout in frame 4 must not move the estimate
+    static constexpr size_t NUM_FRAMES = 12;
+    static constexpr size_t DROP_FRAME = 4;
+    static constexpr int32_t NOISE = 12000;
+
+    TestStream s = makeStream(NUM_FRAMES, 800.0f);
+    size_t dropStart = s.frameStart[DROP_FRAME];
+    size_t dropLength = 0;
+
+    SECTION("100 ms from the middle of a frame")
+    {
+        dropStart += (s.frameStart[DROP_FRAME + 1] - dropStart) / 2;
+        dropLength = 2400;
+    }
+
+    SECTION("60 ms from just after a syncword")
+    {
+        // The frame keeps a valid syncword, the rest of it is noise
+        dropStart += 12 * SAMPLES_PER_SYM;
+        dropLength = 1440;
+    }
+
+    size_t dropEnd = dropStart + dropLength;
+    std::minstd_rand rng(2);
+    for (size_t i = dropStart; i < dropEnd; i++)
+        s.baseband[i] = static_cast<int16_t>(
+            static_cast<int32_t>(rng() % (2 * NOISE + 1)) - NOISE);
+
+    auto received = receivedFrames(s);
+
+    // Every frame starting after the carrier is back is received.
+    for (size_t f = 0; f < NUM_FRAMES; f++) {
+        INFO("Frame " << f);
+        if ((f < DROP_FRAME) || (s.frameStart[f] >= dropEnd))
+            REQUIRE(received[f]);
+    }
+}
