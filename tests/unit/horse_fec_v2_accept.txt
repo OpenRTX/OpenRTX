@@ -1,0 +1,61 @@
+# Horse FEC v2 post-implementation acceptance (2026-10-06)
+
+Branch `upstream-sync` after protocol v2 commits through docs
+`0b915e9a`. Host: `build_linux/horse_fec_v2_sim`, real `HorseDemodulator`,
+`setSkipDcBlock(true)`, gain 1.0.
+
+## complete_v2 noise=10000 ntx=200 miss_limit=4
+
+Seed `1 + t*17`:
+
+```
+complete_v2 mode=encrypt miss_limit=4 noise=10000 ok=95/200 voice_ok=47195
+complete_v2 mode=sign miss_limit=4 noise=10000 ok=107/200 voice_ok=47464
+complete_v2 mode=both miss_limit=4 noise=10000 ok=95/200 voice_ok=46907
+```
+
+Seed `11000 + t*17` (section 16 style `1000 + noise`):
+
+```
+complete_v2 mode=encrypt miss_limit=4 noise=10000 ok=99/200 voice_ok=48277
+complete_v2 mode=sign miss_limit=4 noise=10000 ok=99/200 voice_ok=47932
+complete_v2 mode=both miss_limit=4 noise=10000 ok=98/200 voice_ok=47977
+```
+
+Gate >= 198/200: not met.
+
+## lsf_frag noise=10000 nvoice=40
+
+```
+lsf_frag nfr=3 erase_open=0 noise=10000 nvoice=40 open=158/200 frag_or_open=186/200 mean_start_fr=2 spare_bits=96
+lsf_frag nfr=3 erase_open=1 noise=10000 nvoice=40 open=0/200 frag_or_open=137/200 mean_start_fr=15 spare_bits=96
+lsf_frag nfr=3 erase_open=1 noise=10000 nvoice=40 open=0/200 frag_or_open=127/200 mean_start_fr=15 spare_bits=96
+```
+
+(second erase_open=1 line uses seed 11000). Gate frag_or_open >= 198/200: not met.
+
+## Cost
+
+```
+voice m17_hard noise=0 n=5000 us/frame=82.4
+voice m17_hard noise=10000 n=2000 us/frame=82.2
+sizeof HorseFrameDecoder=454
+sizeof HorseFrameEncoder=116
+sizeof HorseDemodulator=416
+sizeof HardViterbi=2032
+voice_decode -Wstack-usage=2208
+```
+
+## Loopback baselines (post-v2)
+
+```
+impair: first_noise_fail=17000 first_ppm_fail=450 ... dc500=3/3 gain0.25=3/3 gain0.5=3/3 gain2.0=0/3
+long-clock smoke ppm=0 deliv=1.0000
+long-clock smoke ppm=20 deliv=1.0000
+horse_loopback: all tests passed
+```
+
+## long-clock tracking (horse_loopback_test long)
+
+tracking=1 nvoice=3000 and 28000: deliv=1.0000 for ppm<=20 at noise 0 and 8000
+(gate: tracking && ppm<=20 => deliv>=0.99). Exit 0.

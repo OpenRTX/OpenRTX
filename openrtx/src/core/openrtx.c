@@ -15,6 +15,10 @@
 #include "core/threads.h"
 #include "core/state.h"
 #include "core/ui.h"
+#ifdef CONFIG_HORSE
+#include "protocols/horse/horse_keystore.h"
+#include "protocols/horse/horse_provision.h"
+#endif
 #ifdef PLATFORM_LINUX
 #include <stdlib.h>
 #endif
@@ -51,6 +55,11 @@ void openrtx_init()
             #endif
         }
     }
+
+#ifdef CONFIG_HORSE
+    horse_keystore_init();
+    horse_provision_init();
+#endif
 
     // Display splash screen, turn on backlight after a suitable time to
     // hide random pixels during render process

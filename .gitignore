@@ -68,9 +68,20 @@ subprojects/codec2
 subprojects/tinyusb
 subprojects/XPowersLib
 subprojects/catch2
+subprojects/libsodium-1.0.20
+subprojects/packagecache
 
 # ignore log files
 *.log
+
+# Fuzzer artifacts and logs
+fuzz_artifacts/
+fuzz_artifacts_smoke/
+
+# Fuzzer corpus: keep only seed files; ignore libFuzzer-generated (hash-named) corpus
+tests/fuzz/corpus/fuzz_horse_frame/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
+tests/fuzz/corpus/fuzz_horse_voice/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
+tests/fuzz/corpus/[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
 
 # ignore linux openrtx emulator history file
 .emulatorsh_history

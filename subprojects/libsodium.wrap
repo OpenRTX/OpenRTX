@@ -1,0 +1,10 @@
+[wrap-file]
+directory = libsodium-1.0.20
+source_url = https://download.libsodium.org/libsodium/releases/libsodium-1.0.20.tar.gz
+source_filename = libsodium-1.0.20.tar.gz
+source_hash = ebb65ef6ca439333c2bb41a0c1990587288da07f6c7fd07cb3a18cc18d30ce19
+patch_directory = libsodium
+
+# Pin and hash for Horse Cortex-M4 libsodium. Meson does not use
+# Autotools add_project (relative --includedir). See
+# scripts/build_libsodium_cm4.sh.

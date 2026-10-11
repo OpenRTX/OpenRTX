@@ -53,8 +53,24 @@ typedef struct
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
     char     M17_meta_text[53];        /**< M17 Meta Text              */
+
+#ifdef CONFIG_HORSE
+    bool     horseLsfOk;               /**  Horse LSF is valid          */
+    char     horse_dst[10];            /**  Horse LSF destination      */
+    char     horse_src[10];            /**  Horse LSF source           */
+    uint8_t  horseError;               /**  HORSE_ERR_*                  */
+#endif
 }
 rtxStatus_t;
+
+#ifdef CONFIG_HORSE
+#define HORSE_ERR_NONE       0
+#define HORSE_ERR_NO_CRYPTO  1
+#define HORSE_ERR_NO_KEYS    2
+#define HORSE_ERR_CALL_LIMIT 3
+#define HORSE_ERR_TX_CRYPTO  4
+#define HORSE_ERR_RNG        5
+#endif
 
 /**
  * \enum bandwidth Enumeration type defining the current rtx bandwidth.
@@ -70,10 +86,13 @@ enum bandwidth
  */
 enum opmode
 {
-    OPMODE_NONE = 0,        /**< No opMode selected */
-    OPMODE_FM   = 1,        /**< Analog FM          */
-    OPMODE_DMR  = 2,        /**< DMR                */
-    OPMODE_M17  = 3         /**< M17                */
+    OPMODE_NONE  = 0,       /**< No opMode selected */
+    OPMODE_FM    = 1,       /**< Analog FM          */
+    OPMODE_DMR   = 2,       /**< DMR                */
+    OPMODE_M17   = 3        /**< M17                */
+#ifdef CONFIG_HORSE
+    ,OPMODE_HORSE = 4       /**< Horse encrypted    */
+#endif
 };
 
 /**
