@@ -1062,7 +1062,6 @@ foreach t : targets
                               build_by_default : true)
       endif
 
-
       bin = custom_target(name,
                           input   : txt,
                           output  : name+'_bin',
@@ -1090,7 +1089,7 @@ foreach t : targets
   elif name == 'openrtx_c62'
       c62_modules = custom_target('c62_west_update',
                                   output  : 'c62_west_update.stamp',
-                                  command : ['sh', '-c', 'west update --group-filter +c62 && touch @OUTPUT@'])
+                                  command : ['sh', '-c', 'west update --group-filter +csk6 && touch @OUTPUT@'])
 
       bin = custom_target(name,
                           input   : [txt, c62_modules],

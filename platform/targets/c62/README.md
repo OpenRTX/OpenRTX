@@ -6,7 +6,7 @@
 
 # Retevis C62
 
-This target is based on the ListenAI CSK6011B SoC.
+This target is based on the ListenAI CSK6011B (CSK6 family) SoC.
 
 ## Building
 
@@ -24,8 +24,8 @@ meson setup build
 meson compile -C build openrtx_c62
 ```
 
-The build will automatically run `west update --group-filter +c62` to fetch
-C62-specific Zephyr modules (AF, FreeRTOS shims, LSF, URPC) before compiling.
+The build will automatically run `west update --group-filter +csk6` to fetch
+CSK6-specific Zephyr modules (AF, FreeRTOS shims, LSF, URPC) before compiling.
 
 Alternatively, using `west` directly:
 

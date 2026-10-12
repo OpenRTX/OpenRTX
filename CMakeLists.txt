@@ -21,20 +21,25 @@ cmake_minimum_required(VERSION 3.20.0)
 # NOTE: the board-specific CMakeLists.txt files have to use the ${OPENRTX_ROOT}
 # variable as the base path. E.g. ${OPENRTX_ROOT}/platform/drivers/somedriver.c
 #
+get_filename_component(WEST_TOPDIR $ENV{ZEPHYR_BASE} DIRECTORY)
+
 if (${BOARD} STREQUAL "ttwrplus")
     set(ARCH xtensa)
     set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/ESP32S3/zephyr.conf)
-endif()
 
-if (${BOARD} STREQUAL "c62")
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/modules/hal/espressif)
+elseif (${BOARD} STREQUAL "c62")
     set(ARCH arm)
     set(Zephyr-sdk_DIR $ENV{ZEPHYR_16_SDK_INSTALL_DIR}/cmake/)
     set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/CSK6011B/zephyr.conf)
 
-    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/freertos_shims)
-    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/af)
-    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/lsf)
-    list(APPEND ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/../modules/lib/urpc)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/csk)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/modules/hal/cmsis)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/modules/hal/listenai/csk6_cm33)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/modules/lib/af)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/modules/lib/freertos_shims)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/modules/lib/lsf)
+    list(APPEND ZEPHYR_EXTRA_MODULES ${WEST_TOPDIR}/modules/lib/urpc)
 endif()
 
 #
