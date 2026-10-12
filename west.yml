@@ -11,56 +11,92 @@ manifest:
     remote: zephyr
 
   group-filter:
-    - -c62
+    - -csk6
 
   remotes:
-    - name: zephyr
-      url-base: https://github.com/zephyrproject-rtos
-    - name: c62-dependencies
+    - name: openrtx
       url-base: https://github.com/OpenRTX
 
-  projects:
     - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    # Zephyr mainline modules
+    - name: zephyr
+      remote: zephyr
       revision: a4de2eb3d1756c445d2e2ecb72e6d562674c118b
       path: zephyr
       west-commands: scripts/west-commands.yml
-      import: submanifests
 
     - name: mcuboot
+      remote: zephyr
       revision: 9bf7ce8c5fe8152836a6e00bd4444153bd950342
       path: bootloader/mcuboot
 
     - name: hal_espressif
+      remote: zephyr
       revision: 80d910ca89eab9bce03f59a4ade33f1fc30ce0ad
       path: modules/hal/espressif
       west-commands: west/west-commands.yml
-      groups:
-        - hal
 
-    - name: openrtx-c62-modules-af
-      remote: c62-dependencies
+    - name: cmsis
+      remote: zephyr
+      repo-path: cmsis
+      revision: 74981bf893e8b10931464b9945e2143d99a3f0a3
+      path: modules/hal/cmsis
+      groups:
+        - csk6
+
+    # ListenAI fork-specific modules
+    - name: listenai-zephyr
+      remote: openrtx
+      repo-path: listenai-zephyr
+      revision: b8fcc47cc045871d5127a78a77b3f30feb65e8cd
+      path: zephyr-listenai
+      west-commands: scripts/west-commands.yml
+      groups:
+        - csk6
+
+    - name: listenai-csk
+      remote: openrtx
+      repo-path: listenai-csk
+      revision: f097b7f9dfe4aba9fae08af787230e023ee21aa0
+      path: csk
+      groups:
+        - csk6
+
+    - name: listenai-hal
+      remote: openrtx
+      repo-path: csk6_cm33
+      revision: 9444f3dc2abec4d49e5daa6112a798ee43999222
+      path: modules/hal/listenai/csk6_cm33
+      groups:
+        - csk6
+
+    - name: listenai-modules-af
+      remote: openrtx
       revision: openrtx-c62
       path: modules/lib/af
       groups:
-        - c62
+        - csk6
 
-    - name: openrtx-c62-modules-freertos_shims
-      remote: c62-dependencies
+    - name: listenai-modules-freertos_shims
+      remote: openrtx
       revision: openrtx-c62
       path: modules/lib/freertos_shims
       groups:
-        - c62
+        - csk6
 
-    - name: openrtx-c62-modules-lsf
-      remote: c62-dependencies
+    - name: listenai-modules-lsf
+      remote: openrtx
       revision: openrtx-c62
       path: modules/lib/lsf
       groups:
-        - c62
+        - csk6
 
-    - name: openrtx-c62-modules-urpc
-      remote: c62-dependencies
+    - name: listenai-modules-urpc
+      remote: openrtx
       revision: openrtx-c62
       path: modules/lib/urpc
       groups:
-        - c62
+        - csk6
