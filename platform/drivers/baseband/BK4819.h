@@ -48,6 +48,11 @@ extern "C" {
 #define BK4819_REG51_AUTO_CTCSS_BW_MOD BIT(8)
 #define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x), 0)
 
+#define BK4819_GPIO_INPUT 0U
+#define BK4819_GPIO_OUTPUT BIT(0)
+#define BK4819_GPIO_ACTIVE_LOW BIT(1)
+#define BK4819_GPIO_ACTIVE_HIGH 0U
+
 #define BK4819_SCAN_FRE_TIME_2 0x00
 #define BK4819_SCAN_FRE_TIME_4 0x01
 #define BK4819_SCAN_FRE_TIME_8 0x02
@@ -201,8 +206,9 @@ typedef enum {
  * transfer function does not manage it.
  */
 struct BK4819 {
-    const struct spiDevice *spi; ///< SPI bus device
-    struct gpioPin scn;          ///< Chip select, active low
+    const struct spiDevice *spi;  ///< SPI bus device
+    struct gpioPin scn;           ///< Chip select, active low
+    uint8_t gpio_active_low_mask; ///< Bitmask of active-low GPIO outputs
 };
 
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg);
@@ -428,11 +434,24 @@ uint8_t bk4819_get_scan_freq_flag(const struct BK4819 *dev);
 uint32_t bk4819_get_scan_freq(const struct BK4819 *dev);
 
 /**
+ * Configure a BK4819 GPIO pin.
+ *
+ * Pins are numbered 0 through 6. GPIOs are inputs by default; set
+ * BK4819_GPIO_OUTPUT to configure an output. Output values set through
+ * bk4819_gpio_pin_set() use the configured active level.
+ *
+ * @param dev: pointer to device data.
+ * @param Pin GPIO pin number.
+ * @param flags GPIO direction and active-level flags.
+ */
+void bk4819_gpio_pin_config(struct BK4819 *dev, uint8_t Pin, uint16_t flags);
+
+/**
  * Toggle a BK4819 GPIO pin.
  *
  * @param dev: pointer to device data.
  * @param Pin GPIO pin number.
- * @param bSet true to set, false to clear.
+ * @param bSet true to set the pin to its active level, false to clear it.
  */
 void bk4819_gpio_pin_set(const struct BK4819 *dev, uint8_t Pin, bool bSet);
 

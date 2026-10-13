@@ -44,7 +44,7 @@ extern "C" {
  * BK4819 and BK1080 device instances. Pin numbers must be kept in sync
  * with the board devicetree (gpioa/gpiob nodes).
  */
-extern const struct BK4819 c62_bk4819;
+extern struct BK4819 c62_bk4819;
 extern const struct BK1080 c62_bk1080;
 
 extern const struct gpio_dt_spec speaker_enable;

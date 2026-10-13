@@ -66,16 +66,16 @@ void radio_init(const rtxStatus_t *rtxState)
 
     BK4819_SetAF(&c62_bk4819, 0);
 
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA,
-                        false); // VHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA,
-                        false); // UHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_TX_PA,
-                        false); // VHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_TX_PA,
-                        false); // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED,
-                        false); // ALC / TX LED
+    bk4819_gpio_pin_config(&c62_bk4819, GPIO_VHF_RX_LNA,
+                           BK4819_GPIO_OUTPUT | BK4819_GPIO_ACTIVE_LOW);
+    bk4819_gpio_pin_config(&c62_bk4819, GPIO_UHF_RX_LNA,
+                           BK4819_GPIO_OUTPUT | BK4819_GPIO_ACTIVE_LOW);
+    bk4819_gpio_pin_config(&c62_bk4819, GPIO_VHF_TX_PA,
+                           BK4819_GPIO_OUTPUT | BK4819_GPIO_ACTIVE_HIGH);
+    bk4819_gpio_pin_config(&c62_bk4819, GPIO_UHF_TX_PA,
+                           BK4819_GPIO_OUTPUT | BK4819_GPIO_ACTIVE_HIGH);
+    bk4819_gpio_pin_config(&c62_bk4819, GPIO_ALC_TX_LED,
+                           BK4819_GPIO_OUTPUT | BK4819_GPIO_ACTIVE_HIGH);
 }
 
 void radio_terminate()
