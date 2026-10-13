@@ -50,7 +50,9 @@ enum Mode
     OPEN_DRAIN_PU   = 6, ///< Output, open drain with pull-up
     ALTERNATE       = 7, ///< Alternate function
     ALTERNATE_OD    = 8, ///< Alternate function, open drain
-    ALTERNATE_OD_PU = 9  ///< Alternate function, open drain with pull-up
+    ALTERNATE_OD_PU = 9, ///< Alternate function, open drain with pull-up
+    OUTPUT_ACTIVE_LOW =
+        10               ///< Output, push pull, set/clear use active-low levels
 };
 
 /**
@@ -77,7 +79,7 @@ struct gpioApi
     int (*mode)(const struct gpioDev *dev, const uint8_t pin, const uint16_t mode);
 
     /**
-     * Set gpio pin to logic high level.
+    * Set gpio pin to logic high level, or low for OUTPUT_ACTIVE_LOW.
      * NOTE: this function does not guarantee that the operation is performed atomically.
      *
      * @param port: device handling the gpio port.
@@ -86,7 +88,7 @@ struct gpioApi
     void (*set)(const struct gpioDev *dev, const uint8_t pin);
 
     /**
-     * Set gpio pin to logic low level.
+    * Set gpio pin to logic low level, or high for OUTPUT_ACTIVE_LOW.
      * NOTE: this function does not guarantee that the operation is performed atomically.
      *
      * @param port: device handling the gpio port.
@@ -95,7 +97,7 @@ struct gpioApi
     void (*clear)(const struct gpioDev *dev, const uint8_t pin);
 
     /**
-     * Read gpio pin's logic level.
+    * Read gpio pin's logic level (inverted for OUTPUT_ACTIVE_LOW).
      *
      * @param port: device handling the gpio port.
      * @param pin: gpio pin number.
@@ -147,7 +149,7 @@ static inline int gpioDev_setMode(const struct gpioDev *port, const uint8_t pin,
 }
 
 /**
- * Set gpio pin to logic high level.
+ * Set gpio pin to logic high level, or low for OUTPUT_ACTIVE_LOW.
  * NOTE: this function does not guarantee that the operation is performed atomically.
  *
  * @param port: device handling the gpio port.
@@ -159,7 +161,7 @@ static inline void gpioDev_set(const struct gpioDev *port, const uint8_t pin)
 }
 
 /**
- * Set gpio pin to logic low level.
+ * Set gpio pin to logic low level, or high for OUTPUT_ACTIVE_LOW.
  * NOTE: this function does not guarantee that the operation is performed atomically.
  *
  * @param port: device handling the gpio port.
@@ -171,7 +173,7 @@ static inline void gpioDev_clear(const struct gpioDev *port, const uint8_t pin)
 }
 
 /**
- * Read gpio pin's logic level.
+ * Read gpio pin's logic level (inverted for OUTPUT_ACTIVE_LOW).
  *
  * @param port: device handling the gpio port.
  * @param pin: gpio pin number.
@@ -196,7 +198,7 @@ static inline int gpioPin_setMode(const struct gpioPin *gpio, const uint16_t mod
 }
 
 /**
- * Set gpio pin to logic high level.
+ * Set gpio pin to logic high level, or low for OUTPUT_ACTIVE_LOW.
  * NOTE: this function does not guarantee that the operation is performed atomically.
  *
  * @param gpio: pointer to GPIO pin descriptor.
@@ -207,7 +209,7 @@ static inline void gpioPin_set(const struct gpioPin *gpio)
 }
 
 /**
- * Set gpio pin to logic low level.
+ * Set gpio pin to logic low level, or high for OUTPUT_ACTIVE_LOW.
  * NOTE: this function does not guarantee that the operation is performed atomically.
  *
  * @param gpio: pointer to GPIO pin descriptor.
@@ -218,7 +220,7 @@ static inline void gpioPin_clear(const struct gpioPin *gpio)
 }
 
 /**
- * Read gpio pin's logic level.
+ * Read gpio pin's logic level (inverted for OUTPUT_ACTIVE_LOW).
  *
  * @param gpio: pointer to GPIO pin descriptor.
  * @return true if pin is at high logic level, 0 if pin is at low logic level.
