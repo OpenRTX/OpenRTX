@@ -17,6 +17,7 @@
 #include "protocols/M17/Demodulator.hpp"
 #include "protocols/M17/DevEstimator.hpp"
 #include "protocols/M17/DSP.hpp"
+#include "protocols/M17/FrameDecoder.hpp"
 #include "protocols/M17/Synchronizer.hpp"
 #include "core/fir.hpp"
 #include "M17Signal.hpp"
@@ -308,6 +309,116 @@ TEST_CASE("Demodulator stays locked through the packet frames of an SMS",
     REQUIRE(transitions[0] < tx.lsfStart + FRAME_SAMPLES);
     REQUIRE(transitions[1] > tx.end);
     REQUIRE(transitions[1] - tx.end < FRAME_SAMPLES / 2);
+}
+
+/**
+ * Append a lone LSF syncword after symbols of another 4FSK mode, as noise
+ * sometimes forms one.
+ *
+ * @param symbols: symbols to append to.
+ */
+static void appendFalseSync(std::vector<int8_t> &symbols)
+{
+    static constexpr std::array<int8_t, N> LSF_SYNC = { +3, +3, +3, +3,
+                                                        -3, -3, +3, -3 };
+
+    std::vector<int8_t> other = M17Signal::otherSymbols(1, 0.5);
+    symbols.insert(symbols.end(), other.begin(), other.end());
+    symbols.insert(symbols.end(), LSF_SYNC.begin(), LSF_SYNC.end());
+}
+
+/**
+ * Baseband of a false lock and a transmission starting 50 ms after it, while
+ * the lock still holds.
+ *
+ * @param frames: encoded frames of the transmission.
+ * @param tx: filled with the sample indices of the transmission.
+ * @return the baseband.
+ */
+static std::vector<int16_t>
+afterFalseLock(const std::vector<M17::frame_t> &frames, Transmission &tx)
+{
+    std::vector<int8_t> symbols;
+    appendFalseSync(symbols);
+    std::vector<int8_t> other = M17Signal::otherSymbols(2, 0.05);
+    symbols.insert(symbols.end(), other.begin(), other.end());
+    tx = appendTransmission(symbols, frames);
+    symbols.insert(symbols.end(), 400, 0);
+
+    return M17Signal::rrcBaseband(symbols);
+}
+
+/**
+ * Count the LSFs decoded with a valid CRC, taking frames only while locked as
+ * OpMode_M17 does.
+ *
+ * @param baseband: 24 kHz baseband.
+ * @return the number of valid LSFs.
+ */
+static size_t validLsfs(const std::vector<int16_t> &baseband)
+{
+    M17::Demodulator demod;
+    M17::FrameDecoder decoder;
+    demod.init();
+
+    size_t count = 0;
+    bool locked = false;
+    for (size_t i = 0; i < baseband.size(); i++) {
+        bool ready = demod.sample(baseband[i]);
+        if (demod.isLocked() && !locked)
+            decoder.reset();
+
+        locked = demod.isLocked();
+        if (!ready)
+            continue;
+
+        M17::frame_t frame = demod.getFrame();
+        if (locked && (decoder.decodeFrame(frame) == M17::FrameType::LINK_SETUP)
+            && decoder.getLsf().valid())
+            count++;
+    }
+
+    demod.terminate();
+    return count;
+}
+
+TEST_CASE("Demodulator drops a false lock that fails verification",
+          "[m17][demodulator]")
+{
+    std::vector<int8_t> symbols;
+    appendFalseSync(symbols);
+    std::vector<int8_t> other = M17Signal::otherSymbols(2, 0.5);
+    symbols.insert(symbols.end(), other.begin(), other.end());
+    auto transitions = lockTransitions(M17Signal::rrcBaseband(symbols));
+
+    // Locked on the lone syncword; the next frame has none, so the lock is
+    // lost when that frame ends
+    REQUIRE(transitions.size() == 2);
+    REQUIRE(transitions[1] - transitions[0] < 2 * FRAME_SAMPLES);
+}
+
+TEST_CASE("Demodulator decodes the LSF of a voice transmission starting "
+          "during a false lock",
+          "[m17][demodulator]")
+{
+    Transmission tx;
+    auto baseband = afterFalseLock(M17Signal::voiceFrames(10), tx);
+
+    REQUIRE(validLsfs(baseband) == 1);
+}
+
+TEST_CASE("Demodulator receives an SMS starting during a false lock",
+          "[m17][demodulator]")
+{
+    Transmission tx;
+    auto baseband = afterFalseLock(M17Signal::smsFrames(4, 'a'), tx);
+    auto transitions = lockTransitions(baseband);
+
+    // The false lock, then the SMS locked from its LSF to its EOT frame
+    REQUIRE(transitions.size() == 4);
+    REQUIRE(transitions[2] > tx.lsfStart);
+    REQUIRE(transitions[2] < tx.lsfStart + FRAME_SAMPLES);
+    REQUIRE(transitions[3] > tx.end);
 }
 
 TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames",
