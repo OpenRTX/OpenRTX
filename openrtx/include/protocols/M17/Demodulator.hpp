@@ -114,7 +114,8 @@ private:
     void reset();
 
     /**
-     * State handler function for DemodState::UNLOCKED
+     * State handler function for DemodState::UNLOCKED: search for an LSF or
+     * stream syncword to acquire a lock on.
      */
     void unlockedState();
 
@@ -131,7 +132,8 @@ private:
     void lockedState(int16_t sample);
 
     /**
-     * State handler function for DemodState::SYNC_UPDATE
+     * State handler function for DemodState::SYNC_UPDATE: check the syncword
+     * of the frame just completed, to verify a new lock and then to keep it.
      */
     void syncUpdateState();
 
@@ -193,7 +195,7 @@ private:
     uint32_t                       samplingPoint;   ///< Symbol sampling point
     int8_t                         syncSign;        ///< Sign of the last syncword correlation peak
     uint32_t                       sampleCount;     ///< Free-running sample counter
-    uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
+    uint8_t                        missedSyncs;     ///< Missed syncs left before the lock is lost
     bool                           lastSyncValid;   ///< Signs of the last syncword are valid
     uint32_t                       initCount;       ///< Downcounter for initialization
     float                          corrThreshold;   ///< Correlation threshold

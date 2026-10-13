@@ -458,13 +458,16 @@ void Demodulator::syncUpdateState()
 
     bool eot = compareSyncwords(readyFrame->data(), EOT_SYNC_WORD, 1);
 
+    // Noise forms one syncword now and then, rarely two in a row: a new lock
+    // is lost on its first missed sync, a verified one on the fifth in a row.
+    // The first check is of the acquisition syncword: zero becomes one.
     if(valid)
-        missedSyncs = 0;
+        missedSyncs = (missedSyncs > 0) ? 5 : 1;
     else
-        missedSyncs += 1;
+        missedSyncs -= 1;
 
-    // The lock is lost on the fifth consecutive sync miss or an EOT frame.
-    if((missedSyncs > 4) || eot)
+    // The lock is lost when the count reaches zero or on an EOT frame.
+    if((missedSyncs == 0) || eot)
         demodState = DemodState::UNLOCKED;
     else
         demodState = DemodState::LOCKED;
