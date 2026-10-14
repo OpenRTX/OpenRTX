@@ -84,6 +84,7 @@ jobs:
           app-path: app
           toolchains: xtensa-espressif_esp32s3_zephyr-elf
           sdk-version: 0.17.0
+          west-update-flags: --group-filter +esp32
       - name: Compile zephyr
         run: |
           cd app

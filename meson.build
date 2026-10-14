@@ -1062,6 +1062,13 @@ foreach t : targets
                               build_by_default : true)
       endif
 
+      deps = custom_target(name+'_deps',
+                          output  : name+'_deps.stamp',
+                          capture : true,
+                          command : [west,
+                                    'update',
+                                    '--group-filter', '+esp32'])
+
       bin = custom_target(name,
                           input   : txt,
                           output  : name+'_bin',
