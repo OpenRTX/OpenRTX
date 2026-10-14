@@ -41,6 +41,7 @@ path = [
     "subprojects/XPowersLib.wrap",
     "scripts/uf2families.json",
     "scripts/generate_symbols.py",
+    "scripts/voice_overrides.json",
 ]
 SPDX-License-Identifier = "GPL-3.0-or-later"
 SPDX-FileCopyrightText = "OpenRTX Contributors"
