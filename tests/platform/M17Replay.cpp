@@ -169,9 +169,10 @@ void M17Replay::handleStream(const double time)
     // A rejected frame leaves the decoder's frame unchanged, or cleared after
     // a lock: an all-zero frame 0 also reads as rejected.
     StreamFrame sf = decoder.getStreamFrame();
-    if ((sf.getFrameNumber() == lastStream.getFrameNumber())
-        && (std::memcmp(sf.data(), lastStream.data(), sizeof(payload_t))
-            == 0)) {
+    bool sameFn = (sf.getFrameNumber() == lastStream.getFrameNumber());
+    bool samePayload =
+        (std::memcmp(sf.data(), lastStream.data(), sizeof(payload_t)) == 0);
+    if (sameFn && samePayload) {
         count.streamRejected++;
         return;
     }
