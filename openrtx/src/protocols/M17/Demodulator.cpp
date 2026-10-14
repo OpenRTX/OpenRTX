@@ -408,10 +408,13 @@ void Demodulator::syncedState()
     const syncw_t &syncword = (syncSign > 0) ? LSF_SYNC_WORD : STREAM_SYNC_WORD;
     bool valid = compareSyncwords(demodFrame->data(), syncword, 0);
 
-    if(valid)
-        demodState = DemodState::LOCKED;
-    else
+    if(valid) {
+        // Forget the symbol timing gathered before this lock
+        demodState    = DemodState::LOCKED;
+        resetClockRec = true;
+    } else {
         demodState = DemodState::UNLOCKED;
+    }
 
     lastSyncValid = valid;
 }
