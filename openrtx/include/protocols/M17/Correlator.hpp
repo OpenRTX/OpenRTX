@@ -15,7 +15,8 @@
  * between a stream of signed 16-bit samples and a known syncword.
  * The correlator has its internal storage for past samples.
  */
-template <size_t SYNCW_SIZE, size_t SAMPLES_PER_SYM> class Correlator
+template <size_t SYNCW_SIZE, size_t SAMPLES_PER_SYM>
+class Correlator
 {
 public:
     /**
