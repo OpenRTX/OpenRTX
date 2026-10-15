@@ -59,6 +59,7 @@ target_compile_definitions(app
     CODEC2_MODE_3200_EN=1
     M_PI=3.14159265358979323846f
     GIT_VERSION="${GIT_VER_ID}"
+    LFS_THREADSAFE
 )
 
 target_include_directories(app
@@ -73,6 +74,7 @@ target_include_directories(app
     lib/minmea/include
     lib/qdec/include
     lib/QRCode/include
+    lib/littlefs
 )
 
 target_sources(app
@@ -142,4 +144,6 @@ target_sources(app
 
     lib/minmea/minmea.c
     lib/QRCode/qrcode.c
+    lib/littlefs/lfs.c
+    lib/littlefs/lfs_util.c
 )
