@@ -157,7 +157,6 @@ platform/drivers/NVM/W25Qx.c
 platform/drivers/NVM/W25Qx.h
 platform/drivers/NVM/flash_zephyr.c
 platform/drivers/NVM/flash_zephyr.h
-platform/drivers/NVM/nvmem_GDx.c
 platform/drivers/NVM/nvmem_Mod17.c
 platform/drivers/NVM/nvmem_settings_MDx.c
 platform/drivers/NVM/nvmem_ttwrplus.c
