@@ -394,6 +394,33 @@ TEST_CASE("Demodulator drops a false lock that fails verification",
     REQUIRE(transitions[1] - transitions[0] < 2 * FRAME_SAMPLES);
 }
 
+TEST_CASE("Demodulator does not lock on a lone LSF syncword",
+          "[m17][demodulator]")
+{
+    // An LSF syncword with no preamble before it, as noise sometimes forms
+    static constexpr std::array<int8_t, N> LSF_SYNC = { +3, +3, +3, +3,
+                                                        -3, -3, +3, -3 };
+
+    std::vector<int8_t> symbols = M17Signal::otherSymbols(1, 0.5);
+    symbols.insert(symbols.end(), LSF_SYNC.begin(), LSF_SYNC.end());
+    std::vector<int8_t> other = M17Signal::otherSymbols(2, 0.5);
+    symbols.insert(symbols.end(), other.begin(), other.end());
+
+    REQUIRE(lockTransitions(M17Signal::rrcBaseband(symbols)).empty());
+}
+
+TEST_CASE("Demodulator decodes an LSF with a syncword symbol misread",
+          "[m17][demodulator]")
+{
+    // The first syncword symbol at an inner level, as noise can leave it
+    std::vector<int8_t> symbols;
+    Transmission tx = appendTransmission(symbols, M17Signal::voiceFrames(10));
+    symbols[tx.lsfStart / SAMPLES_PER_SYM] = +1;
+    symbols.insert(symbols.end(), 400, 0);
+
+    REQUIRE(validLsfs(M17Signal::rrcBaseband(symbols)) == 1);
+}
+
 TEST_CASE("Demodulator decodes the LSF of a voice transmission starting "
           "during a false lock",
           "[m17][demodulator]")
