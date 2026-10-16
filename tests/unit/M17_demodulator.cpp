@@ -312,19 +312,16 @@ TEST_CASE("Demodulator stays locked through the packet frames of an SMS",
 }
 
 /**
- * Append a lone LSF syncword after symbols of another 4FSK mode, as noise
+ * Append a lone stream syncword after symbols of another 4FSK mode, as noise
  * sometimes forms one.
  *
  * @param symbols: symbols to append to.
  */
 static void appendFalseSync(std::vector<int8_t> &symbols)
 {
-    static constexpr std::array<int8_t, N> LSF_SYNC = { +3, +3, +3, +3,
-                                                        -3, -3, +3, -3 };
-
     std::vector<int8_t> other = M17Signal::otherSymbols(1, 0.5);
     symbols.insert(symbols.end(), other.begin(), other.end());
-    symbols.insert(symbols.end(), LSF_SYNC.begin(), LSF_SYNC.end());
+    symbols.insert(symbols.end(), STREAM_SYNC.begin(), STREAM_SYNC.end());
 }
 
 /**
