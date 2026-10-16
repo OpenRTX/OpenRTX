@@ -66,6 +66,14 @@ void codec_stop(const pathId path);
 bool codec_running();
 
 /**
+ * Check if the codec has no frames queued for a given audio path.
+ *
+ * @param path: audio path on which the operation was started.
+ * @return true if the codec is not running on that path or its queue is empty.
+ */
+bool codec_queueEmpty(const pathId path);
+
+/**
  * Get a compressed audio frame from the internal queue. Each frame is composed
  * of 8 bytes.
  *
