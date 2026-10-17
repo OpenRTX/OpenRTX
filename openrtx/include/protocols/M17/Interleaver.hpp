@@ -17,6 +17,20 @@ namespace M17
 {
 
 /**
+ * Compute the position a bit takes after interleaving, using the quadratic
+ * permutation polynomial from M17 protocol specification. Polynomial used is
+ * P(x) = 45*x + 92*x^2.
+ *
+ * \param i: bit position before interleaving.
+ * \param numBits: size of the block, in bits.
+ * \return bit position after interleaving.
+ */
+inline size_t interleavedIndex(const size_t i, const size_t numBits)
+{
+    return ((45 * i) + (92 * i * i)) % numBits;
+}
+
+/**
  * Interleave a block of data using the quadratic permutation polynomial from
  * M17 protocol specification. Polynomial used is P(x) = 45*x + 92*x^2.
  *
@@ -27,14 +41,11 @@ void interleave(std::array< uint8_t, N >& data)
 {
     std::array< uint8_t, N > interleaved;
 
-    static constexpr size_t F1 = 45;
-    static constexpr size_t F2 = 92;
     static constexpr size_t NB = N*8;
 
     for(size_t i = 0; i < NB; i++)
     {
-        size_t index = ((F1 * i) + (F2 * i * i)) % NB;
-        setBit(interleaved, index, getBit(data, i));
+        setBit(interleaved, interleavedIndex(i, NB), getBit(data, i));
     }
 
     std::copy(interleaved.begin(), interleaved.end(), data.begin());
@@ -52,14 +63,11 @@ void deinterleave(std::array< uint8_t, N >& data)
 {
     std::array< uint8_t, N > deinterleaved;
 
-    static constexpr size_t F1 = 45;
-    static constexpr size_t F2 = 92;
     static constexpr size_t NB = N*8;
 
     for(size_t i = 0; i < NB; i++)
     {
-        size_t index = ((F1 * i) + (F2 * i * i)) % NB;
-        setBit(deinterleaved, i, getBit(data, index));
+        setBit(deinterleaved, i, getBit(data, interleavedIndex(i, NB)));
     }
 
     std::copy(deinterleaved.begin(), deinterleaved.end(), data.begin());
