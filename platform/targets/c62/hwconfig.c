@@ -27,7 +27,10 @@ static const struct spiZephyrCfg c62_bk4819_spiCfg = {
 
 SPI_ZEPHYR_DEVICE_DEFINE(c62_bk4819_spi, c62_bk4819_spiCfg, NULL)
 
-struct BK4819 c62_bk4819 = { .spi = &c62_bk4819_spi, .scn = { &GpioA, 8 } };
+const struct BK4819 c62_bk4819 = { .spi = &c62_bk4819_spi,
+                                   .scn = { &GpioA, 8 } };
+
+GPIO_BK4819_DEVICE_DEFINE(c62_bk4819_gpio, c62_bk4819)
 
 static struct i2cBitbangState c62_bk1080_i2cState;
 

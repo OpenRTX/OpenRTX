@@ -185,50 +185,6 @@ void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
     }
 }
 
-void bk4819_gpio_pin_set(const struct BK4819 *dev, uint8_t Pin, bool bSet)
-{
-    const uint16_t output_mask = (uint16_t)(0x0040U >> Pin);
-    const bool output_high = bSet
-                          != ((dev->gpio_active_low_mask & BIT(Pin)) != 0);
-    uint16_t output_state = BK4819_readReg(dev, BK4819_REG_33);
-
-    if (output_high) {
-        output_state |= output_mask;
-    } else {
-        output_state &= (uint16_t)~output_mask;
-    }
-    BK4819_writeReg(dev, BK4819_REG_33, output_state);
-}
-
-void bk4819_gpio_pin_config(struct BK4819 *dev, uint8_t Pin, uint16_t flags)
-{
-    const uint16_t direction_mask = (uint16_t)(0x4000U >> Pin);
-    const uint16_t output_mask = (uint16_t)(0x0040U >> Pin);
-    const bool output = (flags & BK4819_GPIO_OUTPUT) != 0;
-    const bool active_low = (flags & BK4819_GPIO_ACTIVE_LOW) != 0;
-    uint16_t gpio_state = BK4819_readReg(dev, BK4819_REG_33);
-
-    if (active_low) {
-        dev->gpio_active_low_mask |= (uint8_t)BIT(Pin);
-    } else {
-        dev->gpio_active_low_mask &= (uint8_t)~BIT(Pin);
-    }
-
-    if (output) {
-        gpio_state &= (uint16_t)~direction_mask;
-        if (active_low) {
-            gpio_state |= output_mask;
-        } else {
-            gpio_state &= (uint16_t)~output_mask;
-        }
-    } else {
-        gpio_state |= direction_mask;
-        dev->gpio_active_low_mask &= (uint8_t)~BIT(Pin);
-    }
-
-    BK4819_writeReg(dev, BK4819_REG_33, gpio_state);
-}
-
 void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
 {
     /* frequency is in .1 Hz units */
