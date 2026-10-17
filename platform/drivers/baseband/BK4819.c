@@ -185,23 +185,6 @@ void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
     }
 }
 
-void bk4819_gpio_pin_set(const struct BK4819 *dev, uint8_t Pin, bool bSet)
-{
-    Pin += 1;
-    uint16_t BK4819_GpioOutState = BK4819_readReg(dev, BK4819_REG_33);
-    /*
-     * Enable GPIO output (set REG_33<15:8> to 0x00)
-     * HACK: this enables all GPIO pins as output
-     */
-    BK4819_GpioOutState &= 0x00FF;
-    if (bSet) {
-        BK4819_GpioOutState |= (0x0080 >> Pin);
-    } else {
-        BK4819_GpioOutState &= ~(0x0080 >> Pin);
-    }
-    BK4819_writeReg(dev, BK4819_REG_33, BK4819_GpioOutState);
-}
-
 void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
 {
     /* frequency is in .1 Hz units */

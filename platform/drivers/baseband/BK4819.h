@@ -205,6 +205,32 @@ struct BK4819 {
     struct gpioPin scn;          ///< Chip select, active low
 };
 
+struct gpioBK4819Priv {
+    const struct BK4819 *bk4819; ///< Baseband device
+    uint8_t *active_low;         ///< Per-pin active-low mask
+};
+
+/**
+ * Instantiate a BK4819 GPIO device.
+ *
+ * Pins are numbered 0 through 6. Supported modes are INPUT, OUTPUT and
+ * OUTPUT_ACTIVE_LOW. Both output modes start logically off: OUTPUT drives
+ * low, OUTPUT_ACTIVE_LOW drives high. Active-low outputs invert set, clear
+ * and read. Read samples the pin via REG0A. INPUT preserves the output latch.
+ * Other modes return -ENOTSUP; invalid pins passed to
+ * setMode return -EINVAL. Set, clear and read require a valid pin number.
+ * Operations are not atomic.
+ *
+ * @param name: GPIO device name.
+ * @param bk4819Dev: BK4819 device instance, not a pointer.
+ */
+#define GPIO_BK4819_DEVICE_DEFINE(name, bk4819Dev)                           \
+    extern const struct gpioApi gpioBK4819_ops;                              \
+    static uint8_t name##_active_low;                                        \
+    static const struct gpioBK4819Priv name##_priv = { &bk4819Dev,           \
+                                                       &name##_active_low }; \
+    const struct gpioDev name = { &gpioBK4819_ops, &name##_priv };
+
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg);
 void BK4819_writeReg(const struct BK4819 *dev, bk4819_reg_t reg, uint16_t data);
 
@@ -426,15 +452,6 @@ uint8_t bk4819_get_scan_freq_flag(const struct BK4819 *dev);
  * @return uint32_t
  */
 uint32_t bk4819_get_scan_freq(const struct BK4819 *dev);
-
-/**
- * Toggle a BK4819 GPIO pin.
- *
- * @param dev: pointer to device data.
- * @param Pin GPIO pin number.
- * @param bSet true to set, false to clear.
- */
-void bk4819_gpio_pin_set(const struct BK4819 *dev, uint8_t Pin, bool bSet);
 
 /**
  * Start the beeper.

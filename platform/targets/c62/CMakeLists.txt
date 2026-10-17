@@ -14,6 +14,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/delays.c
 
     ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_zephyr.c
+    ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_bk4819.c
     ${OPENRTX_ROOT}/platform/drivers/SPI/spi_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/SPI/spi_zephyr_bus.c
     ${OPENRTX_ROOT}/platform/drivers/I2C/i2c_bitbang.c
