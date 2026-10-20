@@ -12,6 +12,7 @@
 #include <zephyr/device.h>
 #include "drivers/GPIO/gpio_zephyr.h"
 #include "drivers/SPI/spi_zephyr.h"
+#include "drivers/I2C/i2c_bitbang.h"
 
 /*
  * Pin mapping, must match platform/targets/c62/c62.dts:
@@ -29,8 +30,18 @@ SPI_ZEPHYR_DEVICE_DEFINE(c62_bk4819_spi, c62_bk4819_spiCfg, NULL)
 const struct BK4819 c62_bk4819 = { .spi = &c62_bk4819_spi,
                                    .scn = { &GpioA, 8 } };
 
-const struct BK1080 c62_bk1080 = { .sck = { &GpioA, 5 },
-                                   .sda = { &GpioA, 6 },
+static struct i2cBitbangState c62_bk1080_i2cState;
+
+static const struct i2cBitbangCfg c62_bk1080_i2cCfg = {
+    .sck = { &GpioA, 5 },
+    .sda = { &GpioA, 6 },
+    .clkPeriod = 10,
+    .state = &c62_bk1080_i2cState,
+};
+
+I2C_BITBANG_DEVICE_DEFINE(c62_bk1080_i2c, c62_bk1080_i2cCfg, NULL)
+
+const struct BK1080 c62_bk1080 = { .i2c = &c62_bk1080_i2c,
                                    .pwr = { &GpioB, 2 } };
 
 const struct gpio_dt_spec speaker_enable =
