@@ -205,9 +205,9 @@ struct BK4819 {
     struct gpioPin scn;          ///< Chip select, active low
 };
 
-struct gpioBK4819Priv {
-    const struct BK4819 *bk4819; ///< Baseband device
-    uint8_t *active_low;         ///< Per-pin active-low mask
+struct BK4819Priv {
+    const struct BK4819 *bk4819;  ///< Baseband device
+    uint8_t gpio_active_low_mask; ///< Per-pin active-low mask
 };
 
 /**
@@ -224,12 +224,12 @@ struct gpioBK4819Priv {
  * @param name: GPIO device name.
  * @param bk4819Dev: BK4819 device instance, not a pointer.
  */
-#define GPIO_BK4819_DEVICE_DEFINE(name, bk4819Dev)                           \
-    extern const struct gpioApi gpioBK4819_ops;                              \
-    static uint8_t name##_active_low;                                        \
-    static const struct gpioBK4819Priv name##_priv = { &bk4819Dev,           \
-                                                       &name##_active_low }; \
-    const struct gpioDev name = { &gpioBK4819_ops, &name##_priv };
+#define GPIO_BK4819_DEVICE_DEFINE(name, bk4819Dev)                        \
+    extern const struct gpioApi gpioBK4819_ops;                           \
+    static struct BK4819Priv name##_priv = { .bk4819 = &bk4819Dev,        \
+                                             .gpio_active_low_mask = 0 }; \
+    const struct gpioDev name = { .api = &gpioBK4819_ops,                 \
+                                  .priv = &name##_priv };
 
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg);
 void BK4819_writeReg(const struct BK4819 *dev, bk4819_reg_t reg, uint16_t data);

@@ -14,27 +14,37 @@ static int gpio_bk4819_mode(const struct gpioDev *dev, const uint8_t pin,
     if (pin > 6)
         return -EINVAL;
 
-    if (mode != INPUT && mode != OUTPUT && mode != OUTPUT_ACTIVE_LOW)
-        return -ENOTSUP;
-
-    const struct gpioBK4819Priv *cfg = dev->priv;
+    struct BK4819Priv *cfg = (struct BK4819Priv *)dev->priv;
     const struct BK4819 *bk4819 = cfg->bk4819;
-    const uint16_t mask = 0x4000U >> pin;
-    uint16_t value = BK4819_readReg(bk4819, BK4819_REG_33);
+    const uint16_t direction_mask = 0x4000U >> pin;
+    const uint16_t output_mask = 0x0040U >> pin;
+    uint16_t set_mask = 0;
+    uint16_t clear_mask = 0;
 
-    if (mode == OUTPUT_ACTIVE_LOW) {
-        *cfg->active_low |= 1U << pin;
-        value |= 0x0040U >> pin;
-    } else {
-        *cfg->active_low &= ~(1U << pin);
-        if (mode == OUTPUT)
-            value &= ~(0x0040U >> pin);
+    switch (mode) {
+        case INPUT:
+            cfg->gpio_active_low_mask &= ~(1U << pin);
+            set_mask = direction_mask;
+            break;
+
+        case OUTPUT:
+            cfg->gpio_active_low_mask &= ~(1U << pin);
+            clear_mask = direction_mask | output_mask;
+            break;
+
+        case OUTPUT_ACTIVE_LOW:
+            cfg->gpio_active_low_mask |= 1U << pin;
+            set_mask = output_mask;
+            clear_mask = direction_mask;
+            break;
+
+        default:
+            return -ENOTSUP;
     }
 
-    if (mode == INPUT)
-        value |= mask;
-    else
-        value &= ~mask;
+    uint16_t value = BK4819_readReg(bk4819, BK4819_REG_33);
+    value |= set_mask;
+    value &= ~clear_mask;
 
     BK4819_writeReg(bk4819, BK4819_REG_33, value);
     return 0;
@@ -43,11 +53,11 @@ static int gpio_bk4819_mode(const struct gpioDev *dev, const uint8_t pin,
 static void gpio_bk4819_set(const struct gpioDev *dev, const uint8_t pin)
 {
     assert(pin <= 6);
-    const struct gpioBK4819Priv *cfg = dev->priv;
+    const struct BK4819Priv *cfg = dev->priv;
     const struct BK4819 *bk4819 = cfg->bk4819;
     uint16_t value = BK4819_readReg(bk4819, BK4819_REG_33);
 
-    if (*cfg->active_low & (1U << pin))
+    if (cfg->gpio_active_low_mask & (1U << pin))
         value &= ~(0x0040U >> pin);
     else
         value |= 0x0040U >> pin;
@@ -57,11 +67,11 @@ static void gpio_bk4819_set(const struct gpioDev *dev, const uint8_t pin)
 static void gpio_bk4819_clear(const struct gpioDev *dev, const uint8_t pin)
 {
     assert(pin <= 6);
-    const struct gpioBK4819Priv *cfg = dev->priv;
+    const struct BK4819Priv *cfg = dev->priv;
     const struct BK4819 *bk4819 = cfg->bk4819;
     uint16_t value = BK4819_readReg(bk4819, BK4819_REG_33);
 
-    if (*cfg->active_low & (1U << pin))
+    if (cfg->gpio_active_low_mask & (1U << pin))
         value |= 0x0040U >> pin;
     else
         value &= ~(0x0040U >> pin);
@@ -71,12 +81,12 @@ static void gpio_bk4819_clear(const struct gpioDev *dev, const uint8_t pin)
 static bool gpio_bk4819_read(const struct gpioDev *dev, const uint8_t pin)
 {
     assert(pin <= 6);
-    const struct gpioBK4819Priv *cfg = dev->priv;
+    const struct BK4819Priv *cfg = dev->priv;
     const struct BK4819 *bk4819 = cfg->bk4819;
 
     const bool high = (BK4819_readReg(bk4819, BK4819_REG_0A) & (0x0040U >> pin))
                    != 0;
-    return high != ((*cfg->active_low & (1U << pin)) != 0);
+    return high != ((cfg->gpio_active_low_mask & (1U << pin)) != 0);
 }
 
 const struct gpioApi gpioBK4819_ops = { .mode = &gpio_bk4819_mode,
