@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <string>
 
+#include "calibration/calibInfo_C62.h"
 #include "drivers/baseband/BK4819.h"
 #include "radioUtils.h"
 
@@ -45,6 +46,8 @@ static const rtxStatus_t
 
 static enum opstatus radioStatus; // Current operating status
 
+static struct C62Calib calData;   // TX power calibration
+
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
     GPIO_VHF_RX_LNA = 0,
@@ -54,10 +57,41 @@ enum {
     GPIO_ALC_TX_LED
 };
 
+/**
+ * APC duty cycle for a TX power and frequency, interpolated from the
+ * calibration of the band: 1 W uses the low power setting, 5 W the high one
+ * and 2.5 W the midpoint.
+ *
+ * @param freq: TX frequency, in Hz.
+ * @param power: TX power, in mW.
+ * @return APC PWM duty cycle, in percent.
+ */
+static uint8_t tx_power_duty(const freq_t freq, const uint32_t power)
+{
+    const struct C62BandCalib *band = &calData.uhf;
+    if (freq < 174000000)
+        band = &calData.vhf;
+
+    uint8_t low = interpCalParameter(freq, band->freq, band->lowPwr,
+                                     band->points);
+    uint8_t high = interpCalParameter(freq, band->freq, band->highPwr,
+                                      band->points);
+
+    if (power <= 1000)
+        return low;
+
+    if (power <= 2500)
+        return (low + high) / 2;
+
+    return high;
+}
+
 void radio_init(const rtxStatus_t *rtxState)
 {
     config = rtxState;
     radioStatus = OFF;
+
+    nvm_readCalibData(&calData);
 
     BK4819_SetAF(&c62_bk4819, 0);
 
@@ -158,15 +192,7 @@ void radio_enableTx()
 
     gpioDev_set(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
-    // depending on power level set PWM duty cycle for APC voltage control
-    // Need table for this instead of quadratic mapping,
-    // and also consider frequency dependence of PA efficiency
-    // and battery voltage, but for now just use a crude quadratic mapping
-    uint8_t power_percent =
-        std::min(config->txPower * config->txPower * 100 / (5000 * 5000), 100U);
-    if (power_percent > 60)
-        power_percent = 60; // limit to 60% duty cycle for safety
-    set_tx_power(power_percent);
+    set_tx_power(tx_power_duty(config->txFrequency, config->txPower));
 
     bk4819_tx_on(&c62_bk4819);
     radioStatus = TX;
