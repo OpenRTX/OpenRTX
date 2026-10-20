@@ -1,7 +1,7 @@
 name: "Build devcontainer"
 on:
   # This image is the layer cache for the "Build and test" workflow. The base
-  # image is pinned by digest in the Dockerfile, so the cache only needs
+  # image is pinned by digest in the Containerfile, so the cache only needs
   # refreshing when the devcontainer inputs change.
   workflow_dispatch:
   push:
@@ -10,13 +10,13 @@ on:
     paths:
       - 'requirements.txt'
       - '.github/workflows/build-devcontainer.yml'
-      - '.devcontainer/Dockerfile'
+      - '.devcontainer/Containerfile'
       - '.devcontainer/devcontainer.json'
   pull_request:
     paths:
       - 'requirements.txt'
       - '.github/workflows/build-devcontainer.yml'
-      - '.devcontainer/Dockerfile'
+      - '.devcontainer/Containerfile'
       - '.devcontainer/devcontainer.json'
 
 env:
