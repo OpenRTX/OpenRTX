@@ -307,11 +307,11 @@
 		status = "okay";
 	};
 	
-	/*psram for ap core slot: 2MB */
+	/* Leave the top 256 KiB clear for the DSP stack at CP 0x60400000. */
 	psram_ap: psram_ap@30200000 {
 		compatible = "zephyr,memory-region",
 		"listenai,csk6-psram-partition";
-		reg = <0x30200000 0x200000>;
+		reg = <0x30200000 0x1c0000>;
 		status = "okay";
 		zephyr,memory-region = "PSRAMAP";
 	};
