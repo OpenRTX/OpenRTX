@@ -15,35 +15,19 @@
 #include <algorithm>
 #include <string>
 
+#include "calibration/calib_C62.h"
 #include "drivers/baseband/BK4819.h"
 #include "radioUtils.h"
 
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 
-/**
- * Set the TX power control (APC) voltage through the PWM on pin A03.
- * The PWM runs at 100 kHz, as in the stock firmware: at 1 kHz the APC voltage
- * follows the ripple and the output power stops tracking the duty cycle.
- *
- * @param power_percent: PWM duty cycle, 0-100.
- */
-static void set_tx_power(uint8_t power_percent)
-{
-    const uint32_t period_ns = 10000;
-    uint32_t pulse_ns = (period_ns * power_percent) / 100;
-
-    int ret = pwm_set_dt(&pwm_rf_apc, period_ns, pulse_ns);
-
-    if (ret < 0) {
-        printk("Failed to set TX power PWM: %d\n", ret);
-    }
-}
-
 static const rtxStatus_t
     *config; // Pointer to data structure with radio configuration
 
 static enum opstatus radioStatus; // Current operating status
+
+static struct C62Calib calData;   // TX power calibration
 
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
@@ -54,10 +38,48 @@ enum {
     GPIO_ALC_TX_LED
 };
 
+/**
+ * Set the TX power control (APC) voltage through the PWM on pin A03. The band
+ * calibration gives the duty cycles of the low and high power settings at the
+ * frequency; the power is interpolated linearly between them, from the low
+ * setting at 1 W to the high one at 5 W, as on the MD-3x0 and MD-UV3x0. The
+ * PWM runs at 100 kHz, as in the stock firmware: at 1 kHz the APC voltage
+ * follows the ripple and the output power stops tracking the duty cycle.
+ *
+ * @param freq: TX frequency, in Hz.
+ * @param power: TX power, in mW.
+ */
+static void set_tx_power(const freq_t freq, const uint32_t power)
+{
+    const struct C62BandCalib *band = &calData.uhf;
+    if (freq < 174000000)
+        band = &calData.vhf;
+
+    struct C62CalPoint cal = calibC62_interp(band, freq);
+
+    float pwr = static_cast<float>(power) / 1000.0f;
+    pwr = std::max(std::min(pwr, 5.0f), 1.0f);
+    float pwrHi = static_cast<float>(cal.hiPwr);
+    float pwrLo = static_cast<float>(cal.loPwr);
+    uint8_t duty =
+        static_cast<uint8_t>(pwrLo + (pwrHi - pwrLo) / 4.0f * (pwr - 1.0f));
+
+    const uint32_t period_ns = 10000;
+    uint32_t pulse_ns = (period_ns * duty) / 100;
+
+    int ret = pwm_set_dt(&pwm_rf_apc, period_ns, pulse_ns);
+
+    if (ret < 0) {
+        printk("Failed to set TX power PWM: %d\n", ret);
+    }
+}
+
 void radio_init(const rtxStatus_t *rtxState)
 {
     config = rtxState;
     radioStatus = OFF;
+
+    nvm_readCalibData(&calData);
 
     BK4819_SetAF(&c62_bk4819, 0);
 
@@ -158,15 +180,7 @@ void radio_enableTx()
 
     gpioDev_set(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
-    // depending on power level set PWM duty cycle for APC voltage control
-    // Need table for this instead of quadratic mapping,
-    // and also consider frequency dependence of PA efficiency
-    // and battery voltage, but for now just use a crude quadratic mapping
-    uint8_t power_percent =
-        std::min(config->txPower * config->txPower * 100 / (5000 * 5000), 100U);
-    if (power_percent > 60)
-        power_percent = 60; // limit to 60% duty cycle for safety
-    set_tx_power(power_percent);
+    set_tx_power(config->txFrequency, config->txPower);
 
     bk4819_tx_on(&c62_bk4819);
     radioStatus = TX;
