@@ -10,12 +10,12 @@
                 "please use 'pinctrl' instead of 'c62_pinctrl")
 
 &pinctrl {
-	/* UART alternate function
-
+	/* Configure console TX without relying on DSP pin setup. */
 	pinctrl_uart2_tx_default: uart2_tx_default {
 		pinctrls = <UART2_TXD_GPIOA_18>;
 	};
 
+	/*
 	//TODO -> TX DOESNT WORK IF RX UART IS ENABLED! ??
 
 	pinctrl_uart2_rx_default: uart2_rx_default {
