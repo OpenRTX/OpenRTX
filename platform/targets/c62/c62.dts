@@ -156,6 +156,13 @@
 	};
 };
 
+/* Reserve SRAM bank 4 (0xc0000..0xcffff, data alias 0x200c0000)
+ * for DSP shared audio; exclude it from application data and the heap.
+ */
+&sram0 {
+	reg = <0x80000 DT_SIZE_K(256)>;
+};
+
 &gpioa {
 	status = "okay";
 	reg = <0x45900000 0x1000>;
