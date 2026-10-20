@@ -28,7 +28,9 @@ static struct display_buffer_descriptor displayBufDesc = {
     .pitch = CONFIG_SCREEN_WIDTH,
 };
 
-static uint8_t shadowBuffer[FB_SIZE];
+// Copy of the frame sent to the panel, filled before every transfer, so it
+// can live in PSRAM (not zeroed at boot) to save SRAM.
+__attribute__((section(".psram_section"))) static uint8_t shadowBuffer[FB_SIZE];
 
 void display_init()
 {
