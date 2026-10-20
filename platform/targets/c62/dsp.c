@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include <zephyr/init.h>
+#include <zephyr/irq.h>
 #include <zephyr/device.h>
 #include <zephyr/sys/util.h>
 
@@ -83,6 +84,14 @@ void lsf_dsp_load(const void *addr, uint32_t size)
 
 static int lsf_dsp_init(void)
 {
+#if !defined(CONFIG_UART_INTERRUPT_DRIVEN) && !defined(CONFIG_UART_ASYNC_API)
+    /* DSP logging can trigger UART2 IRQ 10 on the application core.
+     * With a polling console there is no handler, so Zephyr halts at boot.
+     * Mask the AP interrupt before starting the DSP; UART output stays active.
+     */
+    irq_disable(DT_IRQN(DT_NODELABEL(uart2)));
+#endif
+
     /* Disable clocks */
     __HAL_CRM_CP_CLK_DISABLE();
     __HAL_CRM_NPU_CLK_DISABLE();
