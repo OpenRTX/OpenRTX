@@ -20,3 +20,7 @@ CONFIG_SPI_BITBANG=y
 
 # C62 LSF service controller, see Kconfig.board
 CONFIG_LSF_SERVICE_CONTROLLER=y
+
+# The application is linked at flash offset 0 and must end before the
+# DSP image at 0x100000 (slot0_partition).
+CONFIG_FLASH_LOAD_SIZE=0x100000

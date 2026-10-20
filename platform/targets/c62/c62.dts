@@ -240,45 +240,50 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 		
-		/* 256KB for bootloader */
-		boot_partition: partition@0 {
-			reg = <0x0 0x40000>;
-			read-only;
-		};
-		
-		/* application image slot: 512KB */
-		slot0_partition: partition@40000 {
-			reg = <0x40000 0x80000>;
-		};
-		
-		/* backup slot: 512KB */
-		slot1_partition: partition@c0000 {
-			reg = <0xc0000 0x80000>;
+		/* Application image, linked and written at flash offset 0
+		 * (no bootloader): 1 MiB, enforced by CONFIG_FLASH_LOAD_SIZE.
+		 */
+		slot0_partition: partition@0 {
+			reg = <0x0 DT_SIZE_M(1)>;
 		};
 
+		/* DSP image, copied to PSRAM at boot */
 		dsp_firmware: partition@100000 {
-            label = "dsp_firmware";
-            reg = <0x100000 DT_SIZE_M(1)>;
-    	};
-		
-		/* swap slot: 128KB */
-		scratch_partition: partition@140000 {
-			reg = <0x140000 0x20000>;
+			label = "dsp_firmware";
+			reg = <0x100000 DT_SIZE_M(1)>;
+			read-only;
 		};
-		
-		/* wifi driver private storage: 8Kb */
-		wifi_driver_storage: partition@6ee000 {
-			reg = <0x6ee000 0x2000>;
+
+		/* Factory resources left by the OEM firmware */
+		factory_res0: partition@200000 {
+			reg = <0x200000 0xb0000>;
+			read-only;
 		};
-		
-		/* wifi_nvs_storage: 20Kb */
-		wifi_nvs_storage: partition@6F0000 {
-			reg = <0x6F0000 0x10000>;
+
+		/* OpenRTX storage: erased in every factory dump examined */
+		storage_partition: partition@2b0000 {
+			reg = <0x2b0000 0xa0000>;
 		};
-		
-		/* storage: 6.625MB for storage */
-		storage_partition: partition@700000 {
-			reg = <0x700000 0x100000>;
+
+		/* Factory resources left by the OEM firmware */
+		factory_res1: partition@350000 {
+			reg = <0x350000 0x60000>;
+			read-only;
+		};
+
+		/* OEM settings and calibration journal, unique to each radio.
+		 * The OEM firmware rewrites it with defaults if it finds no
+		 * valid entry, so it must never be written.
+		 */
+		factory_cal: partition@3b0000 {
+			reg = <0x3b0000 0x10000>;
+			read-only;
+		};
+
+		/* OEM channel store */
+		factory_chan: partition@3c0000 {
+			reg = <0x3c0000 0x40000>;
+			read-only;
 		};
 	};
 };
