@@ -66,16 +66,11 @@ void radio_init(const rtxStatus_t *rtxState)
 
     BK4819_SetAF(&c62_bk4819, 0);
 
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA,
-                        false); // VHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA,
-                        false); // UHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_TX_PA,
-                        false); // VHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_TX_PA,
-                        false); // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED,
-                        false); // ALC / TX LED
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_RX_LNA, OUTPUT_ACTIVE_LOW);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_RX_LNA, OUTPUT_ACTIVE_LOW);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_TX_PA, OUTPUT);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_TX_PA, OUTPUT);
+    gpioDev_setMode(&c62_bk4819_gpio, GPIO_ALC_TX_LED, OUTPUT);
 }
 
 void radio_terminate()
@@ -111,21 +106,19 @@ void radio_disableAfOutput()
 
 void radio_enableRx()
 {
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA, false); // VHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA, false); // UHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_TX_PA, false);  // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_TX_PA, false);  // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED, false); // ALC / TX LED
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
     //Before enable RX path delay to allow hardware to settle
     delayMs(5);
 
     if (config->rxFrequency < 174000000) {
-        bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA,
-                            true); // VHF RX LNA
+        gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
     } else {
-        bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA,
-                            true); // UHF RX LNA
+        gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
     }
 
     bk4819_set_freq(&c62_bk4819, config->rxFrequency);
@@ -144,16 +137,11 @@ void radio_enableTx()
     if (config->txDisable == 1)
         return;
 
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA,
-                        false); // VHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA,
-                        false); // UHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_TX_PA,
-                        false); // VHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_TX_PA,
-                        false); // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED,
-                        false); // ALC / TX LED
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
     //Before enable TX path delay to allow hardware to settle
     delayMs(5);
@@ -168,15 +156,12 @@ void radio_enableTx()
     }
 
     if (config->txFrequency < 174000000) {
-        bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_TX_PA,
-                            true); // VHF TX PA
+        gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
     } else {
-        bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_TX_PA,
-                            true); // UHF TX PA
+        gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
     }
 
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED,
-                        true); // ALC / TX LED
+    gpioDev_set(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
     // depending on power level set PWM duty cycle for APC voltage control
     // Need table for this instead of quadratic mapping,
@@ -196,16 +181,11 @@ void radio_disableRtx()
 {
     bk4819_disable_ctdcss(&c62_bk4819);
 
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_RX_LNA,
-                        false); // VHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_RX_LNA,
-                        false); // UHF RX LNA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_VHF_TX_PA,
-                        false); // VHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_UHF_TX_PA,
-                        false); // UHF TX PA
-    bk4819_gpio_pin_set(&c62_bk4819, GPIO_ALC_TX_LED,
-                        false); // ALC / TX LED
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
     bk4819_rtx_off(&c62_bk4819);
     radioStatus = OFF;
