@@ -1,0 +1,23 @@
+{
+  "name": "OpenRTX (miosix)",
+  "build": {
+    "dockerfile": "../Containerfile",
+    "target": "miosix",
+    "context": "../..",
+    "args": {
+      "BUILDKIT_STEP_LOG_MAX_SIZE": "10485760" // 10 MiB
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "mesonbuild.mesonbuild",
+        "ms-python.python"
+      ]
+    }
+  },
+  "postCreateCommand": [
+    "/bin/sh", ".devcontainer/miosix/post-create.sh"
+  ]
+}
