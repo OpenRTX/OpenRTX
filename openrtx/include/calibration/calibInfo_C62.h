@@ -8,7 +8,6 @@
 #define CALIBINFO_C62_H
 
 #include "core/datatypes.h"
-#include <stdbool.h>
 #include <stdint.h>
 
 /**
@@ -17,14 +16,22 @@
 #define C62_CAL_POINTS 10
 
 /**
- * TX power calibration of one band, sorted by frequency: the APC PWM duty
- * cycle, in percent, of the stock low and high power settings at each point.
+ * TX power calibration point: the APC PWM duty cycle, in percent, of the
+ * stock low and high power settings at a frequency. Same layout as the start
+ * of a calibration record in the stock firmware's settings journal.
+ */
+struct C62CalPoint {
+    uint32_t freq;
+    uint16_t loPwr;
+    uint16_t hiPwr;
+};
+
+/**
+ * TX power calibration of one band, sorted by frequency.
  */
 struct C62BandCalib {
-    freq_t freq[C62_CAL_POINTS];
-    uint8_t lowPwr[C62_CAL_POINTS];
-    uint8_t highPwr[C62_CAL_POINTS];
-    uint8_t points;
+    struct C62CalPoint points[C62_CAL_POINTS];
+    uint8_t count;
 };
 
 /**
@@ -33,7 +40,6 @@ struct C62BandCalib {
 struct C62Calib {
     struct C62BandCalib vhf;
     struct C62BandCalib uhf;
-    bool fromFlash; ///< False when the stock default table is in use
 };
 
 #endif /* CALIBINFO_C62_H */

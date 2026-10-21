@@ -48,7 +48,7 @@ void nvm_readCalibData(void *buf)
         printk("TX calibration: stock defaults, no valid factory data\n");
     } else {
         printk("TX calibration: factory data, %u VHF and %u UHF points\n",
-               cal->vhf.points, cal->uhf.points);
+               cal->vhf.count, cal->uhf.count);
     }
 }
 

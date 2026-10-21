@@ -8,94 +8,54 @@
 #include <string.h>
 
 /*
- * Settings journal of the stock firmware: entries start with a marker, the
- * 8-bit sum of the payload and the little-endian total length, header
- * included. C2 entries hold 10 calibration records, C62 entries 20.
+ * The settings journal of the stock firmware is little-endian, like the C62
+ * and the hosts running the unit tests, so its structures are read directly.
  */
+
 #define ENTRY_MARKER 0x5A
-#define ENTRY_HDR_SIZE 4
 #define ENTRY_LEN_10 0x0BDC
 #define ENTRY_LEN_20 0x0D48
-
-/*
- * Calibration records start at this offset from the beginning of an entry.
- * Each one holds the frequency in Hz (LE32) followed by four duty cycles in
- * percent (LE16); the first two are the low and high power settings.
- */
 #define RECORD_OFFSET 0x450
-#define RECORD_SIZE 0x24
+
+/**
+ * Header of a journal entry: a marker, the 8-bit sum of the rest of the entry
+ * and the total entry length, header included. C2 entries hold 10 calibration
+ * records, C62 entries 20.
+ */
+struct C62EntryHdr {
+    uint8_t marker;
+    uint8_t sum;
+    uint16_t len;
+};
+
+/**
+ * Calibration record of a journal entry: the frequency and the duty cycles of
+ * the low and high power settings, then the duty cycles of two more power
+ * selectors and six RX parameters, not used here.
+ */
+struct C62CalRecord {
+    struct C62CalPoint point;
+    uint16_t otherPwr[2];
+    uint32_t rxParams[6];
+};
+
+_Static_assert(sizeof(struct C62EntryHdr) == 4, "C62 entry header size");
+_Static_assert(sizeof(struct C62CalRecord) == 0x24, "C62 record size");
 
 /**
  * Stock default calibration, as the C62 firmware ships it.
  */
-static const struct {
-    freq_t freq;
-    uint8_t low;
-    uint8_t high;
-} defaultCalib[] = {
+static const struct C62CalPoint defaultCalib[] = {
     { 136125000, 33, 67 }, { 146125000, 30, 57 }, { 156125000, 27, 64 },
     { 166125000, 33, 73 }, { 173975000, 40, 74 }, { 400125000, 33, 75 },
     { 420125000, 32, 74 }, { 440125000, 31, 74 }, { 460125000, 30, 76 },
     { 479975000, 31, 75 },
 };
 
-/**
- * Read a little-endian 16-bit value.
- *
- * @param p: pointer to the value.
- * @return the value.
+/*
+ * One whole journal entry, kept off the stack.
  */
-static uint16_t read16(const uint8_t *p)
-{
-    return (uint16_t)(p[0] | (p[1] << 8));
-}
-
-/**
- * Read a little-endian 32-bit value.
- *
- * @param p: pointer to the value.
- * @return the value.
- */
-static uint32_t read32(const uint8_t *p)
-{
-    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16)
-         | ((uint32_t)p[3] << 24);
-}
-
-/**
- * Check the payload sum of a journal entry.
- *
- * @param read: journal read function.
- * @param ctx: context passed to read.
- * @param off: offset of the entry.
- * @param len: total length of the entry.
- * @param sum: payload sum from the entry header.
- * @return true if the entry can be read and its payload sum matches.
- */
-static bool entryValid(int (*read)(void *, uint32_t, void *, size_t), void *ctx,
-                       uint32_t off, uint16_t len, uint8_t sum)
-{
-    uint8_t buf[64];
-    uint8_t acc = 0;
-    uint32_t pos = off + ENTRY_HDR_SIZE;
-    uint32_t end = off + len;
-
-    while (pos < end) {
-        size_t chunk = end - pos;
-        if (chunk > sizeof(buf))
-            chunk = sizeof(buf);
-
-        if (read(ctx, pos, buf, chunk) != 0)
-            return false;
-
-        for (size_t i = 0; i < chunk; i++)
-            acc += buf[i];
-
-        pos += chunk;
-    }
-
-    return acc == sum;
-}
+static uint8_t entry[ENTRY_LEN_20];
 
 /**
  * Select the band a calibration frequency belongs to.
@@ -120,85 +80,77 @@ static struct C62BandCalib *bandOf(struct C62Calib *cal, freq_t freq)
  * beyond the band capacity are dropped.
  *
  * @param band: band calibration.
- * @param freq: frequency, in Hz.
- * @param low: duty cycle of the low power setting, in percent.
- * @param high: duty cycle of the high power setting, in percent.
+ * @param point: calibration point.
  */
-static void addPoint(struct C62BandCalib *band, freq_t freq, uint8_t low,
-                     uint8_t high)
+static void addPoint(struct C62BandCalib *band, const struct C62CalPoint *point)
 {
-    if (band->points >= C62_CAL_POINTS)
+    if (band->count >= C62_CAL_POINTS)
         return;
 
-    uint8_t i = band->points;
-    while ((i > 0) && (band->freq[i - 1] > freq)) {
-        band->freq[i] = band->freq[i - 1];
-        band->lowPwr[i] = band->lowPwr[i - 1];
-        band->highPwr[i] = band->highPwr[i - 1];
+    uint8_t i = band->count;
+    while ((i > 0) && (band->points[i - 1].freq > point->freq)) {
+        band->points[i] = band->points[i - 1];
         i--;
     }
 
-    band->freq[i] = freq;
-    band->lowPwr[i] = low;
-    band->highPwr[i] = high;
-    band->points++;
+    band->points[i] = *point;
+    band->count++;
 }
 
 int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
                   void *ctx, uint32_t size, struct C62Calib *cal)
 {
-    uint8_t hdr[ENTRY_HDR_SIZE];
+    struct C62EntryHdr hdr;
     uint32_t off = 0;
     uint32_t newest = 0;
     uint16_t newestLen = 0;
 
     // Walk the journal up to the first erased or malformed header
-    while (off + ENTRY_HDR_SIZE <= size) {
-        if (read(ctx, off, hdr, sizeof(hdr)) != 0)
+    while (off + sizeof(hdr) <= size) {
+        if (read(ctx, off, &hdr, sizeof(hdr)) != 0)
             break;
 
-        uint16_t len = read16(&hdr[2]);
-        if ((hdr[0] != ENTRY_MARKER)
-            || ((len != ENTRY_LEN_10) && (len != ENTRY_LEN_20))
-            || (off + len > size))
+        if ((hdr.marker != ENTRY_MARKER)
+            || ((hdr.len != ENTRY_LEN_10) && (hdr.len != ENTRY_LEN_20))
+            || (off + hdr.len > size))
             break;
 
-        if (entryValid(read, ctx, off, len, hdr[1])) {
+        if (read(ctx, off, entry, hdr.len) != 0)
+            break;
+
+        uint8_t sum = 0;
+        for (uint16_t i = sizeof(hdr); i < hdr.len; i++)
+            sum += entry[i];
+
+        if (sum == hdr.sum) {
             newest = off;
-            newestLen = len;
+            newestLen = hdr.len;
         }
 
-        off += len;
+        off += hdr.len;
     }
 
-    if (newestLen == 0)
+    if ((newestLen == 0) || (read(ctx, newest, entry, newestLen) != 0))
         return -1;
 
     memset(cal, 0, sizeof(*cal));
 
     uint8_t records = (newestLen == ENTRY_LEN_10) ? 10 : 20;
     for (uint8_t i = 0; i < records; i++) {
-        uint8_t rec[RECORD_SIZE];
-        uint32_t pos = newest + RECORD_OFFSET + (i * RECORD_SIZE);
+        struct C62CalRecord rec;
+        memcpy(&rec, &entry[RECORD_OFFSET + (i * sizeof(rec))], sizeof(rec));
 
-        if (read(ctx, pos, rec, sizeof(rec)) != 0)
-            return -1;
-
-        freq_t freq = read32(&rec[0]);
-        uint16_t low = read16(&rec[4]);
-        uint16_t high = read16(&rec[6]);
-        struct C62BandCalib *band = bandOf(cal, freq);
-
-        if ((band == NULL) || (low > 100) || (high > 100))
+        struct C62BandCalib *band = bandOf(cal, rec.point.freq);
+        if ((band == NULL) || (rec.point.loPwr > 100)
+            || (rec.point.hiPwr > 100))
             continue;
 
-        addPoint(band, freq, (uint8_t)low, (uint8_t)high);
+        addPoint(band, &rec.point);
     }
 
-    if ((cal->vhf.points == 0) || (cal->uhf.points == 0))
+    if ((cal->vhf.count == 0) || (cal->uhf.count == 0))
         return -1;
 
-    cal->fromFlash = true;
     return 0;
 }
 
@@ -208,7 +160,45 @@ void calibC62_defaults(struct C62Calib *cal)
 
     for (size_t i = 0; i < sizeof(defaultCalib) / sizeof(defaultCalib[0]);
          i++) {
-        addPoint(bandOf(cal, defaultCalib[i].freq), defaultCalib[i].freq,
-                 defaultCalib[i].low, defaultCalib[i].high);
+        addPoint(bandOf(cal, defaultCalib[i].freq), &defaultCalib[i]);
     }
+}
+
+/**
+ * Interpolate a duty cycle linearly between two frequencies.
+ *
+ * @param freq: frequency, in Hz, between f0 and f1.
+ * @param f0: lower frequency, in Hz.
+ * @param v0: duty cycle at f0.
+ * @param f1: upper frequency, in Hz.
+ * @param v1: duty cycle at f1.
+ * @return duty cycle at freq.
+ */
+static uint16_t interpPwr(freq_t freq, freq_t f0, uint16_t v0, freq_t f1,
+                          uint16_t v1)
+{
+    int64_t num = (int64_t)(freq - f0) * ((int32_t)v1 - (int32_t)v0);
+
+    return (uint16_t)(v0 + (num / (int64_t)(f1 - f0)));
+}
+
+struct C62CalPoint calibC62_interp(const struct C62BandCalib *band, freq_t freq)
+{
+    uint8_t last = band->count - 1;
+    uint8_t i = 0;
+
+    // First point at or above the frequency, or the last one
+    while ((i < last) && (band->points[i].freq < freq))
+        i++;
+
+    const struct C62CalPoint *p1 = &band->points[i];
+    struct C62CalPoint point = { freq, p1->loPwr, p1->hiPwr };
+
+    if ((i > 0) && (freq < p1->freq)) {
+        const struct C62CalPoint *p0 = &band->points[i - 1];
+        point.loPwr = interpPwr(freq, p0->freq, p0->loPwr, p1->freq, p1->loPwr);
+        point.hiPwr = interpPwr(freq, p0->freq, p0->hiPwr, p1->freq, p1->hiPwr);
+    }
+
+    return point;
 }

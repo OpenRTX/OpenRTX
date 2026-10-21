@@ -40,6 +40,18 @@ int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
  */
 void calibC62_defaults(struct C62Calib *cal);
 
+/**
+ * Interpolate the calibration of a band at a frequency, linearly between the
+ * two nearest points. Below the first point and above the last one, the
+ * nearest point is used.
+ *
+ * @param band: band calibration with at least one point.
+ * @param freq: frequency, in Hz.
+ * @return calibration point at the frequency.
+ */
+struct C62CalPoint calibC62_interp(const struct C62BandCalib *band,
+                                   freq_t freq);
+
 #ifdef __cplusplus
 }
 #endif
