@@ -16,6 +16,7 @@
 #include <string>
 
 #include "calibration/calibInfo_C62.h"
+#include "drivers/NVM/calib_C62.h"
 #include "drivers/baseband/BK4819.h"
 #include "radioUtils.h"
 
@@ -58,9 +59,10 @@ enum {
 };
 
 /**
- * APC duty cycle for a TX power and frequency, interpolated from the
- * calibration of the band: 1 W uses the low power setting, 5 W the high one
- * and 2.5 W the midpoint.
+ * APC duty cycle for a TX power and frequency. The band calibration gives the
+ * duty cycles of the low and high power settings at the frequency; the power
+ * is then interpolated linearly between them, from the low setting at 1 W to
+ * the high one at 5 W, as on the MD-3x0 and MD-UV3x0.
  *
  * @param freq: TX frequency, in Hz.
  * @param power: TX power, in mW.
@@ -72,18 +74,15 @@ static uint8_t tx_power_duty(const freq_t freq, const uint32_t power)
     if (freq < 174000000)
         band = &calData.vhf;
 
-    uint8_t low = interpCalParameter(freq, band->freq, band->lowPwr,
-                                     band->points);
-    uint8_t high = interpCalParameter(freq, band->freq, band->highPwr,
-                                      band->points);
+    struct C62CalPoint cal = calibC62_interp(band, freq);
 
-    if (power <= 1000)
-        return low;
+    float pwr = static_cast<float>(power) / 1000.0f;
+    pwr = std::max(std::min(pwr, 5.0f), 1.0f);
+    float pwrHi = static_cast<float>(cal.hiPwr);
+    float pwrLo = static_cast<float>(cal.loPwr);
+    float duty = pwrLo + (pwrHi - pwrLo) / 4.0f * (pwr - 1.0f);
 
-    if (power <= 2500)
-        return (low + high) / 2;
-
-    return high;
+    return static_cast<uint8_t>(duty);
 }
 
 void radio_init(const rtxStatus_t *rtxState)
