@@ -15,8 +15,7 @@
 #include <algorithm>
 #include <string>
 
-#include "calibration/calibInfo_C62.h"
-#include "drivers/NVM/calib_C62.h"
+#include "calibration/calib_C62.h"
 #include "drivers/baseband/BK4819.h"
 #include "radioUtils.h"
 
