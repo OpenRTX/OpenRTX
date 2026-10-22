@@ -1267,7 +1267,7 @@ m17_packet_test = executable('m17_packet_test',
 
 c62_calib_test = executable('c62_calib_test',
                             sources : ['tests/unit/C62_calib.cpp',
-                                       'platform/drivers/NVM/calib_C62.c'],
+                                       'platform/targets/c62/calib_C62.c'],
                             kwargs  : unit_test_opts)
 
 dsp_oversampling_test = executable('dsp_oversampling_test',
