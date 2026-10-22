@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "drivers/NVM/calib_C62.h"
+#include "calibration/calib_C62.h"
 #include <string.h>
 
 /*

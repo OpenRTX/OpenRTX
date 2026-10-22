@@ -7,13 +7,45 @@
 #ifndef CALIB_C62_H
 #define CALIB_C62_H
 
-#include "calibration/calibInfo_C62.h"
+#include "core/datatypes.h"
 #include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Maximum number of TX power calibration points per band.
+ */
+#define C62_CAL_POINTS 10
+
+/**
+ * TX power calibration point: the APC PWM duty cycle, in percent, of the
+ * stock low and high power settings at a frequency. Same layout as the start
+ * of a calibration record in the stock firmware's settings journal.
+ */
+struct C62CalPoint {
+    uint32_t freq;
+    uint16_t loPwr;
+    uint16_t hiPwr;
+};
+
+/**
+ * TX power calibration of one band, sorted by frequency.
+ */
+struct C62BandCalib {
+    struct C62CalPoint points[C62_CAL_POINTS];
+    uint8_t count;
+};
+
+/**
+ * C62 calibration data.
+ */
+struct C62Calib {
+    struct C62BandCalib vhf;
+    struct C62BandCalib uhf;
+};
 
 /**
  * Read the TX power calibration from the stock firmware's settings journal.

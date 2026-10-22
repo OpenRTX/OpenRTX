@@ -7,7 +7,7 @@
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/sys/printk.h>
 #include "interfaces/nvmem.h"
-#include "drivers/NVM/calib_C62.h"
+#include "calibration/calib_C62.h"
 
 /**
  * Read from the stock firmware's settings journal partition.
