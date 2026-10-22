@@ -75,7 +75,7 @@
 			label = "LCD BAcklight PWM";
 		};
 		pwm_rf_apc: pwm_rf_apc {
-            pwms = <&gptchannel3 3 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+            pwms = <&gptchannel3 3 PWM_USEC(10) PWM_POLARITY_NORMAL>;
 			label = "RF Power APC PWM";
 		};
 
@@ -353,7 +353,7 @@ zephyr_udc0: &usbotg {
         status = "okay";
         channel_mode = <1>;  /* 0: timer; 1:pwm */
 
-        clock-prescaler = <128>;
+        clock-prescaler = <1>;  /* 1000 counts per 100 kHz APC period */
         pinctrl-0 = <&pinctrl_pwm3_default>;
         pinctrl-names = "default";
 };

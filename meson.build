@@ -1265,6 +1265,11 @@ m17_packet_test = executable('m17_packet_test',
                               sources : unit_test_src + ['tests/unit/M17_packet.cpp'],
                               kwargs  : unit_test_opts)
 
+c62_calib_test = executable('c62_calib_test',
+                            sources : ['tests/unit/C62_calib.cpp',
+                                       'platform/targets/c62/calib_C62.c'],
+                            kwargs  : unit_test_opts)
+
 dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
@@ -1305,6 +1310,7 @@ test('Codeplug Test',         cps_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
+test('C62 Calibration Test', c62_calib_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
