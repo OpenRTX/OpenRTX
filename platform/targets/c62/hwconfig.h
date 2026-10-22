@@ -40,6 +40,19 @@ extern "C" {
 /* M17 deactivated for now as the feature will come with the next PR */
 //#define CONFIG_M17
 
+/*
+ * CSK6 codec gains in dB, analog (_A) and digital (_D). The TX DAC sets the
+ * level into the BK4819 mic input for both FM and M17; never above 0 dB.
+ */
+#define C62_ADC_MIC_GAIN_A 6
+#define C62_ADC_MIC_GAIN_D 10
+#define C62_ADC_RX_GAIN_A 6
+#define C62_ADC_RX_GAIN_D 20
+#define C62_DAC_SPK_GAIN_A -6
+#define C62_DAC_SPK_GAIN_D 0
+#define C62_DAC_TX_GAIN_A -18
+#define C62_DAC_TX_GAIN_D 0
+
 /**
  * BK4819 and BK1080 device instances. Pin numbers must be kept in sync
  * with the board devicetree (gpioa/gpiob nodes).

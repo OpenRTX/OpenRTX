@@ -333,6 +333,21 @@ static void audio_output_thread(void *arg1, void *arg2, void *arg3)
     printk("Audio output thread stopped\n");
 }
 
+/**
+ * Send a key=value parameter string to the DSP.
+ *
+ * @param kv: parameters, separated by ';'.
+ * @return 0 on success.
+ */
+static int set_dsp_param(const char *kv)
+{
+    String8 param;
+    String8_ctor_char(&param, kv);
+    int ret = AudioSystem_setParameters(0, &param);
+    String8_dtor(&param);
+    return ret;
+}
+
 void audio_init()
 {
     int ret;
@@ -364,14 +379,14 @@ void audio_init()
     }
     s_active_path_count = 0;
 
-    // Set audio system parameters
-    String8 param;
-    String8_ctor_char(&param, "ADC_PDM_GAIN_A_LEFT=6;"
-                              "ADC_PDM_GAIN_D_LEFT=20;"
-                              "ADC_PDM_GAIN_A_RIGHT=6;"
-                              "ADC_PDM_GAIN_D_RIGHT=20");
-    ret = AudioSystem_setParameters(0, &param);
-    String8_dtor(&param);
+    // Set the codec ADC gains: microphone left, BK4819 RX audio right
+    char kv[128];
+    snprintf(kv, sizeof(kv),
+             "ADC_PDM_GAIN_A_LEFT=%d;ADC_PDM_GAIN_D_LEFT=%d;"
+             "ADC_PDM_GAIN_A_RIGHT=%d;ADC_PDM_GAIN_D_RIGHT=%d",
+             C62_ADC_MIC_GAIN_A, C62_ADC_MIC_GAIN_D, C62_ADC_RX_GAIN_A,
+             C62_ADC_RX_GAIN_D);
+    ret = set_dsp_param(kv);
     if (ret != 0) {
         printk("Failed to set audio parameters: %d\n", ret);
         return;
@@ -402,6 +417,21 @@ void audio_init()
         printk("Failed to initialize AudioTrack RTX_OUTPUT: %d\n", ret);
         AudioRecord_dtor(&s_record);
         AudioTrack_dtor(&s_track_spk);
+        return;
+    }
+
+    // Set the codec DAC gains: speaker left, BK4819 TX right
+    snprintf(kv, sizeof(kv),
+             "DAC_GAIN_A_LEFT=%d;DAC_GAIN_D_LEFT=%d;"
+             "DAC_GAIN_A_RIGHT=%d;DAC_GAIN_D_RIGHT=%d",
+             C62_DAC_SPK_GAIN_A, C62_DAC_SPK_GAIN_D, C62_DAC_TX_GAIN_A,
+             C62_DAC_TX_GAIN_D);
+    ret = set_dsp_param(kv);
+    if (ret != 0) {
+        printk("Failed to set DAC gains: %d\n", ret);
+        AudioRecord_dtor(&s_record);
+        AudioTrack_dtor(&s_track_spk);
+        AudioTrack_dtor(&s_track_rtx_output);
         return;
     }
 
