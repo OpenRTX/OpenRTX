@@ -1,6 +1,8 @@
+# OpenRTX firmware development containers
+ARG SOURCE=https://github.com/OpenRTX/OpenRTX
+
 # Always pin to digest for caching and repeatable builds
 ARG BASE_IMAGE=docker.io/ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3
-ARG SOURCE=https://github.com/OpenRTX/OpenRTX
 
 # Remote image for uv binary
 ARG UV_IMAGE=ghcr.io/astral-sh/uv:0.11.7@sha256:9f130421e930bfbdc563c00740466603f8723158e90297d07957c2294640262b
@@ -30,7 +32,6 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
   libusb-1.0-0-dev \
   patch \
   pkg-config \
-  sudo \
   unzip \
   wget \
   xz-utils \
@@ -51,7 +52,8 @@ RUN git clone --depth 1 --branch ${RADIO_TOOL_VERSION} https://github.com/v0l/ra
   && cmake --install radio_tool/build --prefix /opt/radio_tool \
   && rm -rf radio_tool
 
-RUN git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/LISTENAI/cskburn \
+ARG CSKBURN_VERSION=v1.32.0-alpha.5
+RUN git clone --depth 1 --branch ${CSKBURN_VERSION} --recurse-submodules --shallow-submodules https://github.com/LISTENAI/cskburn \
   && cmake -S cskburn -B cskburn/build \
   && cmake --build cskburn/build -j$(nproc) \
   && cmake --install cskburn/build --prefix /opt/cskburn \
@@ -64,16 +66,16 @@ FROM base AS miosix
 
 COPY --from=tools /opt/radio_tool /opt/radio_tool
 
-# devcontainer passes the host architecture as $BUILDARCH (amd64/arm64)
-ARG BUILDARCH
+# Buildx supplies target architecture (amd64/arm64)
+ARG TARGETARCH
 
 # Install the Miosix toolchain matching the host architecture
 ARG OPENRTX_TOOLCHAINS="https://files.openrtx.org/toolchains"
 RUN set -ex; \
-  case "${BUILDARCH:-$(uname -m)}" in \
+  case "${TARGETARCH:-$(uname -m)}" in \
   amd64|x86_64) URL="${OPENRTX_TOOLCHAINS}/arm-miosix-eabi-x86_64.zip" ;; \
   arm64|aarch64) URL="${OPENRTX_TOOLCHAINS}/arm-miosix-eabi-aarch64.zip" ;; \
-  *) echo "Unsupported architecture: ${BUILDARCH}"; exit 1 ;; \
+  *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
   esac; \
   wget -O /tmp/arm-miosix-eabi.zip "$URL"; \
   unzip -q /tmp/arm-miosix-eabi.zip -d /opt; \
@@ -103,7 +105,7 @@ FROM base AS zephyr
 
 COPY --from=tools /opt/cskburn /opt/cskburn
 
-ARG BUILDARCH
+ARG TARGETARCH
 
 # Space-separated list of toolchains to install, using full names
 ARG ZEPHYR_TARGETS="arm-zephyr-eabi xtensa-espressif_esp32s3_zephyr-elf"
@@ -112,10 +114,10 @@ ARG ZEPHYR_SDK_VERSION=0.16.9
 # Install the requested toolchains from the official minimal Zephyr SDK
 ARG ZEPHYR_SDK="https://github.com/zephyrproject-rtos/sdk-ng/releases/download"
 RUN set -ex; \
-  case "${BUILDARCH:-$(uname -m)}" in \
+  case "${TARGETARCH:-$(uname -m)}" in \
   amd64|x86_64) HOSTARCH="x86_64" ;; \
   arm64|aarch64) HOSTARCH="aarch64" ;; \
-  *) echo "Unsupported architecture: ${BUILDARCH}"; exit 1 ;; \
+  *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
   esac; \
   URL="${ZEPHYR_SDK}/v${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-${HOSTARCH}_minimal.tar.xz"; \
   wget -O /tmp/zephyr-sdk.tar.xz "$URL"; \
