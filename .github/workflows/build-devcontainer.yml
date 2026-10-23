@@ -1,4 +1,4 @@
-name: "Build devcontainer"
+name: "Build devcontainer images"
 on:
   # This image is the layer cache for the "Build and test" workflow. The base
   # image is pinned by digest in the Containerfile, so the cache only needs
@@ -8,40 +8,51 @@ on:
     branches:
       - master
     paths:
-      - 'requirements.txt'
-      - '.github/workflows/build-devcontainer.yml'
-      - '.devcontainer/Containerfile'
-      - '.devcontainer/devcontainer.json'
+      - "requirements.txt"
+      - ".github/workflows/build-devcontainer.yml"
+      - ".devcontainer/**"
   pull_request:
     paths:
-      - 'requirements.txt'
-      - '.github/workflows/build-devcontainer.yml'
-      - '.devcontainer/Containerfile'
-      - '.devcontainer/devcontainer.json'
+      - "requirements.txt"
+      - ".github/workflows/build-devcontainer.yml"
+      - ".devcontainer/**"
 
 env:
-  DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
+  # Image names follow the running repository so that forks push to their
+  # own ghcr.io namespace and can test their generated images.
+  SDK_IMAGE_MIOSIX: ghcr.io/${{ github.repository_owner }}/openrtx-sdk-miosix
+  SDK_IMAGE_ZEPHYR: ghcr.io/${{ github.repository_owner }}/openrtx-sdk-zephyr
+
 jobs:
-  build:
-    runs-on: ubuntu-24.04
+  devcontainer:
+    name: Build and upload
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
       - name: Login to GitHub Container Registry
-        if: github.repository == 'OpenRTX/OpenRTX' && github.event_name != 'pull_request'
-        uses: docker/login-action@v2 
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pre-build dev container image
+      - name: Pre-build Miosix devcontainer image
         uses: devcontainers/ci@v0.3
         with:
-            imageName: ${{ env.DEVCONTAINER_NAME }}
-            cacheFrom: ${{ env.DEVCONTAINER_NAME }}
-            push: ${{ github.repository == 'OpenRTX/OpenRTX' && github.event_name != 'pull_request' && 'always' || 'never' }}
+          configFile: ./.devcontainer/miosix/devcontainer.json
+          imageName: ${{ env.SDK_IMAGE_MIOSIX }}
+          cacheFrom: ${{ env.SDK_IMAGE_MIOSIX }}
+          push: ${{ github.event_name != 'pull_request' && 'always' || 'never' }}
+      - name: Pre-build Zephyr devcontainer image
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: ./.devcontainer/zephyr/devcontainer.json
+          imageName: ${{ env.SDK_IMAGE_ZEPHYR }}
+          cacheFrom: ${{ env.SDK_IMAGE_ZEPHYR }}
+          push: ${{ github.event_name != 'pull_request' && 'always' || 'never' }}
