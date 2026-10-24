@@ -29,10 +29,11 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/display/display_c62.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/radio_C62.cpp
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_c62.c
+    ${OPENRTX_ROOT}/platform/drivers/audio/audio_c62.c
+    ${OPENRTX_ROOT}/platform/drivers/audio/csk6_codec.c
 
     ${OPENRTX_ROOT}/platform/targets/c62/platform.c
     ${OPENRTX_ROOT}/platform/targets/c62/hwconfig.c
-    ${OPENRTX_ROOT}/platform/targets/c62/audio_c62.c
     ${OPENRTX_ROOT}/platform/targets/c62/dsp.c
     ${OPENRTX_ROOT}/platform/targets/c62/lsf.c
 )
