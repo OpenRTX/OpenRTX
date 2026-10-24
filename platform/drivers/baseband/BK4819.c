@@ -6,6 +6,7 @@
 
 #include "drivers/baseband/BK4819.h"
 #include "interfaces/delays.h"
+#include "core/utils.h"
 
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg)
 {
@@ -63,8 +64,8 @@ void bk4819_init(const struct BK4819 *dev)
 
     BK4819_writeReg(dev, BK4819_REG_49, 0x2a38);
     BK4819_writeReg(dev, BK4819_REG_7B, 0x8420);
-    BK4819_writeReg(dev, BK4819_REG_7D, 0xe959); // Mic sensitivity
-    BK4819_writeReg(dev, BK4819_REG_48, 0xb3c1); // AF Gains
+    BK4819_writeReg(dev, BK4819_REG_7D, 0xe940);
+    BK4819_writeReg(dev, BK4819_REG_48, 0xb001); // AF DAC gain
     BK4819_writeReg(dev, BK4819_REG_1E, 0x4c58);
     BK4819_writeReg(dev, BK4819_REG_1F, 0xa656);
     BK4819_writeReg(dev, BK4819_REG_3E, 0xa037); // Band selection threshold
@@ -74,9 +75,7 @@ void bk4819_init(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_53, 59000);
     BK4819_writeReg(dev, BK4819_REG_2C, 0x5705);
     BK4819_writeReg(dev, BK4819_REG_4B, 0x7102); // ALC
-    uVar1 = BK4819_readReg(dev, BK4819_REG_40);
-    BK4819_writeReg(dev, BK4819_REG_40,
-                    (uVar1 & 0xf000) | 0x4d2); // RF Tx Deviation
+    bk4819_setAudioMode(dev, BK4819_AUDIO_VOICE);
     BK4819_writeReg(dev, BK4819_REG_77, 0x88ef);
     BK4819_writeReg(dev, BK4819_REG_26, 0x13a0);
     BK4819_writeReg(dev, BK4819_REG_4E, 0x6f15); // Squelch
@@ -322,6 +321,100 @@ void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF)
     uint16_t value = BK4819_readReg(dev, BK4819_REG_47);
     BK4819_writeReg(dev, BK4819_REG_47,
                     (value & ~0x0f00u) | ((AF & 0x0fu) << 8));
+}
+
+/* Audio filter fields: bypass values, and the voice values bk4819_init() sets */
+struct filterFields {
+    bk4819_reg_t reg;
+    uint16_t mask;
+    uint16_t bypass;
+    uint16_t voice;
+};
+
+static const struct filterFields filterFields[] = {
+    { BK4819_REG_2B, 0x0707, 0x0707, 0x0000 }, /* Speech filters, emphasis */
+    { BK4819_REG_31, 0x000c, 0x0000, 0x0000 }, /* Compander and VOX */
+    /* TX filter bypass, and bit 1 "for gain" (app note RF_EnterBypass()) */
+    { BK4819_REG_47, 0x0003, 0x0003, 0x0000 },
+    { BK4819_REG_4B, 0x0020, 0x0020, 0x0000 }, /* ALC disable */
+    { BK4819_REG_70, 0x8080, 0x0000, 0x0000 }, /* Tone generators */
+    { BK4819_REG_7E, 0x003f, 0x0000, 0x002e }, /* TX and RX DC filters */
+};
+
+/**
+ * Write the bits of a register selected by a mask.
+ *
+ * @param dev: pointer to device data.
+ * @param reg: register.
+ * @param mask: bits to write.
+ * @param value: new value of those bits.
+ */
+static void maskSetRegister(const struct BK4819 *dev, bk4819_reg_t reg,
+                            uint16_t mask, uint16_t value)
+{
+    uint16_t current = BK4819_readReg(dev, reg);
+    BK4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
+}
+
+void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
+                           uint16_t tuning)
+{
+    const uint16_t mask = BK4819_REG40_TX_DEVIATION_ENABLE
+                        | BK4819_REG40_TX_DEVIATION_MASK;
+    uint16_t value = BK4819_REG40_TX_DEVIATION(tuning);
+
+    if (enable)
+        value |= BK4819_REG40_TX_DEVIATION_ENABLE;
+
+    maskSetRegister(dev, BK4819_REG_40, mask, value);
+}
+
+void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter)
+{
+    maskSetRegister(dev, BK4819_REG_43, BK4819_REG43_FILTER_MASK, filter);
+}
+
+void bk4819_setAfRxGain(const struct BK4819 *dev, uint8_t gain1, uint8_t gain2)
+{
+    const uint16_t mask = BK4819_REG48_AF_RX_GAIN1_MASK
+                        | BK4819_REG48_AF_RX_GAIN2_MASK;
+    const uint16_t value = BK4819_REG48_AF_RX_GAIN1(gain1)
+                         | BK4819_REG48_AF_RX_GAIN2(gain2);
+
+    maskSetRegister(dev, BK4819_REG_48, mask, value);
+}
+
+void bk4819_setMicGain(const struct BK4819 *dev, uint8_t gain)
+{
+    maskSetRegister(dev, BK4819_REG_7D, BK4819_REG7D_MIC_GAIN_MASK,
+                    BK4819_REG7D_MIC_GAIN(gain));
+}
+
+void bk4819_setAgcFixed(const struct BK4819 *dev, bool fixed)
+{
+    maskSetRegister(dev, BK4819_REG_7E, BK4819_REG7E_AGC_FIX,
+                    fixed ? BK4819_REG7E_AGC_FIX : 0);
+}
+
+void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode)
+{
+    const bool bypass = (mode == BK4819_AUDIO_BYPASS);
+
+    for (size_t i = 0; i < ARRAY_SIZE(filterFields); i++) {
+        const struct filterFields *field = &filterFields[i];
+        maskSetRegister(dev, field->reg, field->mask,
+                        bypass ? field->bypass : field->voice);
+    }
+
+    if (bypass)
+        return;
+
+    bk4819_setTxDeviation(dev, true, BK4819_DEFAULT_TX_DEVIATION);
+    bk4819_setRxFilter(dev, BK4819_DEFAULT_RX_FILTER);
+    bk4819_setAfRxGain(dev, BK4819_DEFAULT_AF_RX_GAIN1,
+                       BK4819_DEFAULT_AF_RX_GAIN2);
+    bk4819_setMicGain(dev, BK4819_DEFAULT_MIC_GAIN);
+    bk4819_setAgcFixed(dev, false);
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)
