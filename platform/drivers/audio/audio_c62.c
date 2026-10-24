@@ -78,9 +78,13 @@ static void init_audio(void)
 }
 
 /**
- * Keep each physical output enabled while any active route needs it.
+ * Keep each physical output enabled while any active route needs it. The
+ * radio AF output is only touched when a route from the radio changed, so
+ * routes opened from other threads (voice prompts) don't access the BK4819.
+ *
+ * @param source: source of the route that changed.
  */
-static void update_mux(void)
+static void update_mux(enum AudioSource source)
 {
     bool radio = false;
     bool speaker = false;
@@ -88,10 +92,12 @@ static void update_mux(void)
         radio |= paths[SOURCE_RTX][i];
         speaker |= paths[i][SINK_SPK];
     }
-    if (radio)
-        radio_enableAfOutput();
-    else
-        radio_disableAfOutput();
+    if (source == SOURCE_RTX) {
+        if (radio)
+            radio_enableAfOutput();
+        else
+            radio_disableAfOutput();
+    }
     gpio_pin_set_dt(&speaker_enable, speaker);
 }
 
@@ -107,7 +113,7 @@ void audio_terminate(void)
     k_mutex_lock(&board_mutex, K_FOREVER);
     if (initialized) {
         memset(paths, 0, sizeof(paths));
-        update_mux();
+        update_mux(SOURCE_RTX);
         csk6codec_terminate();
         initialized = false;
     }
@@ -123,7 +129,7 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
     if (initialized && !paths[source][sink]) {
         paths[source][sink] = true;
         csk6codec_setRoute(source, sink, true);
-        update_mux();
+        update_mux(source);
     }
     k_mutex_unlock(&board_mutex);
 }
@@ -136,7 +142,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
     if (initialized && paths[source][sink]) {
         paths[source][sink] = false;
         csk6codec_setRoute(source, sink, false);
-        update_mux();
+        update_mux(source);
     }
     k_mutex_unlock(&board_mutex);
 }
