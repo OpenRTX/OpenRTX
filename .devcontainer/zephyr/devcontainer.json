@@ -1,0 +1,28 @@
+{
+  "name": "OpenRTX (zephyr)",
+  "build": {
+    "dockerfile": "../Containerfile",
+    "target": "zephyr",
+    "context": "../..",
+    "args": {
+      "BUILDKIT_STEP_LOG_MAX_SIZE": "10485760" // 10 MiB
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "mesonbuild.mesonbuild",
+        "ms-python.python"
+      ]
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/openrtx/OpenRTX,type=bind",
+  "workspaceFolder": "/workspaces/openrtx/OpenRTX",
+  "mounts": [
+    "source=openrtx-workspace,target=/workspaces/openrtx,type=volume"
+  ],
+  "postCreateCommand": [
+    "/bin/sh", ".devcontainer/zephyr/post-create.sh"
+  ]
+}
