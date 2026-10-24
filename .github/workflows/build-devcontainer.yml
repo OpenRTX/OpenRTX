@@ -35,6 +35,10 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
@@ -48,6 +52,7 @@ jobs:
           configFile: ./.devcontainer/miosix/devcontainer.json
           imageName: ${{ env.SDK_IMAGE_MIOSIX }}
           cacheFrom: ${{ env.SDK_IMAGE_MIOSIX }}
+          platform: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' && 'always' || 'never' }}
       - name: Pre-build Zephyr devcontainer image
         uses: devcontainers/ci@v0.3
@@ -55,4 +60,5 @@ jobs:
           configFile: ./.devcontainer/zephyr/devcontainer.json
           imageName: ${{ env.SDK_IMAGE_ZEPHYR }}
           cacheFrom: ${{ env.SDK_IMAGE_ZEPHYR }}
+          platform: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' && 'always' || 'never' }}
