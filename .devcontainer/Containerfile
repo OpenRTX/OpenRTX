@@ -37,7 +37,8 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
   unzip \
   wget \
   xz-utils \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && install -d -m 0755 -o ubuntu -g ubuntu /workspace/openrtx
 
 # Add uv to manage Python dependencies
 COPY --from=uv /uv /uvx /bin/
