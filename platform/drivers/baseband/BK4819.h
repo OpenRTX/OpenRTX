@@ -404,6 +404,16 @@ void bk4819_set_Squelch(const struct BK4819 *dev, uint8_t RTSO, uint8_t RTSC,
 void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF);
 
 /**
+ * Switch the audio paths between FM processing and flat audio, for digital
+ * modes. Disabling restores the values bk4819_init() leaves; deviation, gains
+ * and the RX filter are left to the caller.
+ *
+ * @param dev: pointer to device data.
+ * @param enable: true for flat audio, false for FM processing.
+ */
+void bk4819_setFlatAudio(const struct BK4819 *dev, bool enable);
+
+/**
  * @brief Get RSSI value 0.5dB/step
  *
  * @param dev: pointer to device data.

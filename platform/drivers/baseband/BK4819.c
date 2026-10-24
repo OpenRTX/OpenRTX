@@ -6,6 +6,7 @@
 
 #include "drivers/baseband/BK4819.h"
 #include "interfaces/delays.h"
+#include "core/utils.h"
 
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg)
 {
@@ -322,6 +323,31 @@ void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF)
     uint16_t value = BK4819_readReg(dev, BK4819_REG_47);
     BK4819_writeReg(dev, BK4819_REG_47,
                     (value & ~0x0f00u) | ((AF & 0x0fu) << 8));
+}
+
+void bk4819_setFlatAudio(const struct BK4819 *dev, bool enable)
+{
+    /* Register fields, flat values and the values bk4819_init() leaves */
+    static const struct {
+        bk4819_reg_t reg;
+        uint16_t mask;
+        uint16_t flat;
+        uint16_t fm;
+    } fields[] = {
+        { BK4819_REG_2B, 0x0707, 0x0707, 0x0000 }, // Speech filters, emphasis
+        { BK4819_REG_31, 0x000c, 0x0000, 0x0000 }, // Compander and VOX
+        { BK4819_REG_47, 0x0001, 0x0001, 0x0000 }, // TX filter bypass
+        { BK4819_REG_4B, 0x0020, 0x0020, 0x0000 }, // ALC disable
+        { BK4819_REG_50, 0x8000, 0x0000, 0x0000 }, // AF TX mute (BeepStop)
+        { BK4819_REG_70, 0x8080, 0x0000, 0x0000 }, // Tone generators
+        { BK4819_REG_7E, 0x003f, 0x0000, 0x002e }, // TX and RX DC filters
+    };
+
+    for (size_t i = 0; i < ARRAY_SIZE(fields); i++) {
+        uint16_t value = BK4819_readReg(dev, fields[i].reg) & ~fields[i].mask;
+        value |= enable ? fields[i].flat : fields[i].fm;
+        BK4819_writeReg(dev, fields[i].reg, value);
+    }
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)
