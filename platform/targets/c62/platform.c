@@ -257,12 +257,16 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    BK4819_BeepStart(&c62_bk4819, freq, true);
+    /*
+     * No BK4819 beeps: they come out of its AF output, which the speaker
+     * mux doesn't select, and BK4819_BeepStart() stops RX until the next
+     * retune.
+     */
+    (void)freq;
 }
 
 void platform_beepStop()
 {
-    BK4819_BeepStop(&c62_bk4819);
 }
 
 const hwInfo_t *platform_getHwInfo()
