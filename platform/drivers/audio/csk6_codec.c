@@ -750,13 +750,13 @@ static int stream_sync(struct streamCtx *ctx, uint8_t dirty)
     }
     int ret = ep->ctx == ctx ? ep->error : -ECANCELED;
     if (ret == 0) {
-        uint32_t elapsed = ep->boundaries - ep->observed;
-        /* More than one boundary means capture data was overwritten or
-         * playback reused a half before the caller could refill it. */
-        if (elapsed > 1) {
-            fail_stream(ep, -EOVERFLOW);
-            ret = -EOVERFLOW;
-        } else if (elapsed == 0)
+        /*
+         * More than one boundary means the caller was late: capture data
+         * was overwritten or playback repeated a half. Carry on with the
+         * current half, as the DMA drivers do: failing the stream would
+         * leave the caller without a buffer.
+         */
+        if (ep->boundaries == ep->observed)
             ret = -EIO;
         ep->observed = ep->boundaries;
     }
