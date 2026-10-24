@@ -1,4 +1,4 @@
-name: "Build devcontainer images"
+name: "Build and publish devcontainer images"
 on:
   # This image is the layer cache for the "Build and test" workflow. The base
   # image is pinned by digest in the Containerfile, so the cache only needs
@@ -17,42 +17,75 @@ on:
       - ".github/workflows/build-devcontainer.yml"
       - ".devcontainer/**"
 
-env:
-  # Image names follow the running repository so that forks push to their
-  # own ghcr.io namespace and can test their generated images.
-  SDK_IMAGE_MIOSIX: ghcr.io/${{ github.repository_owner }}/openrtx-sdk-miosix
-  SDK_IMAGE_ZEPHYR: ghcr.io/${{ github.repository_owner }}/openrtx-sdk-zephyr
-
 jobs:
-  devcontainer:
-    name: Build and upload
-    runs-on: ubuntu-latest
+  sdk-build:
+    name: Build multi-arch devcontainer images
+    strategy:
+      matrix:
+        target:
+          - miosix
+          - zephyr
+        include:
+          - runner: ubuntu-26.04
+            platform: linux/amd64
+          - runner: ubuntu-26.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
     steps:
+      - name: Set image name
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE=ghcr.io/$OWNER/openrtx-sdk-${{ matrix.target }}" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          submodules: recursive
       - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+        if: github.repository == 'OpenRTX/OpenRTX' && github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pre-build Miosix devcontainer image
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build devcontainer images
         uses: devcontainers/ci@v0.3
         with:
-          configFile: ./.devcontainer/miosix/devcontainer.json
-          imageName: ${{ env.SDK_IMAGE_MIOSIX }}
-          cacheFrom: ${{ env.SDK_IMAGE_MIOSIX }}
-          push: ${{ github.event_name != 'pull_request' && 'always' || 'never' }}
-      - name: Pre-build Zephyr devcontainer image
-        uses: devcontainers/ci@v0.3
+          configFile: ./.devcontainer/${{ matrix.target }}/devcontainer.json
+          imageName: ${{ env.IMAGE }}
+          cacheFrom: ${{ env.IMAGE }}
+          platform: ${{ matrix.platform }}
+          push: ${{ github.repository == 'OpenRTX/OpenRTX' && github.event_name != 'pull_request' && 'always' || 'never' }}
+          useNativeRunner: true
+
+  sdk-publish:
+    name: Merge and publish multi-arch devcontainer images
+    if: github.repository == 'OpenRTX/OpenRTX' && github.event_name != 'pull_request'
+    needs: sdk-build
+    strategy:
+      matrix:
+        target:
+          - miosix
+          - zephyr
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Set image name
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE=ghcr.io/$OWNER/openrtx-sdk-${{ matrix.target }}" >> $GITHUB_ENV
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
         with:
-          configFile: ./.devcontainer/zephyr/devcontainer.json
-          imageName: ${{ env.SDK_IMAGE_ZEPHYR }}
-          cacheFrom: ${{ env.SDK_IMAGE_ZEPHYR }}
-          push: ${{ github.event_name != 'pull_request' && 'always' || 'never' }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Merge arch images into multi-arch manifest
+        uses: devcontainers/ci/merge@v0.3
+        with:
+          imageName: ${{ env.IMAGE }}
+          platforms: linux/amd64,linux/arm64
+
