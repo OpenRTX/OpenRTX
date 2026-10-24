@@ -34,5 +34,5 @@ config LSF_SERVICE_CONTROLLER
 	select REQUIRES_FULL_LIBC
 
 if LSF_SERVICE_CONTROLLER
-rsource "services/Kconfig"
+orsource "services/Kconfig"
 endif # LSF_SERVICE_CONTROLLER
