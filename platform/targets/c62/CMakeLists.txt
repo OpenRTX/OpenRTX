@@ -48,3 +48,41 @@ target_include_directories(app
 )
 
 target_compile_definitions(app PRIVATE PLATFORM_C62)
+
+#
+# DSP firmware, flashed separately at 0x100000 (dsp_firmware partition). The
+# firmware does not boot without it, and it must match the audio code, so the
+# build pins one image by hash: by default it is downloaded from ListenAI's
+# lsf-zephyr-sdk, or C62_DSP_FIRMWARE (CMake or environment variable) gives a
+# local copy for offline builds. Either way it ends up next to zephyr.bin.
+#
+set(C62_DSP_FIRMWARE_URL
+    "https://raw.githubusercontent.com/OpenRTX/lsf-zephyr-sdk/2ac605527dcde3e90c814bb4175546cc7fbd36da/resources/dsp_firmware.bin")
+set(C62_DSP_FIRMWARE_SHA256
+    "9579b617f048c646465118f6d0b9e1b765b4d7d811ff9c8649c5754fe45a8903")
+set(C62_DSP_FIRMWARE_OUT ${CMAKE_BINARY_DIR}/zephyr/dsp_firmware.bin)
+
+if(NOT DEFINED C62_DSP_FIRMWARE AND DEFINED ENV{C62_DSP_FIRMWARE})
+  set(C62_DSP_FIRMWARE $ENV{C62_DSP_FIRMWARE})
+endif()
+
+if(C62_DSP_FIRMWARE)
+  get_filename_component(c62_dsp_local ${C62_DSP_FIRMWARE} ABSOLUTE)
+  set(C62_DSP_FIRMWARE_URL "file://${c62_dsp_local}")
+endif()
+
+# Skipped when the file is already there with the expected hash
+file(DOWNLOAD ${C62_DSP_FIRMWARE_URL} ${C62_DSP_FIRMWARE_OUT}
+     EXPECTED_HASH SHA256=${C62_DSP_FIRMWARE_SHA256}
+     TLS_VERIFY ON
+     STATUS c62_dsp_status)
+list(GET c62_dsp_status 0 c62_dsp_error)
+if(c62_dsp_error)
+  list(GET c62_dsp_status 1 c62_dsp_message)
+  message(FATAL_ERROR "Could not get the C62 DSP firmware from "
+                      "${C62_DSP_FIRMWARE_URL} (${c62_dsp_message}). Set "
+                      "C62_DSP_FIRMWARE to a local copy with sha256 "
+                      "${C62_DSP_FIRMWARE_SHA256}.")
+endif()
+
+message(STATUS "C62 DSP firmware: ${C62_DSP_FIRMWARE_OUT}, flash at 0x100000")
