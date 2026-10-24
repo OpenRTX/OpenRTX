@@ -5,7 +5,6 @@
 
 #include <string.h>
 
-#include <zephyr/init.h>
 #include <zephyr/irq.h>
 #include <zephyr/device.h>
 #include <zephyr/sys/util.h>
@@ -17,6 +16,8 @@ LOG_MODULE_REGISTER(dsp, LOG_LEVEL_DBG);
 #include <csk6_cm33/include/cache.h>
 #include <csk6_cm33/include/ClockManager.h>
 #include <csk6_cm33/include/SysManager.h>
+
+#include <controller.h>
 
 #define AP_SYS_RAM_BANK_IDX 4
 #define AP_SYS_RAM_BANK_SIZE 0x00010000
@@ -82,7 +83,7 @@ void lsf_dsp_load(const void *addr, uint32_t size)
     __HAL_SYS_CP_RUN();
 }
 
-static int lsf_dsp_init(void)
+int lsf_dsp_init(void)
 {
 #if !defined(CONFIG_UART_INTERRUPT_DRIVEN) && !defined(CONFIG_UART_ASYNC_API)
     /* DSP logging can trigger UART2 IRQ 10 on the application core.
@@ -119,5 +120,3 @@ static int lsf_dsp_init(void)
 
     return 0;
 }
-
-SYS_INIT(lsf_dsp_init, POST_KERNEL, CONFIG_LSF_DSP_INIT_PRIORITY);

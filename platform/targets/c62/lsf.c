@@ -65,11 +65,8 @@ static int lsf_controller_init_internal(const struct device *dev)
 {
     ARG_UNUSED(dev);
 
-#if DT_HAS_CHOSEN(lsf_dsp_firmware)
-    return lsf_controller_init();
-#else  /* DT_HAS_CHOSEN(lsf_dsp_firmware) */
+    /* platform_init_csk6() starts the controller after booting the DSP */
     return 0;
-#endif /* DT_HAS_CHOSEN(lsf_dsp_firmware) */
 }
 
 DEVICE_DT_INST_DEFINE(0, lsf_controller_init_internal, NULL, NULL, NULL,

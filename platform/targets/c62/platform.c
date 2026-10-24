@@ -16,6 +16,7 @@
 #include <zephyr/kernel.h>
 #include <interfaces/audio.h>
 #include "drivers/SPI/spi_zephyr.h"
+#include "controller.h"
 
 static const hwInfo_t hwInfo = {
     .name = "c62",
@@ -33,6 +34,20 @@ static const hwInfo_t hwInfo = {
 static int32_t adc_vref = 0;
 static bool is_battery_charging = false;
 
+/**
+ * Re-apply the ADC pin configuration, which the DSP firmware overwrites when
+ * it starts.
+ */
+static void battery_restore_pins(void)
+{
+    struct adc_csk6_cfg {
+        uint8_t pin;
+        const struct pinctrl_dev_config *pcfg;
+    };
+    const struct adc_csk6_cfg *config = adc_dev->config;
+    pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+}
+
 static int battery_init(void)
 {
     if (!device_is_ready(adc_dev)) {
@@ -40,15 +55,7 @@ static int battery_init(void)
         return -1;
     }
 
-    /* Apply pin configuration for ADC pins
-       because it is overwritten by DSP firmware execution,
-       we need to re-apply it here */
-    struct adc_csk6_cfg {
-        uint8_t pin;
-        const struct pinctrl_dev_config *pcfg;
-    };
-    const struct adc_csk6_cfg *config = adc_dev->config;
-    pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+    battery_restore_pins();
 
     // Configure ADC channel
     struct adc_channel_cfg channel_cfg = {
@@ -103,6 +110,18 @@ void platform_init_csk6()
     /* Initialise BK4819 SPI bus and transceiver */
     spiZephyr_init(c62_bk4819.spi);
     bk4819_init(&c62_bk4819);
+
+    /*
+     * Start the DSP only now, after the BK4819 microphone input has settled.
+     * The battery reading also tells the power knob state, so restore its
+     * pins once the DSP is up.
+     */
+    lsf_dsp_init();
+    int ret = lsf_controller_init();
+    if (ret != 0)
+        printk("LSF controller init failed: %d\n", ret);
+
+    battery_restore_pins();
 
     /* Initialise audio */
     audio_init();
