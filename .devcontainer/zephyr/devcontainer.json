@@ -17,6 +17,11 @@
       ]
     }
   },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/openrtx/OpenRTX,type=bind",
+  "workspaceFolder": "/workspaces/openrtx/OpenRTX",
+  "mounts": [
+    "source=openrtx-workspace,target=/workspaces/openrtx,type=volume"
+  ],
   "postCreateCommand": [
     "/bin/sh", ".devcontainer/zephyr/post-create.sh"
   ]
