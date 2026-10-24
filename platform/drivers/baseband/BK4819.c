@@ -116,6 +116,15 @@ void bk4819_init(const struct BK4819 *dev)
         dev, BK4819_REG_36,
         0xdfbf); // Tx Output power Bias 0xdf = 2,8V PA Tuning 0xbf = Enable PACTKoutput + 7,26dBm
     BK4819_writeReg(dev, BK4819_REG_47, 0x6040); // AF
+
+    /*
+     * Let the microphone input bias settle with only the mic ADC enabled,
+     * before any audio starts: otherwise the mic AGC can stay at a low gain.
+     */
+    uint16_t power = BK4819_readReg(dev, BK4819_REG_30);
+    BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG30_MIC_ADC_ENABLE);
+    delayMs(250);
+    BK4819_writeReg(dev, BK4819_REG_30, power);
 }
 
 uint8_t bk4819_int_get(const struct BK4819 *dev, bk4819_int_t interrupt)
