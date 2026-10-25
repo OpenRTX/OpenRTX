@@ -64,8 +64,8 @@ static void restore_console(void)
 
 /**
  * Keep each physical output enabled while any active route needs it. The
- * radio AF output is only touched when a route from the radio changed, so
- * routes opened from other threads (voice prompts) don't access the BK4819.
+ * radio AF output is only touched when a route from the radio changed, as
+ * in the MDx audio driver.
  *
  * @param source: source of the route that changed.
  */
