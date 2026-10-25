@@ -52,7 +52,7 @@ target_compile_definitions(app PRIVATE PLATFORM_C62)
 #
 # DSP firmware, flashed separately at 0x100000 (dsp_firmware partition). The
 # firmware does not boot without it, and it must match the audio code, so the
-# build pins one image by hash: by default it is downloaded from ListenAI's
+# build pins one image by hash: by default it is downloaded from OpenRTX's
 # lsf-zephyr-sdk, or C62_DSP_FIRMWARE (CMake or environment variable) gives a
 # local copy for offline builds. Either way it ends up next to zephyr.bin.
 #
@@ -66,8 +66,19 @@ if(NOT DEFINED C62_DSP_FIRMWARE AND DEFINED ENV{C62_DSP_FIRMWARE})
   set(C62_DSP_FIRMWARE $ENV{C62_DSP_FIRMWARE})
 endif()
 
+# A relative path is from the OpenRTX root. Check the hash here, as a
+# mismatch in file(DOWNLOAD) stops with CMake's own error.
 if(C62_DSP_FIRMWARE)
-  get_filename_component(c62_dsp_local ${C62_DSP_FIRMWARE} ABSOLUTE)
+  get_filename_component(c62_dsp_local ${C62_DSP_FIRMWARE} ABSOLUTE
+                         BASE_DIR ${OPENRTX_ROOT})
+  if(EXISTS ${c62_dsp_local})
+    file(SHA256 ${c62_dsp_local} c62_dsp_local_sha256)
+  endif()
+  if(NOT "${c62_dsp_local_sha256}" STREQUAL "${C62_DSP_FIRMWARE_SHA256}")
+    message(FATAL_ERROR "C62_DSP_FIRMWARE ${c62_dsp_local} is missing or is "
+                        "not the pinned DSP firmware (sha256 "
+                        "${C62_DSP_FIRMWARE_SHA256}).")
+  endif()
   set(C62_DSP_FIRMWARE_URL "file://${c62_dsp_local}")
 endif()
 

@@ -46,8 +46,9 @@ hash and places it in `build/zephyr/dsp_firmware.bin`, next to `zephyr.bin`:
 | sha256 | `9579b617f048c646465118f6d0b9e1b765b4d7d811ff9c8649c5754fe45a8903` |
 
 By default it is downloaded while configuring. For offline builds, point the
-`C62_DSP_FIRMWARE` environment variable (or CMake variable) at a local copy;
-the build fails if its hash differs.
+`C62_DSP_FIRMWARE` environment variable (or CMake variable) at a local copy,
+relative to the repository root or absolute; the build fails if its hash
+differs.
 
 ## Flashing
 
