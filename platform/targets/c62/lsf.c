@@ -3,8 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT lsf_service_controller
-
+#include <errno.h>
 #include <zephyr/device.h>
 
 #include <zephyr/logging/log.h>
@@ -30,17 +29,27 @@ int lsf_controller_init(void)
     LOG_DBG("Initializing LSF service controller");
 
     /* Initialize LSF */
-    lsf_init();
-    lsf_connect();
+    ret = lsf_init();
+    if (ret != 0)
+        return ret;
+    ret = lsf_connect();
+    if (ret != 0)
+        return ret;
 
     /* Wait for ready signal */
     ICFenceHandle fence = IC_Proxy_getRemoteFence(0);
 
-    ICFence_syncWithRemote(fence);
+    if (fence == NULL)
+        return -EIO;
+    ret = ICFence_syncWithRemote(fence);
+    if (ret != IC_OK)
+        return ret;
     LOG_DBG("DSP synced");
 
     uint32_t val;
-    ICFence_wait(fence, &val);
+    ret = ICFence_wait(fence, &val);
+    if (ret != IC_OK)
+        return ret;
     LOG_DBG("DSP ready");
 
     STRUCT_SECTION_FOREACH(lsf_service, service)
@@ -60,14 +69,3 @@ int lsf_controller_init(void)
 
     return 0;
 }
-
-static int lsf_controller_init_internal(const struct device *dev)
-{
-    ARG_UNUSED(dev);
-
-    /* platform_init_csk6() starts the controller after booting the DSP */
-    return 0;
-}
-
-DEVICE_DT_INST_DEFINE(0, lsf_controller_init_internal, NULL, NULL, NULL,
-                      APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY, NULL);

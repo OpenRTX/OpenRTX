@@ -63,21 +63,6 @@ static void restore_console(void)
 }
 
 /**
- * Configure the audio GPIOs and start the codec, once. Call with board_mutex
- * held.
- */
-static void init_audio(void)
-{
-    if (initialized)
-        return;
-    gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT_INACTIVE);
-    gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT_INACTIVE);
-    restore_console();
-    initialized = csk6codec_init() == 0;
-    restore_console();
-}
-
-/**
  * Keep each physical output enabled while any active route needs it. The
  * radio AF output is only touched when a route from the radio changed, so
  * routes opened from other threads (voice prompts) don't access the BK4819.
@@ -104,7 +89,11 @@ static void update_mux(enum AudioSource source)
 void audio_init(void)
 {
     k_mutex_lock(&board_mutex, K_FOREVER);
-    init_audio();
+    gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT_INACTIVE);
+    gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT_INACTIVE);
+    restore_console();
+    initialized = csk6codec_init() == 0;
+    restore_console();
     k_mutex_unlock(&board_mutex);
 }
 
@@ -125,7 +114,6 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
     if (source > SOURCE_MCU || sink > SINK_MCU)
         return;
     k_mutex_lock(&board_mutex, K_FOREVER);
-    init_audio();
     if (initialized && !paths[source][sink]) {
         paths[source][sink] = true;
         csk6codec_setRoute(source, sink, true);

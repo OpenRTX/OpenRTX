@@ -116,15 +116,17 @@ void platform_init_csk6()
      * The battery reading also tells the power knob state, so restore its
      * pins once the DSP is up.
      */
-    lsf_dsp_init();
-    int ret = lsf_controller_init();
-    if (ret != 0)
-        printk("LSF controller init failed: %d\n", ret);
+    int ret = lsf_dsp_init();
+    if (ret == 0)
+        ret = lsf_controller_init();
 
     battery_restore_pins();
 
-    /* Initialise audio */
-    audio_init();
+    /* Initialise audio, which runs on the DSP */
+    if (ret == 0)
+        audio_init();
+    else
+        printk("DSP start failed, no audio: %d\n", ret);
 }
 
 void platform_terminate()
