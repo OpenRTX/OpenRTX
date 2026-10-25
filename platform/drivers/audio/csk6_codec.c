@@ -30,10 +30,17 @@ LOG_MODULE_REGISTER(csk6_codec, LOG_LEVEL_INF);
 #define DSP_SAMPLE_RATE 48000
 #define CAPTURE_FRAME_SAMPLES (DSP_SAMPLE_RATE / 100)
 #define RECORD_CHANNELS (CHANNEL_IN_LEFT | CHANNEL_IN_RIGHT)
-/* Capacity per FM output, in 48 kHz samples; not a target fill level. */
-#define QUEUE_SAMPLES (DSP_SAMPLE_RATE * 160 / 1000)
+/* Capacity per FM output; not a target fill level. */
+#define QUEUE_MS 160
+#define QUEUE_SAMPLES (DSP_SAMPLE_RATE * QUEUE_MS / MSEC_PER_SEC)
+/* Allowance for a stalled device, on top of one buffer period */
 #define IO_TIMEOUT_MS 1000
+/* Added to the drain estimate, which cannot see the DAC */
+#define DRAIN_MARGIN_MS 20
 #define NO_SOURCE (-1)
+/* Above the rtx thread, below the UI: it paces the DSP streams */
+#define WORKER_PRIORITY 5
+#define WORKER_STACK_SIZE (8 * 1024)
 
 /* FM passthrough only: bridge separately available capture/playback frames. */
 struct sample_queue {
@@ -92,7 +99,7 @@ static bool playback_running;
 static int64_t playback_deadline;
 static uint32_t playback_fraction;
 static struct k_thread worker;
-K_THREAD_STACK_DEFINE(worker_stack, 8 * 1024);
+K_THREAD_STACK_DEFINE(worker_stack, WORKER_STACK_SIZE);
 
 /**
  * Empty an FM queue.
@@ -261,15 +268,12 @@ static int open_dsp(void)
     int ret = configure_adc_gain();
     if (ret != 0)
         goto fail;
-    String8 param;
     /* Set the fixed hardware rate and capture channels before opening streams. */
     stage = "48k ADC/DAC configuration";
     char config[64];
     snprintf(config, sizeof(config), "samplingRate=%u;channels=%u",
              (unsigned int)DSP_SAMPLE_RATE, (unsigned int)RECORD_CHANNELS);
-    String8_ctor_char(&param, config);
-    ret = AudioSystem_setParameters(0, &param);
-    String8_dtor(&param);
+    ret = set_dsp_param(config);
     if (ret != 0)
         goto fail;
     stage = "48k recording constructor";
@@ -488,7 +492,8 @@ static void play_frame(void)
     /* The DSP FIFO can accept several frames at once. Pace writes so it cannot
      * consume application halves faster than callers can refill them. Carry
      * fractional milliseconds forward and avoid catch-up bursts after stalls. */
-    uint64_t duration = buffer.frameCount * 1000ULL + playback_fraction;
+    uint64_t duration = buffer.frameCount * (uint64_t)MSEC_PER_SEC
+                      + playback_fraction;
     int64_t period = duration / DSP_SAMPLE_RATE;
     playback_fraction = duration % DSP_SAMPLE_RATE;
     playback_deadline += period;
@@ -499,8 +504,8 @@ static void play_frame(void)
 /**
  * Complete draining outputs once their last samples have played. Publishing
  * the final frame does not mean it reached the DAC, so wait for the queued
- * samples, the DSP latency and a 20 ms margin. This is an estimate; draining
- * does not read application memory.
+ * samples, the DSP latency and a margin. This is an estimate; draining does
+ * not read application memory.
  */
 static void finish_outputs(void)
 {
@@ -515,8 +520,8 @@ static void finish_outputs(void)
             size_t frames = (fifo->size - fifo_avail(fifo))
                           / (2 * sizeof(int16_t));
             out->deadline = k_uptime_get()
-                          + DIV_ROUND_UP(frames * 1000, DSP_SAMPLE_RATE)
-                          + playback_track.mLatency + 20;
+                          + DIV_ROUND_UP(frames * MSEC_PER_SEC, DSP_SAMPLE_RATE)
+                          + playback_track.mLatency + DRAIN_MARGIN_MS;
         } else if (k_uptime_get() >= out->deadline) {
             ep->ctx->running = 0;
             out->draining = false;
@@ -572,9 +577,8 @@ int csk6codec_init(void)
 {
     k_mutex_lock(&audio_mutex, K_FOREVER);
     if (state != OFF) {
-        int ret = state == RUNNING ? 0 : -EBUSY;
         k_mutex_unlock(&audio_mutex);
-        return ret;
+        return -EBUSY;
     }
     memset(inputs, 0, sizeof(inputs));
     memset(outputs, 0, sizeof(outputs));
@@ -587,7 +591,8 @@ int csk6codec_init(void)
     capture_running = playback_running = routes_dirty = false;
     state = STARTING;
     k_thread_create(&worker, worker_stack, K_THREAD_STACK_SIZEOF(worker_stack),
-                    audio_worker, NULL, NULL, NULL, 5, 0, K_NO_WAIT);
+                    audio_worker, NULL, NULL, NULL, WORKER_PRIORITY, 0,
+                    K_NO_WAIT);
     k_thread_name_set(&worker, "csk6_codec");
     while (state == STARTING)
         k_condvar_wait(&changed, &audio_mutex, K_FOREVER);
@@ -738,7 +743,7 @@ static int stream_sync(struct streamCtx *ctx, uint8_t dirty)
     ep->busy = true;
     /* Allow one buffer period plus a bounded margin for a stalled device. */
     int64_t deadline = k_uptime_get() + IO_TIMEOUT_MS
-                     + (uint64_t)ctx->bufSize * 1000 / ctx->sampleRate;
+                     + (uint64_t)ctx->bufSize * MSEC_PER_SEC / ctx->sampleRate;
     while (ep->ctx == ctx && ctx->running && ep->error == 0
            && ep->boundaries == ep->observed) {
         int64_t remaining = deadline - k_uptime_get();
@@ -795,7 +800,8 @@ static void stream_stop(struct streamCtx *ctx)
             ep->busy = true;
             ep->stop = true;
             int64_t deadline = k_uptime_get() + IO_TIMEOUT_MS
-                             + (uint64_t)ctx->bufSize * 1000 / ctx->sampleRate;
+                             + (uint64_t)ctx->bufSize * MSEC_PER_SEC
+                                   / ctx->sampleRate;
             while (ep->ctx == ctx && ctx->running && ep->error == 0) {
                 int64_t remaining = deadline - k_uptime_get();
                 if (remaining <= 0) {

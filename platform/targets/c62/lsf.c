@@ -16,7 +16,7 @@ LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
 #include <controller.h>
 #include <service.h>
 
-static volatile bool inited = false;
+static bool inited = false;
 
 int lsf_controller_init(void)
 {
