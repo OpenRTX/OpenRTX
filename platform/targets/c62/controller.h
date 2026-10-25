@@ -7,12 +7,10 @@
 #define __LSF_CONTROLLER_H__
 
 /**
- * Load the DSP firmware and start the DSP.
+ * Connect to the DSP and start its services, once.
  *
  * @return 0 on success.
  */
-int lsf_dsp_init(void);
-
 int lsf_controller_init(void);
 
 #endif /* __LSF_CONTROLLER_H__ */

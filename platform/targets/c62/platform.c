@@ -17,6 +17,7 @@
 #include <interfaces/audio.h>
 #include "drivers/SPI/spi_zephyr.h"
 #include "controller.h"
+#include "dsp.h"
 
 static const hwInfo_t hwInfo = {
     .name = "c62",

@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(dsp, LOG_LEVEL_DBG);
 #include <csk6_cm33/include/ClockManager.h>
 #include <csk6_cm33/include/SysManager.h>
 
-#include <controller.h>
+#include "dsp.h"
 
 #define AP_SYS_RAM_BANK_IDX 4
 #define AP_SYS_RAM_BANK_SIZE 0x00010000
