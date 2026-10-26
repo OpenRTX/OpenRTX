@@ -46,13 +46,15 @@ void AK2365A_terminate(const struct ak2365a *dev)
 
 void AK2365A_setFilterBandwidth(const struct ak2365a *dev, const uint8_t bw)
 {
-    uint8_t reg = 0xE1 | (bw << 2);
+    // BPF_BW[1:0] in register 0x01, BPF_BW[2] (F0 select) in register 0x0B.
+    uint8_t reg01 = 0xE1 | ((bw & 0x03) << 2);
+    uint8_t reg0B = 0x01 | ((bw & 0x04) << 5);
 
-    writeReg(dev, 0x01, reg);    // Operating mode 7, LO freq. 50.4MHz
+    writeReg(dev, 0x01, reg01);  // Operating mode 7, LO freq. 50.4MHz
     delayMs(1);
-    writeReg(dev, 0x01, reg);    // Operating mode 7, LO freq. 50.4MHz
+    writeReg(dev, 0x01, reg01);  // Operating mode 7, LO freq. 50.4MHz
     writeReg(dev, 0x02, 0x1E);   // AGC time = 3, AGC step 2dB
     writeReg(dev, 0x03, 0x00);   // IF buffer gain 5dB
-    writeReg(dev, 0x0B, 0x01);   // AGC auto, AGC1 gain 21dB
+    writeReg(dev, 0x0B, reg0B);  // BPF_BW[2], AGC auto
     writeReg(dev, 0x0C, 0x80);   // AGC2 gain 12dB
 }

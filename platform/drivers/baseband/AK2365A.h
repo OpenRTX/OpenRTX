@@ -16,13 +16,18 @@
 extern "C" {
 #endif
 
+/**
+ * IF filter selection, value is BPF_BW[2:0]. BPF_BW[1:0] are bits 3-2 of
+ * register 0x01, BPF_BW[2] is bit 7 of register 0x0B. Bandwidths are the
+ * -6dB points around the 450kHz IF.
+ */
 enum AK2365A_BPF
 {
-    AK2365A_BPF_7p5 = 4,    ///< BAND = 1, BPF_BW = 00
-    AK2365A_BPF_6   = 0,    ///< BAND = 0, BPF_BW = 00
-    AK2365A_BPF_4p5 = 1,    ///< BAND = 0, BPF_BW = 01
-    AK2365A_BPF_3   = 2,    ///< BAND = 0, BPF_BW = 10
-    AK2365A_BPF_2   = 3,    ///< BAND = 0, BPF_BW = 11
+    AK2365A_BPF_7p5 = 4,    ///< F0, BPF_BW = 1xx, +/-7.5kHz
+    AK2365A_BPF_6   = 0,    ///< F1, BPF_BW = 000, +/-6kHz
+    AK2365A_BPF_4p5 = 1,    ///< F2, BPF_BW = 001, +/-4.5kHz
+    AK2365A_BPF_3   = 2,    ///< F3, BPF_BW = 010, +/-3kHz
+    AK2365A_BPF_2   = 3,    ///< F4, BPF_BW = 011, +/-2kHz
 };
 
 /**
