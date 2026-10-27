@@ -5,6 +5,9 @@
  */
 
 #include "calibration/calib_C62.h"
+#include "core/utils.h"
+#include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 /*
@@ -13,9 +16,9 @@
  */
 
 #define ENTRY_MARKER 0x5A
-#define ENTRY_LEN_10 0x0BDC
-#define ENTRY_LEN_20 0x0D48
-#define RECORD_OFFSET 0x450
+#define ENTRY_LEN_10 3036
+#define ENTRY_LEN_20 3400
+#define RECORD_OFFSET 1104
 
 /**
  * Header of a journal entry: a marker, the 8-bit sum of the rest of the entry
@@ -40,7 +43,7 @@ struct C62CalRecord {
 };
 
 _Static_assert(sizeof(struct C62EntryHdr) == 4, "C62 entry header size");
-_Static_assert(sizeof(struct C62CalRecord) == 0x24, "C62 record size");
+_Static_assert(sizeof(struct C62CalRecord) == 36, "C62 record size");
 
 /**
  * Stock default calibration, as the C62 firmware ships it.
@@ -51,11 +54,6 @@ static const struct C62CalPoint defaultCalib[] = {
     { 420125000, 32, 74 }, { 440125000, 31, 74 }, { 460125000, 30, 76 },
     { 479975000, 31, 75 },
 };
-
-/*
- * One whole journal entry, kept off the stack.
- */
-static uint8_t entry[ENTRY_LEN_20];
 
 /**
  * Select the band a calibration frequency belongs to.
@@ -102,10 +100,14 @@ int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
 {
     struct C62EntryHdr hdr;
     uint32_t off = 0;
-    uint32_t newest = 0;
-    uint16_t newestLen = 0;
+    bool found = false;
 
-    // Walk the journal up to the first erased or malformed header
+    uint8_t *entry = malloc(ENTRY_LEN_20);
+    if (entry == NULL)
+        return -1;
+
+    // Walk the journal up to the first erased or malformed header, parsing
+    // each entry with a valid checksum: the newest one is kept
     while (off + sizeof(hdr) <= size) {
         if (read(ctx, off, &hdr, sizeof(hdr)) != 0)
             break;
@@ -118,37 +120,35 @@ int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
         if (read(ctx, off, entry, hdr.len) != 0)
             break;
 
+        off += hdr.len;
+
         uint8_t sum = 0;
         for (uint16_t i = sizeof(hdr); i < hdr.len; i++)
             sum += entry[i];
 
-        if (sum == hdr.sum) {
-            newest = off;
-            newestLen = hdr.len;
-        }
-
-        off += hdr.len;
-    }
-
-    if ((newestLen == 0) || (read(ctx, newest, entry, newestLen) != 0))
-        return -1;
-
-    memset(cal, 0, sizeof(*cal));
-
-    uint8_t records = (newestLen == ENTRY_LEN_10) ? 10 : 20;
-    for (uint8_t i = 0; i < records; i++) {
-        struct C62CalRecord rec;
-        memcpy(&rec, &entry[RECORD_OFFSET + (i * sizeof(rec))], sizeof(rec));
-
-        struct C62BandCalib *band = bandOf(cal, rec.point.freq);
-        if ((band == NULL) || (rec.point.loPwr > 100)
-            || (rec.point.hiPwr > 100))
+        if (sum != hdr.sum)
             continue;
 
-        addPoint(band, &rec.point);
+        const struct C62CalRecord *rec =
+            (const struct C62CalRecord *)&entry[RECORD_OFFSET];
+        uint8_t records = (hdr.len == ENTRY_LEN_10) ? 10 : 20;
+
+        memset(cal, 0, sizeof(*cal));
+        for (uint8_t i = 0; i < records; i++) {
+            struct C62BandCalib *band = bandOf(cal, rec[i].point.freq);
+            if ((band == NULL) || (rec[i].point.loPwr > 100)
+                || (rec[i].point.hiPwr > 100))
+                continue;
+
+            addPoint(band, &rec[i].point);
+        }
+
+        found = true;
     }
 
-    if ((cal->vhf.count == 0) || (cal->uhf.count == 0))
+    free(entry);
+
+    if (!found || (cal->vhf.count == 0) || (cal->uhf.count == 0))
         return -1;
 
     return 0;
@@ -158,10 +158,8 @@ void calibC62_defaults(struct C62Calib *cal)
 {
     memset(cal, 0, sizeof(*cal));
 
-    for (size_t i = 0; i < sizeof(defaultCalib) / sizeof(defaultCalib[0]);
-         i++) {
+    for (size_t i = 0; i < ARRAY_SIZE(defaultCalib); i++)
         addPoint(bandOf(cal, defaultCalib[i].freq), &defaultCalib[i]);
-    }
 }
 
 /**
