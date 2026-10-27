@@ -22,9 +22,8 @@ int lsf_controller_init(void)
 {
     int ret;
 
-    if (inited) {
-        return 0;
-    }
+    if (inited)
+        return -EALREADY;
 
     LOG_DBG("Initializing LSF service controller");
 

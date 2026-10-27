@@ -38,7 +38,8 @@ LOG_MODULE_REGISTER(csk6_codec, LOG_LEVEL_INF);
 /* Added to the drain estimate, which cannot see the DAC */
 #define DRAIN_MARGIN_MS 20
 #define NO_SOURCE (-1)
-/* Above the rtx thread, below the UI: it paces the DSP streams */
+/* Above the rtx and UI threads (Zephyr priority 14 as POSIX default), below
+ * main, so the DSP streams are paced on time */
 #define WORKER_PRIORITY 5
 #define WORKER_STACK_SIZE (8 * 1024)
 
@@ -85,7 +86,12 @@ static struct output_state outputs[2]
  * Condition waits release this mutex so the worker and cancellation can run. */
 static K_MUTEX_DEFINE(audio_mutex);
 static K_CONDVAR_DEFINE(changed);
-static enum { OFF, STARTING, RUNNING, STOPPING } state;
+static enum {
+    CODEC_OFF,
+    CODEC_STARTING,
+    CODEC_RUNNING,
+    CODEC_STOPPING,
+} state;
 static int init_result;
 /* Desired routing, written by board callbacks and applied by the worker. */
 static bool input_enabled[2];
@@ -541,14 +547,14 @@ static void audio_worker(void *a, void *b, void *c)
     (void)c;
     k_mutex_lock(&audio_mutex, K_FOREVER);
     init_result = open_dsp();
-    state = init_result == 0 ? RUNNING : OFF;
+    state = init_result == 0 ? CODEC_RUNNING : CODEC_OFF;
     k_condvar_broadcast(&changed);
     k_mutex_unlock(&audio_mutex);
     if (init_result != 0)
         return;
     for (;;) {
         k_mutex_lock(&audio_mutex, K_FOREVER);
-        if (state == STOPPING)
+        if (state == CODEC_STOPPING)
             break;
         apply_routes();
         if (capture_running)
@@ -566,7 +572,7 @@ static void audio_worker(void *a, void *b, void *c)
     }
     AudioRecord_dtor(&record);
     AudioTrack_dtor(&playback_track);
-    state = OFF;
+    state = CODEC_OFF;
     k_condvar_broadcast(&changed);
     k_mutex_unlock(&audio_mutex);
 }
@@ -576,7 +582,7 @@ static void audio_worker(void *a, void *b, void *c)
 int csk6codec_init(void)
 {
     k_mutex_lock(&audio_mutex, K_FOREVER);
-    if (state != OFF) {
+    if (state != CODEC_OFF) {
         k_mutex_unlock(&audio_mutex);
         return -EBUSY;
     }
@@ -589,12 +595,12 @@ int csk6codec_init(void)
         output_source[i] = NO_SOURCE;
     }
     capture_running = playback_running = routes_dirty = false;
-    state = STARTING;
+    state = CODEC_STARTING;
     k_thread_create(&worker, worker_stack, K_THREAD_STACK_SIZEOF(worker_stack),
                     audio_worker, NULL, NULL, NULL, WORKER_PRIORITY, 0,
                     K_NO_WAIT);
     k_thread_name_set(&worker, "csk6_codec");
-    while (state == STARTING)
+    while (state == CODEC_STARTING)
         k_condvar_wait(&changed, &audio_mutex, K_FOREVER);
     int ret = init_result;
     k_mutex_unlock(&audio_mutex);
@@ -606,11 +612,11 @@ int csk6codec_init(void)
 void csk6codec_terminate(void)
 {
     k_mutex_lock(&audio_mutex, K_FOREVER);
-    if (state != RUNNING) {
+    if (state != CODEC_RUNNING) {
         k_mutex_unlock(&audio_mutex);
         return;
     }
-    state = STOPPING;
+    state = CODEC_STOPPING;
     for (unsigned int i = 0; i < 2; i++) {
         detach(&inputs[i].endpoint);
         detach(&outputs[i].endpoint);
@@ -631,7 +637,7 @@ void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
     if (source > SOURCE_MCU || sink > SINK_MCU)
         return;
     k_mutex_lock(&audio_mutex, K_FOREVER);
-    if (state == RUNNING) {
+    if (state == CODEC_RUNNING) {
         if (sink == SINK_MCU && source != SOURCE_MCU) {
             input_enabled[source] = enabled;
             if (!enabled) {
@@ -645,7 +651,7 @@ void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
         }
         /* Return only after the worker has applied the device start/stop. */
         routes_dirty = true;
-        while (routes_dirty && state == RUNNING)
+        while (routes_dirty && state == CODEC_RUNNING)
             k_condvar_wait(&changed, &audio_mutex, K_FOREVER);
     }
     k_mutex_unlock(&audio_mutex);
@@ -669,7 +675,7 @@ static int stream_start(uint8_t channel, const void *config,
                                   &outputs[channel].endpoint;
     k_mutex_lock(&audio_mutex, K_FOREVER);
     int ret = 0;
-    if (state != RUNNING
+    if (state != CODEC_RUNNING
         || !(input ? input_enabled[channel] :
                      output_source[channel] == SOURCE_MCU))
         ret = -ENODEV;
