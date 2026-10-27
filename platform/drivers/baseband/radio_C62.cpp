@@ -128,7 +128,7 @@ void radio_init(const rtxStatus_t *rtxState)
 
     nvm_readCalibData(&calData);
 
-    BK4819_SetAF(&c62_bk4819, 0);
+    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
 
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_RX_LNA, OUTPUT_ACTIVE_LOW);
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_RX_LNA, OUTPUT_ACTIVE_LOW);
@@ -187,7 +187,7 @@ void radio_enableAfOutput()
     if (radioMode == OPMODE_M17)
         BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_BYPASS);
     else
-        bk4819_set_modulation(&c62_bk4819, true);
+        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_FM);
 }
 
 void radio_disableAfOutput()
