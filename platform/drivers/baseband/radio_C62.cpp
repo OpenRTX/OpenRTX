@@ -10,7 +10,6 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <interfaces/delays.h>
-#include <core/utils.h>
 
 #include <algorithm>
 #include <string>
@@ -29,49 +28,17 @@ static enum opstatus radioStatus; // Current operating status
 static enum opmode radioMode;     // Current operating mode
 
 /*
- * C62 BK4819 fields for M17, on top of bk4819_setFlatAudio(): RX and TX
- * values, and the bits that keep their FM value in TX. M17 RX uses AF bypass,
- * REG_47 bit 1 and RX gain2 0x3f, see
- * https://wiki.m17foundation.org/index.php?title=A36Plus
- * The FM values are saved when entering M17 and restored when leaving.
+ * C62 BK4819 settings for M17, on top of the flat audio mode, from the
+ * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
  */
-static const struct {
-    bk4819_reg_t reg;
-    uint16_t mask;
-    uint16_t rx;
-    uint16_t tx;
-    uint16_t txFm;
-} m17Fields[] = {
-    // TX deviation on, raw value 0x582 (not Hz) for the TX DAC gain in
-    // hwconfig.h
-    { BK4819_REG_40, 0x1fff, 0x1582, 0x1582, 0x0000 },
-    // 4.5 kHz RF / 3.75 kHz weak-signal filter, 12.5 kHz channel
-    { BK4819_REG_43, 0x7ffc, 0x7808, 0x7808, 0x0000 },
-    { BK4819_REG_47, 0x0002, 0x0002, 0x0000, 0x0002 }, // Bit 1
-    // RX gain1 -6 dB, RX gain2 0x3f
-    { BK4819_REG_48, 0x0ff0, 0x07f0, 0x0400, 0x03f0 },
-    { BK4819_REG_7D, 0x001f, 0x0000, 0x0000, 0x0000 }, // Minimum mic gain
-    { BK4819_REG_7E, 0x8000, 0x0000, 0x8000, 0x0000 }, // AGC fix mode in TX
-};
-
-static uint16_t fmFields[ARRAY_SIZE(m17Fields)];
-
-/**
- * Apply the M17 audio settings for receiving or transmitting.
- *
- * @param transmit: true for TX, false for RX.
- */
-static void applyM17Fields(bool transmit)
-{
-    bk4819_setFlatAudio(&c62_bk4819, true);
-
-    for (size_t i = 0; i < ARRAY_SIZE(m17Fields); i++) {
-        const auto &field = m17Fields[i];
-        uint16_t value = BK4819_readReg(&c62_bk4819, field.reg) & ~field.mask;
-        value |= transmit ? field.tx | (fmFields[i] & field.txFm) : field.rx;
-        BK4819_writeReg(&c62_bk4819, field.reg, value);
-    }
-}
+// Raw deviation tuning (not Hz), set for the TX DAC gain in hwconfig.h
+static constexpr uint16_t M17_TX_DEVIATION = 0x582;
+// 4.5 kHz RF filter, 3.75 kHz when the signal is weak
+static constexpr uint16_t M17_RX_FILTER =
+    BK4819_REG43_RF_BW(7) | BK4819_REG43_RF_BW_WEAK(4) | BK4819_REG43_UNDOC3;
+static constexpr uint8_t M17_AF_RX_GAIN1 = 1; // -6 dB
+static constexpr uint8_t M17_AF_RX_GAIN2 = 0x3f;
+static constexpr uint8_t M17_MIC_GAIN = 0;
 
 static struct C62Calib calData;   // TX power calibration
 
@@ -156,22 +123,22 @@ void radio_setOpmode(const enum opmode mode)
     radio_disableRtx();
     radio_disableAfOutput();
 
-    if (radioMode == OPMODE_M17) {
-        for (size_t i = 0; i < ARRAY_SIZE(m17Fields); i++) {
-            const auto &field = m17Fields[i];
-            uint16_t value = BK4819_readReg(&c62_bk4819, field.reg);
-            BK4819_writeReg(&c62_bk4819, field.reg,
-                            (value & ~field.mask) | fmFields[i]);
-        }
-        bk4819_setFlatAudio(&c62_bk4819, false);
-    }
-
-    // Save the FM values; radio_enableRx/Tx() apply the M17 ones
+    // Settings common to M17 RX and TX; radio_enableRx/Tx() set the rest
     if (mode == OPMODE_M17) {
-        for (size_t i = 0; i < ARRAY_SIZE(m17Fields); i++) {
-            const auto &field = m17Fields[i];
-            fmFields[i] = BK4819_readReg(&c62_bk4819, field.reg) & field.mask;
-        }
+        bk4819_setFlatAudio(&c62_bk4819, true);
+        bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
+        bk4819_setRxFilter(&c62_bk4819, M17_RX_FILTER);
+        bk4819_SetFilterBandwidth(&c62_bk4819, 0);
+        bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
+    } else if (radioMode == OPMODE_M17) {
+        bk4819_setFlatAudio(&c62_bk4819, false);
+        bk4819_setTxDeviation(&c62_bk4819, false, BK4819_DEFAULT_TX_DEVIATION);
+        bk4819_setRxFilter(&c62_bk4819, BK4819_DEFAULT_RX_FILTER);
+        bk4819_setMicGain(&c62_bk4819, BK4819_DEFAULT_MIC_GAIN);
+        bk4819_setAfUndoc1(&c62_bk4819, false);
+        bk4819_setAfRxGain(&c62_bk4819, BK4819_DEFAULT_AF_RX_GAIN1,
+                           BK4819_DEFAULT_AF_RX_GAIN2);
+        bk4819_setAgcFixed(&c62_bk4819, false);
     }
 
     radioMode = mode;
@@ -192,7 +159,7 @@ void radio_enableAfOutput()
 
 void radio_disableAfOutput()
 {
-    BK4819_SetAF(&c62_bk4819, 0);
+    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
 }
 
 void radio_enableRx()
@@ -215,7 +182,9 @@ void radio_enableRx()
     bk4819_set_freq(&c62_bk4819, config->rxFrequency);
 
     if (radioMode == OPMODE_M17) {
-        applyM17Fields(false);
+        bk4819_setAfUndoc1(&c62_bk4819, true);
+        bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1, M17_AF_RX_GAIN2);
+        bk4819_setAgcFixed(&c62_bk4819, false);
     } else {
         bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
         if (config->rxToneEn)
@@ -245,9 +214,12 @@ void radio_enableTx()
 
     bk4819_set_freq(&c62_bk4819, config->txFrequency);
 
-    if (radioMode == OPMODE_M17)
-        applyM17Fields(true);
-    else if (config->txToneEn)
+    if (radioMode == OPMODE_M17) {
+        bk4819_setAfUndoc1(&c62_bk4819, false);
+        bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1,
+                           BK4819_DEFAULT_AF_RX_GAIN2);
+        bk4819_setAgcFixed(&c62_bk4819, true);
+    } else if (config->txToneEn)
         bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
 
     if (config->txFrequency < 174000000) {
