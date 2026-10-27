@@ -22,25 +22,6 @@
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
 
-/**
- * Set the TX power control (APC) voltage through the PWM on pin A03.
- * The PWM runs at 100 kHz, as in the stock firmware: at 1 kHz the APC voltage
- * follows the ripple and the output power stops tracking the duty cycle.
- *
- * @param power_percent: PWM duty cycle, 0-100.
- */
-static void set_tx_power(uint8_t power_percent)
-{
-    const uint32_t period_ns = 10000;
-    uint32_t pulse_ns = (period_ns * power_percent) / 100;
-
-    int ret = pwm_set_dt(&pwm_rf_apc, period_ns, pulse_ns);
-
-    if (ret < 0) {
-        printk("Failed to set TX power PWM: %d\n", ret);
-    }
-}
-
 static const rtxStatus_t
     *config; // Pointer to data structure with radio configuration
 
@@ -58,16 +39,17 @@ enum {
 };
 
 /**
- * APC duty cycle for a TX power and frequency. The band calibration gives the
- * duty cycles of the low and high power settings at the frequency; the power
- * is then interpolated linearly between them, from the low setting at 1 W to
- * the high one at 5 W, as on the MD-3x0 and MD-UV3x0.
+ * Set the TX power control (APC) voltage through the PWM on pin A03. The band
+ * calibration gives the duty cycles of the low and high power settings at the
+ * frequency; the power is interpolated linearly between them, from the low
+ * setting at 1 W to the high one at 5 W, as on the MD-3x0 and MD-UV3x0. The
+ * PWM runs at 100 kHz, as in the stock firmware: at 1 kHz the APC voltage
+ * follows the ripple and the output power stops tracking the duty cycle.
  *
  * @param freq: TX frequency, in Hz.
  * @param power: TX power, in mW.
- * @return APC PWM duty cycle, in percent.
  */
-static uint8_t tx_power_duty(const freq_t freq, const uint32_t power)
+static void set_tx_power(const freq_t freq, const uint32_t power)
 {
     const struct C62BandCalib *band = &calData.uhf;
     if (freq < 174000000)
@@ -79,9 +61,17 @@ static uint8_t tx_power_duty(const freq_t freq, const uint32_t power)
     pwr = std::max(std::min(pwr, 5.0f), 1.0f);
     float pwrHi = static_cast<float>(cal.hiPwr);
     float pwrLo = static_cast<float>(cal.loPwr);
-    float duty = pwrLo + (pwrHi - pwrLo) / 4.0f * (pwr - 1.0f);
+    uint8_t duty =
+        static_cast<uint8_t>(pwrLo + (pwrHi - pwrLo) / 4.0f * (pwr - 1.0f));
 
-    return static_cast<uint8_t>(duty);
+    const uint32_t period_ns = 10000;
+    uint32_t pulse_ns = (period_ns * duty) / 100;
+
+    int ret = pwm_set_dt(&pwm_rf_apc, period_ns, pulse_ns);
+
+    if (ret < 0) {
+        printk("Failed to set TX power PWM: %d\n", ret);
+    }
 }
 
 void radio_init(const rtxStatus_t *rtxState)
@@ -190,7 +180,7 @@ void radio_enableTx()
 
     gpioDev_set(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
-    set_tx_power(tx_power_duty(config->txFrequency, config->txPower));
+    set_tx_power(config->txFrequency, config->txPower);
 
     bk4819_tx_on(&c62_bk4819);
     radioStatus = TX;
