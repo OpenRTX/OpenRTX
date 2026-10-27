@@ -123,4 +123,10 @@ void display_setBacklightLevel(uint8_t level)
     if (ret < 0) {
         LOG_ERR("Failed to set display PWM: %d", ret);
     }
+
+    // Keyboard backlight does not have dimming, only on/off
+    if (level > 0)
+        gpio_pin_set_dt(&led_keyboard, 1);
+    else
+        gpio_pin_set_dt(&led_keyboard, 0);
 }
