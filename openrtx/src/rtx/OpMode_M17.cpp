@@ -44,6 +44,7 @@ void OpMode_M17::enable()
     codec_init();
     modulator.init();
     demodulator.init();
+    decoder.init();
     locked       = false;
     dataValid    = false;
     extendedCall = false;
@@ -63,6 +64,7 @@ void OpMode_M17::disable()
     radio_disableRtx();
     modulator.terminate();
     demodulator.terminate();
+    decoder.terminate();
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -186,7 +188,8 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         if(newData)
         {
             auto& frame   = demodulator.getFrame();
-            auto  type    = decoder.decodeFrame(frame);
+            auto  type    = decoder.decodeFrame(frame,
+                                                demodulator.getSoftFrame());
             auto  lsf     = decoder.getLsf();
             status->lsfOk = lsf.valid();
 
