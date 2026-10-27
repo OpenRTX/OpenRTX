@@ -64,8 +64,12 @@ void bk4819_init(const struct BK4819 *dev)
 
     BK4819_writeReg(dev, BK4819_REG_49, 0x2a38);
     BK4819_writeReg(dev, BK4819_REG_7B, 0x8420);
-    BK4819_writeReg(dev, BK4819_REG_7D, 0xe959); // Mic sensitivity
-    BK4819_writeReg(dev, BK4819_REG_48, 0xb3c1); // AF Gains
+    BK4819_writeReg(dev, BK4819_REG_7D, 0xe940);
+    bk4819_setMicGain(dev, BK4819_DEFAULT_MIC_GAIN);
+    BK4819_writeReg(dev, BK4819_REG_48, 0xb001); // AF DAC gain
+    bk4819_setAfRxGain(dev, BK4819_DEFAULT_AF_RX_GAIN1,
+                       BK4819_DEFAULT_AF_RX_GAIN2);
+    bk4819_setRxFilter(dev, BK4819_DEFAULT_RX_FILTER);
     BK4819_writeReg(dev, BK4819_REG_1E, 0x4c58);
     BK4819_writeReg(dev, BK4819_REG_1F, 0xa656);
     BK4819_writeReg(dev, BK4819_REG_3E, 0xa037); // Band selection threshold
@@ -75,9 +79,7 @@ void bk4819_init(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_53, 59000);
     BK4819_writeReg(dev, BK4819_REG_2C, 0x5705);
     BK4819_writeReg(dev, BK4819_REG_4B, 0x7102); // ALC
-    uVar1 = BK4819_readReg(dev, BK4819_REG_40);
-    BK4819_writeReg(dev, BK4819_REG_40,
-                    (uVar1 & 0xf000) | 0x4d2); // RF Tx Deviation
+    bk4819_setTxDeviation(dev, false, BK4819_DEFAULT_TX_DEVIATION);
     BK4819_writeReg(dev, BK4819_REG_77, 0x88ef);
     BK4819_writeReg(dev, BK4819_REG_26, 0x13a0);
     BK4819_writeReg(dev, BK4819_REG_4E, 0x6f15); // Squelch
@@ -336,19 +338,71 @@ static const struct {
     { BK4819_REG_31, 0x000c, 0x0000, 0x0000 }, /* Compander and VOX */
     { BK4819_REG_47, 0x0001, 0x0001, 0x0000 }, /* TX filter bypass */
     { BK4819_REG_4B, 0x0020, 0x0020, 0x0000 }, /* ALC disable */
-    { BK4819_REG_50, 0x8000, 0x0000, 0x0000 }, /* AF TX mute (BeepStop) */
     { BK4819_REG_70, 0x8080, 0x0000, 0x0000 }, /* Tone generators */
     { BK4819_REG_7E, 0x003f, 0x0000, 0x002e }, /* TX and RX DC filters */
 };
 
+/**
+ * Write the bits of a register selected by a mask.
+ *
+ * @param dev: pointer to device data.
+ * @param reg: register.
+ * @param mask: bits to write.
+ * @param value: new value of those bits.
+ */
+static void writeField(const struct BK4819 *dev, bk4819_reg_t reg,
+                       uint16_t mask, uint16_t value)
+{
+    uint16_t current = BK4819_readReg(dev, reg);
+    BK4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
+}
+
 void bk4819_setFlatAudio(const struct BK4819 *dev, bool enable)
 {
     for (size_t i = 0; i < ARRAY_SIZE(flatAudioFields); i++) {
-        const bk4819_reg_t reg = flatAudioFields[i].reg;
-        uint16_t value = BK4819_readReg(dev, reg) & ~flatAudioFields[i].mask;
-        value |= enable ? flatAudioFields[i].flat : flatAudioFields[i].fm;
-        BK4819_writeReg(dev, reg, value);
+        writeField(dev, flatAudioFields[i].reg, flatAudioFields[i].mask,
+                   enable ? flatAudioFields[i].flat : flatAudioFields[i].fm);
     }
+}
+
+void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
+                           uint16_t tuning)
+{
+    writeField(dev, BK4819_REG_40,
+               BK4819_REG40_TX_DEVIATION_ENABLE | BK4819_REG40_TX_DEVIATION(~0),
+               (enable ? BK4819_REG40_TX_DEVIATION_ENABLE : 0)
+                   | BK4819_REG40_TX_DEVIATION(tuning));
+}
+
+void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter)
+{
+    writeField(dev, BK4819_REG_43, BK4819_REG43_FILTER_MASK, filter);
+}
+
+void bk4819_setAfUndoc1(const struct BK4819 *dev, bool enable)
+{
+    writeField(dev, BK4819_REG_47, BK4819_REG47_UNDOC1,
+               enable ? BK4819_REG47_UNDOC1 : 0);
+}
+
+void bk4819_setAfRxGain(const struct BK4819 *dev, uint8_t gain1, uint8_t gain2)
+{
+    writeField(dev, BK4819_REG_48,
+               BK4819_REG48_AF_RX_GAIN1(~0) | BK4819_REG48_AF_RX_GAIN2(~0),
+               BK4819_REG48_AF_RX_GAIN1(gain1)
+                   | BK4819_REG48_AF_RX_GAIN2(gain2));
+}
+
+void bk4819_setMicGain(const struct BK4819 *dev, uint8_t gain)
+{
+    writeField(dev, BK4819_REG_7D, BK4819_REG7D_MIC_GAIN(~0),
+               BK4819_REG7D_MIC_GAIN(gain));
+}
+
+void bk4819_setAgcFixed(const struct BK4819 *dev, bool fixed)
+{
+    writeField(dev, BK4819_REG_7E, BK4819_REG7E_AGC_FIX,
+               fixed ? BK4819_REG7E_AGC_FIX : 0);
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)
