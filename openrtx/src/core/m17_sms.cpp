@@ -72,9 +72,7 @@ static int formatTx(const struct message *msg, struct pktDesc *pkt)
         return -EINVAL;
 
     auto *packet = static_cast<struct m17Packet *>(pkt->buffer);
-    size_t capacity = pkt->size - M17_PKT_HEADER;
-    if (capacity > M17_MAX_PACKET_DATA)
-        capacity = M17_MAX_PACKET_DATA;
+    size_t capacity = std::max(pkt->size - M17_PKT_HEADER, M17_MAX_PACKET_DATA);
 
     size_t len = M17::sms_format_packet(msg->body, msg->bodyLen,
                                         packet->payload, capacity);
