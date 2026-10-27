@@ -491,7 +491,8 @@ TEST_CASE("messages: delete stays consistent after the table wraps",
 
     /* Overfill the table so the ring head has moved past the start. */
     for (size_t i = 0; i < CONFIG_MESSAGES_MAX_ENTRIES + 2; i++) {
-        struct message msg = rxMessage("W1AW", std::to_string(i).c_str());
+        std::string body = std::to_string(i);
+        struct message msg = rxMessage("W1AW", body.c_str());
         storeOk(&msg);
     }
     REQUIRE(messages_count() == CONFIG_MESSAGES_MAX_ENTRIES);
