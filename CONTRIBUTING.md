@@ -18,6 +18,22 @@ The fastest way to get a development environment is to leverage VS Code and the 
 
 Contributions to this project should follow the conventions set in the linux kernel. This project is still adopting this standard (see https://github.com/OpenRTX/OpenRTX/issues/346), and so you'll find existing code may not be compliant. Use `scripts/clang_format.sh --check` to ensure your contributions follow the intended style conventions. New files must be fully formatted.
 
+Beyond formatting, there are conventions the project maintains for naming, layering,
+initialization, and what may not be reordered. [AGENTS.md](AGENTS.md#conventions) has the full list,
+with each rule attributed to the PR it came from, if you want the reference. These are the ones that
+matter most:
+
+- **Do not `typedef` a `struct` or an `enum`.** Write `struct address`, not `address_t`.
+- **Put a trailing comma on the last element of an enum or initializer**, or clang-format will mangle it.
+- **Never insert a field into the middle of `settings_t`, and never reorder `stringsTable_t`.** Append only. Both failure modes are silent and land on users.
+- **Prefix every function with its module** — `history_insert`, `input_getDtmfChar`, `vfo_load`.
+- **Use `ARRAY_SIZE` from `core/utils.h`** rather than a magic number.
+- **No lazy initialization.** A peripheral is initialized by its init function being called explicitly.
+
+Note that `coding_style.md` on the website predates the clang-format migration and still describes
+Allman bracing for control statements; where the two disagree, `.clang-format` in this repository is
+authoritative.
+
 ## Code Organization
 
 The principle of OpenRTX is "write it once for all devices", and the code is organized in such a way to support that. And even within UIs and platforms, there are often specific pieces that can be segmented (i.e. UIs for small screens, drivers for baseband ICs). Please observe the strict separations that the project has put in place.
@@ -45,7 +61,7 @@ platform          # Hardware specific implementations, including things like dri
 ├── mcu           # Micro-controller specific handlings such as drivers and abstractions
 └── targets       # Platform information for specific models of radios, containing things like pin mappings and definitions for other hardware components
 tests/            # Tests
-├── platform      # Platform tests meant to be built and run on real harwdare, facilitating manual verification of specific functionality
+├── platform      # Platform tests meant to be built and run on real hardware, facilitating manual verification of specific functionality, and host-side tools that exercise firmware code on recorded data
 └── unit          # Unit tests
 meta              # Meta scripts for use with the emulator to automate running a series of tasks; may be helpful for debugging or manual testing
 scripts           # Build and utility scripts
@@ -67,12 +83,15 @@ Beyond layout, reviewers look for a few recurring things:
 - **Hardware facts belong in the target.** Target-specific values live in `hwconfig` and `pinmap`. Drivers are named after the chip they drive so other radios can share them; defaults cannot assume one band or model.
 - **Initialize explicitly.** Peripherals and modules are set up by a deliberate init call, never lazily on first use.
 - **Prefer plain, small C.** Use plain `struct`/`enum` rather than typedefs, `static` for anything file-local, `const` driver instances, `moduleName_functionName` naming, and Doxygen comments in the header for every public function.
+- **Keep C++ classes conventional.** One class per file named after it; declarations in the header and definitions in the `.cpp`; `#ifndef` header guards; an explicit constructor and destructor; `public:` before `private:` with constants as private `static constexpr` and data members grouped in `camelCase`; `const` getters; `std::array` over raw arrays and no heap-allocating containers. The formatted M17 protocol classes are the reference, and [AGENTS.md](AGENTS.md#c-class-conventions) has the full list.
 
 ## Testing
 
 Changes made to this project need to be verified either manually, using automation, or preferrably a combination of both. PRs should include documentation of the testing that took place so that reviewers understand how you've managed the quality of your changes. Automated tests are run using CI, as are builds confirming each target compiles properly.
 
 Automated tests can be run locally using meson. For example: `meson setup build && meson test -C build "M17 Golay Unit Test"`.
+
+Unit tests are Catch2 cases under `tests/unit/`, registered in `meson.build` as an executable plus a `test()` line. CI passes `--reporter junit` to every test executable, so each one must be a Catch2 binary rather than a plain program. A test that reads a committed asset should get the asset directory as an absolute path from the build system rather than a path relative to the build directory. Host-side tools that exercise firmware code on recorded data live in `tests/platform/` next to the hardware tests and parse arguments with `getopt`, following `scripts/c2tool.c`.
 
 ## Making Changes
 
@@ -88,13 +107,42 @@ A few habits keep review fast and history useful:
 - Unrelated improvements you discover along the way belong in a separate PR.
 - Sign off every commit (`git commit -s`, DCO), and attribute co-authors when necessary.
 
+### Splitting commits
+
+Split along the lines of the code, one commit per module or logical addition — for a new hardware
+target, that has looked like: MCU glue code, platform support, display and backlight, keyboard, GPS.
+The `master` branch history is the reference for both the granularity and the message style. Commit
+messages are written in the imperative mood, with a short summary line prefixed by the module and any
+detail in a few plain lines of body — keep them short. Two unrelated features are two pull requests, not two commits in one.
+
+When you reformat an existing file with clang-format, that goes in its own dedicated commit, never
+mixed with a behavioural change. Likewise, don't add something in one commit and move it in another.
+
+Where you can, make each commit build on its own so `git bisect` stays useful. During early bring-up
+of a new device this is sometimes impossible; say so in the PR description and it's fine.
+
+### Responding to review
+
+Apply review feedback as **fixup commits** (`git commit --fixup=<sha>`) and squash them with
+`git rebase --autosquash` before the branch is merged. The goal is that the merged history contains no
+trace of the rework — it keeps the history readable and keeps bisect honest. Don't append "Fix review
+comment" commits on top.
+
+While you're reworking, put the PR back to draft, and mark it ready when you're done. If a maintainer
+has asked for changes on a block of commits, hold off pushing unrelated new work onto the same PR —
+it makes the diff very hard to review. Open a second PR instead.
+
+When a maintainer rebases or mainlines a branch underneath yours, re-sync your fork and force-push.
+
 ## Pull Request Process
 
 Once you've completed a contribution, please submit it as a pull request. Ensure that you own the intellectual property that you are contributing (or have an appropriate license).
 
 1. Make sure your branch is up-to-date, preferring to rebase your changes rather than introduce unnecessary merge commits
-2. Ensure that the PR template is completed, and don't skip sections; this helps reviewers and the community understand what changes are and how they work
-3. Maintainers will review new PRs as quickly as possible, but there is no time estimate or guarantee
+2. Sign off every commit (`git commit -s`); maintainers ask for this on PRs that arrive without it
+3. Make sure every new file carries an SPDX header — the `reuse` CI stage fails without it
+4. Ensure that the PR template is completed, and don't skip sections; this helps reviewers and the community understand what changes are and how they work
+5. Maintainers will review new PRs as quickly as possible, but there is no time estimate or guarantee
 
 ## Release Process
 
