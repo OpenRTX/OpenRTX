@@ -109,6 +109,14 @@ bool codec_running()
     return running;
 }
 
+bool codec_queueEmpty(const pathId path)
+{
+    if ((running == false) || (audioPath != path))
+        return true;
+
+    return numElements == 0;
+}
+
 int codec_popFrame(uint8_t *frame, const bool blocking)
 {
     if (running == false)
