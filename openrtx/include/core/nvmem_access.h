@@ -15,6 +15,12 @@ extern "C" {
 #endif
 
 /**
+ *
+ */
+#define NVM_PART_WHOLE_DEVICE   0
+#define NVM_DEVICE_NONE         0xFFFFFFFF
+
+/**
  * Obtain the descriptor of a given nonvolatile memory area.
  *
  * @param index: index of the nonvolatile memory area.

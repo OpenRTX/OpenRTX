@@ -142,6 +142,18 @@ struct nvmTable {
 extern const struct nvmTable nvmTab;
 
 /**
+ * Helper to define NVM partitions
+ *
+ * @param _offset: partition offset
+ * @param _size: partition size
+ */
+#define NVM_PART_DEFINE(_offset, _size) \
+    {                                   \
+        .offset = _offset,              \
+        .size = _size,                  \
+    }
+
+/**
  * Initialise NVM driver.
  */
 void nvm_init();
