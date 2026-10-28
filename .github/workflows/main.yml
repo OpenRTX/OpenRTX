@@ -103,6 +103,69 @@ jobs:
           path: |
             app/build/openrtx_*.uf2
           if-no-files-found: error
+  # The C62 builds on ListenAI's Zephyr 3.4 fork (the csk6 group in west.yml),
+  # which needs the 0.16 SDK. action-zephyr-setup can't set this workspace
+  # up: it installs the Python requirements from zephyr/, which only the
+  # esp32 group checks out.
+  build-c62:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ZEPHYR_SDK_VERSION: 0.16.8
+      ZEPHYR_16_SDK_INSTALL_DIR: ${{ github.workspace }}/zephyr-sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: app
+      # libusb and dbus are for the radio_tool subproject, which meson setup
+      # builds even though the C62 doesn't use it.
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y meson ninja-build gperf device-tree-compiler libusb-1.0-0-dev libdbus-1-dev
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Set up the west workspace
+        run: |
+          pip install west
+          west init -l app
+          west config manifest.group-filter -- +csk6
+          west config zephyr.base zephyr-listenai
+          west update -o=--depth=1 -n
+          pip install -r zephyr-listenai/scripts/requirements-base.txt
+      - name: Cache the Zephyr SDK
+        id: zephyr-sdk
+        uses: actions/cache@v4
+        with:
+          path: zephyr-sdk
+          key: zephyr-sdk-${{ env.ZEPHYR_SDK_VERSION }}-arm-${{ runner.os }}-${{ runner.arch }}
+      - name: Install the Zephyr SDK
+        if: steps.zephyr-sdk.outputs.cache-hit != 'true'
+        run: |
+          sdk="zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-$(uname -m)_minimal.tar.xz"
+          wget -q "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/$sdk"
+          mkdir zephyr-sdk
+          tar xf "$sdk" -C zephyr-sdk --strip-components=1
+          rm "$sdk"
+          zephyr-sdk/setup.sh -t arm-zephyr-eabi
+      - name: Compile C62
+        run: |
+          cd app
+          meson setup build
+          meson compile -C build openrtx_c62
+      # dsp_firmware.bin is there once the build fetches the DSP image.
+      - name: Upload C62 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: openrtx-c62
+          path: |
+            app/build/zephyr/zephyr.bin
+            app/build/zephyr/dsp_firmware.bin
+          if-no-files-found: error
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
