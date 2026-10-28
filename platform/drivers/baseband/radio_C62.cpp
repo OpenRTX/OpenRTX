@@ -40,7 +40,7 @@ static constexpr uint8_t M17_AF_RX_GAIN1 = 1; // -6 dB
 static constexpr uint8_t M17_AF_RX_GAIN2 = 0x3f;
 static constexpr uint8_t M17_MIC_GAIN = 0;
 
-static struct C62Calib calData;   // TX power calibration
+static struct C62Calib calData; // TX power calibration
 
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
