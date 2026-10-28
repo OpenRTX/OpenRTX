@@ -725,6 +725,7 @@ static void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
                 state.channel.rx_frequency = ui_state.new_rx_frequency;
                 state.channel.tx_frequency = ui_state.new_tx_frequency;
                 *sync_rtx = true;
+                nvm_writeSettingsAndVfo(&state.settings, &state.channel);
                 // play is called at end.
                 vp_announceFrequencies(state.channel.rx_frequency,
                                        state.channel.tx_frequency, vpqInit);
