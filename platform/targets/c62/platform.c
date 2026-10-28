@@ -15,6 +15,7 @@
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/kernel.h>
 #include <interfaces/audio.h>
+#include <interfaces/nvmem.h>
 #include "drivers/SPI/spi_zephyr.h"
 
 static const hwInfo_t hwInfo = {
@@ -79,6 +80,9 @@ static int battery_init(void)
 
 void platform_init_csk6()
 {
+    /* Initialise non volatile memory manager */
+    nvm_init();
+
     // Configure the PTT key as input with pull-up
     gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
 
