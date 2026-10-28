@@ -169,7 +169,8 @@ void _ui_drawMenuList(uint8_t selected, int (*getCurrentEntry)(char *buf, uint8_
                 gfx_drawRect(rect_pos, CONFIG_SCREEN_WIDTH, layout.menu_h, color_white, true);
                 announceMenuItemIfNeeded(entry_buf, NULL, false);
             }
-            gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
+            gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, "%s",
+                      entry_buf);
             pos.y += layout.menu_h;
         }
     }
@@ -224,8 +225,10 @@ void _ui_drawMenuListValue(ui_state_t* ui_state, uint8_t selected,
                                              ui_state->edit_mode);
                 }
             }
-            gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, entry_buf);
-            gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, value_buf);
+            gfx_print(pos, layout.menu_font, TEXT_ALIGN_LEFT, text_color, "%s",
+                      entry_buf);
+            gfx_print(pos, layout.menu_font, TEXT_ALIGN_RIGHT, text_color, "%s",
+                      value_buf);
             pos.y += layout.menu_h;
         }
     }
