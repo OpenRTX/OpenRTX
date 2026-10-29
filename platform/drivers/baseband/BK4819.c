@@ -79,7 +79,7 @@ void bk4819_init(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_53, 59000);
     BK4819_writeReg(dev, BK4819_REG_2C, 0x5705);
     BK4819_writeReg(dev, BK4819_REG_4B, 0x7102); // ALC
-    bk4819_setTxDeviation(dev, false, BK4819_DEFAULT_TX_DEVIATION);
+    bk4819_setTxDeviation(dev, true, BK4819_DEFAULT_TX_DEVIATION);
     BK4819_writeReg(dev, BK4819_REG_77, 0x88ef);
     BK4819_writeReg(dev, BK4819_REG_26, 0x13a0);
     BK4819_writeReg(dev, BK4819_REG_4E, 0x6f15); // Squelch
