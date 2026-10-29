@@ -15,6 +15,7 @@
 #include "core/event.h"
 #include "hwconfig.h"
 #include "core/ui.h"
+#include "core/messages.h"
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -52,7 +53,14 @@ enum uiScreen
     SETTINGS_FM,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+#ifdef CONFIG_MESSAGES
+    MESSAGES_LIST,
+    MESSAGES_DETAIL,
+#ifdef CONFIG_M17_SMS
+    MESSAGES_COMPOSE,
+#endif
+#endif
 };
 
 enum SetRxTx
@@ -70,6 +78,9 @@ enum menuItems
     M_CONTACTS,
 #ifdef CONFIG_GPS
     M_GPS,
+#endif
+#ifdef CONFIG_MESSAGES
+    M_MESSAGES,
 #endif
     M_SETTINGS,
     M_INFO,
@@ -210,7 +221,7 @@ typedef struct ui_state_t
     bool input_locked;
     // Variables used for VFO input
     uint8_t input_number;
-    uint8_t input_position;
+    uint16_t input_position;
     uint8_t input_set;
     long long last_keypress;
     freq_t new_rx_frequency;
@@ -234,6 +245,36 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+#ifdef CONFIG_MESSAGES
+    // Sequence number of the message currently highlighted in
+    // MESSAGES_LIST, pinned the same way as messages_detail_seq below: a
+    // keypress can be processed many UI-loop ticks after the frame the
+    // user saw, and a new message arriving in between shifts every later
+    // entry's index (newest-first sort), which would otherwise make
+    // ENTER act on the wrong row. 0 means "not yet pinned" (screen just
+    // entered); UINT32_MAX means the virtual "New Message" row.
+    uint32_t messages_list_seq;
+    // Sequence number of the message pinned in MESSAGES_DETAIL. Using the
+    // sequence (rather than a snapshot index) means the detail view keeps
+    // showing the same message across a snapshot rebuild even if its
+    // position shifts; see messages_findBySequence().
+    uint32_t messages_detail_seq;
+    // Body scroll offset (pixels) and its current maximum in MESSAGES_DETAIL.
+    int16_t detail_scroll;
+    int16_t detail_scroll_max;
+#ifdef CONFIG_M17_SMS
+    char compose_recipient[MSG_ADDR_MAX_LEN];
+    // Compose draft, MSG_BODY_MAX_LEN bytes on the heap rather than paid
+    // for statically: allocated when the compose screen is entered and
+    // freed when it is left, so it is non-NULL exactly while ui_screen ==
+    // MESSAGES_COMPOSE.
+    char *compose_body;
+    uint8_t compose_focus;
+    bool compose_editing;
+    bool compose_body_editing;
+    bool compose_is_reply;
+#endif
+#endif
 }
 ui_state_t;
 

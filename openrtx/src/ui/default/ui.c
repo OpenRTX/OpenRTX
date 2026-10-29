@@ -65,6 +65,10 @@
 #include "hwconfig.h"
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
+#include "core/messages.h"
+#ifdef CONFIG_M17_SMS
+#include "protocols/M17/m17.h"
+#endif
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -104,6 +108,18 @@ extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
 extern void _ui_reset_menu_anouncement_tracking();
+/* UI messages functions, their implementation is in "ui_messages.c" */
+#ifdef CONFIG_MESSAGES
+extern size_t _ui_messagesListSelection(const ui_state_t *ui_state);
+extern void _ui_drawMessagesList(ui_state_t *ui_state);
+extern void _ui_drawMessagesDetail(ui_state_t *ui_state);
+#ifdef CONFIG_M17_SMS
+extern void _ui_drawMessagesCompose(ui_state_t *ui_state);
+extern const char *_ui_resolveComposeRecipient(const char *typed,
+                                               const char *m17_dest,
+                                               const char *fallback);
+#endif
+#endif
 // TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
 {
@@ -112,6 +128,9 @@ const char *menu_items[] =
     "Contacts",
 #ifdef CONFIG_GPS
     "GPS",
+#endif
+#ifdef CONFIG_MESSAGES
+    "Messages",
 #endif
     "Settings",
     "Info",
@@ -1122,7 +1141,7 @@ static void _ui_textInputReset(char *buf, size_t bufSize)
     buf[0] = '_';
 }
 
-static void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg,
+static void _ui_textInputKeypad(char *buf, uint16_t max_len, kbd_msg_t msg,
                          bool callsign)
 {
     long long now = getTick();
@@ -1381,6 +1400,55 @@ static enum vpGPSInfoFlags GetGPSDirectionOrSpeedChanged()
 }
 #endif // CONFIG_GPS
 
+#ifdef CONFIG_M17_SMS
+/**
+ * \internal Reset MESSAGES_COMPOSE state and switch to it, prefilling the
+ * recipient. Shared by the "New Message" and "Reply" entry points so a
+ * future compose-state field only needs to be initialised in one place.
+ *
+ * @param recipient: initial recipient string, or NULL to leave it empty.
+ * @param is_reply:  whether this compose session was opened via Reply.
+ */
+static void _ui_startCompose(const char *recipient, bool is_reply)
+{
+    /* The draft buffer exists only while the compose screen is up; the
+     * draw and input code rely on it, so stay on the current screen if
+     * the allocation fails. */
+    if (ui_state.compose_body == NULL)
+        ui_state.compose_body = malloc(MSG_BODY_MAX_LEN);
+    if (ui_state.compose_body == NULL)
+        return;
+
+    memset(ui_state.compose_recipient, 0, sizeof(ui_state.compose_recipient));
+    if (recipient != NULL)
+        strncpy(ui_state.compose_recipient, recipient,
+                sizeof(ui_state.compose_recipient) - 1);
+    memset(ui_state.compose_body, 0, MSG_BODY_MAX_LEN);
+    ui_state.input_position = 0;
+    ui_state.input_number = 0;
+    ui_state.input_set = 0;
+    ui_state.last_keypress = 0;
+    ui_state.compose_focus = 1;
+    ui_state.compose_editing = false;
+    /* Land directly in body text-entry so the user can type immediately;
+     * the empty-draft cursor state matches the focus==1 ENTER branch. */
+    ui_state.compose_body_editing = true;
+    ui_state.compose_is_reply = is_reply;
+    state.ui_screen = MESSAGES_COMPOSE;
+}
+
+/**
+ * \internal Leave MESSAGES_COMPOSE for the message list, releasing the
+ * draft buffer.
+ */
+static void _ui_endCompose(void)
+{
+    free(ui_state.compose_body);
+    ui_state.compose_body = NULL;
+    state.ui_screen = MESSAGES_LIST;
+}
+#endif
+
 void ui_updateFSM(bool *sync_rtx)
 {
     // Check for events
@@ -1404,6 +1472,12 @@ void ui_updateFSM(bool *sync_rtx)
 #if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
+#ifdef CONFIG_M17_SMS
+        /* Leaving compose for the low-battery screen must release the compose
+         * draft, keeping it allocated only while ui_screen == MESSAGES_COMPOSE. */
+        if (state.ui_screen == MESSAGES_COMPOSE)
+            _ui_endCompose();
+#endif
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload)
         {
@@ -1833,6 +1907,11 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef CONFIG_GPS
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
+                            break;
+#endif
+#ifdef CONFIG_MESSAGES
+                        case M_MESSAGES:
+                            state.ui_screen = MESSAGES_LIST;
                             break;
 #endif
                         case M_SETTINGS:
@@ -2582,6 +2661,298 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+#ifdef CONFIG_MESSAGES
+            // Messages inbox list view
+            case MESSAGES_LIST: {
+                size_t count = messages_count();
+                size_t total =
+                    count
+                    + (messages_canCompose(last_state.channel.mode) ? 1 : 0);
+
+                // Resolve the highlighted row from the pinned sequence
+                // number; the messages_list_seq field docs explain why an
+                // index cannot be trusted across ticks.
+                size_t idx = _ui_messagesListSelection(&ui_state);
+
+                if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT) {
+                    if (idx > 0)
+                        idx--;
+                    else if (total > 0)
+                        idx = total - 1;
+                } else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT) {
+                    if (idx + 1 < total)
+                        idx++;
+                    else
+                        idx = 0;
+                } else if (msg.keys & KEY_ENTER) {
+                    if (idx < count) {
+                        const struct message *entry = messages_get(idx);
+                        if (entry != NULL) {
+                            // Pin by sequence; see messages_detail_seq docs.
+                            ui_state.messages_detail_seq = entry->sequence;
+                            ui_state.detail_scroll = 0;
+                            ui_state.detail_scroll_max = 0;
+                            messages_markRead(idx, true);
+                            state.ui_screen = MESSAGES_DETAIL;
+                        }
+                    }
+#ifdef CONFIG_M17_SMS
+                    else if (idx == count
+                             && messages_canCompose(last_state.channel.mode)) {
+                        /* Virtual "New Message" item selected */
+                        _ui_startCompose(last_state.settings.m17_dest, false);
+                    }
+#endif
+                } else if (msg.keys & KEY_ESC) {
+                    // Unpin, so re-entry starts at the newest message.
+                    ui_state.messages_list_seq = 0;
+                    ui_state.menu_selected = 0;
+                    state.ui_screen = MENU_TOP;
+                    break;
+                }
+
+                // Re-pin the (possibly updated) selection.
+                if (idx < count) {
+                    const struct message *sel_hdr = messages_get(idx);
+                    ui_state.messages_list_seq = (sel_hdr != NULL) ?
+                                                     sel_hdr->sequence :
+                                                     0;
+                } else if (idx == count) {
+                    ui_state.messages_list_seq = UINT32_MAX;
+                } else {
+                    ui_state.messages_list_seq = 0;
+                }
+                break;
+            }
+            // Messages detail view
+            case MESSAGES_DETAIL: {
+                size_t idx =
+                    messages_findBySequence(ui_state.messages_detail_seq);
+                if (idx == SIZE_MAX) {
+                    // The message was deleted or evicted by its source while
+                    // being viewed (e.g. by another action) — bounce back to
+                    // the list rather than showing stale/empty content.
+                    ui_state.messages_list_seq = 0;
+                    state.ui_screen = MESSAGES_LIST;
+                    break;
+                }
+                /* Scroll one rendered body line per step. */
+                const int16_t scrollStep =
+                    (int16_t)gfx_getFontHeight(layout.message_font);
+                if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT) {
+                    if (ui_state.detail_scroll > 0) {
+                        /* Scroll body up */
+                        ui_state.detail_scroll -= scrollStep;
+                        if (ui_state.detail_scroll < 0)
+                            ui_state.detail_scroll = 0;
+                    } else if (idx > 0) {
+                        /* Edge: go to the previous message. Navigate from
+                         * the freshly resolved idx, so a rebuild while the
+                         * message is open cannot skip or repeat one. */
+                        const struct message *prev = messages_get(idx - 1);
+                        if (prev != NULL) {
+                            ui_state.messages_detail_seq = prev->sequence;
+                            ui_state.messages_list_seq = prev->sequence;
+                            /* A message is "seen" the moment it's displayed,
+                             * whether reached from the list or by scrolling
+                             * here from an adjacent message. */
+                            messages_markRead(idx - 1, true);
+                        }
+                        /* Land on the tail of the previous message: the
+                         * per-frame clamp in the draw code turns INT16_MAX
+                         * into that message's scroll_max. */
+                        ui_state.detail_scroll = INT16_MAX;
+                    }
+                } else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT) {
+                    if (ui_state.detail_scroll < ui_state.detail_scroll_max) {
+                        /* Scroll body down */
+                        ui_state.detail_scroll += scrollStep;
+                        if (ui_state.detail_scroll > ui_state.detail_scroll_max)
+                            ui_state.detail_scroll = ui_state.detail_scroll_max;
+                    } else if (idx + 1 < messages_count()) {
+                        /* Edge: go to next message, reset scroll.
+                         * Navigate from the freshly resolved idx (see the
+                         * previous-message branch above). */
+                        const struct message *next = messages_get(idx + 1);
+                        if (next != NULL) {
+                            ui_state.messages_detail_seq = next->sequence;
+                            ui_state.messages_list_seq = next->sequence;
+                            /* See the previous-message branch above. */
+                            messages_markRead(idx + 1, true);
+                        }
+                        ui_state.detail_scroll = 0;
+                    }
+                } else if (msg.keys & KEY_ESC) {
+                    state.ui_screen = MESSAGES_LIST;
+                }
+#ifdef CONFIG_M17_SMS
+                else if (msg.keys & KEY_ENTER) {
+                    /* Only received messages of the current mode can be
+                     * replied to. */
+                    const struct message *entry = messages_get(idx);
+                    if ((entry != NULL)
+                        && (entry->mode == last_state.channel.mode)
+                        && (entry->direction == MSG_DIR_RX)) {
+                        /* Pre-fill compose recipient from reply sender. */
+                        _ui_startCompose(entry->sender, true);
+                    }
+                }
+#endif
+                break;
+            }
+#ifdef CONFIG_M17_SMS
+            // Message compose form (3-row selector)
+            case MESSAGES_COMPOSE:
+                if (ui_state.compose_editing) {
+                    /* To overlay active: route input to new_callsign */
+                    if (msg.keys & KEY_ENTER) {
+                        _ui_textInputConfirm(ui_state.new_callsign);
+                        /* An untouched field is just the "_" reset
+                         * placeholder; store it as empty so the recipient
+                         * falls back to m17_dest / broadcast rather than the
+                         * literal "_". */
+                        const char *entered = ui_state.new_callsign;
+                        if (entered[0] == '_' && entered[1] == '\0')
+                            entered = "";
+                        strncpy(ui_state.compose_recipient, entered,
+                                sizeof(ui_state.compose_recipient) - 1);
+                        ui_state.compose_editing = false;
+                    } else if (msg.keys & KEY_ESC) {
+                        /* Discard: restore compose_recipient unchanged */
+                        ui_state.compose_editing = false;
+                    } else if (msg.keys & KEY_UP || msg.keys & KEY_DOWN
+                               || msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
+                        _ui_textInputDel(ui_state.new_callsign);
+                    else if (input_isCharPressed(msg))
+                        _ui_textInputKeypad(ui_state.new_callsign, 9, msg,
+                                            true);
+                } else {
+                    /* Form navigation / body editing */
+                    if (ui_state.compose_focus == 1
+                        && ui_state.compose_body_editing) {
+                        /* Body editing mode: any arrow key or knob deletes
+                         * the last character — same pattern as M17 dest
+                         * entry on the VFO screen (universally available). */
+                        if (msg.keys & KEY_UP || msg.keys & KEY_DOWN
+                            || msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT
+                            || msg.keys & KNOB_LEFT || msg.keys & KNOB_RIGHT)
+                            _ui_textInputDel(ui_state.compose_body);
+                        else if (input_isCharPressed(msg))
+                            _ui_textInputKeypad(ui_state.compose_body,
+                                                MSG_BODY_MAX_LEN - 1, msg,
+                                                false);
+                        else if (msg.keys & KEY_ENTER || msg.keys & KEY_ESC) {
+                            /* Confirm pending multi-tap char, exit body
+                             * editing mode but stay on body row. */
+                            _ui_textInputConfirm(ui_state.compose_body);
+                            ui_state.compose_body_editing = false;
+                        }
+                    } else if (msg.keys & KEY_ESC) {
+                        _ui_endCompose();
+                    } else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT) {
+                        /* compose_body_editing is always false here (the
+                         * active-editing branch above handles UP/DOWN as
+                         * delete instead of falling through), so there is
+                         * never a pending body edit to confirm; input_position
+                         * may still hold a stale cursor left over from the
+                         * To-field overlay, so confirming here would
+                         * truncate compose_body at the wrong offset. */
+                        ui_state.compose_focus = (ui_state.compose_focus + 1)
+                                               % 3;
+                        if (ui_state.compose_focus == 0)
+                            vp_queueStringTableEntry(
+                                &currentLanguage->newMessage);
+                        else if (ui_state.compose_focus == 2)
+                            vp_queueStringTableEntry(&currentLanguage->send);
+                        vp_play();
+                    } else if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT) {
+                        ui_state.compose_focus = (ui_state.compose_focus == 0) ?
+                                                     2 :
+                                                     ui_state.compose_focus - 1;
+                        if (ui_state.compose_focus == 0)
+                            vp_queueStringTableEntry(
+                                &currentLanguage->newMessage);
+                        else if (ui_state.compose_focus == 2)
+                            vp_queueStringTableEntry(&currentLanguage->send);
+                        vp_play();
+                    } else if (msg.keys & KEY_ENTER) {
+                        if (ui_state.compose_focus == 0) {
+                            /* Open To overlay: seed new_callsign from
+                             * current recipient, cursor at end */
+                            strncpy(ui_state.new_callsign,
+                                    ui_state.compose_recipient,
+                                    sizeof(ui_state.new_callsign) - 1);
+                            size_t rlen =
+                                strnlen(ui_state.new_callsign,
+                                        sizeof(ui_state.new_callsign));
+                            if (rlen > 0) {
+                                ui_state.input_position = rlen - 1;
+                                ui_state.input_set = 0;
+                                ui_state.last_keypress = 1;
+                                ui_state.input_number = 0;
+                            } else {
+                                _ui_textInputReset(
+                                    ui_state.new_callsign,
+                                    sizeof(ui_state.new_callsign));
+                            }
+                            ui_state.compose_editing = true;
+                        } else if (ui_state.compose_focus == 1) {
+                            /* Activate body text-entry mode. Position the
+                             * cursor at the end of any existing text (same
+                             * pattern as the To field) so re-entering to
+                             * continue typing doesn't clobber what's
+                             * already there. */
+                            ui_state.compose_body_editing = true;
+                            size_t blen = strnlen(ui_state.compose_body,
+                                                  MSG_BODY_MAX_LEN);
+                            if (blen > 0) {
+                                ui_state.input_position = blen - 1;
+                                ui_state.last_keypress = 1;
+                            } else {
+                                ui_state.input_position = 0;
+                                ui_state.last_keypress = 0;
+                            }
+                            ui_state.input_number = 0;
+                            ui_state.input_set = 0;
+                        } else if (ui_state.compose_focus == 2) {
+                            /* Send if body is non-empty.
+                             * Resolve recipient: compose_recipient >
+                             * m17_dest > broadcast. */
+                            size_t clen = strnlen(ui_state.compose_body,
+                                                  MSG_BODY_MAX_LEN);
+                            if (clen > 0) {
+                                /* A broadcast transmits the M17 wire
+                                 * literal, never the localized display
+                                 * string. */
+                                const char *rcpt = _ui_resolveComposeRecipient(
+                                    ui_state.compose_recipient,
+                                    last_state.settings.m17_dest,
+                                    M17_BROADCAST_CALLSIGN);
+                                struct message txMsg = { 0 };
+                                txMsg.body = ui_state.compose_body;
+                                txMsg.bodyLen = clen;
+                                txMsg.mode = last_state.channel.mode;
+                                strncpy(txMsg.sender,
+                                        last_state.settings.callsign,
+                                        sizeof(txMsg.sender) - 1);
+                                strncpy(txMsg.recipient, rcpt,
+                                        sizeof(txMsg.recipient) - 1);
+                                /* Close compose regardless of the immediate
+                                 * result: the entry records its own
+                                 * SENDING/SENT/FAILED status in the inbox, so
+                                 * leaving compose open on a transient failure
+                                 * (e.g. -EBUSY while a previous send is still
+                                 * in flight) would only strand the user and
+                                 * store a duplicate entry on each retry. */
+                                messages_send(&txMsg);
+                                _ui_endCompose();
+                            }
+                        }
+                    }
+                }
+                break;
+#endif
+#endif
         }
 
         // Enable Tx only if in MAIN_VFO or MAIN_MEM states
@@ -2754,6 +3125,22 @@ bool ui_updateGUI()
         case LOW_BAT:
             _ui_drawLowBatteryScreen();
             break;
+#ifdef CONFIG_MESSAGES
+        // Messages inbox list view
+        case MESSAGES_LIST:
+            _ui_drawMessagesList(&ui_state);
+            break;
+        // Messages detail view
+        case MESSAGES_DETAIL:
+            _ui_drawMessagesDetail(&ui_state);
+            break;
+#ifdef CONFIG_M17_SMS
+        // Messages compose screen
+        case MESSAGES_COMPOSE:
+            _ui_drawMessagesCompose(&ui_state);
+            break;
+#endif
+#endif
     }
 
     // If MACRO menu is active draw it
