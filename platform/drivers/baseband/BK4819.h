@@ -58,8 +58,6 @@ extern "C" {
     BIT(3) /* Undocumented, set for M17 on the A36Plus */
 #define BK4819_REG43_FM_DEMOD_GAIN BIT(2)
 #define BK4819_REG43_FILTER_MASK 0x7fcc
-#define BK4819_REG47_UNDOC1 \
-    BIT(1) /* Undocumented, set for M17 RX on the A36Plus */
 #define BK4819_REG48_AF_RX_GAIN1(x) BITV((x) & 0x03, 10)
 #define BK4819_REG48_AF_RX_GAIN2(x) BITV((x) & 0x3f, 4)
 #define BK4819_REG7D_MIC_GAIN(x) BITV((x) & 0x1f, 0)
@@ -453,14 +451,6 @@ void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
  * @param filter: BK4819_REG43_* fields, e.g. BK4819_DEFAULT_RX_FILTER.
  */
 void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter);
-
-/**
- * Set or clear the undocumented REG_47 bit 1, used for M17 RX.
- *
- * @param dev: pointer to device data.
- * @param enable: true to set the bit.
- */
-void bk4819_setAfUndoc1(const struct BK4819 *dev, bool enable);
 
 /**
  * Set the AF RX gains (REG_48).

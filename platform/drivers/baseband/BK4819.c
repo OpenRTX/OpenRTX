@@ -336,7 +336,8 @@ static const struct {
 } flatAudioFields[] = {
     { BK4819_REG_2B, 0x0707, 0x0707, 0x0000 }, /* Speech filters, emphasis */
     { BK4819_REG_31, 0x000c, 0x0000, 0x0000 }, /* Compander and VOX */
-    { BK4819_REG_47, 0x0001, 0x0001, 0x0000 }, /* TX filter bypass */
+    /* TX filter bypass, and bit 1 "for gain" (app note RF_EnterBypass()) */
+    { BK4819_REG_47, 0x0003, 0x0003, 0x0000 },
     { BK4819_REG_4B, 0x0020, 0x0020, 0x0000 }, /* ALC disable */
     { BK4819_REG_70, 0x8080, 0x0000, 0x0000 }, /* Tone generators */
     { BK4819_REG_7E, 0x003f, 0x0000, 0x002e }, /* TX and RX DC filters */
@@ -377,12 +378,6 @@ void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
 void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter)
 {
     writeField(dev, BK4819_REG_43, BK4819_REG43_FILTER_MASK, filter);
-}
-
-void bk4819_setAfUndoc1(const struct BK4819 *dev, bool enable)
-{
-    writeField(dev, BK4819_REG_47, BK4819_REG47_UNDOC1,
-               enable ? BK4819_REG47_UNDOC1 : 0);
 }
 
 void bk4819_setAfRxGain(const struct BK4819 *dev, uint8_t gain1, uint8_t gain2)
