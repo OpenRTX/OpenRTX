@@ -54,8 +54,7 @@ extern "C" {
 #define BK4819_REG43_RF_BW(x) BITV((x) & 0x07, 12)
 #define BK4819_REG43_RF_BW_WEAK(x) BITV((x) & 0x07, 9)
 #define BK4819_REG43_AF_TX_LPF2_BW(x) BITV((x) & 0x07, 6)
-#define BK4819_REG43_UNDOC3 \
-    BIT(3) /* Undocumented, set for M17 on the A36Plus */
+#define BK4819_REG43_UNDOC3 BIT(3) /* Undocumented, set at reset */
 #define BK4819_REG43_FM_DEMOD_GAIN BIT(2)
 #define BK4819_REG43_FILTER_MASK 0x7fcc
 #define BK4819_REG48_AF_RX_GAIN1(x) BITV((x) & 0x03, 10)
@@ -63,8 +62,9 @@ extern "C" {
 #define BK4819_REG7D_MIC_GAIN(x) BITV((x) & 0x1f, 0)
 #define BK4819_REG7E_AGC_FIX BIT(15)
 #define BK4819_DEFAULT_TX_DEVIATION 0x4d2
-#define BK4819_DEFAULT_RX_FILTER \
-    (BK4819_REG43_RF_BW(4) | BK4819_REG43_AF_TX_LPF2_BW(1))
+#define BK4819_DEFAULT_RX_FILTER                           \
+    (BK4819_REG43_RF_BW(4) | BK4819_REG43_AF_TX_LPF2_BW(1) \
+     | BK4819_REG43_UNDOC3)
 #define BK4819_DEFAULT_AF_RX_GAIN1 0
 #define BK4819_DEFAULT_AF_RX_GAIN2 0x3c
 #define BK4819_DEFAULT_MIC_GAIN 0x19
