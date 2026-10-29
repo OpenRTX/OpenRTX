@@ -135,7 +135,6 @@ void radio_setOpmode(const enum opmode mode)
         bk4819_setTxDeviation(&c62_bk4819, false, BK4819_DEFAULT_TX_DEVIATION);
         bk4819_setRxFilter(&c62_bk4819, BK4819_DEFAULT_RX_FILTER);
         bk4819_setMicGain(&c62_bk4819, BK4819_DEFAULT_MIC_GAIN);
-        bk4819_setAfUndoc1(&c62_bk4819, false);
         bk4819_setAfRxGain(&c62_bk4819, BK4819_DEFAULT_AF_RX_GAIN1,
                            BK4819_DEFAULT_AF_RX_GAIN2);
         bk4819_setAgcFixed(&c62_bk4819, false);
@@ -182,7 +181,6 @@ void radio_enableRx()
     bk4819_set_freq(&c62_bk4819, config->rxFrequency);
 
     if (radioMode == OPMODE_M17) {
-        bk4819_setAfUndoc1(&c62_bk4819, true);
         bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1, M17_AF_RX_GAIN2);
         bk4819_setAgcFixed(&c62_bk4819, false);
     } else {
@@ -215,7 +213,6 @@ void radio_enableTx()
     bk4819_set_freq(&c62_bk4819, config->txFrequency);
 
     if (radioMode == OPMODE_M17) {
-        bk4819_setAfUndoc1(&c62_bk4819, false);
         bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1,
                            BK4819_DEFAULT_AF_RX_GAIN2);
         bk4819_setAgcFixed(&c62_bk4819, true);
