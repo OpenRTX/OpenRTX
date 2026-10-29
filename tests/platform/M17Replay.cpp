@@ -16,15 +16,9 @@
 
 using namespace M17;
 
-M17Replay::M17Replay(const bool invertPhase, const bool verbose)
-    : invertPhase(invertPhase)
-    , verbose(verbose)
-    , locked(false)
-    , haveStreamFn(false)
-    , lastStreamFn(0)
-    , packetLen(0)
-    , packetNext(0)
-    , count{}
+M17Replay::M17Replay(const bool invertPhase, const bool verbose) :
+    invertPhase(invertPhase), verbose(verbose), locked(false),
+    haveStreamFn(false), lastStreamFn(0), packetLen(0), packetNext(0), count{}
 {
     demod.init();
 }
