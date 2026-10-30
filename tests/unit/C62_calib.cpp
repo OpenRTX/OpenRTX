@@ -5,6 +5,7 @@
  */
 
 #include <catch2/catch_test_macros.hpp>
+#include <cerrno>
 #include <cstdint>
 #include <cstring>
 #include <vector>
@@ -163,7 +164,7 @@ TEST_CASE("C62 calibration fails on an erased journal", "[c62][calibration]")
     vector<uint8_t> journal(0x10000, 0xFF);
 
     C62Calib cal;
-    REQUIRE(parse(journal, cal) == -1);
+    REQUIRE(parse(journal, cal) == -ENOENT);
 }
 
 TEST_CASE("C62 calibration fails without points in both bands",
@@ -174,7 +175,7 @@ TEST_CASE("C62 calibration fails without points in both bands",
     writeEntry(journal, 0, 0x0BDC, vhfOnly);
 
     C62Calib cal;
-    REQUIRE(parse(journal, cal) == -1);
+    REQUIRE(parse(journal, cal) == -ENOENT);
 }
 
 TEST_CASE("C62 default calibration", "[c62][calibration]")
