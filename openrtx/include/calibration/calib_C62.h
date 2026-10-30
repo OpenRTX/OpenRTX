@@ -16,23 +16,25 @@ extern "C" {
 #endif
 
 /**
- * Maximum number of TX power calibration points per band.
+ * Maximum number of TX calibration points per band.
  */
 #define C62_CAL_POINTS 10
 
 /**
- * TX power calibration point: the APC PWM duty cycle, in percent, of the
- * stock low and high power settings at a frequency. Same layout as the start
- * of a calibration record in the stock firmware's settings journal.
+ * TX calibration point: the APC PWM duty cycle, in percent, of the stock low
+ * and high power settings, and the BK4819 TX deviation tuning (REG_40) for
+ * 12.5 and 25 kHz channels, at a frequency.
  */
 struct C62CalPoint {
     uint32_t freq;
     uint16_t loPwr;
     uint16_t hiPwr;
+    uint16_t txDevNarrow;
+    uint16_t txDevWide;
 };
 
 /**
- * TX power calibration of one band, sorted by frequency.
+ * TX calibration of one band, sorted by frequency.
  */
 struct C62BandCalib {
     struct C62CalPoint points[C62_CAL_POINTS];
@@ -48,12 +50,13 @@ struct C62Calib {
 };
 
 /**
- * Read the TX power calibration from the stock firmware's settings journal.
+ * Read the TX calibration from the stock firmware's settings journal.
  *
  * The journal holds back-to-back settings entries, each starting with a 0x5A
  * marker, an 8-bit sum of its payload and its little-endian total length.
  * The newest entry with a valid checksum is used. Records outside the VHF
- * (136-174 MHz) and UHF (400-480 MHz) bands or above 100% duty are skipped.
+ * (136-174 MHz) and UHF (400-480 MHz) bands or above 100% duty are skipped,
+ * and deviations are limited to 4095, as the stock firmware does.
  *
  * @param read: function reading len bytes at offset off of the journal into
  * buf, returning zero on success.
