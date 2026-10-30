@@ -424,6 +424,24 @@ void bk4819_set_Squelch(const struct BK4819 *dev, uint8_t RTSO, uint8_t RTSC,
  */
 void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF);
 
+/** Audio processing modes, see bk4819_setAudioMode(). */
+enum bk4819_audioMode {
+    BK4819_AUDIO_VOICE,  ///< Audio filters on, voice levels.
+    BK4819_AUDIO_BYPASS, ///< Audio filters bypassed, for digital modes.
+};
+
+/**
+ * Set the audio processing mode. VOICE also sets the TX deviation, RX filter,
+ * gains and AGC to the values bk4819_init() uses; BYPASS, as the application
+ * note's RF_EnterBypass(), leaves them to the caller. The RX output is chosen
+ * with BK4819_SetAF() (BK4819_AF_TYPE_BYPASS in BYPASS), as it is also the
+ * squelch mute.
+ *
+ * @param dev: pointer to device data.
+ * @param mode: audio processing mode.
+ */
+void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode);
+
 /**
  * Switch the audio paths between FM processing and flat audio, for digital
  * modes. Disabling restores the values bk4819_init() leaves; deviation, gains
