@@ -16,10 +16,6 @@ config LSF_DSP
 
 if LSF_DSP
 
-config LSF_DSP_INIT_PRIORITY
-	int "Init priority"
-	default 80
-
 DT_CHOSEN_LSF_DSP_FIRMWARE := lsf,dsp-firmware
 
 config LSF_DSP_LOAD_ON_BOOT
