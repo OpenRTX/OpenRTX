@@ -28,7 +28,7 @@ static enum opstatus radioStatus; // Current operating status
 static enum opmode radioMode;     // Current operating mode
 
 /*
- * C62 BK4819 settings for M17, on top of the flat audio mode, from the
+ * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
  * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
  */
 // Raw deviation tuning (not Hz), set for the TX DAC gain in hwconfig.h
@@ -125,19 +125,13 @@ void radio_setOpmode(const enum opmode mode)
 
     // Settings common to M17 RX and TX; radio_enableRx/Tx() set the rest
     if (mode == OPMODE_M17) {
-        bk4819_setFlatAudio(&c62_bk4819, true);
+        bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_BYPASS);
         bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
         bk4819_setRxFilter(&c62_bk4819, M17_RX_FILTER);
         bk4819_SetFilterBandwidth(&c62_bk4819, 0);
         bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
     } else if (radioMode == OPMODE_M17) {
-        bk4819_setFlatAudio(&c62_bk4819, false);
-        bk4819_setTxDeviation(&c62_bk4819, true, BK4819_DEFAULT_TX_DEVIATION);
-        bk4819_setRxFilter(&c62_bk4819, BK4819_DEFAULT_RX_FILTER);
-        bk4819_setMicGain(&c62_bk4819, BK4819_DEFAULT_MIC_GAIN);
-        bk4819_setAfRxGain(&c62_bk4819, BK4819_DEFAULT_AF_RX_GAIN1,
-                           BK4819_DEFAULT_AF_RX_GAIN2);
-        bk4819_setAgcFixed(&c62_bk4819, false);
+        bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_VOICE);
     }
 
     radioMode = mode;
