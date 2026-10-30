@@ -119,6 +119,24 @@ static inline int32_t fixedPointToCoord(const int32_t value, const uint8_t unit)
     return tmp;
 }
 
+/**
+ * Multiply two signed 16-bit values without wrap around.
+ *
+ * @param a: first value
+ * @param b: second value
+ * @return product of input parameters
+ */
+static inline int16_t s16_multiplySaturate(int16_t a, int16_t b)
+{
+    int32_t result = (int32_t)a * (int32_t)b;
+
+    if (result > INT16_MAX)
+        return INT16_MAX;
+    if (result < INT16_MIN)
+        return INT16_MIN;
+
+    return (int16_t)result;
+}
 #ifdef __cplusplus
 }
 #endif

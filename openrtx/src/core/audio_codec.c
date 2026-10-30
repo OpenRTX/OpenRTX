@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "core/dsp.h"
+#include "core/utils.h"
 #include "hwconfig.h"
 
 #define BUF_SIZE 4
@@ -216,7 +217,8 @@ static void *encodeFunc(void *arg)
 #endif
 
             sample = dsp_dcBlockFilter(&dcBlock, sample);
-            audio.data[outIdx++] = sample * CONFIG_MIC_GAIN;
+            audio.data[outIdx++] = s16_multiplySaturate(sample,
+                                                        CONFIG_MIC_GAIN);
         }
 
         // CODEC2 encodes 160 speech samples (20 ms), into 8 bytes: here we
