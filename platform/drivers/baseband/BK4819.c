@@ -354,14 +354,6 @@ static void writeField(const struct BK4819 *dev, bk4819_reg_t reg,
     BK4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
 }
 
-void bk4819_setFlatAudio(const struct BK4819 *dev, bool enable)
-{
-    for (size_t i = 0; i < ARRAY_SIZE(filterFields); i++) {
-        writeField(dev, filterFields[i].reg, filterFields[i].mask,
-                   enable ? filterFields[i].bypass : filterFields[i].voice);
-    }
-}
-
 void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
                            uint16_t tuning)
 {
