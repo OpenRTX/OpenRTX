@@ -52,6 +52,21 @@ enum {
 };
 
 /**
+ * Get the TX calibration at a frequency, from the band it is in.
+ *
+ * @param freq: TX frequency, in Hz.
+ * @return calibration point at the frequency.
+ */
+static struct C62CalPoint calib_at(const freq_t freq)
+{
+    const struct C62BandCalib *band = &calData.uhf;
+    if (freq < 174000000)
+        band = &calData.vhf;
+
+    return calibC62_interp(band, freq);
+}
+
+/**
  * Set the TX power control (APC) voltage through the PWM on pin A03. The band
  * calibration gives the duty cycles of the low and high power settings at the
  * frequency; the power is interpolated linearly between them, from the low
@@ -64,11 +79,7 @@ enum {
  */
 static void set_tx_power(const freq_t freq, const uint32_t power)
 {
-    const struct C62BandCalib *band = &calData.uhf;
-    if (freq < 174000000)
-        band = &calData.vhf;
-
-    struct C62CalPoint cal = calibC62_interp(band, freq);
+    struct C62CalPoint cal = calib_at(freq);
 
     float pwr = static_cast<float>(power) / 1000.0f;
     pwr = std::max(std::min(pwr, 5.0f), 1.0f);
@@ -178,12 +189,8 @@ void radio_enableRx()
     if (radioMode == OPMODE_M17) {
         bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1, M17_AF_RX_GAIN2);
         bk4819_setAgcFixed(&c62_bk4819, false);
-    } else {
-        bk4819_setBandwidth(&c62_bk4819, (config->bandwidth == BW_25) ?
-                                             BK4819_BW_25 :
-                                             BK4819_BW_12_5);
-        if (config->rxToneEn)
-            bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
+    } else if (config->rxToneEn) {
+        bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
     }
 
     bk4819_rx_on(&c62_bk4819);
@@ -246,6 +253,26 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    // Set bandwidth and TX deviation, only for analog FM mode
+    if (config->opMode == OPMODE_FM) {
+        struct C62CalPoint cal = calib_at(config->txFrequency);
+
+        switch (config->bandwidth) {
+            case BW_12_5:
+                bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
+                bk4819_setTxDeviation(&c62_bk4819, true, cal.txDevNarrow);
+                break;
+
+            case BW_25:
+                bk4819_setBandwidth(&c62_bk4819, BK4819_BW_25);
+                bk4819_setTxDeviation(&c62_bk4819, true, cal.txDevWide);
+                break;
+
+            default:
+                break;
+        }
+    }
+
     /*
      * Update VCO frequency and tuning parameters if current operating status
      * is different from OFF.
