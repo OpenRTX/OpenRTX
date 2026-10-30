@@ -5,22 +5,21 @@
  */
 
 #include <catch2/catch_test_macros.hpp>
+
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
 #include <vector>
+
 #include "calibration/calib_C62.h"
 
 using namespace std;
-
-namespace
-{
 
 /**
  * The ten points of the stock default table, in the order the stock firmware
  * stores them.
  */
-const vector<C62CalPoint> stockPoints = {
+static const vector<C62CalPoint> stockPoints = {
     { 400125000, 33, 75 }, { 420125000, 32, 74 }, { 440125000, 31, 74 },
     { 460125000, 30, 76 }, { 479975000, 31, 75 }, { 136125000, 33, 67 },
     { 146125000, 30, 57 }, { 156125000, 27, 64 }, { 166125000, 33, 73 },
@@ -37,8 +36,9 @@ const vector<C62CalPoint> stockPoints = {
  * @param badSum: write a wrong payload sum.
  * @return offset right after the entry.
  */
-uint32_t writeEntry(vector<uint8_t> &journal, uint32_t off, uint16_t len,
-                    const vector<C62CalPoint> &points, bool badSum = false)
+static uint32_t writeEntry(vector<uint8_t> &journal, uint32_t off, uint16_t len,
+                           const vector<C62CalPoint> &points,
+                           bool badSum = false)
 {
     memset(&journal[off], 0, len);
 
@@ -66,7 +66,7 @@ uint32_t writeEntry(vector<uint8_t> &journal, uint32_t off, uint16_t len,
  * @param len: number of bytes to read.
  * @return zero on success, -1 when reading past the end.
  */
-int readJournal(void *ctx, uint32_t off, void *buf, size_t len)
+static int readJournal(void *ctx, uint32_t off, void *buf, size_t len)
 {
     auto *journal = static_cast<vector<uint8_t> *>(ctx);
     if (off + len > journal->size())
@@ -83,12 +83,10 @@ int readJournal(void *ctx, uint32_t off, void *buf, size_t len)
  * @param cal: destination for the calibration data.
  * @return value returned by calibC62_read().
  */
-int parse(vector<uint8_t> &journal, C62Calib &cal)
+static int parse(vector<uint8_t> &journal, C62Calib &cal)
 {
     return calibC62_read(readJournal, &journal, journal.size(), &cal);
 }
-
-} // namespace
 
 TEST_CASE("C62 calibration from the newest valid journal entry",
           "[c62][calibration]")
