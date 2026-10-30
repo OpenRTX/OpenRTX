@@ -46,7 +46,7 @@ extern "C" {
 #define BK4819_REG51_1050HZ_DET_MOD BIT(10)
 #define BK4819_REG51_AUTO_CDCSS_BW_MOD BIT(9)
 #define BK4819_REG51_AUTO_CTCSS_BW_MOD BIT(8)
-#define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x), 0)
+#define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x) & 0x7f, 0)
 
 /* Audio path fields set by the bk4819_set* functions, and their reset values */
 #define BK4819_REG40_TX_DEVIATION_ENABLE BIT(12)
@@ -336,8 +336,11 @@ void bk4819_rtx_off(const struct BK4819 *dev);
  *
  * @param dev: pointer to device data.
  * @param frequency
+ * @param gain: CTCSS/CDCSS TX gain (REG_51), 0 to 127; the reset value 0 is
+ * the minimum, far below the usual 10-20% of the peak deviation.
  */
-void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency);
+void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency,
+                            uint8_t gain);
 
 /**
  * @brief Enable Rx CTCSS.
@@ -362,9 +365,10 @@ void bk4819_enable_ctcss2(const struct BK4819 *dev, uint16_t frequency);
  * @param code_type 0:positive code   1:negative code
  * @param bit_sel 0: 23bit          1:24bit
  * @param cdcss_code cdcss code
+ * @param gain: CTCSS/CDCSS TX gain (REG_51), 0 to 127.
  */
 void bk4819_enable_tx_cdcss(const struct BK4819 *dev, uint8_t code_type,
-                            uint8_t bit_sel, uint32_t cdcss_code);
+                            uint8_t bit_sel, uint32_t cdcss_code, uint8_t gain);
 
 /**
  * @brief Disable CTCSS/CDCSS

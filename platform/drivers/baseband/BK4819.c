@@ -183,14 +183,17 @@ void bk4819_rtx_off(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
 }
 
-void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
+void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency,
+                            uint8_t gain)
 {
     /* frequency is in .1 Hz units */
     uint32_t ctcss_reg_value = frequency * 2064888 / 100000
                              / 10; /* Register value for 26MHz XTAL */
 
     uint16_t reg = BK4819_readReg(dev, BK4819_REG_51);
-    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
+    reg &= ~BK4819_REG51_CTCDCSS_TX_GAIN1T(~0);
+    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL
+         | BK4819_REG51_CTCDCSS_TX_GAIN1T(gain);
     BK4819_writeReg(dev, BK4819_REG_51, reg);
     BK4819_writeReg(dev, BK4819_REG_07, (uint16_t)ctcss_reg_value);
 }
@@ -215,11 +218,12 @@ void bk4819_enable_ctcss2(const struct BK4819 *dev, uint16_t frequency)
 }
 
 void bk4819_enable_tx_cdcss(const struct BK4819 *dev, uint8_t code_type,
-                            uint8_t bit_sel, uint32_t cdcss_code)
+                            uint8_t bit_sel, uint32_t cdcss_code, uint8_t gain)
 {
     BK4819_writeReg(dev, BK4819_REG_51,
                     BK4819_REG51_TX_CTCDSS_ENABLE | BITV(code_type, 13)
-                        | BITV(bit_sel, 11));
+                        | BITV(bit_sel, 11)
+                        | BK4819_REG51_CTCDCSS_TX_GAIN1T(gain));
     BK4819_writeReg(dev, BK4819_REG_07, BITV(2, 13) | 0x0AD7);
     BK4819_writeReg(dev, BK4819_REG_08, BIT(15) | ((cdcss_code >> 12) & 0XFFF));
     BK4819_writeReg(dev, BK4819_REG_08, cdcss_code & 0XFFF);
