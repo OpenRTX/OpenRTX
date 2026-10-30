@@ -33,6 +33,21 @@
 #define CONFIG_MIC_OVERSAMPLE 1
 #endif
 
+/*
+ * Scale a conditioned microphone sample without wrapping around int16_t.
+ * The original `sample * CONFIG_MIC_GAIN` expression can overflow on loud
+ * speech and turn positive peaks into negative artifacts.
+ */
+static inline int16_t scaleMicSample(int16_t sample, int16_t gain)
+{
+    int32_t scaled = (int32_t)sample * (int32_t)gain;
+    if (scaled > INT16_MAX)
+        return INT16_MAX;
+    if (scaled < INT16_MIN)
+        return INT16_MIN;
+    return (int16_t)scaled;
+}
+
 static pathId audioPath;
 
 static uint8_t initCnt = 0;
@@ -216,7 +231,7 @@ static void *encodeFunc(void *arg)
 #endif
 
             sample = dsp_dcBlockFilter(&dcBlock, sample);
-            audio.data[outIdx++] = sample * CONFIG_MIC_GAIN;
+            audio.data[outIdx++] = scaleMicSample(sample, CONFIG_MIC_GAIN);
         }
 
         // CODEC2 encodes 160 speech samples (20 ms), into 8 bytes: here we
