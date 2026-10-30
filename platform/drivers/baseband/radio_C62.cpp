@@ -127,8 +127,9 @@ void radio_setOpmode(const enum opmode mode)
     if (mode == OPMODE_M17) {
         bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_BYPASS);
         bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
+        // 12.5 kHz bandwidth mode; M17_RX_FILTER then replaces its filters
+        bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
         bk4819_setRxFilter(&c62_bk4819, M17_RX_FILTER);
-        bk4819_SetFilterBandwidth(&c62_bk4819, 0);
         bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
     } else if (radioMode == OPMODE_M17) {
         bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_VOICE);
@@ -178,7 +179,9 @@ void radio_enableRx()
         bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1, M17_AF_RX_GAIN2);
         bk4819_setAgcFixed(&c62_bk4819, false);
     } else {
-        bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
+        bk4819_setBandwidth(&c62_bk4819, (config->bandwidth == BW_25) ?
+                                             BK4819_BW_25 :
+                                             BK4819_BW_12_5);
         if (config->rxToneEn)
             bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
     }

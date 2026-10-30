@@ -183,16 +183,6 @@ void bk4819_rtx_off(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
 }
 
-void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
-{
-    uint16_t Value = BK4819_readReg(dev, BK4819_REG_43);
-    if (bandwidth) { /* 25kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 32);
-    } else {         /* 12.5kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 0);
-    }
-}
-
 void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
 {
     /* frequency is in .1 Hz units */
@@ -366,6 +356,23 @@ void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
 void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter)
 {
     writeField(dev, BK4819_REG_43, BK4819_REG43_FILTER_MASK, filter);
+}
+
+void bk4819_setBandwidth(const struct BK4819 *dev, enum bk4819_bandwidth bw)
+{
+    /* 12.5 kHz: the reset value; 25 kHz: 3 kHz RF filter, doubled by the
+     * bandwidth mode, and 3 kHz AF TX filter */
+    static const uint16_t filters[] = {
+        [BK4819_BW_12_5] = BK4819_DEFAULT_RX_FILTER
+                         | BK4819_REG43_BW_MODE(BK4819_BW_MODE_12_5),
+        [BK4819_BW_25] = BK4819_REG43_RF_BW(3) | BK4819_REG43_AF_TX_LPF2_BW(0)
+                       | BK4819_REG43_BW_MODE(BK4819_BW_MODE_25)
+                       | BK4819_REG43_UNDOC3,
+    };
+
+    writeField(dev, BK4819_REG_43,
+               BK4819_REG43_FILTER_MASK | BK4819_REG43_BW_MODE(~0),
+               filters[bw]);
 }
 
 void bk4819_setAfRxGain(const struct BK4819 *dev, uint8_t gain1, uint8_t gain2)

@@ -54,6 +54,7 @@ extern "C" {
 #define BK4819_REG43_RF_BW(x) BITV((x) & 0x07, 12)
 #define BK4819_REG43_RF_BW_WEAK(x) BITV((x) & 0x07, 9)
 #define BK4819_REG43_AF_TX_LPF2_BW(x) BITV((x) & 0x07, 6)
+#define BK4819_REG43_BW_MODE(x) BITV((x) & 0x03, 4)
 #define BK4819_REG43_UNDOC3 BIT(3) /* Undocumented, set at reset */
 #define BK4819_REG43_FM_DEMOD_GAIN BIT(2)
 #define BK4819_REG43_FILTER_MASK 0x7fcc
@@ -68,6 +69,12 @@ extern "C" {
 #define BK4819_DEFAULT_AF_RX_GAIN1 0
 #define BK4819_DEFAULT_AF_RX_GAIN2 0x3c
 #define BK4819_DEFAULT_MIC_GAIN 0x19
+
+/** REG_43 bandwidth mode values, see BK4819_REG43_BW_MODE(). */
+enum bk4819_bwMode {
+    BK4819_BW_MODE_12_5 = 0, ///< 12.5 kHz channels.
+    BK4819_BW_MODE_25 = 2,   ///< 25 and 20 kHz channels.
+};
 
 #define BK4819_SCAN_FRE_TIME_2 0x00
 #define BK4819_SCAN_FRE_TIME_4 0x01
@@ -375,13 +382,6 @@ void bk4819_disable_ctdcss(const struct BK4819 *dev);
 uint16_t bk4819_get_ctcss(const struct BK4819 *dev);
 
 /**
- * @brief Set filter bandwidth (0:12.5KHz 1:25KHz)
- *
- * @param dev: pointer to device data.
- */
-void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth);
-
-/**
  * @brief Enable VOX
  *
  * @param dev: pointer to device data.
@@ -453,12 +453,27 @@ void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
                            uint16_t tuning);
 
 /**
- * Set the RF and AF TX filters (REG_43 fields, not the channel bandwidth).
+ * Set the RF and AF TX filters (REG_43 fields, not the bandwidth mode).
  *
  * @param dev: pointer to device data.
  * @param filter: BK4819_REG43_* fields, e.g. BK4819_DEFAULT_RX_FILTER.
  */
 void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter);
+
+/** Channel bandwidths, see bk4819_setBandwidth(). */
+enum bk4819_bandwidth {
+    BK4819_BW_12_5, ///< 12.5 kHz channels.
+    BK4819_BW_25,   ///< 25 kHz channels.
+};
+
+/**
+ * Set the bandwidth mode and the RF and AF TX filters for a channel
+ * bandwidth (REG_43), to the values of the BK4819 vendor firmwares.
+ *
+ * @param dev: pointer to device data.
+ * @param bw: channel bandwidth.
+ */
+void bk4819_setBandwidth(const struct BK4819 *dev, enum bk4819_bandwidth bw);
 
 /**
  * Set the AF RX gains (REG_48).
