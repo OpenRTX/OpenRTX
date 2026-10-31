@@ -37,8 +37,10 @@ extern "C" {
 #define CONFIG_BAT_LIION
 #define CONFIG_BAT_NCELLS 2
 
-/* M17 deactivated for now as the feature will come with the next PR */
-//#define CONFIG_M17
+#define CONFIG_M17
+
+/* Microphone audio input, set for C62_ADC_MIC_GAIN_D below */
+#define CONFIG_MIC_GAIN 13
 
 /*
  * CSK6 codec gains in dB, analog (_A) and digital (_D). The TX DAC sets the

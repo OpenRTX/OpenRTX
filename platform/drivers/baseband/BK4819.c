@@ -6,6 +6,7 @@
 
 #include "drivers/baseband/BK4819.h"
 #include "interfaces/delays.h"
+#include "core/utils.h"
 
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg)
 {
@@ -63,8 +64,8 @@ void bk4819_init(const struct BK4819 *dev)
 
     BK4819_writeReg(dev, BK4819_REG_49, 0x2a38);
     BK4819_writeReg(dev, BK4819_REG_7B, 0x8420);
-    BK4819_writeReg(dev, BK4819_REG_7D, 0xe959); // Mic sensitivity
-    BK4819_writeReg(dev, BK4819_REG_48, 0xb3c1); // AF Gains
+    BK4819_writeReg(dev, BK4819_REG_7D, 0xe940);
+    BK4819_writeReg(dev, BK4819_REG_48, 0xb001); // AF DAC gain
     BK4819_writeReg(dev, BK4819_REG_1E, 0x4c58);
     BK4819_writeReg(dev, BK4819_REG_1F, 0xa656);
     BK4819_writeReg(dev, BK4819_REG_3E, 0xa037); // Band selection threshold
@@ -74,9 +75,7 @@ void bk4819_init(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_53, 59000);
     BK4819_writeReg(dev, BK4819_REG_2C, 0x5705);
     BK4819_writeReg(dev, BK4819_REG_4B, 0x7102); // ALC
-    uVar1 = BK4819_readReg(dev, BK4819_REG_40);
-    BK4819_writeReg(dev, BK4819_REG_40,
-                    (uVar1 & 0xf000) | 0x4d2); // RF Tx Deviation
+    bk4819_setAudioMode(dev, BK4819_AUDIO_VOICE);
     BK4819_writeReg(dev, BK4819_REG_77, 0x88ef);
     BK4819_writeReg(dev, BK4819_REG_26, 0x13a0);
     BK4819_writeReg(dev, BK4819_REG_4E, 0x6f15); // Squelch
@@ -116,6 +115,15 @@ void bk4819_init(const struct BK4819 *dev)
         dev, BK4819_REG_36,
         0xdfbf); // Tx Output power Bias 0xdf = 2,8V PA Tuning 0xbf = Enable PACTKoutput + 7,26dBm
     BK4819_writeReg(dev, BK4819_REG_47, 0x6040); // AF
+
+    /*
+     * Let the microphone input bias settle with only the mic ADC enabled,
+     * before any audio starts: otherwise the mic AGC can stay at a low gain.
+     */
+    uint16_t power = BK4819_readReg(dev, BK4819_REG_30);
+    BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG30_MIC_ADC_ENABLE);
+    delayMs(250);
+    BK4819_writeReg(dev, BK4819_REG_30, power);
 }
 
 uint8_t bk4819_int_get(const struct BK4819 *dev, bk4819_int_t interrupt)
@@ -175,24 +183,17 @@ void bk4819_rtx_off(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
 }
 
-void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
-{
-    uint16_t Value = BK4819_readReg(dev, BK4819_REG_43);
-    if (bandwidth) { /* 25kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 32);
-    } else {         /* 12.5kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 0);
-    }
-}
-
-void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
+void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency,
+                            uint8_t gain)
 {
     /* frequency is in .1 Hz units */
     uint32_t ctcss_reg_value = frequency * 2064888 / 100000
                              / 10; /* Register value for 26MHz XTAL */
 
     uint16_t reg = BK4819_readReg(dev, BK4819_REG_51);
-    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
+    reg &= ~BK4819_REG51_CTCDCSS_TX_GAIN1T(~0);
+    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL
+         | BK4819_REG51_CTCDCSS_TX_GAIN1T(gain);
     BK4819_writeReg(dev, BK4819_REG_51, reg);
     BK4819_writeReg(dev, BK4819_REG_07, (uint16_t)ctcss_reg_value);
 }
@@ -217,11 +218,12 @@ void bk4819_enable_ctcss2(const struct BK4819 *dev, uint16_t frequency)
 }
 
 void bk4819_enable_tx_cdcss(const struct BK4819 *dev, uint8_t code_type,
-                            uint8_t bit_sel, uint32_t cdcss_code)
+                            uint8_t bit_sel, uint32_t cdcss_code, uint8_t gain)
 {
     BK4819_writeReg(dev, BK4819_REG_51,
                     BK4819_REG51_TX_CTCDSS_ENABLE | BITV(code_type, 13)
-                        | BITV(bit_sel, 11));
+                        | BITV(bit_sel, 11)
+                        | BK4819_REG51_CTCDCSS_TX_GAIN1T(gain));
     BK4819_writeReg(dev, BK4819_REG_07, BITV(2, 13) | 0x0AD7);
     BK4819_writeReg(dev, BK4819_REG_08, BIT(15) | ((cdcss_code >> 12) & 0XFFF));
     BK4819_writeReg(dev, BK4819_REG_08, cdcss_code & 0XFFF);
@@ -313,6 +315,108 @@ void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF)
     uint16_t value = BK4819_readReg(dev, BK4819_REG_47);
     BK4819_writeReg(dev, BK4819_REG_47,
                     (value & ~0x0f00u) | ((AF & 0x0fu) << 8));
+}
+
+/* Audio filter fields: bypass values, and the voice values bk4819_init() sets */
+static const struct {
+    bk4819_reg_t reg;
+    uint16_t mask;
+    uint16_t bypass;
+    uint16_t voice;
+} filterFields[] = {
+    { BK4819_REG_2B, 0x0707, 0x0707, 0x0000 }, /* Speech filters, emphasis */
+    { BK4819_REG_31, 0x000c, 0x0000, 0x0000 }, /* Compander and VOX */
+    /* TX filter bypass, and bit 1 "for gain" (app note RF_EnterBypass()) */
+    { BK4819_REG_47, 0x0003, 0x0003, 0x0000 },
+    { BK4819_REG_4B, 0x0020, 0x0020, 0x0000 }, /* ALC disable */
+    { BK4819_REG_70, 0x8080, 0x0000, 0x0000 }, /* Tone generators */
+    { BK4819_REG_7E, 0x003f, 0x0000, 0x002e }, /* TX and RX DC filters */
+};
+
+/**
+ * Write the bits of a register selected by a mask.
+ *
+ * @param dev: pointer to device data.
+ * @param reg: register.
+ * @param mask: bits to write.
+ * @param value: new value of those bits.
+ */
+static void writeField(const struct BK4819 *dev, bk4819_reg_t reg,
+                       uint16_t mask, uint16_t value)
+{
+    uint16_t current = BK4819_readReg(dev, reg);
+    BK4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
+}
+
+void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
+                           uint16_t tuning)
+{
+    writeField(dev, BK4819_REG_40,
+               BK4819_REG40_TX_DEVIATION_ENABLE | BK4819_REG40_TX_DEVIATION(~0),
+               (enable ? BK4819_REG40_TX_DEVIATION_ENABLE : 0)
+                   | BK4819_REG40_TX_DEVIATION(tuning));
+}
+
+void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter)
+{
+    writeField(dev, BK4819_REG_43, BK4819_REG43_FILTER_MASK, filter);
+}
+
+void bk4819_setBandwidth(const struct BK4819 *dev, enum bk4819_bandwidth bw)
+{
+    /* 12.5 kHz: the reset value; 25 kHz: 3 kHz RF filter, doubled by the
+     * bandwidth mode, and 3 kHz AF TX filter */
+    static const uint16_t filters[] = {
+        [BK4819_BW_12_5] = BK4819_DEFAULT_RX_FILTER
+                         | BK4819_REG43_BW_MODE(BK4819_BW_MODE_12_5),
+        [BK4819_BW_25] = BK4819_REG43_RF_BW(3) | BK4819_REG43_AF_TX_LPF2_BW(0)
+                       | BK4819_REG43_BW_MODE(BK4819_BW_MODE_25)
+                       | BK4819_REG43_UNDOC3,
+    };
+
+    writeField(dev, BK4819_REG_43,
+               BK4819_REG43_FILTER_MASK | BK4819_REG43_BW_MODE(~0),
+               filters[bw]);
+}
+
+void bk4819_setAfRxGain(const struct BK4819 *dev, uint8_t gain1, uint8_t gain2)
+{
+    writeField(dev, BK4819_REG_48,
+               BK4819_REG48_AF_RX_GAIN1(~0) | BK4819_REG48_AF_RX_GAIN2(~0),
+               BK4819_REG48_AF_RX_GAIN1(gain1)
+                   | BK4819_REG48_AF_RX_GAIN2(gain2));
+}
+
+void bk4819_setMicGain(const struct BK4819 *dev, uint8_t gain)
+{
+    writeField(dev, BK4819_REG_7D, BK4819_REG7D_MIC_GAIN(~0),
+               BK4819_REG7D_MIC_GAIN(gain));
+}
+
+void bk4819_setAgcFixed(const struct BK4819 *dev, bool fixed)
+{
+    writeField(dev, BK4819_REG_7E, BK4819_REG7E_AGC_FIX,
+               fixed ? BK4819_REG7E_AGC_FIX : 0);
+}
+
+void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode)
+{
+    const bool bypass = (mode == BK4819_AUDIO_BYPASS);
+
+    for (size_t i = 0; i < ARRAY_SIZE(filterFields); i++) {
+        writeField(dev, filterFields[i].reg, filterFields[i].mask,
+                   bypass ? filterFields[i].bypass : filterFields[i].voice);
+    }
+
+    if (bypass)
+        return;
+
+    bk4819_setTxDeviation(dev, true, BK4819_DEFAULT_TX_DEVIATION);
+    bk4819_setRxFilter(dev, BK4819_DEFAULT_RX_FILTER);
+    bk4819_setAfRxGain(dev, BK4819_DEFAULT_AF_RX_GAIN1,
+                       BK4819_DEFAULT_AF_RX_GAIN2);
+    bk4819_setMicGain(dev, BK4819_DEFAULT_MIC_GAIN);
+    bk4819_setAgcFixed(dev, false);
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)
