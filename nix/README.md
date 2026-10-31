@@ -125,13 +125,14 @@ rebuilding it. Jobs without cache credentials still use the cache read-only.
 
 ## Updating pins
 
-* nixpkgs: `nix flake update nixpkgs`, then `nix flake check` and
-  `nix build .#all` before committing `flake.lock`. The fragile spots on a
-  rolling branch are `gcc13Stdenv` in `nix/miosix-toolchain.nix` (gdb 9.1 does
-  not build with newer GCC), the sdl2-compat/SDL3 workaround for the ASan
-  tests in `nix/emulator.nix`, and the Zephyr Python packages in
-  `nix/zephyr-python.nix`. Run `nix fmt` afterwards: `checks.nix-lint` runs
-  `nixfmt --check`.
+* nixpkgs: Dependabot opens a weekly PR bumping `flake.lock`, and the Nix
+  build workflow builds it. To bump by hand, `nix flake update nixpkgs`, then
+  `nix flake check` and `nix build .#all` before committing `flake.lock`. The
+  fragile spots on a rolling branch are `gcc13Stdenv` in
+  `nix/miosix-toolchain.nix` (gdb 9.1 does not build with newer GCC), the
+  sdl2-compat/SDL3 workaround for the ASan tests in `nix/emulator.nix`, and
+  the Zephyr Python packages in `nix/zephyr-python.nix`. Run `nix fmt`
+  afterwards: `checks.nix-lint` runs `nixfmt --check`.
 * Wrap subprojects: keep `nix/subprojects.nix` in sync with
   `subprojects/*.wrap` (`nix-prefetch-git` gives the hash).
 * Miosix toolchain recipe: `miosixRev` in `nix/miosix-toolchain.nix` mirrors

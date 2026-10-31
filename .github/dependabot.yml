@@ -14,3 +14,14 @@ updates:
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
+
+  # Bumps the nixpkgs pin in flake.lock; the Nix build workflow runs the
+  # checks and every image on the PR (see "Updating pins" in nix/README.md).
+  - package-ecosystem: nix
+    directory: /
+    commit-message:
+      prefix: build
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 1
