@@ -1,0 +1,134 @@
+name: "Nix build"
+on:
+  workflow_dispatch:
+  pull_request:
+
+# Cancel superseded runs of the same PR, keep manual runs. As in main.yml,
+# pushes do not start a run on their own and the event name is part of the
+# group key so a manual run is never cancelled as a superseded PR run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  # OIDC token for pushing build outputs to the niks3 binary cache
+  id-token: write
+
+env:
+  NIKS3_SERVER: https://niks3.fu.io
+
+jobs:
+  # The arm-miosix-eabi toolchain is the long pole (~15 min on 16 cores). It
+  # is built once and pushed to the cache so the firmware jobs substitute it.
+  toolchain:
+    name: Miosix toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v7
+      - uses: NixOS/nix-installer-action@main
+      - uses: Mic92/niks3-action@v1
+        with:
+          server-url: ${{ env.NIKS3_SERVER }}
+      - name: Build
+        run: nix build -L .#miosix-toolchain
+
+  firmware:
+    name: Firmware ${{ matrix.target }}
+    needs: toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - md3x0
+          - mduv3x0
+          - md9600
+          - dm1701
+          - gd77
+          - dm1801
+          - mod17
+          - cs7000
+          - cs7000p
+          - rt4d
+    steps:
+      - uses: actions/checkout@v7
+      - uses: NixOS/nix-installer-action@main
+      - uses: Mic92/niks3-action@v1
+        with:
+          server-url: ${{ env.NIKS3_SERVER }}
+      - name: Build
+        run: nix build -L .#openrtx-${{ matrix.target }}
+      # Not every radio has a flashing recipe (rt4d has none yet).
+      - name: Build flash app
+        run: |
+          if nix eval '.#packages.x86_64-linux.flash-${{ matrix.target }}' --apply 'drv: drv.name' >/dev/null 2>&1; then
+            nix build -L '.#flash-${{ matrix.target }}'
+          else
+            echo "no flash app for ${{ matrix.target }}"
+          fi
+      - name: List outputs
+        run: ls -la result/
+
+  zephyr:
+    name: Firmware ttwrplus (Zephyr)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: NixOS/nix-installer-action@main
+      - uses: Mic92/niks3-action@v1
+        with:
+          server-url: ${{ env.NIKS3_SERVER }}
+      - name: Build
+        run: nix build -L .#openrtx-ttwrplus .#flash-ttwrplus
+      - name: List outputs
+        run: ls -la result/
+
+  # Emulator unit tests (plain and ASan), Nix lints, REUSE lint, and
+  # evaluation of every output for every supported system.
+  checks:
+    name: Flake checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: NixOS/nix-installer-action@main
+      - uses: Mic92/niks3-action@v1
+        with:
+          server-url: ${{ env.NIKS3_SERVER }}
+      - name: Evaluate all systems
+        run: nix flake check --all-systems --no-build
+      - name: Build checks
+        run: nix flake check -L
+      - name: Build emulator variants and dev shells
+        run: |
+          nix build -L .#emulator .#emulator-asan .#emulator-coverage
+          nix build -L .#devShells.x86_64-linux.default .#devShells.x86_64-linux.zephyr
+
+  # Everything at once, substituted from the cache, published as one artifact.
+  all:
+    name: All firmware images
+    needs: [firmware, zephyr]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: NixOS/nix-installer-action@main
+      - uses: Mic92/niks3-action@v1
+        with:
+          server-url: ${{ env.NIKS3_SERVER }}
+      - name: Build
+        run: nix build -L .#all
+      - name: Collect images
+        run: |
+          mkdir -p images
+          cp -L result/openrtx_* result/bootloader.bin images/
+          ls -la images/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nix-release-bins
+          path: images/
+          if-no-files-found: error
