@@ -10,7 +10,6 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <interfaces/delays.h>
-#include <core/utils.h>
 
 #include <algorithm>
 #include <string>
@@ -26,8 +25,25 @@ static const rtxStatus_t
     *config; // Pointer to data structure with radio configuration
 
 static enum opstatus radioStatus; // Current operating status
+static enum opmode radioMode;     // Current operating mode
 
-static struct C62Calib calData;   // TX power calibration
+/*
+ * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
+ * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
+ */
+// Raw deviation tuning (not Hz), set for the TX DAC gain in hwconfig.h
+static constexpr uint16_t M17_TX_DEVIATION = 0x582;
+// 4.5 kHz RF filter, 3.75 kHz when the signal is weak
+static constexpr uint16_t M17_RX_FILTER =
+    BK4819_REG43_RF_BW(7) | BK4819_REG43_RF_BW_WEAK(4) | BK4819_REG43_UNDOC3;
+static constexpr uint8_t M17_AF_RX_GAIN1 = 1; // -6 dB
+static constexpr uint8_t M17_AF_RX_GAIN2 = 0x3f;
+static constexpr uint8_t M17_MIC_GAIN = 0;
+
+// CTCSS/CDCSS TX gain of the stock firmware, a factory constant (11 * 5 + 10)
+static constexpr uint8_t SUBAUDIO_TX_GAIN = 65;
+
+static struct C62Calib calData; // TX power calibration
 
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
@@ -37,6 +53,21 @@ enum {
     GPIO_UHF_TX_PA,
     GPIO_ALC_TX_LED
 };
+
+/**
+ * Get the TX calibration at a frequency, from the band it is in.
+ *
+ * @param freq: TX frequency, in Hz.
+ * @return calibration point at the frequency.
+ */
+static struct C62CalPoint calib_at(const freq_t freq)
+{
+    const struct C62BandCalib *band = &calData.uhf;
+    if (freq < 174000000)
+        band = &calData.vhf;
+
+    return calibC62_interp(band, freq);
+}
 
 /**
  * Set the TX power control (APC) voltage through the PWM on pin A03. The band
@@ -51,11 +82,7 @@ enum {
  */
 static void set_tx_power(const freq_t freq, const uint32_t power)
 {
-    const struct C62BandCalib *band = &calData.uhf;
-    if (freq < 174000000)
-        band = &calData.vhf;
-
-    struct C62CalPoint cal = calibC62_interp(band, freq);
+    struct C62CalPoint cal = calib_at(freq);
 
     float pwr = static_cast<float>(power) / 1000.0f;
     pwr = std::max(std::min(pwr, 5.0f), 1.0f);
@@ -78,10 +105,11 @@ void radio_init(const rtxStatus_t *rtxState)
 {
     config = rtxState;
     radioStatus = OFF;
+    radioMode = OPMODE_FM;
 
     nvm_readCalibData(&calData);
 
-    BK4819_SetAF(&c62_bk4819, 0);
+    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
 
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_RX_LNA, OUTPUT_ACTIVE_LOW);
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_RX_LNA, OUTPUT_ACTIVE_LOW);
@@ -102,7 +130,26 @@ void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 
 void radio_setOpmode(const enum opmode mode)
 {
-    (void)mode;
+    if (mode == radioMode)
+        return;
+
+    // The core calls this before disabling the old mode: unkey first
+    radio_disableRtx();
+    radio_disableAfOutput();
+
+    // Settings common to M17 RX and TX; radio_enableRx/Tx() set the rest
+    if (mode == OPMODE_M17) {
+        bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_BYPASS);
+        bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
+        // 12.5 kHz bandwidth mode; M17_RX_FILTER then replaces its filters
+        bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
+        bk4819_setRxFilter(&c62_bk4819, M17_RX_FILTER);
+        bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
+    } else if (radioMode == OPMODE_M17) {
+        bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_VOICE);
+    }
+
+    radioMode = mode;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -112,13 +159,15 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    bk4819_set_modulation(&c62_bk4819, true);
-    return;
+    if (radioMode == OPMODE_M17)
+        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_BYPASS);
+    else
+        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_FM);
 }
 
 void radio_disableAfOutput()
 {
-    BK4819_SetAF(&c62_bk4819, 0);
+    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
 }
 
 void radio_enableRx()
@@ -139,9 +188,11 @@ void radio_enableRx()
     }
 
     bk4819_set_freq(&c62_bk4819, config->rxFrequency);
-    bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
 
-    if (config->rxToneEn) {
+    if (radioMode == OPMODE_M17) {
+        bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1, M17_AF_RX_GAIN2);
+        bk4819_setAgcFixed(&c62_bk4819, false);
+    } else if (config->rxToneEn) {
         bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
     }
 
@@ -168,9 +219,12 @@ void radio_enableTx()
 
     bk4819_set_freq(&c62_bk4819, config->txFrequency);
 
-    if (config->txToneEn) {
-        bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
-    }
+    if (radioMode == OPMODE_M17) {
+        bk4819_setAfRxGain(&c62_bk4819, M17_AF_RX_GAIN1,
+                           BK4819_DEFAULT_AF_RX_GAIN2);
+        bk4819_setAgcFixed(&c62_bk4819, true);
+    } else if (config->txToneEn)
+        bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone, SUBAUDIO_TX_GAIN);
 
     if (config->txFrequency < 174000000) {
         gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
@@ -202,6 +256,26 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    // Set bandwidth and TX deviation, only for analog FM mode
+    if (config->opMode == OPMODE_FM) {
+        struct C62CalPoint cal = calib_at(config->txFrequency);
+
+        switch (config->bandwidth) {
+            case BW_12_5:
+                bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
+                bk4819_setTxDeviation(&c62_bk4819, true, cal.txDevNarrow);
+                break;
+
+            case BW_25:
+                bk4819_setBandwidth(&c62_bk4819, BK4819_BW_25);
+                bk4819_setTxDeviation(&c62_bk4819, true, cal.txDevWide);
+                break;
+
+            default:
+                break;
+        }
+    }
+
     /*
      * Update VCO frequency and tuning parameters if current operating status
      * is different from OFF.

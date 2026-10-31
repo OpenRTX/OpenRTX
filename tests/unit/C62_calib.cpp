@@ -5,26 +5,43 @@
  */
 
 #include <catch2/catch_test_macros.hpp>
+
+#include <cerrno>
 #include <cstdint>
 #include <cstring>
 #include <vector>
+
 #include "calibration/calib_C62.h"
 
 using namespace std;
-
-namespace
-{
 
 /**
  * The ten points of the stock default table, in the order the stock firmware
  * stores them.
  */
-const vector<C62CalPoint> stockPoints = {
-    { 400125000, 33, 75 }, { 420125000, 32, 74 }, { 440125000, 31, 74 },
-    { 460125000, 30, 76 }, { 479975000, 31, 75 }, { 136125000, 33, 67 },
-    { 146125000, 30, 57 }, { 156125000, 27, 64 }, { 166125000, 33, 73 },
-    { 173975000, 40, 74 },
+static const vector<C62CalPoint> stockPoints = {
+    { 400125000, 33, 75, 1250, 1240 }, { 420125000, 32, 74, 1250, 1240 },
+    { 440125000, 31, 74, 1250, 1240 }, { 460125000, 30, 76, 1250, 1240 },
+    { 479975000, 31, 75, 1250, 1240 }, { 136125000, 33, 67, 1250, 1240 },
+    { 146125000, 30, 57, 1250, 1240 }, { 156125000, 27, 64, 1250, 1240 },
+    { 166125000, 33, 73, 1250, 1240 }, { 173975000, 40, 74, 1250, 1240 },
 };
+
+/**
+ * Calibration record as the stock firmware stores it.
+ */
+struct Record {
+    uint32_t freq;
+    uint16_t loPwr;
+    uint16_t hiPwr;
+    uint16_t otherPwr[2];
+    uint32_t levels[2];
+    uint32_t txDevNarrow;
+    uint32_t txDevWide;
+    uint32_t squelch[2];
+};
+
+static_assert(sizeof(Record) == 0x24, "stock record size");
 
 /**
  * Write a journal entry with the given calibration points.
@@ -36,14 +53,21 @@ const vector<C62CalPoint> stockPoints = {
  * @param badSum: write a wrong payload sum.
  * @return offset right after the entry.
  */
-uint32_t writeEntry(vector<uint8_t> &journal, uint32_t off, uint16_t len,
-                    const vector<C62CalPoint> &points, bool badSum = false)
+static uint32_t writeEntry(vector<uint8_t> &journal, uint32_t off, uint16_t len,
+                           const vector<C62CalPoint> &points,
+                           bool badSum = false)
 {
     memset(&journal[off], 0, len);
 
-    for (size_t i = 0; i < points.size(); i++)
-        memcpy(&journal[off + 0x450 + (i * 0x24)], &points[i],
-               sizeof(points[i]));
+    for (size_t i = 0; i < points.size(); i++) {
+        Record rec = {};
+        rec.freq = points[i].freq;
+        rec.loPwr = points[i].loPwr;
+        rec.hiPwr = points[i].hiPwr;
+        rec.txDevNarrow = points[i].txDevNarrow;
+        rec.txDevWide = points[i].txDevWide;
+        memcpy(&journal[off + 0x450 + (i * sizeof(rec))], &rec, sizeof(rec));
+    }
 
     uint8_t sum = 0;
     for (uint32_t i = off + 4; i < off + len; i++)
@@ -65,7 +89,7 @@ uint32_t writeEntry(vector<uint8_t> &journal, uint32_t off, uint16_t len,
  * @param len: number of bytes to read.
  * @return zero on success, -1 when reading past the end.
  */
-int readJournal(void *ctx, uint32_t off, void *buf, size_t len)
+static int readJournal(void *ctx, uint32_t off, void *buf, size_t len)
 {
     auto *journal = static_cast<vector<uint8_t> *>(ctx);
     if (off + len > journal->size())
@@ -82,12 +106,10 @@ int readJournal(void *ctx, uint32_t off, void *buf, size_t len)
  * @param cal: destination for the calibration data.
  * @return value returned by calibC62_read().
  */
-int parse(vector<uint8_t> &journal, C62Calib &cal)
+static int parse(vector<uint8_t> &journal, C62Calib &cal)
 {
     return calibC62_read(readJournal, &journal, journal.size(), &cal);
 }
-
-} // namespace
 
 TEST_CASE("C62 calibration from the newest valid journal entry",
           "[c62][calibration]")
@@ -95,6 +117,7 @@ TEST_CASE("C62 calibration from the newest valid journal entry",
     vector<uint8_t> journal(0x10000, 0xFF);
     vector<C62CalPoint> older = stockPoints;
     older[6].loPwr = 11;
+    older[6].txDevWide = 1100;
 
     uint32_t off = writeEntry(journal, 0, 0x0BDC, older);
     writeEntry(journal, off, 0x0BDC, stockPoints);
@@ -112,6 +135,23 @@ TEST_CASE("C62 calibration from the newest valid journal entry",
     // From the newer entry
     REQUIRE(cal.vhf.points[1].loPwr == 30);
     REQUIRE(cal.vhf.points[1].hiPwr == 57);
+    REQUIRE(cal.vhf.points[1].txDevNarrow == 1250);
+    REQUIRE(cal.vhf.points[1].txDevWide == 1240);
+}
+
+TEST_CASE("C62 calibration limits deviations to the REG_40 field",
+          "[c62][calibration]")
+{
+    vector<uint8_t> journal(0x10000, 0xFF);
+    vector<C62CalPoint> points = stockPoints;
+    points[0].txDevNarrow = 0xFFFF;
+
+    writeEntry(journal, 0, 0x0BDC, points);
+
+    C62Calib cal;
+    REQUIRE(parse(journal, cal) == 0);
+    REQUIRE(cal.uhf.points[0].txDevNarrow == 4095);
+    REQUIRE(cal.uhf.points[0].txDevWide == 1240);
 }
 
 TEST_CASE("C62 calibration skips an entry with a bad checksum",
@@ -146,7 +186,7 @@ TEST_CASE("C62 calibration skips records outside the bands or above 100%",
 {
     vector<uint8_t> journal(0x10000, 0xFF);
     vector<C62CalPoint> points = stockPoints;
-    points.push_back({ 300000000, 30, 60 });
+    points.push_back({ 300000000, 30, 60, 1250, 1240 });
     points[0].hiPwr = 150;
 
     writeEntry(journal, 0, 0x0D48, points);
@@ -163,7 +203,7 @@ TEST_CASE("C62 calibration fails on an erased journal", "[c62][calibration]")
     vector<uint8_t> journal(0x10000, 0xFF);
 
     C62Calib cal;
-    REQUIRE(parse(journal, cal) == -1);
+    REQUIRE(parse(journal, cal) == -ENOENT);
 }
 
 TEST_CASE("C62 calibration fails without points in both bands",
@@ -174,7 +214,7 @@ TEST_CASE("C62 calibration fails without points in both bands",
     writeEntry(journal, 0, 0x0BDC, vhfOnly);
 
     C62Calib cal;
-    REQUIRE(parse(journal, cal) == -1);
+    REQUIRE(parse(journal, cal) == -ENOENT);
 }
 
 TEST_CASE("C62 default calibration", "[c62][calibration]")
@@ -190,6 +230,8 @@ TEST_CASE("C62 default calibration", "[c62][calibration]")
     REQUIRE(cal.uhf.points[4].freq == 479975000);
     REQUIRE(cal.uhf.points[4].loPwr == 31);
     REQUIRE(cal.uhf.points[4].hiPwr == 75);
+    REQUIRE(cal.uhf.points[4].txDevNarrow == 1250);
+    REQUIRE(cal.uhf.points[4].txDevWide == 1240);
 }
 
 TEST_CASE("C62 calibration interpolated between points", "[c62][calibration]")
@@ -207,6 +249,20 @@ TEST_CASE("C62 calibration interpolated between points", "[c62][calibration]")
     C62CalPoint vhf = calibC62_interp(&cal.vhf, 141125000);
     REQUIRE(vhf.loPwr == 32);
     REQUIRE(vhf.hiPwr == 62);
+}
+
+TEST_CASE("C62 calibration deviations interpolated between points",
+          "[c62][calibration]")
+{
+    C62Calib cal;
+    calibC62_defaults(&cal);
+    cal.uhf.points[3].txDevNarrow = 1350;
+    cal.uhf.points[3].txDevWide = 1140;
+
+    // 440.125 MHz 1250/1240 and 460.125 MHz 1350/1140
+    C62CalPoint mid = calibC62_interp(&cal.uhf, 450125000);
+    REQUIRE(mid.txDevNarrow == 1300);
+    REQUIRE(mid.txDevWide == 1190);
 }
 
 TEST_CASE("C62 calibration at and beyond the calibration points",
