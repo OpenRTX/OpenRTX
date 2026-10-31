@@ -80,3 +80,8 @@ scripts/get_demod_log
 
 # OpenRTX Codeplugs
 *.rtxc
+
+# Nix build outputs and direnv cache
+/result
+/result-*
+.direnv/
