@@ -113,6 +113,20 @@ arguments are passed through to `radio_tool`, `dfu-util`, the GD-77 loader or
 * `nix flake check` only builds the emulator tests and the lints. Firmware
   images are heavy; build them explicitly with `nix build .#all`.
 
+## Continuous integration
+
+`.github/workflows/nix.yml` runs on every pull request. It builds the
+toolchain first, then one job per attribute of the flake's `githubActions`
+output (generated with
+[nix-github-actions](https://github.com/nix-community/nix-github-actions)):
+every check, firmware image, flashing app, emulator variant and dev shell on
+x86_64-linux. Each radio's package is uploaded as its own `openrtx-<radio>`
+artifact, as `main.yml` does. Build outputs are
+pushed to a [niks3](https://github.com/Mic92/niks3) binary cache
+(`https://niks3.fu.io`, authenticated through GitHub OIDC) as soon as each
+derivation finishes, so later runs substitute the toolchain instead of
+rebuilding it. Jobs without cache credentials still use the cache read-only.
+
 ## Updating pins
 
 * nixpkgs: `nix flake update nixpkgs`, then `nix flake check` and

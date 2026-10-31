@@ -8,10 +8,20 @@
 {
   description = "OpenRTX - modular open source radio firmware";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nix-github-actions = {
+      url = "github:nix-community/nix-github-actions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
 
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      nix-github-actions,
+    }:
     let
       inherit (nixpkgs) lib;
 
@@ -277,6 +287,21 @@
           zephyr = pkgs.openrtx.zephyrShell;
         }
       );
+
+      # One GitHub Actions job per attribute (.github/workflows/nix.yml): every
+      # check, package and dev shell on x86_64-linux, where all of them build.
+      # The toolchain has a job of its own that runs first, and `default` is
+      # `all`. Other systems are only evaluated, by `nix flake check
+      # --all-systems --no-build`.
+      githubActions = nix-github-actions.lib.mkGithubMatrix {
+        checks.x86_64-linux =
+          self.checks.x86_64-linux
+          // removeAttrs self.packages.x86_64-linux [
+            "default"
+            "miosix-toolchain"
+          ]
+          // lib.mapAttrs' (name: lib.nameValuePair "devshell-${name}") self.devShells.x86_64-linux;
+      };
 
       # `nix fmt` formats every .nix file in the tree; `nix fmt -- --ci` checks.
       formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
