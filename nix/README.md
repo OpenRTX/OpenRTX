@@ -113,6 +113,16 @@ arguments are passed through to `radio_tool`, `dfu-util`, the GD-77 loader or
 * `nix flake check` only builds the emulator tests and the lints. Firmware
   images are heavy; build them explicitly with `nix build .#all`.
 
+## Continuous integration
+
+`.github/workflows/nix.yml` builds the toolchain, every firmware image, the
+Zephyr image and the flake checks on every pull request, and
+uploads the images as the `nix-release-bins` artifact. Build outputs are
+pushed to a [niks3](https://github.com/Mic92/niks3) binary cache
+(`https://niks3.fu.io`, authenticated through GitHub OIDC) as soon as each
+derivation finishes, so later runs substitute the toolchain instead of
+rebuilding it. Jobs without cache credentials still use the cache read-only.
+
 ## Updating pins
 
 * nixpkgs: `nix flake update nixpkgs`, then `nix flake check` and
