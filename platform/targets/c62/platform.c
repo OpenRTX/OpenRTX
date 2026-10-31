@@ -16,6 +16,8 @@
 #include <zephyr/kernel.h>
 #include <interfaces/audio.h>
 #include "drivers/SPI/spi_zephyr.h"
+#include "controller.h"
+#include "dsp.h"
 
 static const hwInfo_t hwInfo = {
     .name = "c62",
@@ -33,6 +35,20 @@ static const hwInfo_t hwInfo = {
 static int32_t adc_vref = 0;
 static bool is_battery_charging = false;
 
+/**
+ * Re-apply the ADC pin configuration, which the DSP firmware overwrites when
+ * it starts.
+ */
+static void battery_restore_pins(void)
+{
+    struct adc_csk6_cfg {
+        uint8_t pin;
+        const struct pinctrl_dev_config *pcfg;
+    };
+    const struct adc_csk6_cfg *config = adc_dev->config;
+    pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+}
+
 static int battery_init(void)
 {
     if (!device_is_ready(adc_dev)) {
@@ -40,15 +56,7 @@ static int battery_init(void)
         return -1;
     }
 
-    /* Apply pin configuration for ADC pins
-       because it is overwritten by DSP firmware execution,
-       we need to re-apply it here */
-    struct adc_csk6_cfg {
-        uint8_t pin;
-        const struct pinctrl_dev_config *pcfg;
-    };
-    const struct adc_csk6_cfg *config = adc_dev->config;
-    pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+    battery_restore_pins();
 
     // Configure ADC channel
     struct adc_channel_cfg channel_cfg = {
@@ -104,8 +112,22 @@ void platform_init_csk6()
     spiZephyr_init(c62_bk4819.spi);
     bk4819_init(&c62_bk4819);
 
-    /* Initialise audio */
-    audio_init();
+    /*
+     * Start the DSP only now, after the BK4819 microphone input has settled.
+     * The battery reading also tells the power knob state, so restore its
+     * pins once the DSP is up.
+     */
+    int ret = lsf_dsp_init();
+    if (ret == 0)
+        ret = lsf_controller_init();
+
+    battery_restore_pins();
+
+    /* Initialise audio, which runs on the DSP */
+    if (ret == 0)
+        audio_init();
+    else
+        printk("DSP start failed, no audio: %d\n", ret);
 }
 
 void platform_terminate()
@@ -238,12 +260,16 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    BK4819_BeepStart(&c62_bk4819, freq, true);
+    /*
+     * No BK4819 beeps: they come out of its AF output, which the speaker
+     * mux doesn't select, and BK4819_BeepStart() stops RX until the next
+     * retune.
+     */
+    (void)freq;
 }
 
 void platform_beepStop()
 {
-    BK4819_BeepStop(&c62_bk4819);
 }
 
 const hwInfo_t *platform_getHwInfo()
