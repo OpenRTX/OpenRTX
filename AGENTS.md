@@ -79,6 +79,19 @@ west build -b ttwrplus
 python3 scripts/uf2conv.py <binary> -o openrtx_ttwrplus.uf2
 ```
 
+### Nix
+
+A Nix flake at the repository root builds every target hermetically, toolchain included; see `nix/README.md`.
+
+```bash
+nix build .#openrtx-md3x0     # one radio -> result/openrtx_md3x0.bin
+nix build .#all               # every firmware image + emulator
+nix flake check               # unit tests, ASan tests, lints
+nix develop                   # dev shell with meson + arm-miosix-eabi toolchain
+```
+
+When changing the `targets` table in `meson.build`, the wrap files, `west.yml` or the devcontainer pins, update `nix/targets.nix`, `nix/subprojects.nix`, `nix/ttwrplus.nix` or `nix/miosix-toolchain.nix` accordingly.
+
 The T-TWR Plus (ESP32S3/Xtensa) target uses Zephyr RTOS and CMake instead of Meson cross-compilation. Board definitions live in `platform/targets/ttwrplus/`, and Zephyr configuration is in `platform/mcu/ESP32S3/zephyr.conf`. The `west.yml` manifest pins the Zephyr, MCUboot, and HAL Espressif versions.
 
 ### Python Scripts

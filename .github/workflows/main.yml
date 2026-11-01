@@ -1,18 +1,17 @@
 name: "Build and test"
 on:
   workflow_dispatch:
-  push:
   pull_request:
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
 
-# Cancel superseded runs of the same PR, keep all runs on branches. The event
-# name is part of the group key because a push to a same-repo pull request
-# branch starts both a push run and a pull_request run: in a shared group,
-# whichever queued first would be cancelled as superseded, and losing the
-# pull_request run means the PR build comment is never updated for that commit.
+# Cancel superseded runs of the same PR, keep manual runs. Pushes do not start
+# a run on their own: every change arrives through a pull request, whose
+# pull_request run already builds it, so a push run would only duplicate that
+# work and compete with it for the cache. The event name stays in the group key
+# so a manual run is never cancelled as a superseded pull request run.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

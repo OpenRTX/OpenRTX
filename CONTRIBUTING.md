@@ -14,6 +14,8 @@ In general, create a fork, get your development environment setup (we recommend 
 
 The fastest way to get a development environment is to leverage VS Code and the included devcontainer. From there, use the Meson extension to compile your code for various targets. Some developers may prefer setting up an environment directly on their host, such as for ease of flashing to devices. Refer to [the developers guide](https://openrtx.org/#/developers_guide?id=developers39-guide) for details on how to configure Linux, Mac, and Windows development environments.
 
+Nix users can run `nix develop` for a shell with the Meson toolchains and every host tool, or `nix build .#all` for a hermetic build of every firmware image; see `nix/README.md`.
+
 ## Style Conventions
 
 Contributions to this project should follow the conventions set in the linux kernel. This project is still adopting this standard (see https://github.com/OpenRTX/OpenRTX/issues/346), and so you'll find existing code may not be compliant. Use `scripts/clang_format.sh --check` to ensure your contributions follow the intended style conventions. New files must be fully formatted.
