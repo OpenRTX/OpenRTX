@@ -66,13 +66,8 @@ uint16_t FrameEncoder::encodeStreamFrame(const payload_t& payload,
     memcpy(streamFrame.data(), payload.data(), payload.size());
 
     // Encode frame
-    std::array<uint8_t, 37> encoded;
-    encoder.reset();
-    encoder.encode(&streamFrame.frameData, encoded.data(), sizeof(StreamFrame));
-    encoded[36] = encoder.flush();
-
     std::array<uint8_t, 34> punctured;
-    puncture(encoded, punctured, DATA_PUNCTURE);
+    encodeStreamPayload(streamFrame, punctured);
 
     // Generate LICH segment
     lich_t lich;
@@ -97,6 +92,17 @@ uint16_t FrameEncoder::encodeStreamFrame(const payload_t& payload,
     std::copy(frame.begin(), frame.end(), oIt);
 
     return streamFrame.getFrameNumber();
+}
+
+void FrameEncoder::encodeStreamPayload(const StreamFrame& frame,
+                                       std::array<uint8_t, 34>& punctured)
+{
+    ConvolutionalEncoder conv;
+    std::array<uint8_t, 37> encoded;
+    conv.encode(&frame.frameData, encoded.data(), sizeof(StreamFrame));
+    encoded[36] = conv.flush();
+
+    puncture(encoded, punctured, DATA_PUNCTURE);
 }
 
 void M17::FrameEncoder::encodeEotFrame(M17::frame_t& output)
