@@ -63,6 +63,7 @@ TEST_CASE("m17_sms: source serves the M17 opmode", "[m17][messages]")
     CHECK(std::string(m17_sms_ops.name) == "M17 SMS");
     CHECK(m17_sms_ops.processRx != nullptr);
     CHECK(m17_sms_ops.formatTx != nullptr);
+    CHECK(std::string(m17_sms_ops.broadcastAddr) == "ALL");
 }
 
 TEST_CASE("m17_sms: a received SMS is filed in the inbox", "[m17][messages]")

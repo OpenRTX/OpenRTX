@@ -88,9 +88,12 @@ static int formatTx(const struct message *msg, struct pktDesc *pkt)
     return 0;
 }
 
+#pragma GCC diagnostic ignored "-Wpedantic"
 const struct messageOps m17_sms_ops = {
-    processRx,
-    formatTx,
-    "M17 SMS",
-    OPMODE_M17,
+    .processRx = processRx,
+    .formatTx = formatTx,
+    .name = "M17 SMS",
+    .mode = OPMODE_M17,
+    .broadcastAddr = M17_BROADCAST_CALLSIGN,
 };
+#pragma GCC diagnostic pop
