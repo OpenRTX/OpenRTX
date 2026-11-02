@@ -491,6 +491,13 @@ bool messages_canCompose(uint8_t mode)
     return (findSource(sources, numSources, mode) != NULL) && (ctx != NULL);
 }
 
+const char *messages_broadcastAddr(uint8_t mode)
+{
+    const struct messageOps *ops = findSource(sources, numSources, mode);
+
+    return (ops != NULL) ? ops->broadcastAddr : NULL;
+}
+
 int messages_send(const struct message *msg)
 {
     if (msg == NULL)

@@ -651,6 +651,22 @@ TEST_CASE("messages: source registration", "[messages]")
     CHECK_FALSE(messages_canCompose(5));
 }
 
+TEST_CASE("messages: broadcast address comes from the source", "[messages]")
+{
+    setup();
+
+    struct messageOps withBroadcast = fakeOps;
+    withBroadcast.broadcastAddr = "EVERYONE";
+    REQUIRE(messages_registerSource(&withBroadcast) == 0);
+    REQUIRE(messages_registerSource(&otherOps) == 0);
+
+    /* Answered from the registration alone, active inbox or not. */
+    REQUIRE(messages_broadcastAddr(MODE_A) != nullptr);
+    CHECK(std::string(messages_broadcastAddr(MODE_A)) == "EVERYONE");
+    CHECK(messages_broadcastAddr(MODE_B) == nullptr);
+    CHECK(messages_broadcastAddr(MODE_NONE) == nullptr);
+}
+
 TEST_CASE("messages: no receive without a source for the mode", "[messages]")
 {
     setup();
