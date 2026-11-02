@@ -152,6 +152,13 @@ struct messageOps {
 
     const char *name; /**< Display name, e.g. "M17 SMS". */
     uint8_t mode;     /**< Operating mode served, enum opmode. */
+
+    /**
+     * Recipient address that sends a message to everyone, as transmitted on
+     * the air, or NULL if the protocol has no broadcast. Kept last so that
+     * sources without one can leave it out of their initializer.
+     */
+    const char *broadcastAddr;
 };
 
 /**
@@ -269,6 +276,16 @@ int messages_delete(size_t idx);
  * @return true if messages can be sent in that mode.
  */
 bool messages_canCompose(uint8_t mode);
+
+/**
+ * Get the broadcast recipient address of the source registered for an
+ * operating mode.
+ *
+ * @param mode: operating mode, enum opmode.
+ * @return the address, or NULL if no source is registered for the mode or
+ *         its protocol has no broadcast.
+ */
+const char *messages_broadcastAddr(uint8_t mode);
 
 /**
  * Send a message: store it as an outgoing entry and hand it to the protocol
