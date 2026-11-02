@@ -89,8 +89,5 @@ static int formatTx(const struct message *msg, struct pktDesc *pkt)
 }
 
 const struct messageOps m17_sms_ops = {
-    processRx,
-    formatTx,
-    "M17 SMS",
-    OPMODE_M17,
+    processRx, formatTx, "M17 SMS", OPMODE_M17, M17_BROADCAST_CALLSIGN,
 };
