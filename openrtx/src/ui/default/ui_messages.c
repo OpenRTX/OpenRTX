@@ -6,8 +6,6 @@
 
 #include "hwconfig.h"
 
-#ifdef CONFIG_MESSAGES
-
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -35,7 +33,12 @@ extern void _ui_textInputConfirm(char *buf);
 extern void _ui_textInputDel(char *buf);
 
 /* Rows of the compose form, top to bottom, as held in compose_focus. */
-enum composeRow { COMPOSE_TO = 0, COMPOSE_BODY, COMPOSE_SEND, COMPOSE_ROWS };
+enum composeRow {
+    COMPOSE_TO = 0,
+    COMPOSE_BODY,
+    COMPOSE_SEND,
+    COMPOSE_ROWS,
+};
 
 /**
  * \internal Callback for _ui_drawMenuList(): formats snapshot entry @p index
@@ -712,5 +715,3 @@ void _ui_drawMessagesCompose(ui_state_t *ui_state)
                       TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
     }
 }
-
-#endif /* CONFIG_MESSAGES */
