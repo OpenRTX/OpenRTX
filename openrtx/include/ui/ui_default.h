@@ -54,11 +54,9 @@ enum uiScreen
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
     LOW_BAT,
-#ifdef CONFIG_MESSAGES
     MESSAGES_LIST,
     MESSAGES_DETAIL,
     MESSAGES_COMPOSE,
-#endif
 };
 
 enum SetRxTx
@@ -243,7 +241,6 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
-#ifdef CONFIG_MESSAGES
     // Sequence number of the message currently highlighted in
     // MESSAGES_LIST, pinned the same way as messages_detail_seq below: a
     // keypress can be processed many UI-loop ticks after the frame the
@@ -270,7 +267,6 @@ typedef struct ui_state_t
     bool compose_editing;
     bool compose_body_editing;
     bool compose_is_reply;
-#endif
 }
 ui_state_t;
 
