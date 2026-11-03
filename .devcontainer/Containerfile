@@ -2,7 +2,7 @@
 ARG SOURCE=https://github.com/OpenRTX/OpenRTX
 
 # Always pin to digest for caching and repeatable builds
-ARG BASE_IMAGE=docker.io/ubuntu@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3
+ARG BASE_IMAGE=docker.io/ubuntu@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
 
 # Remote image for uv binary
 ARG UV_IMAGE=ghcr.io/astral-sh/uv@sha256:9f130421e930bfbdc563c00740466603f8723158e90297d07957c2294640262b
