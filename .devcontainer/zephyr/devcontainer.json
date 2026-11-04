@@ -1,0 +1,42 @@
+{
+  "name": "OpenRTX (zephyr)",
+  "build": {
+    "dockerfile": "../Containerfile",
+    "target": "zephyr",
+    "context": "../..",
+    "args": {
+      "BUILDKIT_STEP_LOG_MAX_SIZE": "10485760" // 10 MiB
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "mesonbuild.mesonbuild",
+        "ms-python.python"
+      ]
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/openrtx/OpenRTX,type=bind",
+  "workspaceFolder": "/workspaces/openrtx/OpenRTX",
+  "mounts": [
+    "source=openrtx-workspace,target=/workspaces/openrtx,type=volume",
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+    "source=${localEnv:XAUTHORITY},target=${localEnv:XAUTHORITY},type=bind",
+    "source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind,readonly"
+  ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "SDL_RENDER_DRIVER": "software",
+    "XAUTHORITY": "${localEnv:XAUTHORITY}",
+    "XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}"
+  },
+  "updateRemoteUserUID": true,
+  "runArgs": [
+    "--userns=keep-id"
+  ],
+  "postCreateCommand": [
+    "/bin/bash", ".devcontainer/zephyr/post-create.sh"
+  ]
+}
