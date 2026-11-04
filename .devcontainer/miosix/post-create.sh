@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+source ${HOME}/venv/bin/activate
 
 BUILD="build_cm4"
 if [ ! -d ${BUILD} ]; then
