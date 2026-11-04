@@ -1,6 +1,10 @@
 [wrap-git]
 url = https://github.com/v0l/radio_tool
-revision = head
+# Pinned: upstream dropped the C++ implementation (and its CMakeLists.txt) on
+# 2026-11-02, which breaks the cmake/make steps in
+# subprojects/packagefiles/radio_tool/meson.build. v0.5.1 is the last tag
+# that still builds as a CMake project. Do not move this back to head.
+revision = v0.5.1
 patch_directory = radio_tool
 
 [provide]
