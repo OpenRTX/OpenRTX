@@ -73,6 +73,18 @@ extern const struct pwm_dt_spec pwm_lcd_backlight;
 extern const struct pwm_dt_spec pwm_rf_apc;
 extern const struct device *adc_dev;
 
+/*
+ * Persistence policy.
+ *
+ * The C62 has no graceful shutdown: the power knob cuts power, so
+ * state_terminate() never runs and a save on shutdown would be lost. Settings
+ * and VFO changes are therefore persisted by a debounced write while the
+ * radio is running. Platforms with a clean shutdown leave this undefined and
+ * keep saving from state_terminate() only.
+ */
+#define NVMEM_DEBOUNCED_WRITE
+#define NVM_WRITE_DEBOUNCE_MS 3000
+
 #ifdef __cplusplus
 }
 #endif
