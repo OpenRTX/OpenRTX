@@ -14,11 +14,73 @@
 #include "hwconfig.h"
 #include "interfaces/platform.h"
 #include "interfaces/nvmem.h"
+#include "core/crc.h"
 #include "interfaces/delays.h"
 
 state_t state;
 pthread_mutex_t state_mutex;
 static long long int lastUpdate = 0;
+
+#ifdef NVMEM_DEBOUNCED_WRITE
+#ifndef NVM_WRITE_DEBOUNCE_MS
+#define NVM_WRITE_DEBOUNCE_MS 3000
+#endif
+
+// Use CRC (CCITT) hashes instead of full struct copies to detect changes.
+// Data structures are large (settings_t ~84 B, channel_t ~94 B) and keeping
+// multiple full copies wastes RAM on constrained MCUs (per Silvano's review).
+static uint16_t lastSavedSettingsCrc;
+static uint16_t lastSeenSettingsCrc;
+static uint16_t lastSavedChannelCrc;
+static uint16_t lastSeenChannelCrc;
+static long long lastChangeTick = 0;
+
+/**
+ * Debounced persistence for platforms without a graceful shutdown.
+ *
+ * Settings and VFO changes are stored once they differ from what was last
+ * written and have been stable for NVM_WRITE_DEBOUNCE_MS. Comparing CRC
+ * hashes (CCITT) instead of full structs saves RAM and detects changes in
+ * O(1) space. Continuous adjustment (a knob, a held key) keeps postponing
+ * the write instead of triggering one per interval.
+ */
+static void persistDebounced(void)
+{
+    settings_t settings;
+    channel_t channel;
+
+    pthread_mutex_lock(&state_mutex);
+    settings = state.settings;
+    channel = state.channel;
+    pthread_mutex_unlock(&state_mutex);
+
+    uint16_t settingsCrc = crc_ccitt(&settings, sizeof(settings_t));
+    uint16_t channelCrc = crc_ccitt(&channel, sizeof(channel_t));
+
+    // Any difference from the last value observed means the user is still
+    // adjusting something: restart the stability timer and wait.
+    if (settingsCrc != lastSeenSettingsCrc
+        || channelCrc != lastSeenChannelCrc) {
+        lastSeenSettingsCrc = settingsCrc;
+        lastSeenChannelCrc = channelCrc;
+        lastChangeTick = getTick();
+        return;
+    }
+
+    bool differsFromSaved = (settingsCrc != lastSavedSettingsCrc)
+                         || (channelCrc != lastSavedChannelCrc);
+
+    if (!differsFromSaved)
+        return;
+
+    if ((getTick() - lastChangeTick) < NVM_WRITE_DEBOUNCE_MS)
+        return;
+
+    nvm_writeSettingsAndVfo(&settings, &channel);
+    lastSavedSettingsCrc = settingsCrc;
+    lastSavedChannelCrc = channelCrc;
+}
+#endif
 
 // Commonly used frequency steps, expressed in Hz
 const uint32_t freq_steps[] = { 1000,  5000,  6250,  10000, 12500,
@@ -67,6 +129,16 @@ void state_init()
     if (state.settings.brightness > 100) {
         state.settings.brightness = 100;
     }
+
+#ifdef NVMEM_DEBOUNCED_WRITE
+    // Initialize CRC baselines so the first persistDebounced() call doesn't
+    // trigger a spurious write of unchanged data.
+    lastSavedSettingsCrc = crc_ccitt(&state.settings, sizeof(settings_t));
+    lastSeenSettingsCrc = lastSavedSettingsCrc;
+    lastSavedChannelCrc = crc_ccitt(&state.channel, sizeof(channel_t));
+    lastSeenChannelCrc = lastSavedChannelCrc;
+    lastChangeTick = getTick();
+#endif
 }
 
 void state_terminate()
@@ -123,6 +195,10 @@ void state_task()
 #endif
 
     pthread_mutex_unlock(&state_mutex);
+
+#ifdef NVMEM_DEBOUNCED_WRITE
+    persistDebounced();
+#endif
 
     ui_pushEvent(EVENT_STATUS, 0);
 }
