@@ -22,6 +22,8 @@ precedence = "override"
 [[annotations]]
 path = [
     "requirements.txt",
+    "flake.lock",
+    "nix/README.md",
     "meta/**/*",
     ".vscode/**/*",
     "voiceprompts.vpc",
