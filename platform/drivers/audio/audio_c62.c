@@ -11,6 +11,7 @@
 #include <zephyr/drivers/uart.h>
 #include <hwconfig.h>
 #include <interfaces/radio.h>
+#include "audio_c62.h"
 #include "csk6_codec.h"
 
 /*
@@ -23,6 +24,7 @@
 static K_MUTEX_DEFINE(board_mutex);
 static bool initialized;
 static bool paths[3][3]; /* Active routes, by source and sink */
+static bool broadcastFm; /* Broadcast FM receiver playing on the speaker */
 
 /* Both device tables use one driver; the config selects capture or playback */
 const struct audioDevice outputDevices[] = {
@@ -80,6 +82,7 @@ static void update_mux(enum AudioSource source)
         radio |= paths[SOURCE_RTX][i];
         speaker |= paths[i][SINK_SPK];
     }
+    speaker |= broadcastFm;
     if (source == SOURCE_RTX) {
         if (radio)
             radio_enableAfOutput();
@@ -87,6 +90,14 @@ static void update_mux(enum AudioSource source)
             radio_disableAfOutput();
     }
     gpio_pin_set_dt(&speaker_enable, speaker);
+}
+
+void audio_c62_setBroadcastFm(bool enable)
+{
+    k_mutex_lock(&board_mutex, K_FOREVER);
+    broadcastFm = enable;
+    update_mux(SOURCE_MCU);
+    k_mutex_unlock(&board_mutex);
 }
 
 void audio_init(void)
