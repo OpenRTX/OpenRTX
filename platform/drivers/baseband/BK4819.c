@@ -197,6 +197,14 @@ void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
     BK4819_writeReg(dev, BK4819_REG_07, (uint16_t)ctcss_reg_value);
 }
 
+void bk4819_set_ctcss_tx_gain(const struct BK4819 *dev, uint8_t gain)
+{
+    uint16_t reg = BK4819_readReg(dev, BK4819_REG_51);
+    reg &= ~BK4819_REG_51_MASK_CxCSS_TX_GAIN1;
+    reg |= BK4819_REG51_CTCDCSS_TX_GAIN1T(gain & 0x7F);
+    BK4819_writeReg(dev, BK4819_REG_51, reg);
+}
+
 void bk4819_enable_rx_ctcss(const struct BK4819 *dev, uint16_t frequency)
 {
     /* frequency is in .1 Hz units */
