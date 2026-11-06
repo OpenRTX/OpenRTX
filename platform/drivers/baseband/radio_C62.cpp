@@ -29,6 +29,12 @@ static enum opstatus radioStatus; // Current operating status
 
 static struct C62Calib calData;   // TX power calibration
 
+/*
+ * Frequency splitting the VHF and UHF paths (LNA, PA and calibration band).
+ * It lies between the two bands, so no band edge falls on it.
+ */
+#define C62_BAND_SPLIT 300000000
+
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
     GPIO_VHF_RX_LNA = 0,
@@ -52,7 +58,7 @@ enum {
 static void set_tx_power(const freq_t freq, const uint32_t power)
 {
     const struct C62BandCalib *band = &calData.uhf;
-    if (freq < 174000000)
+    if (freq < C62_BAND_SPLIT)
         band = &calData.vhf;
 
     struct C62CalPoint cal = calibC62_interp(band, freq);
@@ -132,7 +138,7 @@ void radio_enableRx()
     //Before enable RX path delay to allow hardware to settle
     delayMs(5);
 
-    if (config->rxFrequency < 174000000) {
+    if (config->rxFrequency < C62_BAND_SPLIT) {
         gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
     } else {
         gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
@@ -174,7 +180,7 @@ void radio_enableTx()
         bk4819_set_ctcss_tx_gain(&c62_bk4819, 65);
     }
 
-    if (config->txFrequency < 174000000) {
+    if (config->txFrequency < C62_BAND_SPLIT) {
         gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
     } else {
         gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
