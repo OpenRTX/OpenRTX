@@ -34,6 +34,7 @@ openrtx_def += {'FONT_UBUNTU_REGULAR': ''}
 ##
 
 openrtx_src = ['openrtx/src/core/state.c',
+               'openrtx/src/core/bcastfm_tuner.c',
                'openrtx/src/core/threads.c',
                'openrtx/src/core/battery.c',
                'openrtx/src/core/graphics.c',
@@ -77,6 +78,7 @@ openrtx_inc = ['openrtx/include', 'platform']
 
 ui_src_default = ['openrtx/src/ui/default/ui.c',
                   'openrtx/src/ui/default/ui_main.c',
+                  'openrtx/src/ui/default/ui_broadcastfm.c',
                   'openrtx/src/ui/default/ui_menu.c',
                   'openrtx/src/ui/default/ui_strings.c']
 
@@ -352,6 +354,7 @@ linux_src = ['platform/targets/linux/emulator/emulator.c',
              'platform/mcu/x86_64/drivers/delays.c',
              'platform/mcu/x86_64/drivers/rng.cpp',
              'platform/drivers/baseband/radio_linux.cpp',
+             'platform/drivers/baseband/bcastfm_linux.c',
              'platform/drivers/audio/audio_linux.c',
              'platform/drivers/audio/file_source.c',
              'platform/drivers/audio/audio_sdl.cpp',
@@ -1270,6 +1273,16 @@ c62_calib_test = executable('c62_calib_test',
                                        'platform/targets/c62/calib_C62.c'],
                             kwargs  : unit_test_opts)
 
+bk1080_test = executable('bk1080_test',
+                         sources : ['tests/unit/BK1080.cpp',
+                                    'platform/drivers/baseband/BK1080.c'],
+                         kwargs  : unit_test_opts)
+
+bcastfm_tuner_test = executable('bcastfm_tuner_test',
+                                sources : ['tests/unit/bcastfm_tuner.cpp',
+                                           'openrtx/src/core/bcastfm_tuner.c'],
+                                kwargs  : unit_test_opts)
+
 dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
@@ -1311,6 +1324,8 @@ test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('C62 Calibration Test', c62_calib_test)
+test('BK1080 Driver Test',   bk1080_test)
+test('Broadcast FM Tuner Test', bcastfm_tuner_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage

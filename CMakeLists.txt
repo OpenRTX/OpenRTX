@@ -96,6 +96,7 @@ target_sources(app
 
     openrtx/src/main.c
     openrtx/src/core/state.c
+    openrtx/src/core/bcastfm_tuner.c
     openrtx/src/core/threads.c
     openrtx/src/core/battery.c
     openrtx/src/core/graphics.c
@@ -133,6 +134,7 @@ target_sources(app
 
     openrtx/src/ui/default/ui.c
     openrtx/src/ui/default/ui_main.c
+    openrtx/src/ui/default/ui_broadcastfm.c
     openrtx/src/ui/default/ui_menu.c
     openrtx/src/ui/default/ui_strings.c
 
