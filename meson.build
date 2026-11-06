@@ -1277,6 +1277,11 @@ bk1080_test = executable('bk1080_test',
                                     'platform/drivers/baseband/BK1080.c'],
                          kwargs  : unit_test_opts)
 
+bcastfm_tuner_test = executable('bcastfm_tuner_test',
+                                sources : ['tests/unit/bcastfm_tuner.cpp',
+                                           'openrtx/src/core/bcastfm_tuner.c'],
+                                kwargs  : unit_test_opts)
+
 dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
@@ -1319,6 +1324,7 @@ test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('C62 Calibration Test', c62_calib_test)
 test('BK1080 Driver Test',   bk1080_test)
+test('Broadcast FM Tuner Test', bcastfm_tuner_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
