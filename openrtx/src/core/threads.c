@@ -69,7 +69,9 @@ void *ui_threadFunc(void *arg)
         if(sync_rtx)
         {
             pthread_mutex_lock(&rtx_mutex);
-            rtx_cfg.opMode      = state.channel.mode;
+            // Keep the transceiver idle while the broadcast FM receiver plays
+            rtx_cfg.opMode      = state.broadcastFm ? OPMODE_NONE
+                                                    : state.channel.mode;
             rtx_cfg.bandwidth   = state.channel.bandwidth;
             rtx_cfg.rxFrequency = state.channel.rx_frequency;
             rtx_cfg.txFrequency = state.channel.tx_frequency;

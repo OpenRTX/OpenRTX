@@ -50,6 +50,7 @@ typedef struct {
     bool backup_eflash;
     bool restore_eflash;
     bool txDisable;
+    bool broadcastFm; // Broadcast FM receiver in use, transceiver idle
     uint8_t step_index;
 } state_t;
 
