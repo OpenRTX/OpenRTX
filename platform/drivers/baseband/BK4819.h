@@ -312,6 +312,14 @@ void bk4819_rtx_off(const struct BK4819 *dev);
 void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency);
 
 /**
+ * @brief Set the level of the transmitted CTCSS/DCS signal.
+ *
+ * @param dev: pointer to device data.
+ * @param gain: level, 0 to 127. It sets the sub-audio deviation.
+ */
+void bk4819_set_ctcss_tx_gain(const struct BK4819 *dev, uint8_t gain);
+
+/**
  * @brief Enable Rx CTCSS.
  *
  * @param dev: pointer to device data.

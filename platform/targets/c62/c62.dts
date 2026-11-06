@@ -178,8 +178,9 @@
 };
 
 &spi1 {
+	/* No MISO: its pin, PA10, is the display D/C line */
 	pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default
-	&pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
+	&pinctrl_spi1_cs_default>;
 	pinctrl-names = "default";
 	status = "okay";
 	

@@ -29,6 +29,12 @@ static enum opstatus radioStatus; // Current operating status
 
 static struct C62Calib calData;   // TX power calibration
 
+/*
+ * Frequency splitting the VHF and UHF paths (LNA, PA and calibration band).
+ * It lies between the two bands, so no band edge falls on it.
+ */
+#define C62_BAND_SPLIT 300000000
+
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
     GPIO_VHF_RX_LNA = 0,
@@ -52,7 +58,7 @@ enum {
 static void set_tx_power(const freq_t freq, const uint32_t power)
 {
     const struct C62BandCalib *band = &calData.uhf;
-    if (freq < 174000000)
+    if (freq < C62_BAND_SPLIT)
         band = &calData.vhf;
 
     struct C62CalPoint cal = calibC62_interp(band, freq);
@@ -74,6 +80,19 @@ static void set_tx_power(const freq_t freq, const uint32_t power)
     }
 }
 
+/**
+ * Remove the TX power control (APC) voltage. A zero pulse width disables the
+ * PWM output, so the PA is unbiased outside of TX.
+ */
+static void clear_tx_power()
+{
+    int ret = pwm_set_dt(&pwm_rf_apc, 10000, 0);
+
+    if (ret < 0) {
+        printk("Failed to clear TX power PWM: %d\n", ret);
+    }
+}
+
 void radio_init(const rtxStatus_t *rtxState)
 {
     config = rtxState;
@@ -88,6 +107,8 @@ void radio_init(const rtxStatus_t *rtxState)
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_TX_PA, OUTPUT);
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_TX_PA, OUTPUT);
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_ALC_TX_LED, OUTPUT);
+
+    clear_tx_power();
 }
 
 void radio_terminate()
@@ -123,6 +144,8 @@ void radio_disableAfOutput()
 
 void radio_enableRx()
 {
+    clear_tx_power();
+
     gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
     gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
     gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
@@ -132,7 +155,7 @@ void radio_enableRx()
     //Before enable RX path delay to allow hardware to settle
     delayMs(5);
 
-    if (config->rxFrequency < 174000000) {
+    if (config->rxFrequency < C62_BAND_SPLIT) {
         gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
     } else {
         gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
@@ -170,9 +193,11 @@ void radio_enableTx()
 
     if (config->txToneEn) {
         bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
+        // Tone level, 0 to 127: sets the sub-audio deviation
+        bk4819_set_ctcss_tx_gain(&c62_bk4819, 65);
     }
 
-    if (config->txFrequency < 174000000) {
+    if (config->txFrequency < C62_BAND_SPLIT) {
         gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
     } else {
         gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
@@ -188,6 +213,7 @@ void radio_enableTx()
 
 void radio_disableRtx()
 {
+    clear_tx_power();
     bk4819_disable_ctdcss(&c62_bk4819);
 
     gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);

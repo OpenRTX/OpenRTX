@@ -76,8 +76,9 @@ keyboard_t kbd_getKeys()
         // Set the current row high
         gpio_pin_set_dt(rows[r], 1);
 
-        // Small delay to stabilize
-        k_busy_wait(1);
+        // Let the lines settle: a released line is pulled back only by the
+        // internal pull-up
+        k_busy_wait(20);
 
         // Read columns
         for (int c = 0; c < 4; c++) {
