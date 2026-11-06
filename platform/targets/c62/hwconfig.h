@@ -39,6 +39,9 @@ extern "C" {
 
 #define CONFIG_M17
 
+/* BK1080 broadcast FM receiver */
+#define CONFIG_BROADCAST_FM
+
 /* Microphone audio input, set for C62_ADC_MIC_GAIN_D below */
 #define CONFIG_MIC_GAIN 13
 
