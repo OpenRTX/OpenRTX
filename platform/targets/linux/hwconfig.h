@@ -27,6 +27,9 @@ enum Mod17Flags {
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Simulated broadcast FM receiver */
+#define CONFIG_BROADCAST_FM
+
 #ifdef __cplusplus
 }
 #endif
