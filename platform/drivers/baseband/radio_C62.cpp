@@ -170,6 +170,8 @@ void radio_enableTx()
 
     if (config->txToneEn) {
         bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
+        // Tone level, 0 to 127: sets the sub-audio deviation
+        bk4819_set_ctcss_tx_gain(&c62_bk4819, 65);
     }
 
     if (config->txFrequency < 174000000) {
