@@ -15,6 +15,9 @@
 #include "core/event.h"
 #include "hwconfig.h"
 #include "core/ui.h"
+#ifdef CONFIG_BROADCAST_FM
+#include "core/bcastfm_tuner.h"
+#endif
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -52,7 +55,10 @@ enum uiScreen
     SETTINGS_FM,
     SETTINGS_ACCESSIBILITY,
     SETTINGS_RESET2DEFAULTS,
-    LOW_BAT
+    LOW_BAT,
+#ifdef CONFIG_BROADCAST_FM
+    BROADCAST_FM,
+#endif
 };
 
 enum SetRxTx
@@ -70,6 +76,9 @@ enum menuItems
     M_CONTACTS,
 #ifdef CONFIG_GPS
     M_GPS,
+#endif
+#ifdef CONFIG_BROADCAST_FM
+    M_BROADCAST_FM,
 #endif
     M_SETTINGS,
     M_INFO,
@@ -234,6 +243,10 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+#ifdef CONFIG_BROADCAST_FM
+    // Broadcast FM receiver tuning state, kept while away from the screen
+    bcastfmTuner_t bcastfm;
+#endif
 }
 ui_state_t;
 

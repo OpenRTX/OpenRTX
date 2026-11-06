@@ -65,6 +65,9 @@
 #include "hwconfig.h"
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
+#ifdef CONFIG_BROADCAST_FM
+#include "interfaces/broadcast_fm.h"
+#endif
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -103,6 +106,9 @@ extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
 extern bool _ui_drawMacroMenu(ui_state_t* ui_state);
+#ifdef CONFIG_BROADCAST_FM
+extern void _ui_drawBroadcastFm(ui_state_t* ui_state);
+#endif
 extern void _ui_reset_menu_anouncement_tracking();
 // TODO: get these from ui strings / currentLanguage
 const char *menu_items[] =
@@ -112,6 +118,9 @@ const char *menu_items[] =
     "Contacts",
 #ifdef CONFIG_GPS
     "GPS",
+#endif
+#ifdef CONFIG_BROADCAST_FM
+    "Broadcast FM",
 #endif
     "Settings",
     "Info",
@@ -1078,6 +1087,127 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     }
 }
 
+#ifdef CONFIG_BROADCAST_FM
+/**
+ * Speak the tuned broadcast FM frequency, following the voice prompt level.
+ */
+static void _ui_broadcastFmAnnounce(void)
+{
+    freq_t freq = ui_state.bcastfm.freq;
+
+    vp_announceFrequencies(freq, freq, vp_getVoiceLevelQueueFlags());
+}
+
+/**
+ * Enter the broadcast FM screen. The transceiver is asked to go idle first,
+ * the receiver is started by _ui_broadcastFmPoll() once it has.
+ */
+static void _ui_broadcastFmEnter(bool *sync_rtx)
+{
+    /* First use since boot: start from the bottom of the band */
+    if (ui_state.bcastfm.freq == 0) {
+        freq_t max;
+        bcastfm_getBandLimits(&ui_state.bcastfm.freq, &max);
+    }
+
+    state.broadcastFm = true;
+    *sync_rtx = true;
+    state.ui_screen = BROADCAST_FM;
+}
+
+/**
+ * Leave the broadcast FM screen: stop the receiver and give the speaker back
+ * to the transceiver.
+ */
+static void _ui_broadcastFmExit(bool *sync_rtx)
+{
+    bcastfmTuner_stopSeek(&ui_state.bcastfm);
+    bcastfm_disable();
+    state.broadcastFm = false;
+    *sync_rtx = true;
+    state.ui_screen = ui_state.last_main_state;
+}
+
+/**
+ * Periodic update of the broadcast FM screen. Starts the receiver once the
+ * transceiver is idle, so that the UI never touches the transceiver and the
+ * two never drive the speaker together. Then refreshes the receiver status
+ * and advances a running seek.
+ */
+static void _ui_broadcastFmPoll(bool *sync_rtx)
+{
+    bcastfmTuner_t *tuner = &ui_state.bcastfm;
+
+    if (!bcastfm_isEnabled()) {
+        rtxStatus_t rtx = rtx_getCurrentStatus();
+        if ((rtx.opMode != OPMODE_NONE) || (rtx.opStatus != OFF))
+            return;
+
+        if (!bcastfm_enable()) {
+            _ui_broadcastFmExit(sync_rtx);
+            return;
+        }
+
+        bcastfmTuner_init(tuner, tuner->freq);
+        _ui_broadcastFmAnnounce();
+        return;
+    }
+
+    bool seeking = (tuner->seekDir != 0);
+    bcastfmTuner_tick(tuner);
+
+    if (seeking && (tuner->seekDir == 0))
+        _ui_broadcastFmAnnounce();
+}
+
+/**
+ * Keys of the broadcast FM screen: up/down step one channel, holding them
+ * seeks, digits type a frequency, enter confirms it and escape cancels the
+ * typed frequency, then a seek, then leaves the screen.
+ */
+static void _ui_fsm_broadcastFm(kbd_msg_t msg, bool *sync_rtx)
+{
+    bcastfmTuner_t *tuner = &ui_state.bcastfm;
+    bool up = (msg.keys & KEY_UP) || (msg.keys & KNOB_RIGHT);
+    bool down = (msg.keys & KEY_DOWN) || (msg.keys & KNOB_LEFT);
+    freq_t prevFreq = tuner->freq;
+
+    /* Still waiting for the transceiver to stop: only allow leaving */
+    if (!bcastfm_isEnabled()) {
+        if ((msg.keys & KEY_ESC) && !msg.long_press)
+            _ui_broadcastFmExit(sync_rtx);
+        return;
+    }
+
+    if (up || down) {
+        int dir = up ? 1 : -1;
+        if (msg.long_press)
+            bcastfmTuner_startSeek(tuner, dir);
+        else
+            bcastfmTuner_step(tuner, dir);
+    } else if (msg.long_press) {
+        /* The other keys act on the press, not on the long press after it */
+        return;
+    } else if (input_isNumberPressed(msg)) {
+        bcastfmTuner_inputDigit(tuner, input_getPressedNumber(msg));
+    } else if (msg.keys & KEY_ENTER) {
+        bcastfmTuner_inputConfirm(tuner);
+    } else if (msg.keys & KEY_ESC) {
+        if (tuner->inputDigits != 0)
+            bcastfmTuner_inputCancel(tuner);
+        else if (tuner->seekDir != 0)
+            bcastfmTuner_stopSeek(tuner);
+        else
+            _ui_broadcastFmExit(sync_rtx);
+        return;
+    }
+
+    /* Speak the new frequency, unless a seek is still looking for one */
+    if ((tuner->freq != prevFreq) && (tuner->seekDir == 0))
+        _ui_broadcastFmAnnounce();
+}
+#endif // CONFIG_BROADCAST_FM
+
 static void _ui_menuUp(uint8_t menu_entries)
 {
     if(ui_state.menu_selected > 0)
@@ -1404,6 +1534,12 @@ void ui_updateFSM(bool *sync_rtx)
 #if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
+#ifdef CONFIG_BROADCAST_FM
+        // Stop broadcast FM, otherwise it keeps playing after this screen
+        // and the transceiver stays idle
+        if (state.broadcastFm)
+            _ui_broadcastFmExit(sync_rtx);
+#endif
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload)
         {
@@ -1811,6 +1947,12 @@ void ui_updateFSM(bool *sync_rtx)
                     }
                 }
                 break;
+#ifdef CONFIG_BROADCAST_FM
+            // Broadcast FM receiver screen
+            case BROADCAST_FM:
+                _ui_fsm_broadcastFm(msg, sync_rtx);
+                break;
+#endif
             // Top menu screen
             case MENU_TOP:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
@@ -1833,6 +1975,11 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef CONFIG_GPS
                         case M_GPS:
                             state.ui_screen = MENU_GPS;
+                            break;
+#endif
+#ifdef CONFIG_BROADCAST_FM
+                        case M_BROADCAST_FM:
+                            _ui_broadcastFmEnter(sync_rtx);
                             break;
 #endif
                         case M_SETTINGS:
@@ -2625,6 +2772,12 @@ void ui_updateFSM(bool *sync_rtx)
         }
 #endif //            CONFIG_GPS
 
+#ifdef CONFIG_BROADCAST_FM
+        // Start the broadcast FM receiver, refresh its status, run seeks
+        if (state.ui_screen == BROADCAST_FM)
+            _ui_broadcastFmPoll(sync_rtx);
+#endif
+
         if (txOngoing || rtx_rxSquelchOpen() || (state.volume != last_state.volume))
         {
             _ui_exitStandby(now);
@@ -2663,6 +2816,12 @@ bool ui_updateGUI()
         case MAIN_MEM:
             _ui_drawMainMEM(&ui_state);
             break;
+#ifdef CONFIG_BROADCAST_FM
+        // Broadcast FM receiver screen
+        case BROADCAST_FM:
+            _ui_drawBroadcastFm(&ui_state);
+            break;
+#endif
         // Top menu screen
         case MENU_TOP:
             _ui_drawMenuTop(&ui_state);
