@@ -124,6 +124,11 @@ void vp_announceRadioMode(const uint8_t mode, const enum vpQueueFlags flags)
         case OPMODE_M17:
             vp_queueStringTableEntry(&currentLanguage->m17);
             break;
+
+        case OPMODE_APRS:
+            // There is no voice prompt for the name: spell it
+            vp_queueString("APRS", vpDefault);
+            break;
     }
 
     playIfNeeded(flags);
