@@ -40,6 +40,13 @@ static constexpr uint8_t M17_AF_RX_GAIN1 = 1; // -6 dB
 static constexpr uint8_t M17_AF_RX_GAIN2 = 0x3f;
 static constexpr uint8_t M17_MIC_GAIN = 0;
 
+/*
+ * CTCSS/CDCSS TX gain of the stock C62 firmware, REG_51 <6:0> "CTCSS/CDCSS
+ * Tx Gain1 Tuning" (0 = min, 127 = max) in the BK4819 notes of
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L463-L471
+ */
+static constexpr uint8_t SUBAUDIO_TX_GAIN = 65;
+
 static struct C62Calib calData; // TX calibration
 
 /* The BK4819 GPIOs to control the C62 LNA and PA */
@@ -221,7 +228,7 @@ void radio_enableTx()
                            BK4819_DEFAULT_AF_RX_GAIN2);
         bk4819_setAgcFixed(&c62_bk4819, true);
     } else if (config->txToneEn)
-        bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
+        bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone, SUBAUDIO_TX_GAIN);
 
     if (config->txFrequency < 174000000) {
         gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
