@@ -53,13 +53,14 @@ public:
     void reset();
 
     /**
-     * Decode an M17 frame, identifying its type. Frame data must contain the
-     * sync word in the first two bytes.
+     * Decode an M17 frame from its soft bits, one per coded bit, identifying
+     * its type from the sync word in the first 16 bits: 0x0000 is a confident
+     * 0, 0xFFFF a confident 1 (see Demodulator::getSoftFrame()).
      *
-     * @param frame: byte array containing frame data.
+     * @param soft: soft bits of the frame.
      * @return the type of frame recognized.
      */
-    FrameType decodeFrame(const frame_t &frame);
+    FrameType decodeFrame(const softFrame_t &soft);
 
     /**
      * Get the latest Link Setup Frame decoded. Check of the validity of the
@@ -105,51 +106,67 @@ private:
     FrameType getFrameType(const std::array<uint8_t, 2> &syncWord);
 
     /**
+     * Read a payload bit of a frame in coded order, deinterleaving and
+     * decorrelating it, so the payload is never copied.
+     *
+     * @param soft: soft bits of the frame.
+     * @param pos: position in the payload, after deinterleaving.
+     * @return the soft bit, 0x0000 a confident 0 and 0xFFFF a confident 1.
+     */
+    static uint16_t payloadBit(const softFrame_t &soft, const size_t pos);
+
+    /**
      * Decode Link Setup Frame data and update the internal LSF field with
      * the new frame data.
      *
-     * @param data: byte array containing frame data, without sync word.
+     * @param soft: soft bits of the frame.
      */
-    void decodeLSF(const std::array<uint8_t, 46> &data);
+    void decodeLSF(const softFrame_t &soft);
 
     /**
      * Decode stream data and update the internal LSF field with the new
      * frame data.
      *
-     * @param data: byte array containing frame data, without sync word.
+     * @param soft: soft bits of the frame.
      */
-    void decodeStream(const std::array<uint8_t, 46> &data);
+    void decodeStream(const softFrame_t &soft);
 
     /**
      * Decode packet data and update the internal packet frame field with the
      * new frame data.
      *
-     * @param data: byte array containing frame data, without sync word.
+     * @param soft: soft bits of the frame.
      */
-    void decodePacket(const std::array<uint8_t, 46> &data);
+    void decodePacket(const softFrame_t &soft);
 
     /**
      * Decode a LICH block.
      *
      * @param segment: byte array where to store the decoded Link Setup Frame
      * segment. The last byte contains the segment number.
-     * @param lich: LICH block to be decoded.
+     * @param soft: soft bits of the stream frame, whose payload starts with
+     * the LICH block.
      * @return true when the LICH block is successfully decoded.
      */
-    bool decodeLich(std::array<uint8_t, 6> &segment, const lich_t &lich);
+    bool decodeLich(std::array<uint8_t, 6> &segment, const softFrame_t &soft);
+
+    ///< Maximum allowed hamming distance when determining the frame type.
+    static constexpr uint8_t MAX_SYNC_HAMM_DISTANCE = 4;
+
+    /**
+     * A stream payload whose decode differs from the received bits in this
+     * many coded bits or more is not copied, keeping the previous frame.
+     * Stream frames carry no CRC, so this is the only check between the
+     * decoder and codec2.
+     */
+    static constexpr uint16_t MAX_STREAM_BIT_ERRORS = 20;
 
     uint8_t lsfSegmentMap;      ///< Bitmap for LSF reassembly from LICH
     LinkSetupFrame lsf;         ///< Latest LSF received.
     LinkSetupFrame lsfFromLich; ///< LSF assembled from LICH segments.
     StreamFrame streamFrame;    ///< Latest stream dat frame received.
     PacketFrame packetFrame;    ///< Latest packet data frame received.
-    HardViterbi viterbi;        ///< Viterbi decoder.
-
-    ///< Maximum allowed hamming distance when determining the frame type.
-    static constexpr uint8_t MAX_SYNC_HAMM_DISTANCE = 4;
-
-    ///< Maximum number of corrected bit errors allowed in a stream frame.
-    static constexpr uint16_t MAX_VITERBI_ERRORS = 15;
+    SoftViterbi viterbi;        ///< Soft-decision Viterbi decoder.
 };
 
 } // namespace M17

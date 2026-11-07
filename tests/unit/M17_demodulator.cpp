@@ -373,8 +373,9 @@ static size_t validLsfs(const std::vector<int16_t> &baseband)
         if (!ready)
             continue;
 
-        M17::frame_t frame = demod.getFrame();
-        if (locked && (decoder.decodeFrame(frame) == M17::FrameType::LINK_SETUP)
+        if (locked
+            && (decoder.decodeFrame(demod.getSoftFrame())
+                == M17::FrameType::LINK_SETUP)
             && decoder.getLsf().valid())
             count++;
     }

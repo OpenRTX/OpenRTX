@@ -172,8 +172,8 @@ private:
 
     M17::Demodulator demod;
     M17::FrameDecoder decoder;
-    M17::frame_t frame;
     M17::StreamFrame lastStream; ///< Stream frame the decoder holds.
+    M17::softFrame_t softFrame;  ///< Soft bits of the latest frame.
     std::array<uint8_t, MAX_PACKET> packet;
 };
 
