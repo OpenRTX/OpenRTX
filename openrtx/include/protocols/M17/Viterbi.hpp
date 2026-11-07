@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <array>
 #include <bitset>
+#include <type_traits>
 #include "Utils.hpp"
 
 namespace M17
@@ -83,7 +84,27 @@ public:
                                    std::array< uint8_t, OUT >& out,
                              const std::array< uint8_t, P   >& punctureMatrix)
     {
-        static_assert(IN*4 < 244, "Input size exceeds max history");
+        auto bit = [&in](size_t pos) { return getBit(in, pos); };
+        return decodePunctured< IN * 8 >(bit, out, punctureMatrix);
+    }
+
+    /**
+     * Decode punctured convolutionally encoded data read through a function,
+     * for input that is not stored in decoding order.
+     *
+     * @param in: returns the input bit at a position, from 0 to IN - 1.
+     * @param out: destination array where decoded data are written.
+     * @param punctureMatrix: puncturing matrix.
+     * @return number of bit errors corrected.
+     */
+    template < size_t IN, typename Input, size_t OUT, size_t P >
+    uint16_t decodePunctured(const Input& in,
+                                   std::array< uint8_t, OUT >& out,
+                             const std::array< uint8_t, P   >& punctureMatrix)
+    {
+        static_assert(IN < 244*2, "Input size exceeds max history");
+        static_assert(std::is_same< decltype(in(0)), bool >::value,
+                      "Input must return a bit");
 
         currMetricsData.fill(0x00);
         prevMetricsData.fill(0x00);
@@ -93,7 +114,7 @@ public:
         size_t   bitPos      = 0;
         uint16_t punctBitCnt = 0;
 
-        while(bitPos < IN*8)
+        while(bitPos < IN)
         {
             uint8_t sym[2] = {1, 1};
 
@@ -101,7 +122,7 @@ public:
             {
                 if(punctureMatrix[punctIndex++])
                 {
-                    sym[i] = getBit(in, bitPos) ? 2 : 0;
+                    sym[i] = in(bitPos) ? 2 : 0;
                     bitPos++;
                 }
                 else
@@ -284,7 +305,27 @@ public:
                                    std::array< uint8_t, OUT >& out,
                              const std::array< uint8_t, P   >& punctureMatrix)
     {
+        auto value = [&in](size_t pos) { return in[pos]; };
+        return decodePunctured< IN >(value, out, punctureMatrix);
+    }
+
+    /**
+     * Decode punctured convolutionally encoded data read through a function,
+     * for input that is not stored in decoding order.
+     *
+     * @param in: returns the input value at a position, from 0 to IN - 1.
+     * @param out: destination array where decoded data are written.
+     * @param punctureMatrix: puncturing matrix.
+     * @return number of bit errors corrected.
+     */
+    template < size_t IN, typename Input, size_t OUT, size_t P >
+    uint16_t decodePunctured(const Input& in,
+                                   std::array< uint8_t, OUT >& out,
+                             const std::array< uint8_t, P   >& punctureMatrix)
+    {
         static_assert(IN < 244*2, "Input size exceeds max history");
+        static_assert(std::is_same< decltype(in(0)), uint16_t >::value,
+                      "Input must return a soft bit");
 
         reset();
 
@@ -301,7 +342,7 @@ public:
             {
                 if(punctureMatrix[punctIndex++])
                 {
-                    sym[i] = in[bitPos];
+                    sym[i] = in(bitPos);
                     bitPos++;
                 }
                 else
