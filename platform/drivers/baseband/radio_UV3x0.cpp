@@ -100,6 +100,13 @@ void radio_setOpmode(const enum opmode mode)
             C6000.setInputGain(-3);                 // Input gain in dB, as per TYT firmware
             break;
 
+        case OPMODE_APRS:
+            at1846s.setOpMode(AT1846S_OpMode::FM);  // AFSK is FM audio
+            at1846s.setBandwidth(AT1846S_BW::_25);  // APRS uses 25kHz channels
+            C6000.fmMode();                         // HR_C6000 in FM mode
+            C6000.setInputGain(-3);                 // Input gain in dB, as in FM mode
+            break;
+
         case OPMODE_DMR:
             at1846s.setOpMode(AT1846S_OpMode::DMR);
             at1846s.setBandwidth(AT1846S_BW::_12P5);
