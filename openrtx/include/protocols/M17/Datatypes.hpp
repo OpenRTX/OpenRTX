@@ -39,8 +39,8 @@ enum DataType
 enum EncryptionType
 {
     ENCRYPTION_NONE      = 0,
-    ENCRYPTION_AES       = 1,
-    ENCRYPTION_SCRAMBLER = 2,
+    ENCRYPTION_SCRAMBLER = 1,
+    ENCRYPTION_AES       = 2,
     ENCRYPTION_OTHER     = 3,
 };
 
