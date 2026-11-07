@@ -48,6 +48,33 @@ extern "C" {
 #define BK4819_REG51_AUTO_CTCSS_BW_MOD BIT(8)
 #define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x), 0)
 
+/* Audio path fields set by the bk4819_set* functions, and their reset values */
+#define BK4819_REG40_TX_DEVIATION_ENABLE BIT(12)
+#define BK4819_REG40_TX_DEVIATION_MASK 0x0fffU
+#define BK4819_REG40_TX_DEVIATION(x) ((x) & BK4819_REG40_TX_DEVIATION_MASK)
+#define BK4819_REG43_RF_BW_MASK 0x7000U
+#define BK4819_REG43_RF_BW(x) (BITV((x), 12) & BK4819_REG43_RF_BW_MASK)
+#define BK4819_REG43_RF_BW_WEAK_MASK 0x0e00U
+#define BK4819_REG43_RF_BW_WEAK(x) (BITV((x), 9) & BK4819_REG43_RF_BW_WEAK_MASK)
+#define BK4819_REG43_AF_TX_LPF2_BW_MASK 0x01c0U
+#define BK4819_REG43_AF_TX_LPF2_BW(x) \
+    (BITV((x), 6) & BK4819_REG43_AF_TX_LPF2_BW_MASK)
+#define BK4819_REG48_AF_RX_GAIN1_MASK 0x0c00U
+#define BK4819_REG48_AF_RX_GAIN1(x) \
+    (BITV((x), 10) & BK4819_REG48_AF_RX_GAIN1_MASK)
+#define BK4819_REG48_AF_RX_GAIN2_MASK 0x03f0U
+#define BK4819_REG48_AF_RX_GAIN2(x) \
+    (BITV((x), 4) & BK4819_REG48_AF_RX_GAIN2_MASK)
+#define BK4819_REG7D_MIC_GAIN_MASK 0x001fU
+#define BK4819_REG7D_MIC_GAIN(x) ((x) & BK4819_REG7D_MIC_GAIN_MASK)
+#define BK4819_DEFAULT_TX_DEVIATION 0x4d2
+#define BK4819_DEFAULT_RF_BW 4      /* 3.75 kHz */
+#define BK4819_DEFAULT_RF_BW_WEAK 0 /* 1.7 kHz */
+#define BK4819_DEFAULT_TX_LPF2_BW 1 /* 2.5 kHz */
+#define BK4819_DEFAULT_RX_AUDIO_GAIN1 0
+#define BK4819_DEFAULT_RX_AUDIO_GAIN2 0x3c
+#define BK4819_DEFAULT_MIC_GAIN 0x19
+
 #define BK4819_SCAN_FRE_TIME_2 0x00
 #define BK4819_SCAN_FRE_TIME_4 0x01
 #define BK4819_SCAN_FRE_TIME_8 0x02
@@ -402,6 +429,73 @@ void bk4819_set_Squelch(const struct BK4819 *dev, uint8_t RTSO, uint8_t RTSC,
  * @param AF AF mode.
  */
 void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF);
+
+/**
+ * Audio processing modes, see bk4819_setAudioMode().
+ */
+enum bk4819_audioMode {
+    BK4819_AUDIO_VOICE,  ///< Audio filters on, voice levels.
+    BK4819_AUDIO_BYPASS, ///< Audio filters bypassed, for digital modes.
+};
+
+/**
+ * Set the audio processing mode. VOICE also sets the TX deviation, filters
+ * and gains to the values bk4819_init() uses; BYPASS, as the application
+ * note's RF_EnterBypass(), leaves them to the caller. The RX output is chosen
+ * with BK4819_SetAF() (BK4819_AF_TYPE_BYPASS in BYPASS), as it is also the
+ * squelch mute.
+ *
+ * @param dev: pointer to device data.
+ * @param mode: audio processing mode.
+ */
+void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode);
+
+/**
+ * Set the RF TX deviation (REG_40).
+ *
+ * @param dev: pointer to device data.
+ * @param enable: true to enable the deviation tuning.
+ * @param tuning: raw tuning value, 0 to 4095 (not Hz).
+ */
+void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
+                           uint16_t tuning);
+
+/**
+ * Set the RX RF filter bandwidths (REG_43). Doubled in 25 kHz channel mode,
+ * see bk4819_SetFilterBandwidth().
+ *
+ * @param dev: pointer to device data.
+ * @param bw: bandwidth, 0 to 7 (1.7 to 4.5 kHz).
+ * @param weakBw: bandwidth when the signal is weak, 0 to 7.
+ */
+void bk4819_setRfFilter(const struct BK4819 *dev, uint8_t bw, uint8_t weakBw);
+
+/**
+ * Set the TX audio low-pass filter bandwidth (REG_43 AF TX LPF2).
+ *
+ * @param dev: pointer to device data.
+ * @param bw: bandwidth, 0 to 7 (0 = 3 kHz, 1 = 2.5 kHz, see the register
+ * list).
+ */
+void bk4819_setTxAudioFilter(const struct BK4819 *dev, uint8_t bw);
+
+/**
+ * Set the RX audio gains (REG_48).
+ *
+ * @param dev: pointer to device data.
+ * @param gain1: gain 1, 0 to 3.
+ * @param gain2: gain 2, 0 to 63.
+ */
+void bk4819_setRxAudioGain(const struct BK4819 *dev, uint8_t gain1,
+                           uint8_t gain2);
+
+/**
+ * Set the microphone sensitivity (REG_7D).
+ *
+ * @param dev: pointer to device data.
+ * @param gain: 0 to 31.
+ */
+void bk4819_setMicGain(const struct BK4819 *dev, uint8_t gain);
 
 /**
  * @brief Get RSSI value 0.5dB/step

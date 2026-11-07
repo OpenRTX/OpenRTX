@@ -10,7 +10,6 @@
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <interfaces/delays.h>
-#include <core/utils.h>
 
 #include <algorithm>
 #include <string>
@@ -26,8 +25,22 @@ static const rtxStatus_t
     *config; // Pointer to data structure with radio configuration
 
 static enum opstatus radioStatus; // Current operating status
+static enum opmode radioMode;     // Current operating mode
 
-static struct C62Calib calData;   // TX power calibration
+/*
+ * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
+ * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
+ */
+// Raw deviation tuning (not Hz), set for the TX DAC gain in hwconfig.h
+static constexpr uint16_t M17_TX_DEVIATION = 0x582;
+static constexpr uint8_t M17_RF_BW = 7;          // 4.5 kHz
+static constexpr uint8_t M17_RF_BW_WEAK = 4;     // 3.75 kHz
+static constexpr uint8_t M17_TX_LPF2_BW = 0;     // 3 kHz
+static constexpr uint8_t M17_RX_AUDIO_GAIN1 = 1; // -6 dB
+static constexpr uint8_t M17_RX_AUDIO_GAIN2 = 0x3f;
+static constexpr uint8_t M17_MIC_GAIN = 0;
+
+static struct C62Calib calData; // TX power calibration
 
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
@@ -78,10 +91,11 @@ void radio_init(const rtxStatus_t *rtxState)
 {
     config = rtxState;
     radioStatus = OFF;
+    radioMode = OPMODE_FM;
 
     nvm_readCalibData(&calData);
 
-    BK4819_SetAF(&c62_bk4819, 0);
+    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
 
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_RX_LNA, OUTPUT_ACTIVE_LOW);
     gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_RX_LNA, OUTPUT_ACTIVE_LOW);
@@ -102,7 +116,24 @@ void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 
 void radio_setOpmode(const enum opmode mode)
 {
-    (void)mode;
+    // The core calls this before disabling the old mode: unkey first
+    radio_disableRtx();
+    radio_disableAfOutput();
+
+    if (mode == OPMODE_M17) {
+        bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_BYPASS);
+        bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
+        bk4819_setRfFilter(&c62_bk4819, M17_RF_BW, M17_RF_BW_WEAK);
+        bk4819_setTxAudioFilter(&c62_bk4819, M17_TX_LPF2_BW);
+        bk4819_SetFilterBandwidth(&c62_bk4819, 0);
+        bk4819_setRxAudioGain(&c62_bk4819, M17_RX_AUDIO_GAIN1,
+                              M17_RX_AUDIO_GAIN2);
+        bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
+    } else {
+        bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_VOICE);
+    }
+
+    radioMode = mode;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -112,13 +143,15 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    bk4819_set_modulation(&c62_bk4819, true);
-    return;
+    if (radioMode == OPMODE_M17)
+        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_BYPASS);
+    else
+        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_FM);
 }
 
 void radio_disableAfOutput()
 {
-    BK4819_SetAF(&c62_bk4819, 0);
+    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
 }
 
 void radio_enableRx()
@@ -139,10 +172,12 @@ void radio_enableRx()
     }
 
     bk4819_set_freq(&c62_bk4819, config->rxFrequency);
-    bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
 
-    if (config->rxToneEn) {
-        bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
+    // M17 sets its bandwidth on the mode change and has no CTCSS
+    if (radioMode != OPMODE_M17) {
+        bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
+        if (config->rxToneEn)
+            bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
     }
 
     bk4819_rx_on(&c62_bk4819);
@@ -168,7 +203,7 @@ void radio_enableTx()
 
     bk4819_set_freq(&c62_bk4819, config->txFrequency);
 
-    if (config->txToneEn) {
+    if (radioMode != OPMODE_M17 && config->txToneEn) {
         bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
     }
 
