@@ -60,7 +60,8 @@ struct C62Calib {
  * @param ctx: context passed to read.
  * @param size: journal size, in bytes.
  * @param cal: destination for the calibration data.
- * @return zero on success, -1 if the journal has no usable calibration.
+ * @return zero on success, -ENOENT if the journal has no usable calibration
+ * or -ENOMEM if the entry buffer cannot be allocated.
  */
 int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
                   void *ctx, uint32_t size, struct C62Calib *cal);

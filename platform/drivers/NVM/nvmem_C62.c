@@ -35,9 +35,9 @@ void nvm_readCalibData(void *buf)
 {
     struct C62Calib *cal = (struct C62Calib *)buf;
     const struct flash_area *journal;
-    int ret = -1;
+    int ret = flash_area_open(FIXED_PARTITION_ID(factory_cal), &journal);
 
-    if (flash_area_open(FIXED_PARTITION_ID(factory_cal), &journal) == 0) {
+    if (ret == 0) {
         ret = calibC62_read(journalRead, (void *)journal, journal->fa_size,
                             cal);
         flash_area_close(journal);

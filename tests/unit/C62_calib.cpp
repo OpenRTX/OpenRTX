@@ -5,6 +5,7 @@
  */
 
 #include <catch2/catch_test_macros.hpp>
+#include <cerrno>
 #include <cstdint>
 #include <cstring>
 #include <vector>
@@ -63,13 +64,13 @@ uint32_t writeEntry(vector<uint8_t> &journal, uint32_t off, uint16_t len,
  * @param off: offset to read.
  * @param buf: destination buffer.
  * @param len: number of bytes to read.
- * @return zero on success, -1 when reading past the end.
+ * @return zero on success, -EIO when reading past the end.
  */
 int readJournal(void *ctx, uint32_t off, void *buf, size_t len)
 {
     auto *journal = static_cast<vector<uint8_t> *>(ctx);
     if (off + len > journal->size())
-        return -1;
+        return -EIO;
 
     memcpy(buf, journal->data() + off, len);
     return 0;
@@ -163,7 +164,7 @@ TEST_CASE("C62 calibration fails on an erased journal", "[c62][calibration]")
     vector<uint8_t> journal(0x10000, 0xFF);
 
     C62Calib cal;
-    REQUIRE(parse(journal, cal) == -1);
+    REQUIRE(parse(journal, cal) == -ENOENT);
 }
 
 TEST_CASE("C62 calibration fails without points in both bands",
@@ -174,7 +175,7 @@ TEST_CASE("C62 calibration fails without points in both bands",
     writeEntry(journal, 0, 0x0BDC, vhfOnly);
 
     C62Calib cal;
-    REQUIRE(parse(journal, cal) == -1);
+    REQUIRE(parse(journal, cal) == -ENOENT);
 }
 
 TEST_CASE("C62 default calibration", "[c62][calibration]")

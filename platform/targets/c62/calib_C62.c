@@ -6,6 +6,7 @@
 
 #include "calibration/calib_C62.h"
 #include "core/utils.h"
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,7 +105,7 @@ int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
 
     uint8_t *entry = malloc(ENTRY_LEN_20);
     if (entry == NULL)
-        return -1;
+        return -ENOMEM;
 
     // Walk the journal up to the first erased or malformed header, parsing
     // each entry with a valid checksum: the newest one is kept
@@ -149,7 +150,7 @@ int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
     free(entry);
 
     if (!found || (cal->vhf.count == 0) || (cal->uhf.count == 0))
-        return -1;
+        return -ENOENT;
 
     return 0;
 }
