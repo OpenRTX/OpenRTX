@@ -12,6 +12,7 @@
 #endif
 
 #include <cstdint>
+#include <array>
 
 namespace M17
 {
@@ -73,6 +74,18 @@ static inline uint16_t golay24_decode(const uint32_t& codeword)
     if(errors == 0xFFFFFFFF) return 0xFFFF;
     return ((codeword ^ errors) >> 12) & 0x0FFF;
 }
+
+/**
+ * Decode a Golay(24,12) codeword from soft bits (Chase-II). The hard decoder
+ * runs with every combination of the four least reliable bits flipped, and
+ * the candidate closest to the soft bits wins. When the runner-up is almost
+ * as close, the codeword is ambiguous and rejected.
+ *
+ * \param soft: the 24 soft bits of the codeword, most significant first,
+ * 0x0000 a confident 0 and 0xFFFF a confident 1.
+ * \return original data block or 0xFFFF if no codeword is close enough.
+ */
+uint16_t golay24_softDecode(const std::array< uint16_t, 24 >& soft);
 
 }      // namespace M17
 
