@@ -183,16 +183,6 @@ void bk4819_rtx_off(const struct BK4819 *dev)
     BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
 }
 
-void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
-{
-    uint16_t Value = BK4819_readReg(dev, BK4819_REG_43);
-    if (bandwidth) { /* 25kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 32);
-    } else {         /* 12.5kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 0);
-    }
-}
-
 void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
 {
     /* frequency is in .1 Hz units */
@@ -366,6 +356,29 @@ void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
 void bk4819_setRxFilter(const struct BK4819 *dev, uint16_t filter)
 {
     writeField(dev, BK4819_REG_43, BK4819_REG43_FILTER_MASK, filter);
+}
+
+void bk4819_setBandwidth(const struct BK4819 *dev, enum bk4819_bandwidth bw)
+{
+    /*
+     * 0x4048 and 0x3028, the values of the stock C62 firmware and of the
+     * UV-K5 firmware's BK4819_SetFilterBandwidth():
+     * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/driver/bk4819.c#L292-L299
+     * 12.5 kHz is the reset value; 25 kHz has a 3 kHz RF filter, doubled by
+     * the bandwidth mode, and a 3 kHz AF TX filter, per the REG_43 notes in
+     * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L562-L609
+     */
+    static const uint16_t filters[] = {
+        [BK4819_BW_12_5] = BK4819_DEFAULT_RX_FILTER
+                         | BK4819_REG43_BW_MODE(BK4819_BW_MODE_12_5),
+        [BK4819_BW_25] = BK4819_REG43_RF_BW(3) | BK4819_REG43_AF_TX_LPF2_BW(0)
+                       | BK4819_REG43_BW_MODE(BK4819_BW_MODE_25)
+                       | BK4819_REG43_UNDOC3,
+    };
+
+    writeField(dev, BK4819_REG_43,
+               BK4819_REG43_FILTER_MASK | BK4819_REG43_BW_MODE(~0),
+               filters[bw]);
 }
 
 void bk4819_setAfRxGain(const struct BK4819 *dev, uint8_t gain1, uint8_t gain2)
