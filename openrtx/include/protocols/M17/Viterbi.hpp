@@ -282,6 +282,23 @@ public:
                                std::array< uint8_t, OUT >& out,
                          const std::array< uint8_t, P   >& punctureMatrix)
     {
+        decodePunctured< IN >([&in](size_t pos) { return in[pos]; }, out,
+                              punctureMatrix);
+    }
+
+    /**
+     * Decode punctured convolutionally encoded data read through a function,
+     * for input that is not stored in decoding order.
+     *
+     * @param in: returns the input value at a position, from 0 to IN - 1.
+     * @param out: destination array where decoded data are written.
+     * @param punctureMatrix: puncturing matrix.
+     */
+    template < size_t IN, typename Input, size_t OUT, size_t P >
+    void decodePunctured(const Input& in,
+                               std::array< uint8_t, OUT >& out,
+                         const std::array< uint8_t, P   >& punctureMatrix)
+    {
         static_assert(IN < 244*2, "Input size exceeds max history");
 
         reset();
@@ -298,7 +315,7 @@ public:
             {
                 if(punctureMatrix[punctIndex++])
                 {
-                    sym[i] = in[bitPos];
+                    sym[i] = in(bitPos);
                     bitPos++;
                 }
                 else
