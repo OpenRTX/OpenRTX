@@ -1410,6 +1410,63 @@ static enum vpGPSInfoFlags GetGPSDirectionOrSpeedChanged()
 }
 #endif // CONFIG_GPS
 
+#ifdef CONFIG_M17
+/*
+ * Outcome of a key press while a callsign is typed into the settings.
+ */
+enum callsignEntry
+{
+    CALLSIGN_EDITING,
+    CALLSIGN_CHANGED,
+    CALLSIGN_CONFIRMED,
+    CALLSIGN_DISCARDED,
+};
+
+/**
+ * Handle a key press while a callsign is typed into ui_state.new_callsign.
+ *
+ * @param msg: key press.
+ * @param f1Handled: set when the key read the entry out as a voice prompt.
+ * @return whether the entry was confirmed, discarded, changed or is still
+ * going on unchanged.
+ */
+static enum callsignEntry _ui_enterCallsign(kbd_msg_t msg, bool *f1Handled)
+{
+    if(msg.keys & KEY_ENTER)
+    {
+        _ui_textInputConfirm(ui_state.new_callsign);
+        return CALLSIGN_CONFIRMED;
+    }
+
+    if(msg.keys & KEY_ESC)
+        return CALLSIGN_DISCARDED;
+
+    if((msg.keys & KEY_UP) || (msg.keys & KEY_DOWN) ||
+       (msg.keys & KEY_LEFT) || (msg.keys & KEY_RIGHT))
+    {
+        _ui_textInputDel(ui_state.new_callsign);
+        return CALLSIGN_CHANGED;
+    }
+
+    if(input_isCharPressed(msg))
+    {
+        _ui_textInputKeypad(ui_state.new_callsign,
+                            sizeof(ui_state.new_callsign) - 1, msg, true);
+        return CALLSIGN_CHANGED;
+    }
+
+    if((msg.long_press) && (msg.keys & KEY_F1) &&
+            (state.settings.vpLevel > vpBeep))
+    {
+        vp_announceBuffer(&currentLanguage->callsign, true, true,
+                          ui_state.new_callsign);
+        *f1Handled = true;
+    }
+
+    return CALLSIGN_EDITING;
+}
+#endif // CONFIG_M17
+
 void ui_updateFSM(bool *sync_rtx)
 {
     // Check for events
@@ -2354,37 +2411,19 @@ void ui_updateFSM(bool *sync_rtx)
                     switch (ui_state.menu_selected)
                     {
                         case M17_CALLSIGN:
-                            // Handle text input for M17 callsign
-                            if(msg.keys & KEY_ENTER)
+                            switch(_ui_enterCallsign(msg, &f1Handled))
                             {
-                                _ui_textInputConfirm(ui_state.new_callsign);
-                                // Save selected callsign and disable input mode
-                                strncpy(state.settings.callsign, ui_state.new_callsign, 10);
-                                ui_state.edit_mode = false;
-                                vp_announceBuffer(&currentLanguage->callsign,
-                                                  false, true, state.settings.callsign);
-                            }
-                            else if(msg.keys & KEY_ESC)
-                            {
-                                // Discard selected callsign and disable input mode
-                                ui_state.edit_mode = false;
-                                vp_announceBuffer(&currentLanguage->callsign,
-                                                  false, true, state.settings.callsign);
-                            }
-                            else if(msg.keys & KEY_UP || msg.keys & KEY_DOWN ||
-                                     msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT)
-                            {
-                                _ui_textInputDel(ui_state.new_callsign);
-                            }
-                            else if(input_isCharPressed(msg))
-                            {
-                                _ui_textInputKeypad(ui_state.new_callsign, 9, msg, true);
-                            }
-                            else if (msg.long_press && (msg.keys & KEY_F1) && (state.settings.vpLevel > vpBeep))
-                            {
-                                vp_announceBuffer(&currentLanguage->callsign,
-                                                  true, true, ui_state.new_callsign);
-                                f1Handled=true;
+                                case CALLSIGN_CONFIRMED:
+                                    // Save selected callsign
+                                    strncpy(state.settings.callsign, ui_state.new_callsign, 10);
+                                    /* fallthrough */
+                                case CALLSIGN_DISCARDED:
+                                    ui_state.edit_mode = false;
+                                    vp_announceBuffer(&currentLanguage->callsign,
+                                                      false, true, state.settings.callsign);
+                                    break;
+                                default:
+                                    break;
                             }
                             break;
                         case M17_METATEXT:

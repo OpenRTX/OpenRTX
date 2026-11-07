@@ -983,6 +983,28 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 #endif
 
 #ifdef CONFIG_M17
+/**
+ * Draw the box a callsign is typed into.
+ *
+ * @param callsign: callsign being typed.
+ */
+static void _ui_drawCallsignInput(const char *callsign)
+{
+    uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
+    uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+    point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
+                           (CONFIG_SCREEN_HEIGHT - rect_height) / 2};
+
+    gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                layout.horizontal_pad, layout.menu_font,
+                TEXT_ALIGN_LEFT, color_white, currentLanguage->callsign);
+    gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+    // Print the callsign being typed
+    gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.input_font,
+                  TEXT_ALIGN_CENTER, color_white, callsign);
+}
+
 void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -991,19 +1013,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
               color_white, currentLanguage->m17settings);
     if((ui_state->edit_mode) && (ui_state->menu_selected == M17_CALLSIGN))
     {
-        uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
-        uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
-        point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
-                               (CONFIG_SCREEN_HEIGHT - rect_height) / 2};
-
-        gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
-                    layout.horizontal_pad, layout.menu_font,
-                    TEXT_ALIGN_LEFT, color_white, currentLanguage->callsign);
-        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
-        // Print M17 callsign being typed
-        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
-                      layout.horizontal_pad, layout.input_font,
-                      TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+        _ui_drawCallsignInput(ui_state->new_callsign);
     }
     else
     if((ui_state->edit_meta_text) && (ui_state->menu_selected == M17_METATEXT))
