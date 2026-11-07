@@ -97,6 +97,7 @@ void M17Replay::processBlock(const int16_t *block, const double time)
     for (size_t i = 0; i < BLOCK_SAMPLES; i++) {
         if (demod.sample(block[i], invertPhase)) {
             frame = demod.getFrame();
+            softFrame = demod.getSoftFrame();
             frameReady = true;
         }
     }
@@ -122,7 +123,7 @@ void M17Replay::processBlock(const int16_t *block, const double time)
     if (!frameReady || !locked)
         return;
 
-    switch (decoder.decodeFrame(frame)) {
+    switch (decoder.decodeFrame(frame, softFrame)) {
         case FrameType::LINK_SETUP:
             handleLinkSetup(time);
             break;

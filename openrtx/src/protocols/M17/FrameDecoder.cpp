@@ -6,6 +6,7 @@
 
 #include "protocols/M17/Golay.hpp"
 #include "protocols/M17/FrameDecoder.hpp"
+#include "protocols/M17/FrameEncoder.hpp"
 #include "protocols/M17/Interleaver.hpp"
 #include "protocols/M17/Decorrelator.hpp"
 #include "protocols/M17/CodePuncturing.hpp"
@@ -14,6 +15,23 @@
 #include <algorithm>
 
 using namespace M17;
+
+static constexpr size_t SYNC_BITS = 2 * SYNCWORD_SYMBOLS;
+static constexpr size_t PAYLOAD_BITS = 2 * (FRAME_SYMBOLS - SYNCWORD_SYMBOLS);
+static constexpr size_t LICH_BITS = 8 * sizeof(lich_t);
+static constexpr size_t STREAM_BITS = PAYLOAD_BITS - LICH_BITS;
+
+/**
+ * Whether a frame of this type carries a payload to decode.
+ *
+ * @param type: frame type, from the sync word.
+ * @return true for link setup, stream and packet frames.
+ */
+static bool hasPayload(FrameType type)
+{
+    return (type == FrameType::LINK_SETUP) || (type == FrameType::STREAM)
+        || (type == FrameType::PACKET);
+}
 
 FrameDecoder::FrameDecoder()
 {
@@ -30,38 +48,88 @@ void FrameDecoder::reset()
     lsfFromLich.clear();
     streamFrame.clear();
     packetFrame.clear();
+    streamBitErrors = 0;
 }
+
+/**
+ * Soft bits of a frame payload, read in coded order: each read deinterleaves
+ * and decorrelates one bit of the frame, so the payload is never copied.
+ */
+class FrameDecoder::PayloadBits
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param frame: frame, starting with the sync word.
+     * @param soft: soft bits of the frame, or nullptr to read the hard bits of
+     * the frame as fully confident ones.
+     */
+    PayloadBits(const frame_t &frame, const softFrame_t *soft)
+        : frame(frame), soft(soft)
+    {
+    }
+
+    /**
+     * Read a payload bit.
+     *
+     * @param pos: position in the payload, after deinterleaving.
+     * @return the soft bit, 0x0000 a confident 0 and 0xFFFF a confident 1.
+     */
+    uint16_t operator()(size_t pos) const
+    {
+        size_t index = interleavedIndex(pos, PAYLOAD_BITS);
+        uint16_t value;
+        if (soft != nullptr)
+            value = (*soft)[SYNC_BITS + index];
+        else
+            value = getBit(frame, SYNC_BITS + index) ? 0xFFFF : 0x0000;
+
+        // Decorrelating a soft bit inverts its confidence
+        if (getBit(sequence, index))
+            value = 0xFFFF - value;
+
+        return value;
+    }
+
+private:
+    const frame_t &frame;    ///< Frame, starting with the sync word.
+    const softFrame_t *soft; ///< Soft bits of the frame, or nullptr.
+};
 
 FrameType FrameDecoder::decodeFrame(const frame_t &frame)
 {
+    return decode(frame, nullptr);
+}
+
+FrameType FrameDecoder::decodeFrame(const frame_t &frame,
+                                    const softFrame_t &soft)
+{
+    return decode(frame, &soft);
+}
+
+FrameType FrameDecoder::decode(const frame_t &frame, const softFrame_t *soft)
+{
     std::array<uint8_t, 2> syncWord;
-    std::array<uint8_t, 46> data;
-
     std::copy_n(frame.begin(), 2, syncWord.begin());
-    std::copy(frame.begin() + 2, frame.end(), data.begin());
-
-    // Re-correlating data is the same operation as decorrelating
-    decorrelate(data);
-    deinterleave(data);
-
     auto type = getFrameType(syncWord);
+
+    // Preamble, EOT and unknown frames carry no payload to decode.
+    if (!hasPayload(type))
+        return type;
+
+    PayloadBits payload(frame, soft);
 
     switch (type) {
         case FrameType::LINK_SETUP:
-            decodeLSF(data);
+            decodeLSF(payload);
             break;
-
         case FrameType::STREAM:
-            decodeStream(data);
+            decodeStream(payload);
             break;
-
         case FrameType::PACKET:
-            decodePacket(data);
+            decodePacket(payload);
             break;
-
-        case FrameType::EOT:
-            break; // EOT conveys termination only; no payload to decode.
-
         default:
             break;
     }
@@ -121,22 +189,19 @@ FrameType FrameDecoder::getFrameType(const std::array<uint8_t, 2> &syncWord)
     return type;
 }
 
-void FrameDecoder::decodeLSF(const std::array<uint8_t, 46> &data)
+void FrameDecoder::decodeLSF(const PayloadBits &payload)
 {
     std::array<uint8_t, sizeof(LinkSetupFrame)> tmp;
-
-    viterbi.decodePunctured(data, tmp, LSF_PUNCTURE);
+    viterbi.decodePunctured<PAYLOAD_BITS>(payload, tmp, LSF_PUNCTURE);
     memcpy(&lsf.data, tmp.data(), tmp.size());
 }
 
-void FrameDecoder::decodePacket(const std::array<uint8_t, 46> &data)
+void FrameDecoder::decodePacket(const PayloadBits &payload)
 {
-    packetFrame.clear();
-
     // Extract and decode packet data
     std::array<uint8_t, PacketFrame::FRAME_SIZE> tmp;
 
-    uint16_t bitErrs = viterbi.decodePunctured(data, tmp, PACKET_PUNCTURE);
+    viterbi.decodePunctured<PAYLOAD_BITS>(payload, tmp, PACKET_PUNCTURE);
 
     // Viterbi decoding of P3-punctured packets produces a 2-bit right shift:
     // encoding 26 bytes (208 bits) with flush gives 210 Viterbi steps → 420
@@ -150,19 +215,15 @@ void FrameDecoder::decodePacket(const std::array<uint8_t, 46> &data)
         tmp[i] = (currentByte << 2) | (nextByte >> 6);
     }
 
-    if (bitErrs < MAX_VITERBI_ERRORS)
-        memcpy(&packetFrame.frameData, tmp.data(), tmp.size());
+    // No error limit here: the packet CRC checked by the deframer is the
+    // authority, and a frame that decoded badly ends the packet either way.
+    memcpy(&packetFrame.frameData, tmp.data(), tmp.size());
 }
 
-void FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
+void FrameDecoder::decodeStream(const PayloadBits &payload)
 {
-    // Extract and unpack the LICH segment contained at beginning of frame
-    lich_t lich;
     std::array<uint8_t, 6> lsfSegment;
-
-    std::copy_n(data.begin(), lich.size(), lich.begin());
-    bool decodeOk = decodeLich(lsfSegment, lich);
-
+    bool decodeOk = decodeLich(lsfSegment, payload);
     if (decodeOk) {
         // Append LICH segment
         uint8_t segmentNum = lsfSegment[5];
@@ -178,48 +239,62 @@ void FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
         if (lsfSegmentMap == 0x3F) {
             if (lsfFromLich.valid())
                 lsf = lsfFromLich;
+
             lsfSegmentMap = 0;
             lsfFromLich.clear();
         }
     }
 
-    // Extract and decode stream data
-    std::array<uint8_t, 34> punctured;
+    // Decode the stream data, which follows the LICH
+    auto stream = [&payload](size_t pos) { return payload(LICH_BITS + pos); };
+
     std::array<uint8_t, sizeof(StreamFrame)> tmp;
+    viterbi.decodePunctured<STREAM_BITS>(stream, tmp, DATA_PUNCTURE);
 
-    auto begin = data.begin();
-    begin += lich.size();
-    std::copy(begin, data.end(), punctured.begin());
+    StreamFrame decoded;
+    memcpy(&decoded.frameData, tmp.data(), tmp.size());
 
-    // Skip payload copy if BER is too high to avoid audio artifacts
-    uint16_t bitErrs = viterbi.decodePunctured(punctured, tmp, DATA_PUNCTURE);
-    if (bitErrs < MAX_VITERBI_ERRORS)
-        memcpy(&streamFrame.frameData, tmp.data(), tmp.size());
+    // Acceptance check: re-encode the decoded payload as the transmitter did
+    // and count the coded bits that differ from the received hard decisions.
+    // A decode from noise disagrees with many of them, a genuine frame only
+    // where the channel flipped a bit.
+    std::array<uint8_t, 34> punctured;
+    FrameEncoder::encodeStreamPayload(decoded, punctured);
+
+    uint16_t errors = 0;
+    for (size_t i = 0; i < STREAM_BITS; i++) {
+        bool received = stream(i) >= 0x8000;
+        if (received != getBit(punctured, i))
+            errors++;
+    }
+    streamBitErrors = errors;
+
+    // A rejected payload is not copied, so the previous stream frame is kept.
+    if (errors < MAX_STREAM_BIT_ERRORS)
+        streamFrame = decoded;
 }
 
 bool FrameDecoder::decodeLich(std::array<uint8_t, 6> &segment,
-                              const lich_t &lich)
+                              const PayloadBits &payload)
 {
     /*
      * Extract and unpack the LICH segment contained in the frame header.
-     * The LICH segment is composed of four blocks of Golay(24,12) encoded data
-     * and carries five bytes of the original Link Setup Frame. The sixth byte
-     * is the segment number, allowing to determine the correct position of the
-     * segment when reassembling the LSF.
-     *
-     * NOTE: LICH data is stored in big-endian format, swap and shift after
-     * memcpy convert it to little-endian.
+     * The LICH segment is composed of four blocks of Golay(24,12) encoded data,
+     * the first 96 bits of the payload, and carries five bytes of the original
+     * Link Setup Frame. The sixth byte is the segment number, allowing to
+     * determine the correct position of the segment when reassembling the LSF.
      */
 
     segment.fill(0x00);
 
     size_t index = 0;
-    uint32_t block = 0;
+    std::array<uint16_t, 24> block;
 
     for (size_t i = 0; i < 4; i++) {
-        memcpy(&block, lich.data() + 3 * i, 3);
-        block = __builtin_bswap32(block) >> 8;
-        uint16_t decoded = golay24_decode(block);
+        for (size_t j = 0; j < block.size(); j++)
+            block[j] = payload(block.size() * i + j);
+
+        uint16_t decoded = golay24_softDecode(block);
 
         // Unrecoverable error, abort decoding
         if (decoded == 0xFFFF) {
