@@ -58,6 +58,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/core/messages.c',
                'openrtx/src/core/m17_sms.cpp',
+               'openrtx/src/core/aprs_msg.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -1318,6 +1319,16 @@ m17_sms_test = executable('m17_sms_test',
                                      'tests/unit/m17_sms.cpp'],
                           kwargs  : unit_test_opts)
 
+aprs_msg_test = executable('aprs_msg_test',
+                           sources : ['openrtx/src/core/messages.c',
+                                      'tests/unit/rtx_packet_stub.cpp',
+                                      'openrtx/src/core/aprs_msg.c',
+                                      'openrtx/src/core/crc.c',
+                                      'tests/unit/aprs_test_frame.cpp',
+                                      'openrtx/src/protocols/APRS/packet.c',
+                                      'tests/unit/aprs_msg.cpp'],
+                           kwargs  : unit_test_opts)
+
 aprs_packet_test = executable('aprs_packet_test',
                               sources : unit_test_src + ['tests/unit/aprs_test_frame.cpp',
                                                         'tests/unit/APRS_packet.cpp'],
@@ -1355,6 +1366,7 @@ test('M17 SMS Packet Test', m17_sms_packet_test)
 test('M17 Packet OpMode Test', m17_packet_opmode_test)
 test('Messages Test', messages_test)
 test('M17 SMS Source Test', m17_sms_test)
+test('APRS Message Source Test', aprs_msg_test)
 test('APRS Packet Test', aprs_packet_test)
 test('APRS Test', aprs_test)
 test('APRS OpMode Test', aprs_opmode_test)
