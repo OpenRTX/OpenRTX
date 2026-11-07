@@ -189,8 +189,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
         // Process new data
         if(newData)
         {
-            auto& frame   = demodulator.getFrame();
-            auto  type    = decoder.decodeFrame(frame);
+            auto  type    = decoder.decodeFrame(demodulator.getSoftFrame());
             auto  lsf     = decoder.getLsf();
             status->lsfOk = lsf.valid();
 
