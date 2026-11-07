@@ -24,6 +24,7 @@
 #include "core/messages.h"
 #include "core/m17_sms.h"
 #include "core/beeps.h"
+#include "core/packet_engine.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -70,6 +71,7 @@ void *ui_threadFunc(void *arg)
         }
 
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
+
         ui_updateFSM(&sync_rtx);            // Update UI FSM
         ui_saveState();                     // Save local state copy
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
@@ -143,6 +145,9 @@ void *main_thread(void *arg)
     (void) arg;
 
     long long time = 0;
+#ifdef CONFIG_APRS
+    packetEngine_init();
+#endif
 
     #if defined(CONFIG_GPS)
     const struct gpsDevice *gps = platform_initGps();
@@ -171,6 +176,11 @@ void *main_thread(void *arg)
 
         // Run state update task
         state_task();
+
+#ifdef CONFIG_APRS
+        if (state.channel.mode == OPMODE_APRS)
+            packetEngine_task();
+#endif
 
         // Run this loop once every 5ms
         time += 5;

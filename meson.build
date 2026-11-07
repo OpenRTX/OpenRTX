@@ -45,6 +45,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/dsp.cpp',
                'openrtx/src/core/cps.c',
                'openrtx/src/core/crc.c',
+               'openrtx/src/core/slip.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
                'openrtx/src/core/audio_codec.c',
@@ -58,11 +59,13 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/core/messages.c',
                'openrtx/src/core/m17_sms.cpp',
+               'openrtx/src/core/packet_engine.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/protocols/M17/DSP.cpp',
                'openrtx/src/protocols/M17/Golay.cpp',
+               'openrtx/src/rtx/OpMode_APRS.cpp',
                'openrtx/src/protocols/M17/MetaText.cpp',
                'openrtx/src/protocols/M17/Callsign.cpp',
                'openrtx/src/protocols/M17/Modulator.cpp',
@@ -72,7 +75,12 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
                'openrtx/src/protocols/M17/PacketDeframer.cpp',
                'openrtx/src/protocols/M17/PacketFramer.cpp',
-               'openrtx/src/protocols/M17/SmsPacket.cpp']
+               'openrtx/src/protocols/M17/SmsPacket.cpp',
+               'openrtx/src/protocols/APRS/Slicer.cpp',
+               'openrtx/src/protocols/APRS/FrameDecoder.cpp',
+               'openrtx/src/protocols/APRS/Demodulator.cpp',
+               'openrtx/src/protocols/APRS/packet.c',
+               'openrtx/src/protocols/APRS/packet_list.c']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -84,7 +92,8 @@ ui_src_default = ['openrtx/src/ui/default/ui.c',
                   'openrtx/src/ui/default/ui_main.c',
                   'openrtx/src/ui/default/ui_menu.c',
                   'openrtx/src/ui/default/ui_messages.c',
-                  'openrtx/src/ui/default/ui_strings.c']
+                  'openrtx/src/ui/default/ui_strings.c',
+                  'openrtx/src/ui/default/ui_aprs.c']
 
 ui_src_module17 = ['openrtx/src/ui/module17/ui.c',
                    'openrtx/src/ui/module17/ui_main.c',
@@ -1313,6 +1322,17 @@ m17_sms_test = executable('m17_sms_test',
                                      'tests/unit/m17_sms.cpp'],
                           kwargs  : unit_test_opts)
 
+aprs_packet_test = executable('aprs_packet_test',
+                              sources : unit_test_src + ['tests/unit/APRS_packet.cpp'],
+                              kwargs  : unit_test_opts)
+aprs_test = executable('aprs-test',
+                       sources : unit_test_src + ['tests/unit/APRS.cpp'],
+                       kwargs  : unit_test_opts)
+
+slip_test = executable('slip_test',
+                      sources : unit_test_src + ['tests/unit/slip.cpp'],
+                      kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1335,3 +1355,6 @@ test('M17 SMS Packet Test', m17_sms_packet_test)
 test('M17 Packet OpMode Test', m17_packet_opmode_test)
 test('Messages Test', messages_test)
 test('M17 SMS Source Test', m17_sms_test)
+test('APRS Packet Test', aprs_packet_test)
+test('APRS Test', aprs_test)
+test('Slip Test', slip_test)

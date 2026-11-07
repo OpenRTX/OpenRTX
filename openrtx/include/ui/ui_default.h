@@ -16,6 +16,7 @@
 #include "hwconfig.h"
 #include "core/ui.h"
 #include "core/messages.h"
+#include "protocols/APRS/packet.h"
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -57,6 +58,7 @@ enum uiScreen
     MESSAGES_LIST,
     MESSAGES_DETAIL,
     MESSAGES_COMPOSE,
+    APRS_PKT
 };
 
 enum SetRxTx
@@ -267,6 +269,9 @@ typedef struct ui_state_t
     bool compose_editing;
     bool compose_body_editing;
     bool compose_is_reply;
+#ifdef CONFIG_APRS
+    struct aprsPacket *pkt; // selected APRS packet
+#endif
 }
 ui_state_t;
 

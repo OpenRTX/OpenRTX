@@ -26,7 +26,7 @@ std::vector<int16_t> M17Signal::rrcBaseband(const std::vector<int8_t> &symbols,
     static constexpr size_t SPS = 24000 / SYMBOL_RATE;
     static constexpr size_t NTAPS = rrc_taps_24k.size();
 
-    Fir<NTAPS> txRrc(rrc_taps_24k);
+    Fir<float, NTAPS> txRrc(rrc_taps_24k);
 
     std::vector<int16_t> out;
     out.reserve(symbols.size() * SPS);
@@ -196,7 +196,7 @@ void M17NoisyChannel::transmit(const std::vector<int8_t> &symbols,
 {
     align(SAMPLES_PER_SYMBOL, phase);
 
-    Fir<std::tuple_size<decltype(rrc_taps_48k)>::value> rrc(rrc_taps_48k);
+    Fir<float, std::tuple_size<decltype(rrc_taps_48k)>::value> rrc(rrc_taps_48k);
     const size_t len = (symbols.size() * SAMPLES_PER_SYMBOL)
                      + rrc_taps_48k.size();
     std::vector<float> signal;
