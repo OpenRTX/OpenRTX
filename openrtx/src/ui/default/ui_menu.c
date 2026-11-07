@@ -982,7 +982,7 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
-#ifdef CONFIG_M17
+#if defined(CONFIG_M17) || defined(CONFIG_APRS)
 /**
  * Draw the box a callsign is typed into.
  *
@@ -1004,7 +1004,9 @@ static void _ui_drawCallsignInput(const char *callsign)
                   layout.horizontal_pad, layout.input_font,
                   TEXT_ALIGN_CENTER, color_white, callsign);
 }
+#endif
 
+#ifdef CONFIG_M17
 void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -1054,6 +1056,50 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     {
         _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getM17EntryName,
                               _ui_getM17ValueName);
+    }
+}
+#endif
+
+#ifdef CONFIG_APRS
+static int _ui_getAPRSEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_aprs_num) return -1;
+    sniprintf(buf, max_len, "%s", settings_aprs_items[index]);
+    return 0;
+}
+
+static int _ui_getAPRSValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_aprs_num)
+        return -1;
+
+    switch(index)
+    {
+        case APRS_CALLSIGN:
+            sniprintf(buf, max_len, "%s", last_state.settings.aprs_callsign);
+            break;
+    }
+
+    return 0;
+}
+
+void _ui_drawSettingsAPRS(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "APRS Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->aprsSettings);
+    if((ui_state->edit_mode) && (ui_state->menu_selected == APRS_CALLSIGN))
+    {
+        _ui_drawCallsignInput(ui_state->new_callsign);
+        if(ui_state->callsign_invalid)
+            gfx_print(layout.bottom_pos, layout.bottom_font, TEXT_ALIGN_CENTER,
+                      color_white, currentLanguage->invalidCallsign);
+    }
+    else
+    {
+        _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                              _ui_getAPRSEntryName, _ui_getAPRSValueName);
     }
 }
 #endif

@@ -107,6 +107,8 @@ typedef struct
     const char* send;
     const char* to;
     const char* message;
+    const char* aprsSettings;
+    const char* invalidCallsign;
 }
 stringsTable_t;
 

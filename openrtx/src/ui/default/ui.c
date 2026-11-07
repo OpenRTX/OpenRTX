@@ -66,6 +66,7 @@
 #include "core/voicePromptUtils.h"
 #include "core/beeps.h"
 #include "core/messages.h"
+#include "protocols/APRS/packet.h"
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -99,6 +100,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
+extern void _ui_drawSettingsAPRS(ui_state_t* ui_state);
 extern void _ui_drawSettingsFM(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
@@ -145,6 +147,9 @@ const char *settings_items[] =
 #ifdef CONFIG_M17
     "M17",
 #endif
+#ifdef CONFIG_APRS
+    "APRS",
+#endif
     "FM",
     "Accessibility",
     "Default Settings"
@@ -186,6 +191,11 @@ const char * settings_m17_items[] =
     "Meta Txt",
     "CAN",
     "CAN RX Check"
+};
+
+const char *settings_aprs_items[] =
+{
+    "Callsign",
 };
 
 const char* settings_fm_items[] =
@@ -290,6 +300,7 @@ const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_
 #ifdef CONFIG_M17
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 #endif
+const uint8_t settings_aprs_num = ARRAY_SIZE(settings_aprs_items);
 const uint8_t settings_fm_num = sizeof(settings_fm_items) / sizeof(settings_fm_items[0]);
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
@@ -1410,7 +1421,7 @@ static enum vpGPSInfoFlags GetGPSDirectionOrSpeedChanged()
 }
 #endif // CONFIG_GPS
 
-#ifdef CONFIG_M17
+#if defined(CONFIG_M17) || defined(CONFIG_APRS)
 /*
  * Outcome of a key press while a callsign is typed into the settings.
  */
@@ -1465,7 +1476,7 @@ static enum callsignEntry _ui_enterCallsign(kbd_msg_t msg, bool *f1Handled)
 
     return CALLSIGN_EDITING;
 }
-#endif // CONFIG_M17
+#endif // CONFIG_M17 || CONFIG_APRS
 
 void ui_updateFSM(bool *sync_rtx)
 {
@@ -2067,6 +2078,11 @@ void ui_updateFSM(bool *sync_rtx)
                             state.ui_screen = SETTINGS_M17;
                             break;
 #endif
+#ifdef CONFIG_APRS
+                        case S_APRS:
+                            state.ui_screen = SETTINGS_APRS;
+                            break;
+#endif
                         case S_FM:
                             state.ui_screen = SETTINGS_FM;
                             break;
@@ -2529,6 +2545,69 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
 #endif
+#ifdef CONFIG_APRS
+            // APRS Settings
+            case SETTINGS_APRS:
+                if(ui_state.edit_mode)
+                {
+                    switch(ui_state.menu_selected)
+                    {
+                        case APRS_CALLSIGN:
+                            // A callsign that is not a station address is
+                            // refused, and the field stays in edit
+                            switch(_ui_enterCallsign(msg, &f1Handled))
+                            {
+                                case CALLSIGN_CONFIRMED:
+                                    if(aprsAddr_validate(ui_state.new_callsign) != 0)
+                                    {
+                                        ui_state.callsign_invalid = true;
+                                        break;
+                                    }
+
+                                    strncpy(state.settings.aprs_callsign,
+                                            ui_state.new_callsign,
+                                            sizeof(state.settings.aprs_callsign) - 1);
+                                    /* fallthrough */
+                                case CALLSIGN_DISCARDED:
+                                    ui_state.callsign_invalid = false;
+                                    ui_state.edit_mode = false;
+                                    vp_announceBuffer(&currentLanguage->callsign,
+                                                      false, true,
+                                                      state.settings.aprs_callsign);
+                                    break;
+                                case CALLSIGN_CHANGED:
+                                    ui_state.callsign_invalid = false;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                    }
+                }
+                else
+                {
+                    if(msg.keys & KEY_ENTER)
+                    {
+                        ui_state.edit_mode = true;
+
+                        if(ui_state.menu_selected == APRS_CALLSIGN)
+                        {
+                            ui_state.callsign_invalid = false;
+                            _ui_textInputReset(ui_state.new_callsign,
+                                    sizeof(ui_state.new_callsign));
+                            vp_announceBuffer(&currentLanguage->callsign,
+                                            true, true, ui_state.new_callsign);
+                        }
+                    }
+                    else if((msg.keys & KEY_UP) || (msg.keys & KNOB_LEFT))
+                        _ui_menuUp(settings_aprs_num);
+                    else if((msg.keys & KEY_DOWN) || (msg.keys & KNOB_RIGHT))
+                        _ui_menuDown(settings_aprs_num);
+                    else if(msg.keys & KEY_ESC)
+                        _ui_menuBack(MENU_SETTINGS);
+                }
+                break;
+#endif
             case SETTINGS_FM:
                 if (ui_state.edit_mode)
                 {
@@ -2824,6 +2903,12 @@ bool ui_updateGUI()
         // M17 settings screen
         case SETTINGS_M17:
             _ui_drawSettingsM17(&ui_state);
+            break;
+#endif
+#ifdef CONFIG_APRS
+        // APRS settings screen
+        case SETTINGS_APRS:
+            _ui_drawSettingsAPRS(&ui_state);
             break;
 #endif
         // FM settings screen
