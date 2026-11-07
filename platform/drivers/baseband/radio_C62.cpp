@@ -40,7 +40,7 @@ static constexpr uint8_t M17_AF_RX_GAIN1 = 1; // -6 dB
 static constexpr uint8_t M17_AF_RX_GAIN2 = 0x3f;
 static constexpr uint8_t M17_MIC_GAIN = 0;
 
-static struct C62Calib calData; // TX power calibration
+static struct C62Calib calData; // TX calibration
 
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
@@ -50,6 +50,21 @@ enum {
     GPIO_UHF_TX_PA,
     GPIO_ALC_TX_LED
 };
+
+/**
+ * Get the TX calibration at a frequency, from the band it is in.
+ *
+ * @param freq: TX frequency, in Hz.
+ * @return calibration point at the frequency.
+ */
+static struct C62CalPoint calib_at(const freq_t freq)
+{
+    const struct C62BandCalib *band = &calData.uhf;
+    if (getBandFromFrequency(freq) == BND_VHF)
+        band = &calData.vhf;
+
+    return calibC62_interp(band, freq);
+}
 
 /**
  * Set the TX power control (APC) voltage through the PWM on pin A03. The band
@@ -64,11 +79,7 @@ enum {
  */
 static void set_tx_power(const freq_t freq, const uint32_t power)
 {
-    const struct C62BandCalib *band = &calData.uhf;
-    if (freq < 174000000)
-        band = &calData.vhf;
-
-    struct C62CalPoint cal = calibC62_interp(band, freq);
+    struct C62CalPoint cal = calib_at(freq);
 
     float pwr = static_cast<float>(power) / 1000.0f;
     pwr = std::max(std::min(pwr, 5.0f), 1.0f);
@@ -244,13 +255,17 @@ void radio_updateConfiguration()
 {
     // Set bandwidth, only for analog FM mode
     if (config->opMode == OPMODE_FM) {
+        struct C62CalPoint cal = calib_at(config->txFrequency);
+
         switch (config->bandwidth) {
             case BW_12_5:
                 bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
+                bk4819_setTxDeviation(&c62_bk4819, true, cal.txDevNarrow);
                 break;
 
             case BW_25:
                 bk4819_setBandwidth(&c62_bk4819, BK4819_BW_25);
+                bk4819_setTxDeviation(&c62_bk4819, true, cal.txDevWide);
                 break;
 
             default:
