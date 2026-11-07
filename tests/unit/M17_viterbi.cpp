@@ -83,6 +83,70 @@ TEST_CASE("Viterbi decode recovers punctured convolutional encoding",
     }
 }
 
+/**
+ * Encode the frame number and payload of a stream frame and puncture them, as
+ * the transmitter does.
+ *
+ * @param source: frame number and payload.
+ * @param encoded: coded bits before puncturing.
+ * @param punctured: coded bits after puncturing.
+ */
+static void encodeStream(const array<uint8_t, 18> &source,
+                         array<uint8_t, 37> &encoded,
+                         array<uint8_t, 34> &punctured)
+{
+    M17::ConvolutionalEncoder encoder;
+    encoder.reset();
+    encoder.encode(source.data(), encoded.data(), source.size());
+    encoded[36] = encoder.flush();
+
+    M17::puncture(encoded, punctured, M17::DATA_PUNCTURE);
+}
+
+TEST_CASE("Viterbi decoders read their input through a function",
+          "[m17][viterbi]")
+{
+    static constexpr size_t BITS = 34 * 8;
+
+    array<uint8_t, 18> source;
+    for (size_t i = 0; i < source.size(); i++)
+        source[i] = static_cast<uint8_t>(37 * i + 11);
+
+    array<uint8_t, 37> encoded;
+    array<uint8_t, 34> punctured;
+    encodeStream(source, encoded, punctured);
+    M17::setBit(punctured, 40, !M17::getBit(punctured, 40));
+    M17::setBit(punctured, 200, !M17::getBit(punctured, 200));
+
+    // The coded bits stored in reverse order, read back through a function
+    array<bool, BITS> hardBits;
+    array<uint16_t, BITS> softBits;
+    for (size_t i = 0; i < BITS; i++) {
+        bool bit = M17::getBit(punctured, i);
+        hardBits[BITS - 1 - i] = bit;
+        softBits[BITS - 1 - i] = bit ? 0xFFFF : 0x0000;
+    }
+
+    array<uint8_t, 18> fromArray;
+    array<uint8_t, 18> fromFunction;
+
+    M17::HardViterbi hard;
+    uint16_t arrayErrs = hard.decodePunctured(punctured, fromArray,
+                                              M17::DATA_PUNCTURE);
+    uint16_t functionErrs = hard.decodePunctured<BITS>(
+        [&hardBits](size_t pos) { return hardBits[BITS - 1 - pos]; },
+        fromFunction, M17::DATA_PUNCTURE);
+    REQUIRE(fromFunction == source);
+    REQUIRE(fromArray == source);
+    REQUIRE(functionErrs == arrayErrs);
+
+    M17::SoftViterbi soft;
+    soft.decodePunctured<BITS>(
+        [&softBits](size_t pos) { return softBits[BITS - 1 - pos]; },
+        fromFunction, M17::DATA_PUNCTURE);
+    REQUIRE(fromFunction == source);
+}
+
 TEST_CASE("Viterbi decode starts the trellis in the encoder's start state",
           "[m17][viterbi]")
 {
