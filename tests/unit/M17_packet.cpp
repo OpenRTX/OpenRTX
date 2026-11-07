@@ -14,10 +14,26 @@
 #include "protocols/M17/PacketFrame.hpp"
 #include "protocols/M17/Datatypes.hpp"
 #include "protocols/M17/Constants.hpp"
+#include "protocols/M17/Utils.hpp"
 #include "protocols/M17/LinkSetupFrame.hpp"
 #include "core/crc.h"
 
 using namespace M17;
+
+/**
+ * Soft bits of a frame, every bit fully confident.
+ *
+ * @param frame: frame.
+ * @return the soft bits.
+ */
+static softFrame_t softBits(const frame_t &frame)
+{
+    softFrame_t soft;
+    for (size_t i = 0; i < soft.size(); i++)
+        soft[i] = getBit(frame, i) ? UINT16_MAX : 0;
+
+    return soft;
+}
 
 TEST_CASE("Freshly constructed PacketFrame is zeroed", "[m17][packet]")
 {
@@ -79,7 +95,7 @@ TEST_CASE("Encode then decode round-trip", "[m17][packet]")
     REQUIRE(encoded[1] == PACKET_SYNC_WORD[1]);
 
     // Decode
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -97,7 +113,7 @@ TEST_CASE("Round-trip with all-zeros payload", "[m17][packet]")
     frame_t encoded;
     encoder.encodePacketFrame(frame, encoded);
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -117,7 +133,7 @@ TEST_CASE("Round-trip with sequential byte pattern", "[m17][packet]")
     frame_t encoded;
     encoder.encodePacketFrame(frame, encoded);
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -175,7 +191,7 @@ TEST_CASE("Round-trip with all-0xFF payload", "[m17][packet]")
     frame_t encoded;
     encoder.encodePacketFrame(frame, encoded);
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -194,7 +210,7 @@ TEST_CASE("Round-trip with single non-zero byte", "[m17][packet]")
     frame_t encoded;
     encoder.encodePacketFrame(frame, encoded);
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -214,7 +230,7 @@ TEST_CASE("Decoder distinguishes PACKET from STREAM frame type",
     frame_t pktEncoded;
     encoder.encodePacketFrame(pktFrame, pktEncoded);
 
-    FrameType pktType = decoder.decodeFrame(pktEncoded);
+    FrameType pktType = decoder.decodeFrame(softBits(pktEncoded));
     REQUIRE(pktType == FrameType::PACKET);
 
     // Encode a stream frame and verify it is NOT detected as PACKET
@@ -223,7 +239,7 @@ TEST_CASE("Decoder distinguishes PACKET from STREAM frame type",
     frame_t streamEncoded;
     encoder.encodeStreamFrame(streamPayload, streamEncoded);
 
-    FrameType streamType = decoder.decodeFrame(streamEncoded);
+    FrameType streamType = decoder.decodeFrame(softBits(streamEncoded));
     REQUIRE(streamType == FrameType::STREAM);
     REQUIRE(streamType != FrameType::PACKET);
 }
@@ -236,7 +252,7 @@ TEST_CASE("Decoder identifies EOT frame type", "[m17][packet]")
     frame_t eotFrame;
     encoder.encodeEotFrame(eotFrame);
 
-    FrameType type = decoder.decodeFrame(eotFrame);
+    FrameType type = decoder.decodeFrame(softBits(eotFrame));
     REQUIRE(type == FrameType::EOT);
 }
 
@@ -249,7 +265,7 @@ TEST_CASE("Decoder identifies LSF frame type, not PACKET", "[m17][packet]")
     frame_t lsfEncoded;
     encoder.encodeLsf(lsf, lsfEncoded);
 
-    FrameType type = decoder.decodeFrame(lsfEncoded);
+    FrameType type = decoder.decodeFrame(softBits(lsfEncoded));
     REQUIRE(type == FrameType::LINK_SETUP);
     REQUIRE(type != FrameType::PACKET);
 }
@@ -265,7 +281,7 @@ TEST_CASE("Decoder reset clears previous packet frame data", "[m17][packet]")
         frame[i] = 0xAA;
     frame_t encoded;
     encoder.encodePacketFrame(frame, encoded);
-    decoder.decodeFrame(encoded);
+    decoder.decodeFrame(softBits(encoded));
 
     // Reset should clear internal state
     decoder.reset();
@@ -299,11 +315,11 @@ TEST_CASE("Consecutive encodes with different payloads are independent",
     REQUIRE(encoded1 != encoded2);
 
     // Each should decode back to its own payload
-    decoder.decodeFrame(encoded1);
+    decoder.decodeFrame(softBits(encoded1));
     const PacketFrame &dec1 = decoder.getPacketFrame();
     REQUIRE(memcmp(frame1.data(), dec1.data(), PacketFrame::DATA_SIZE) == 0);
 
-    decoder.decodeFrame(encoded2);
+    decoder.decodeFrame(softBits(encoded2));
     const PacketFrame &dec2 = decoder.getPacketFrame();
     REQUIRE(memcmp(frame2.data(), dec2.data(), PacketFrame::DATA_SIZE) == 0);
 }
@@ -382,7 +398,7 @@ TEST_CASE("EOF and counter round-trip through encode/decode", "[m17][packet]")
     frame_t encoded;
     encoder.encodePacketFrame(frame, encoded);
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -397,7 +413,7 @@ TEST_CASE("EOF and counter round-trip through encode/decode", "[m17][packet]")
     lastFrame.setCounter(12);
 
     encoder.encodePacketFrame(lastFrame, encoded);
-    type = decoder.decodeFrame(encoded);
+    type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decodedLast = decoder.getPacketFrame();
@@ -421,7 +437,7 @@ TEST_CASE("Viterbi recovers payload after single bit flip in encoded frame",
     // Flip one bit in a data byte (bytes 0-1 are the sync word, skip them)
     encoded[10] ^= 0x01;
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -446,7 +462,7 @@ TEST_CASE("Viterbi recovers payload after scattered bit flips in encoded frame",
     encoded[20] ^= 0x40;
     encoded[38] ^= 0x02;
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -486,7 +502,7 @@ TEST_CASE("Reference vector: assemble, encode, decode SMS packet",
 
     // --- Decode and verify every field ---
     FrameDecoder decoder;
-    FrameType type = decoder.decodeFrame(KNOWN_GOOD_FRAME);
+    FrameType type = decoder.decodeFrame(softBits(KNOWN_GOOD_FRAME));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &pf = decoder.getPacketFrame();
