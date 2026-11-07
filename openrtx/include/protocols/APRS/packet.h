@@ -32,6 +32,11 @@ extern "C" {
 #define APRS_MSG_ADDRESSEE_LEN 9
 
 /**
+ * Highest SSID: an AX.25 address holds it in four bits.
+ */
+#define APRS_SSID_MAX 15
+
+/**
  * Position of each address in an AX.25 address field: the destination, the
  * source, then the digipeater path.
  */
@@ -129,6 +134,28 @@ size_t aprsPath_toStr(const struct aprsPacket *pkt, char *out, size_t len);
  */
 int aprsMsg_unwrap(const struct aprsPacket *pkt, char *addressee,
                    size_t addresseeLen, char *text, size_t textLen);
+
+/**
+ * Parse a "CALLSIGN" or "CALLSIGN-SSID" string into an address, upper-casing
+ * the callsign. Lenient, as text received from other stations can be:
+ * "k1abc-07" is K1ABC-7.
+ *
+ * @param str: address text, NUL-terminated.
+ * @param addr: destination address; untouched if the text is not an address.
+ * @return 0 on success, -EINVAL if the text is not an AX.25 address.
+ */
+int aprsAddr_fromStr(const char *str, struct aprsAddress *addr);
+
+/**
+ * Check a callsign the user chooses: one to six upper-case letters or
+ * digits, optionally followed by "-" and an SSID of 0 to 15 without a
+ * leading zero, as APRS writes station addresses. An M17 callsign is not
+ * necessarily one: M17 allows nine characters and '/' and '.'.
+ *
+ * @param str: callsign text, NUL-terminated.
+ * @return 0 if the text is a valid station address, -EINVAL otherwise.
+ */
+int aprsAddr_validate(const char *str);
 
 #ifdef __cplusplus
 }

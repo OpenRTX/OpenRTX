@@ -320,3 +320,73 @@ TEST_CASE("APRS packet: the info field may be as long as AX.25 allows",
         REQUIRE(aprsPkt_fromFrame(frame.data, frame.len, &pkt) == -EINVAL);
     }
 }
+
+TEST_CASE("APRS address: TNC2 text parses back into an address", "[aprs]")
+{
+    struct aprsAddress addr;
+
+    SECTION("callsign without an SSID")
+    {
+        REQUIRE(aprsAddr_fromStr("W1AW", &addr) == 0);
+        REQUIRE(strcmp(addr.addr, "W1AW") == 0);
+        REQUIRE(addr.ssid == 0);
+    }
+
+    SECTION("callsign with an SSID")
+    {
+        REQUIRE(aprsAddr_fromStr("N0CALL-15", &addr) == 0);
+        REQUIRE(strcmp(addr.addr, "N0CALL") == 0);
+        REQUIRE(addr.ssid == 15);
+    }
+
+    SECTION("lower case and a leading zero, as other stations may write")
+    {
+        REQUIRE(aprsAddr_fromStr("n0call-07", &addr) == 0);
+        REQUIRE(strcmp(addr.addr, "N0CALL") == 0);
+        REQUIRE(addr.ssid == 7);
+    }
+
+    SECTION("round trip through the formatter")
+    {
+        char out[APRS_ADDR_STR_LEN];
+        REQUIRE(aprsAddr_fromStr("N0CALL-7", &addr) == 0);
+        REQUIRE(aprsAddr_toStr(&addr, out, sizeof(out)) == 8);
+        REQUIRE(strcmp(out, "N0CALL-7") == 0);
+    }
+
+    SECTION("malformed text is rejected")
+    {
+        REQUIRE(aprsAddr_fromStr("", &addr) == -EINVAL);
+        REQUIRE(aprsAddr_fromStr("-7", &addr) == -EINVAL);
+        REQUIRE(aprsAddr_fromStr("N0CALL-", &addr) == -EINVAL);
+        REQUIRE(aprsAddr_fromStr("N0CALL-16", &addr) == -EINVAL);
+        REQUIRE(aprsAddr_fromStr("N0CALL-x", &addr) == -EINVAL);
+        REQUIRE(aprsAddr_fromStr("TOOLONGCALL", &addr) == -EINVAL);
+        REQUIRE(aprsAddr_fromStr("WITH SPACE", &addr) == -EINVAL);
+    }
+}
+
+TEST_CASE("APRS address: a callsign the user chooses is checked strictly",
+          "[aprs]")
+{
+    SECTION("station addresses as APRS writes them")
+    {
+        CHECK(aprsAddr_validate("W1AW") == 0);
+        CHECK(aprsAddr_validate("N0CALL-7") == 0);
+        CHECK(aprsAddr_validate("ABCDEF-15") == 0);
+        CHECK(aprsAddr_validate("K1ABC-0") == 0);
+    }
+
+    SECTION("anything an AX.25 address cannot carry")
+    {
+        CHECK(aprsAddr_validate("") == -EINVAL);
+        CHECK(aprsAddr_validate("w1aw") == -EINVAL);
+        CHECK(aprsAddr_validate("W1AW/P") == -EINVAL);
+        CHECK(aprsAddr_validate("ABCDEFG") == -EINVAL);
+        CHECK(aprsAddr_validate("N0CALL-") == -EINVAL);
+        CHECK(aprsAddr_validate("N0CALL-07") == -EINVAL);
+        CHECK(aprsAddr_validate("N0CALL-16") == -EINVAL);
+        CHECK(aprsAddr_validate("N0CALL-7X") == -EINVAL);
+        CHECK(aprsAddr_validate("-7") == -EINVAL);
+    }
+}

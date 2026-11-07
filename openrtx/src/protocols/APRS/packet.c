@@ -209,3 +209,104 @@ int aprsMsg_unwrap(const struct aprsPacket *pkt, char *addressee,
 
     return 0;
 }
+
+/*
+ * Upper-case an ASCII letter, leaving anything else as it is.
+ */
+static char upcase(char c)
+{
+    if ((c >= 'a') && (c <= 'z'))
+        return (char)(c - 'a' + 'A');
+
+    return c;
+}
+
+/*
+ * Read a decimal SSID of 0 to APRS_SSID_MAX, leading zeros allowed.
+ *
+ * @return the SSID, or -EINVAL if the text is not one.
+ */
+static int parseSsid(const char *digits)
+{
+    uint32_t ssid = 0;
+
+    if (digits[0] == '\0')
+        return -EINVAL;
+
+    for (size_t j = 0; digits[j] != '\0'; j++) {
+        if ((digits[j] < '0') || (digits[j] > '9'))
+            return -EINVAL;
+
+        ssid = (ssid * 10) + (uint32_t)(digits[j] - '0');
+        if (ssid > APRS_SSID_MAX)
+            return -EINVAL;
+    }
+
+    return (int)ssid;
+}
+
+int aprsAddr_fromStr(const char *str, struct aprsAddress *addr)
+{
+    struct aprsAddress parsed;
+    size_t i = 0;
+
+    memset(&parsed, 0, sizeof(parsed));
+
+    for (; (str[i] != '\0') && (str[i] != '-'); i++) {
+        if (i >= (APRS_ADDR_LEN - 1))
+            return -EINVAL;
+
+        /* Only printable characters survive the shift, and a space would
+         * end the callsign early. */
+        char c = upcase(str[i]);
+        if ((c <= ' ') || (c >= ASCII_DEL))
+            return -EINVAL;
+
+        parsed.addr[i] = c;
+    }
+
+    if (i == 0)
+        return -EINVAL;
+
+    parsed.addr[i] = '\0';
+
+    if (str[i] == '-') {
+        const int ssid = parseSsid(&str[i + 1]);
+        if (ssid < 0)
+            return ssid;
+
+        parsed.ssid = (uint8_t)ssid;
+    }
+
+    *addr = parsed;
+    return 0;
+}
+
+int aprsAddr_validate(const char *str)
+{
+    size_t i = 0;
+
+    for (; (str[i] != '\0') && (str[i] != '-'); i++) {
+        const char c = str[i];
+        const bool alnum = ((c >= 'A') && (c <= 'Z'))
+                        || ((c >= '0') && (c <= '9'));
+
+        if ((i >= (APRS_ADDR_LEN - 1)) || !alnum)
+            return -EINVAL;
+    }
+
+    if (i == 0)
+        return -EINVAL;
+    if (str[i] == '\0')
+        return 0;
+
+    /* No leading zero, as APRS writes them */
+    const char *ssid = &str[i + 1];
+    if ((ssid[0] == '0') && (ssid[1] != '\0'))
+        return -EINVAL;
+
+    if (parseSsid(ssid) < 0)
+        return -EINVAL;
+
+    return 0;
+}
