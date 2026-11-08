@@ -140,7 +140,10 @@ subkeys may be marked with notation `horse-radio@NOTATION-DOMAIN`
 (placeholder until an owner domain is chosen) or listed in
 `$XDG_STATE_HOME/OpenRTX/horse_radio_subkeys.json` (public fingerprints
 only). `openpgp-new-radio-key` requires `--yes` and defaults to a 2-year
-expiry. Command examples and store versions:
+expiry. Extract writes a normal store-v2 identity (Horse passphrase via
+TTY / `--passphrase-fd` / `HORSE_PASSPHRASE`); any OpenPGP key passphrase
+is separate (`HORSE_OPENPGP_PASSPHRASE` into a helper pipe, never argv).
+Secrets move only over pipes. Command examples and store versions:
 [docs/horse/PROVISIONING.md](./docs/horse/PROVISIONING.md).
 
 All libsodium work (X25519, Ed25519, BLAKE2b, XChaCha20, Argon2id) runs
@@ -219,9 +222,13 @@ See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
 the loopback Hamming-0 false-lock table to ten minutes.
 
 Horse tests: Frame, Crypto, Crypto Worker (stack HWM + PTT cancel),
-Info, Codec, Peers, Keystore, Host Interop, Loopback (including late
-entry, three-mode, long-clock), CPS layout vs upstream, Provision Pack.
-FEC binary: `horse_fec_v2_sim` (floors, owner targets, streamloss).
+Info, Codec, Peers, Keystore, Host Interop (OpenPGP extract required
+when the helper is present), Loopback (including late entry, three-mode,
+long-clock), CPS layout vs upstream, Provision Pack, Provision Socket,
+Horse Provision pytest (OpenPGP + store). FEC binary: `horse_fec_v2_sim`
+(floors, owner targets, streamloss). Fixture listings:
+`tests/fixtures/openpgp/`. CI tip and results:
+[docs/horse/TEST_RESULTS.md](./docs/horse/TEST_RESULTS.md).
 
 Sanitizer: `meson setup build_linux_address -Dasan=true` with
 `ASAN_OPTIONS=detect_leaks=0`.

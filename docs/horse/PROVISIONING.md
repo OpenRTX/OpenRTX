@@ -16,7 +16,8 @@ belong on argv in normal use; prefer `--passphrase-fd` or a TTY prompt.
 | [`tools/horse-openpgp/`](../../tools/horse-openpgp/) | Rust sequoia helper (`inspect-cert`, `extract-public`, `extract-secret`) |
 
 Protocol and store formats: [horse.md](../../horse.md). Hardware steps:
-[HARDWARE_TEST_PLAN.md](./HARDWARE_TEST_PLAN.md).
+[HARDWARE_TEST_PLAN.md](./HARDWARE_TEST_PLAN.md). Test snapshot:
+[TEST_RESULTS.md](./TEST_RESULTS.md).
 
 ## Dependencies
 
@@ -31,6 +32,11 @@ If `CARGO_TARGET_DIR` points elsewhere, set `HORSE_OPENPGP_HELPER` to that
 `release/horse-openpgp` path. Lookup order: `HORSE_OPENPGP_HELPER`, then
 `tools/horse-openpgp/target/release/horse-openpgp`, then `PATH`.
 
+CI builds the helper with `cargo test` / `cargo build --release --locked`,
+caches cargo by lockfile **and** helper sources, and deletes the release
+binary before rebuild so a restored `target/` cannot skip an outdated
+link.
+
 ## Identity store
 
 Files live under `$XDG_STATE_HOME/OpenRTX/` (or `~/.local/state/OpenRTX/`):
@@ -39,8 +45,21 @@ Files live under `$XDG_STATE_HOME/OpenRTX/` (or `~/.local/state/OpenRTX/`):
 - Store **version 2**: Argon2id + XChaCha20-Poly1305 (Horse passphrase)
 - Store **version 3**: packed identity encrypted to an OpenPGP recipient
   (decrypt via gpg/sq agent; no Horse passphrase on unwrap)
+- `horse_radio_subkeys.json`: public radio-subkey fingerprints only
+  (allowlist used when notation is absent)
 
 Passphrase length: 8 to 32 bytes inclusive.
+
+## Environment
+
+| Variable | Role |
+|----------|------|
+| `HORSE_PASSPHRASE` | Horse store passphrase (tests / automation only) |
+| `HORSE_OPENPGP_PASSPHRASE` | OpenPGP key passphrase for gpg loopback and the helper `--passphrase-fd` pipe (empty for unprotected throwaway keys) |
+| `HORSE_OPENPGP_HELPER` | Absolute path to the `horse-openpgp` binary |
+| `HORSE_REQUIRE_CRYPTO=1` | Fail (do not skip) when gpg/sq/helper are missing |
+| `OPENRTX_HORSE_PROV_SOCK` | Override Linux emulator provision socket path |
+| `GNUPGHOME` | Isolated gpg home (pytest / local throwaway keys) |
 
 ## Common commands
 
@@ -75,6 +94,8 @@ Notation domain is still a placeholder (`horse-radio@NOTATION-DOMAIN`).
 Until a real domain is chosen, subkeys may be recorded in
 `$XDG_STATE_HOME/OpenRTX/horse_radio_subkeys.json` (public fingerprints
 only). Peers need those fingerprints out of band when notation is absent.
+`--allow-unmarked` selects the first usable signing and encryption
+subkeys by key flags without requiring notation or the allowlist.
 
 ```bash
 # Plan only unless --yes (edits the keyring). Default subkey expiry: 2y
@@ -83,9 +104,13 @@ python3 scripts/horse_provision.py openpgp-new-radio-key \
 python3 scripts/horse_provision.py openpgp-new-radio-key \
   --gpg <PRIMARY_FPR> --expire 2y --yes
 
-# Extract radio subkeys into a normal Horse v2 identity file
-python3 scripts/horse_provision.py openpgp-extract-identity fromgpg \
-  --gpg <PRIMARY_FPR> --allow-unmarked
+# Extract radio subkeys into a Horse v2 identity file (needs Horse
+# passphrase for the Argon2id wrap; OpenPGP passphrase is separate)
+python3 scripts/horse_provision.py --passphrase-fd 0 \
+  openpgp-extract-identity fromgpg \
+  --gpg <PRIMARY_FPR> --allow-unmarked --force <<'EOF'
+horsestore-pass
+EOF
 
 # Import a peer certificate (file / gpg / sq) into the peer table
 python3 scripts/horse_provision.py openpgp-import-peer 3 \
@@ -99,13 +124,23 @@ python3 scripts/horse_provision.py openpgp-wrap myradio \
 python3 scripts/horse_provision.py openpgp-export --gpg <FPR> -o cert.asc
 ```
 
+`openpgp-extract-identity` exports secret material over pipes only
+(`gpg --export-secret-keys`, with a subkeys export retry). Card stubs
+and token-held subkeys are refused before extract (gpg colon field 15
+on `ssb` lines must be `+`; primary may be offline).
+
 Helper CLI (JSON on stdout; errors on stderr; no secrets in errors):
 
 ```bash
 horse-openpgp inspect-cert < cert.pgp
 horse-openpgp extract-public [--allow-unmarked] [--allowlist path] < cert.pgp
-horse-openpgp extract-secret --passphrase-fd N [--allow-unmarked] < secret.pgp
+horse-openpgp extract-secret --passphrase-fd N [--allow-unmarked] \
+  [--allowlist path] < secret.pgp
 ```
+
+Under `--allow-unmarked`, the helper retries sequoia `StandardPolicy` at
+skewed reference times and falls back to `NullPolicy` so freshly minted
+gpg keys are usable in CI; subkeys are still selected by key flags.
 
 ## Safety
 

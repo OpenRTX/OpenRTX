@@ -516,7 +516,10 @@ session-keyed voice MAC (C1).
   card serial) on **ssb subkeys only** (primary may be offline/token);
   see `horse_openpgp.py`. Extraction is `tools/horse-openpgp`
   (sequoia), not pysequoia. Store version 3 is OpenPGP-wrapped packed
-  identity (pipes only).
+  identity (pipes only). `--allow-unmarked` retries StandardPolicy
+  times then NullPolicy so fresh gpg keys do not flake CI; host interop
+  fails closed if extract fails when the helper is present. Usage:
+  `PROVISIONING.md`; CI tip: `TEST_RESULTS.md`.
 - MDx `data[1024]` overlay vs 128 KB sector 11: likely pre-existing;
   passphrase makes blocks larger.
 - `horse_identity_store_t` is not packed: Linux vs ARM padding if both
