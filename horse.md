@@ -140,7 +140,8 @@ subkeys may be marked with notation `horse-radio@NOTATION-DOMAIN`
 (placeholder until an owner domain is chosen) or listed in
 `$XDG_STATE_HOME/OpenRTX/horse_radio_subkeys.json` (public fingerprints
 only). `openpgp-new-radio-key` requires `--yes` and defaults to a 2-year
-expiry.
+expiry. Command examples and store versions:
+[docs/horse/PROVISIONING.md](./docs/horse/PROVISIONING.md).
 
 All libsodium work (X25519, Ed25519, BLAKE2b, XChaCha20, Argon2id) runs
 on a dedicated 16 KiB worker thread. RTX posts a job under a mutex,

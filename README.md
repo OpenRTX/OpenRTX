@@ -54,9 +54,12 @@ The `Supermagnum/OpenRTX` fork adds a small number of **experimental** features 
 
 - An encrypted digital voice mode called **Horse**, implemented for the TYT MD-3x0 family and integrated as an additional operating mode alongside M17. The implementation lives primarily under `openrtx/include/protocols/horse/` and `openrtx/src/protocols/horse/`, with runtime wiring in `openrtx/src/rtx/OpMode_Horse.cpp` and unit tests in `tests/unit/horse_frame.cpp` and `tests/unit/horse_crypto.cpp`.
 - Horse supports **encrypted** (XChaCha20 + X25519 ECDH), **signed** (Ed25519 session signature + per-frame auth), and **combined** modes, selectable per channel via codeplug `encrypt_en` / `sign_en` flags.
-- Key provisioning tool `scripts/horse_provision.py` generates Ed25519/X25519 identities and provisions them to radios over USB serial (`--port`) or the Linux emulator Unix socket (`--sock`, default `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` mode 0600; see `horse.md`). Optional OpenPGP import uses `tools/horse-openpgp`.
-- For protocol, modulation, cryptography and key-handling details see the dedicated [horse documentation](./horse.md).
-- Audit, design notes, device matrix, DSP UB, and PR text live under [docs/horse/](./docs/horse/) (including [DEVICE_SUPPORT.md](./docs/horse/DEVICE_SUPPORT.md)).
+- **Provisioning tools** (usage: [docs/horse/PROVISIONING.md](./docs/horse/PROVISIONING.md)):
+  - [`scripts/horse_provision.py`](./scripts/horse_provision.py) — generate / show / provision identities over USB (`--port`) or the Linux emulator Unix socket (`--sock`, default `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` mode 0600), plus OpenPGP import/export commands.
+  - [`scripts/horse_openpgp.py`](./scripts/horse_openpgp.py) — OpenPGP helpers used by the provision tool (pipes only; no secret temp files).
+  - [`tools/horse-openpgp/`](./tools/horse-openpgp/) — Rust sequoia helper for certificate inspect and subkey extract (`HORSE_OPENPGP_HELPER`).
+- Protocol, modulation, cryptography and key-handling details: [horse.md](./horse.md).
+- Docs under [docs/horse/](./docs/horse/): [PROVISIONING.md](./docs/horse/PROVISIONING.md), [DEVICE_SUPPORT.md](./docs/horse/DEVICE_SUPPORT.md), [TEST_RESULTS.md](./docs/horse/TEST_RESULTS.md), [HARDWARE_TEST_PLAN.md](./docs/horse/HARDWARE_TEST_PLAN.md), [HORSE_AUDIT.md](./docs/horse/HORSE_AUDIT.md).
 - Horse libFuzzer targets (`fuzz_horse_frame`, `fuzz_horse_voice`): see [FUZZING.md](./FUZZING.md); build with `-Dfuzzing=true` (requires clang).
 
 These features are intended for experimentation and research only and may change or be removed without notice.
