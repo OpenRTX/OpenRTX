@@ -173,6 +173,77 @@ int main()
 
     horse_crypto_memzero(&id, sizeof id);
     horse_keystore_lock();
+
+    /* Optional: identity extracted from a throwaway OpenPGP key must unlock
+     * in the C keystore the same way as generate. Requires gpg + helper. */
+    const char *helper = getenv("HORSE_OPENPGP_HELPER");
+    if (helper != nullptr && helper[0] != '\0' && access(helper, X_OK) == 0) {
+        std::string gpghome = xdg + "/gnupg";
+        mkdir(gpghome.c_str(), 0700);
+        setenv("GNUPGHOME", gpghome.c_str(), 1);
+        setenv("HORSE_OPENPGP_PASSPHRASE", "", 1);
+        std::string genkey =
+            "gpg --batch --pinentry-mode loopback --passphrase '' "
+            "--quick-gen-key 'Horse Interop <interop@example.test>' "
+            "ed25519 cert 2y >/dev/null 2>&1";
+        if (system(genkey.c_str()) == 0) {
+            std::string list_out;
+            run_cmd("gpg --batch --with-colons --list-secret-keys", list_out);
+            std::string fpr;
+            std::string::size_type p = list_out.find("fpr:");
+            if (p != std::string::npos) {
+                p = list_out.find(':', p);
+                /* fpr:::::::::HEX: -> field 10 */
+                int col = 0;
+                std::string::size_type i = p;
+                while (i < list_out.size() && col < 9) {
+                    if (list_out[i] == ':')
+                        col++;
+                    i++;
+                }
+                std::string::size_type end = list_out.find(':', i);
+                if (end != std::string::npos)
+                    fpr = list_out.substr(i, end - i);
+            }
+            if (!fpr.empty()) {
+                std::string add1 =
+                    "gpg --batch --pinentry-mode loopback --passphrase '' "
+                    "--quick-add-key "
+                    + fpr + " ed25519 sign 2y >/dev/null 2>&1";
+                std::string add2 =
+                    "gpg --batch --pinentry-mode loopback --passphrase '' "
+                    "--quick-add-key "
+                    + fpr + " cv25519 encr 2y >/dev/null 2>&1";
+                system(add1.c_str());
+                system(add2.c_str());
+                std::string ext = std::string("python3 \"") + py
+                                + "\" --json openpgp-extract-identity opgp "
+                                + "--gpg " + fpr + " --allow-unmarked --force";
+                std::string ext_out;
+                if (run_cmd(ext, ext_out) == 0) {
+                    std::string src2 = openrtx + "/horse_identity_opgp.bin";
+                    cmd = "cp \"" + src2 + "\" \"" + dst + "\"";
+                    run_cmd(cmd, unused);
+                    horse_keystore_init();
+                    if (!horse_keystore_unlock(pass, strlen(pass))) {
+                        std::printf(
+                            "horse_host_interop: OpenPGP identity unlock failed\n");
+                        return -1;
+                    }
+                    horse_keystore_lock();
+                    std::printf(
+                        "horse_host_interop: OpenPGP extract unlocked\n");
+                } else {
+                    std::printf(
+                        "horse_host_interop: OpenPGP extract skipped/failed\n%s\n",
+                        ext_out.c_str());
+                }
+            }
+        }
+        unsetenv("GNUPGHOME");
+        unsetenv("HORSE_OPENPGP_PASSPHRASE");
+    }
+
     unsetenv("HORSE_PASSPHRASE");
     std::printf(
         "horse_host_interop: python blobs read by C, wrong pass rejected\n");

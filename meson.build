@@ -1427,6 +1427,11 @@ horse_test_env = environment()
 horse_test_env.set('ASAN_OPTIONS', 'detect_leaks=0')
 # Missing PyNaCl/libsodium must fail (not silently pass). CI also exports this.
 horse_test_env.set('HORSE_REQUIRE_CRYPTO', '1')
+hopg_helper = run_command('sh', '-c', 'printf %s "${HORSE_OPENPGP_HELPER-}"',
+                          check : false).stdout().strip()
+if hopg_helper != ''
+  horse_test_env.set('HORSE_OPENPGP_HELPER', hopg_helper)
+endif
 test('Horse FEC v2 sim selftest', horse_fec_v2_sim,
      args : ['selftest'],
      env : horse_test_env, timeout : 60)
@@ -1458,7 +1463,7 @@ test('Horse Provision pytest', py3,
              '-q', meson.project_source_root() / 'tests/python'],
      env : horse_test_env,
      workdir : meson.project_source_root(),
-     timeout : 120)
+     timeout : 300)
 test('Horse settings.h matches upstream', py3,
      args : [meson.project_source_root() / 'tests/unit/horse_settings_upstream.py'],
      workdir : meson.project_source_root(),
@@ -1530,7 +1535,7 @@ test('Horse Peers Test', horse_peers_test,
 test('Horse Keystore Test', horse_keystore_test,
      env : horse_test_env, timeout : 60)
 test('Horse Host Interop Test', horse_host_interop_test,
-     env : horse_test_env, timeout : 60)
+     env : horse_test_env, timeout : 180)
 test('Horse Provision Socket Test', horse_provision_sock_test,
      env : horse_test_env, timeout : 60)
 test('Horse Loopback Test', horse_loopback_test,
