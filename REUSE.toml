@@ -49,6 +49,10 @@ path = [
     "tests/fuzz/dict/**/*",
     "tests/unit/horse_fec_v2_*.txt",
     "tests/python/**/*",
+    "tests/fixtures/openpgp/**/*",
+    "tools/horse-openpgp/Cargo.lock",
+    "tools/horse-openpgp/Cargo.toml",
+    "tools/horse-openpgp/.gitignore",
 ]
 SPDX-License-Identifier = "GPL-3.0-or-later"
 SPDX-FileCopyrightText = "OpenRTX Contributors"
