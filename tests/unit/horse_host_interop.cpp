@@ -236,8 +236,7 @@ int main()
                     return -1;
                 }
                 horse_keystore_lock();
-                std::printf(
-                    "horse_host_interop: OpenPGP extract unlocked\n");
+                std::printf("horse_host_interop: OpenPGP extract unlocked\n");
             }
         }
         unsetenv("GNUPGHOME");
