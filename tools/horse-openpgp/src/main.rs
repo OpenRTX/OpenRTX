@@ -20,7 +20,7 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::os::fd::FromRawFd;
 use std::path::PathBuf;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use x25519_dalek::{PublicKey as X25519Public, StaticSecret};
 use zeroize::{Zeroize, Zeroizing};
 
@@ -269,12 +269,17 @@ fn notations_from_sig(sig: &sequoia_openpgp::packet::Signature) -> Vec<(String, 
     out
 }
 
+/// Reference time for policy checks. A few seconds ahead absorbs gpg
+/// second-rounding so freshly minted keys are not "not yet valid".
+fn policy_time() -> SystemTime {
+    SystemTime::now() + Duration::from_secs(30)
+}
+
 fn inspect(allowlist: Option<PathBuf>) -> Result<()> {
     let allow = load_allowlist(&allowlist)?;
     let cert = Cert::from_bytes(&read_stdin()?).context("parse certificate")?;
     let policy = &StandardPolicy::new();
-    let now = SystemTime::now();
-    let vc = cert.with_policy(policy, Some(now))?;
+    let vc = cert.with_policy(policy, Some(policy_time()))?;
 
     let mut subkeys = Vec::new();
     for ka in vc.keys().subkeys() {
@@ -341,7 +346,7 @@ fn extract_public(allow_unmarked: bool, allowlist: Option<PathBuf>) -> Result<()
     let allow = load_allowlist(&allowlist)?;
     let cert = Cert::from_bytes(&read_stdin()?).context("parse certificate")?;
     let policy = &StandardPolicy::new();
-    let vc = cert.with_policy(policy, Some(SystemTime::now()))?;
+    let vc = cert.with_policy(policy, Some(policy_time()))?;
     let (sign_fpr, enc_fpr) = pick_fps(&vc, &allow, allow_unmarked)?;
 
     let mut ed_pk = [0u8; 32];
@@ -441,7 +446,7 @@ fn extract_secret(
     let password = Password::from(pass_bytes.to_vec());
     let cert = Cert::from_bytes(&read_stdin()?).context("parse secret key")?;
     let policy = &StandardPolicy::new();
-    let vc = cert.with_policy(policy, Some(SystemTime::now()))?;
+    let vc = cert.with_policy(policy, Some(policy_time()))?;
     let (sign_fpr, enc_fpr) = pick_fps(&vc, &allow, allow_unmarked)?;
 
     let mut ed_seed = [0u8; 32];

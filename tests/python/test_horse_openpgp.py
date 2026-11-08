@@ -240,11 +240,16 @@ def test_openpgp_extract_identity_cli(gnupg_home, helper_path, monkeypatch,
     monkeypatch.setenv("HORSE_PASSPHRASE", "pytest-pass-ok")
     monkeypatch.setenv("HORSE_OPENPGP_HELPER", helper_path)
     monkeypatch.setenv("HORSE_OPENPGP_PASSPHRASE", "")
-    rc = hp.main([
-        "--json", "openpgp-extract-identity", "fromgpg",
-        "--gpg", fpr, "--allow-unmarked", "--force",
-    ])
-    assert rc == 0
+    import io
+    from contextlib import redirect_stderr
+
+    err = io.StringIO()
+    with redirect_stderr(err):
+        rc = hp.main([
+            "--json", "openpgp-extract-identity", "fromgpg",
+            "--gpg", fpr, "--allow-unmarked", "--force",
+        ])
+    assert rc == 0, err.getvalue()
     path = hp.identity_path("fromgpg")
     assert path.is_file()
     # Public-only: secrets must not appear in a second show JSON via stdout

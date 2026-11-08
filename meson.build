@@ -1549,4 +1549,5 @@ test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('Audio Codec Test',     audio_codec_test)
-test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
+# Coverage + parallel FEC load can push this well past 40 s on GHA runners.
+test('M17 Baseband Replay Test', m17_replay_test, timeout : 300)

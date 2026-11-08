@@ -60,6 +60,16 @@ def _run(cmd, input_bytes=None, check=True, env=None, pass_fds=()):
     return proc
 
 
+def _gpg_cmd(*args):
+    """gpg with non-interactive pinentry (unprotected / HORSE_OPENPGP_PASSPHRASE)."""
+    passwd = os.environ.get("HORSE_OPENPGP_PASSPHRASE", "")
+    return [
+        "gpg", "--batch", "--yes",
+        "--pinentry-mode", "loopback",
+        "--passphrase", passwd,
+    ] + list(args)
+
+
 def _state_dir():
     env = os.environ.get("XDG_STATE_HOME")
     if env:
@@ -221,25 +231,24 @@ def cmd_openpgp_new_radio_key(args, json_mode):
 
         # --cert-notation applies to binding signatures from --quick-add-key
         # (verified on GnuPG 2.4.4: hashed subpkt 20 present).
-        before = _run([
-            "gpg", "--batch", "--with-colons", "--list-keys", fpr,
-        ]).stdout.decode("utf-8", errors="replace")
+        before = _run(_gpg_cmd(
+            "--with-colons", "--list-keys", fpr,
+        )).stdout.decode("utf-8", errors="replace")
         before_fps = set()
         for line in before.splitlines():
             if line.startswith("fpr:"):
                 before_fps.add(line.split(":")[9])
 
         for algo, usage in (("ed25519", "sign"), ("cv25519", "encr")):
-            _run([
-                "gpg", "--batch", "--yes",
+            _run(_gpg_cmd(
                 "--cert-notation",
                 "%s=%s" % (HORSE_RADIO_NOTATION, HORSE_RADIO_NOTATION_VALUE),
                 "--quick-add-key", fpr, algo, usage, expire,
-            ])
+            ))
 
-        after = _run([
-            "gpg", "--batch", "--with-colons", "--list-keys", fpr,
-        ]).stdout.decode("utf-8", errors="replace")
+        after = _run(_gpg_cmd(
+            "--with-colons", "--list-keys", fpr,
+        )).stdout.decode("utf-8", errors="replace")
         new_fps = []
         for line in after.splitlines():
             if line.startswith("fpr:"):
@@ -359,14 +368,12 @@ def cmd_openpgp_extract_identity(args, json_mode, passphrase,
     if args.gpg:
         if not shutil.which("gpg"):
             raise RuntimeError("gpg not found")
-        listing = _run([
-            "gpg", "--batch", "--with-colons", "--with-secret",
-            "--list-secret-keys", keyid,
-        ]).stdout.decode("utf-8", errors="replace")
+        listing = _run(_gpg_cmd(
+            "--with-colons", "--with-secret", "--list-secret-keys", keyid,
+        )).stdout.decode("utf-8", errors="replace")
         reject_subkey_stub_or_card(listing)
-        secret = _run([
-            "gpg", "--batch", "--export-secret-subkeys", keyid,
-        ]).stdout
+        # Full secret export keeps binding signatures that sequoia needs.
+        secret = _run(_gpg_cmd("--export-secret-keys", keyid)).stdout
     else:
         if not shutil.which("sq"):
             raise RuntimeError("sq not found")
