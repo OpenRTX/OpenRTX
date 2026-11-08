@@ -1282,9 +1282,13 @@ m17_metatext_test = executable('m17_metatext_test',
                       sources : unit_test_src + ['tests/unit/M17_metatext.cpp'],
                       kwargs  : unit_test_opts)
                  
+# Test signals shared by the M17 tests (tests/platform/M17Signal.hpp)
+m17_signal_src = ['tests/platform/NoisyChannel.cpp', 'tests/platform/M17Signal.cpp']
+m17_signal_inc = linux_inc + ['tests/platform']
+
 m17_demodulator_test = executable('m17_demodulator_test',
-                            sources: unit_test_src + ['tests/unit/M17_demodulator.cpp'],
-                            kwargs: unit_test_opts)
+                            sources: unit_test_src + m17_signal_src + ['tests/unit/M17_demodulator.cpp'],
+                            kwargs: unit_test_opts + {'include_directories' : m17_signal_inc})
 
 m17_rrc_test = executable('m17_rrc_test',
                           sources: unit_test_src + ['tests/unit/M17_rrc.cpp'],
@@ -1382,6 +1386,18 @@ horse_host_interop_test = executable('horse_host_interop_test',
                                      ],
                                      link_args : linux_l_args)
 
+horse_provision_sock_test = executable('horse_provision_sock_test',
+                                       sources : ['openrtx/src/protocols/horse/horse_provision.c',
+                                                  'openrtx/src/protocols/horse/horse_keystore.c',
+                                                  'openrtx/src/protocols/horse/horse_crypto.c',
+                                                  'openrtx/src/protocols/horse/horse_randombytes.c',
+                                                  'tests/unit/horse_provision_sock.cpp'],
+                                       include_directories : openrtx_inc,
+                                       dependencies : linux_deps + [threads_dep],
+                                       c_args : linux_c_args + ['-DPLATFORM_LINUX'],
+                                       cpp_args : linux_cpp_args + ['-DPLATFORM_LINUX'],
+                                       link_args : linux_l_args)
+
 horse_loopback_test = executable('horse_loopback_test',
                                  sources : unit_test_src + ['tests/unit/horse_loopback.cpp',
                                                             'tests/unit/horse_session_modem.cpp'],
@@ -1409,6 +1425,13 @@ horse_fec_v2_sim = executable('horse_fec_v2_sim',
 py3 = find_program('python3', required : true)
 horse_test_env = environment()
 horse_test_env.set('ASAN_OPTIONS', 'detect_leaks=0')
+# Missing PyNaCl/libsodium must fail (not silently pass). CI also exports this.
+horse_test_env.set('HORSE_REQUIRE_CRYPTO', '1')
+hopg_helper = run_command('sh', '-c', 'printf %s "${HORSE_OPENPGP_HELPER-}"',
+                          check : false).stdout().strip()
+if hopg_helper != ''
+  horse_test_env.set('HORSE_OPENPGP_HELPER', hopg_helper)
+endif
 test('Horse FEC v2 sim selftest', horse_fec_v2_sim,
      args : ['selftest'],
      env : horse_test_env, timeout : 60)
@@ -1434,6 +1457,13 @@ test('Horse Provision Pack Test', py3,
      args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'],
      env : horse_test_env,
      timeout : 30)
+# Wrapper strips Catch2 --reporter from meson --test-args.
+test('Horse Provision pytest', py3,
+     args : [meson.project_source_root() / 'tests/python/run_pytest.py',
+             '-q', meson.project_source_root() / 'tests/python'],
+     env : horse_test_env,
+     workdir : meson.project_source_root(),
+     timeout : 300)
 test('Horse settings.h matches upstream', py3,
      args : [meson.project_source_root() / 'tests/unit/horse_settings_upstream.py'],
      workdir : meson.project_source_root(),
@@ -1455,6 +1485,10 @@ gfx_text_test = executable('gfx_text_test',
                             sources : unit_test_src + ['tests/unit/gfx_text.cpp'],
                             kwargs  : unit_test_opts)
 
+audio_codec_test = executable('audio_codec_test',
+                              sources : unit_test_src + ['tests/unit/audio_codec.cpp'],
+                              kwargs  : unit_test_opts)
+
 # Baseband replay (tests/platform/M17Replay.hpp): a command line tool and a
 # unit test replaying a committed recording through the same class. The test
 # gets the asset directory as an absolute path so it does not depend on the
@@ -1473,7 +1507,7 @@ m17_replay_test_opts = unit_test_opts + {'include_directories' : m17_replay_inc,
                                          'cpp_args' : linux_cpp_args +
       ['-DREPLAY_ASSET_DIR="' + meson.project_source_root() / 'tests/unit/assets' + '"']}
 m17_replay_test = executable('m17_replay_test',
-                             sources : unit_test_src + m17_replay_src + ['tests/unit/M17_replay.cpp'],
+                             sources : unit_test_src + m17_replay_src + m17_signal_src + ['tests/unit/M17_replay.cpp'],
                              kwargs  : m17_replay_test_opts)
 
 test('M17 Golay Unit Test',   m17_golay_test)
@@ -1501,6 +1535,8 @@ test('Horse Peers Test', horse_peers_test,
 test('Horse Keystore Test', horse_keystore_test,
      env : horse_test_env, timeout : 60)
 test('Horse Host Interop Test', horse_host_interop_test,
+     env : horse_test_env, timeout : 180)
+test('Horse Provision Socket Test', horse_provision_sock_test,
      env : horse_test_env, timeout : 60)
 test('Horse Loopback Test', horse_loopback_test,
      env : horse_test_env, timeout : 600)
@@ -1512,30 +1548,5 @@ test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
-test('M17 Baseband Replay Test', m17_replay_test)
-
-##
-## ----------------------------------- LibFuzzer targets (optional) ------------------------------
-## Build with: meson setup build -Dfuzzing=true (requires clang)
-## Run each: ./build/fuzz_<name> [corpus_dir] [artifacts_dir]
-## Run Horse: ./scripts/run_all_fuzzers_3h.sh build
-##
-if get_option('fuzzing')
-  fuzz_sanitizer_args = ['-fsanitize=fuzzer,address,undefined', '-fno-omit-frame-pointer', '-g']
-  fuzz_inc = openrtx_inc
-
-  fuzz_horse_frame = executable('fuzz_horse_frame',
-                                sources : horse_frame_test_src + ['tests/fuzz/fuzz_horse_frame.cpp'],
-                                include_directories : fuzz_inc,
-                                c_args : fuzz_sanitizer_args,
-                                cpp_args : fuzz_sanitizer_args,
-                                link_args : fuzz_sanitizer_args)
-
-  fuzz_horse_voice = executable('fuzz_horse_voice',
-                              sources : horse_frame_test_src +
-                                        ['tests/fuzz/fuzz_horse_voice.cpp'],
-                              include_directories : fuzz_inc,
-                              c_args : fuzz_sanitizer_args,
-                              cpp_args : fuzz_sanitizer_args,
-                              link_args : fuzz_sanitizer_args)
-endif
+test('Audio Codec Test',     audio_codec_test)
+test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage

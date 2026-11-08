@@ -121,7 +121,26 @@ chosen keypad-feasible floor, not a high-entropy policy.
 Passphrase is RAM-only. Linux files are
 `$XDG_STATE_HOME/OpenRTX/horse_identity.bin` mode 0600. Peer public keys
 are a sidecar table (`horse_peer_t`, 64 slots), not `contact_t`.
-`horse_provision.py` writes both formats.
+`horse_provision.py` writes both formats. Store version 2 is
+Argon2id+XChaCha20; store version 3 is the same packed identity
+encrypted to an OpenPGP recipient (decrypt via gpg/sq agent, pipes
+only). Identity fingerprint is
+BLAKE2b-256 keyed `"HORSE-IDFP"` over `ed25519_pk || x25519_pk` (public
+keys only); CONFIRM must match. Linux emulator provisioning uses a Unix
+stream socket under `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` (mode
+0600; or a per-user state dir fallback), overridable with
+`OPENRTX_HORSE_PROV_SOCK` — not a FIFO and not a fixed path in `/tmp`.
+Passphrase via TTY, `--passphrase-fd`, or `HORSE_PASSPHRASE` (tests) —
+not argv.
+
+Optional OpenPGP import uses `tools/horse-openpgp` (sequoia-openpgp):
+locate via `HORSE_OPENPGP_HELPER`, then
+`tools/horse-openpgp/target/release/horse-openpgp`, then `PATH`. Radio
+subkeys may be marked with notation `horse-radio@NOTATION-DOMAIN`
+(placeholder until an owner domain is chosen) or listed in
+`$XDG_STATE_HOME/OpenRTX/horse_radio_subkeys.json` (public fingerprints
+only). `openpgp-new-radio-key` requires `--yes` and defaults to a 2-year
+expiry.
 
 All libsodium work (X25519, Ed25519, BLAKE2b, XChaCha20, Argon2id) runs
 on a dedicated 16 KiB worker thread. RTX posts a job under a mutex,
@@ -163,13 +182,20 @@ Limits:
 - False LSF/voice locks on open FM are expected at the measured rate.
   They are harmless: no audio without a valid tag and LSF CRC.
 - Gain 2.0 fails in the impairment test because the samples clip.
-- C13 C5000 TX enable is implemented and untested on hardware.
+- C13: OpMode calls `radio_enableTx()` and MD-3x0 has an
+  `OPMODE_HORSE` C5000 `LINE_IN` case; still **untested on hardware**.
+- C21: Horse uses 12.5 kHz / mod factor `0x1E` while M17 uses 25 kHz /
+  `0x3C` "for proper deviation". Do not treat either as measured.
+- VHF-only MD-3x0: Horse TX is refused (`HORSE_ERR_VHF` / `Horse: VHF
+  TX`); RX is unaffected. Matches upstream M17 TX support. Untested
+  on hardware.
 - MD-3x0 flash, RTX stack, libsodium, Argon2 heap, and C5000 keying:
   see the unverified list in `docs/horse/PR_DESCRIPTION.md`. Host
   decoder BSS is 8872 B; fragment soft accumulator is int16.
 
 Normative FEC, gates, and measured stack: `docs/horse/HORSE_FEC_V2.md`.
-Audit: `docs/horse/HORSE_AUDIT.md`.
+Audit: `docs/horse/HORSE_AUDIT.md`. Device matrix:
+`docs/horse/DEVICE_SUPPORT.md`.
 
 ---
 

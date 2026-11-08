@@ -186,6 +186,14 @@ bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
                       bool have_ed25519_peer);
 
 /*
+ * Upstream marks M17 TX unsupported on VHF-only MD-380/390/RT3. Horse
+ * shares that RF path. Refuse TX when the device is VHF-capable and not
+ * UHF-capable. Dual-band (including the Linux emulator) is allowed.
+ * Untested on hardware.
+ */
+bool horse_tx_vhf_refused(uint8_t vhf_band, uint8_t uhf_band);
+
+/*
  * Voice audio requires a valid ECDH session (k_tag) in every mode.
  * Signed LSF also requires a verified session signature.
  * Channel encrypt_en/sign_en must match the LSF flags (legacy both-clear

@@ -91,3 +91,8 @@ scripts/get_demod_log
 
 # OpenRTX Codeplugs
 *.rtxc
+__pycache__/
+
+# Local caches (cargo target for horse-openpgp, etc.)
+.cache/
+tools/horse-openpgp/target/

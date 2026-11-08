@@ -567,6 +567,16 @@ void OpMode_Horse::txState(rtxStatus_t *const status)
             && horse_peer_read(state.channel.horse.contact_index, &txPeer))
             have_peer = true;
 
+        /* Untested on hardware: VHF-only MD-3x0 has no M17 TX upstream. */
+        {
+            const hwInfo_t *hw = platform_getHwInfo();
+            if (horse_tx_vhf_refused(hw->vhf_band, hw->uhf_band)) {
+                status->horseError = HORSE_ERR_VHF;
+                abortTx(status, false);
+                return;
+            }
+        }
+
         const bool have_id = horse_keystore_copy_identity(&txId);
         if (!horse_tx_allowed(want_encrypt, want_sign, horse_crypto_available(),
                               have_id,

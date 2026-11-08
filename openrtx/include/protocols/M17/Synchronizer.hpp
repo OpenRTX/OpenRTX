@@ -26,12 +26,25 @@ public:
      * @param sync_word: symbols of the target syncword.
      */
     Synchronizer(std::array< int8_t, SYNCW_SIZE >&& sync_word) :
-        syncword(std::move(sync_word)), triggered(false) { }
+        syncword(std::move(sync_word))
+    {
+        reset();
+    }
 
     /**
      * Destructor.
      */
     ~Synchronizer() { }
+
+    /**
+     * Clear the correlation history and the last sampling index.
+     */
+    void reset()
+    {
+        values.fill(0);
+        triggered = false;
+        sampIndex = 0;
+    }
 
     /**
      * Perform an update step of the syncronizer.

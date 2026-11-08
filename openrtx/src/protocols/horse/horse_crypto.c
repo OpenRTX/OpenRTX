@@ -366,6 +366,8 @@ bool horse_crypto_decrypt_identity(const uint8_t *blob, size_t blob_len,
 bool horse_crypto_identity_fingerprint(const horse_identity_keys_t *identity,
                                        uint8_t fp_out[32])
 {
+    uint8_t pub[HORSE_ED25519_PUBLICKEY_BYTES + HORSE_X25519_PUBLICKEY_BYTES];
+
     if (identity == NULL || fp_out == NULL)
         return false;
 
@@ -373,8 +375,11 @@ bool horse_crypto_identity_fingerprint(const horse_identity_keys_t *identity,
     if (horse_sodium_init() != 0)
         return false;
 
-    crypto_generichash(fp_out, 32, (const unsigned char *)identity,
-                       sizeof(horse_identity_keys_t),
+    /* Public keys only: never hash secret material into CONFIRM. */
+    memcpy(pub, identity->ed25519_pk, HORSE_ED25519_PUBLICKEY_BYTES);
+    memcpy(pub + HORSE_ED25519_PUBLICKEY_BYTES, identity->x25519_pk,
+           HORSE_X25519_PUBLICKEY_BYTES);
+    crypto_generichash(fp_out, 32, pub, sizeof pub,
                        (const unsigned char *)"HORSE-IDFP", 10);
     return true;
 #else
@@ -512,6 +517,11 @@ bool horse_tx_allowed(bool encrypt_en, bool sign_en, bool crypto_available,
     if (want_sign && !have_ed25519_peer)
         return false;
     return true;
+}
+
+bool horse_tx_vhf_refused(uint8_t vhf_band, uint8_t uhf_band)
+{
+    return vhf_band != 0 && uhf_band == 0;
 }
 
 bool horse_rx_may_output_voice(bool lsf_encrypted, bool session_valid,

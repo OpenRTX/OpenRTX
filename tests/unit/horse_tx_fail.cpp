@@ -69,5 +69,26 @@ int main(void)
         std::printf("horse_tx_fail: HORSE_ERR_TX_CRYPTO is not 4\n");
         return -5;
     }
+    if (HORSE_ERR_VHF != 6) {
+        std::printf("horse_tx_fail: HORSE_ERR_VHF is not 6\n");
+        return -6;
+    }
+    /* VHF-only MD-3x0: refuse TX. Dual-band / UHF-only: allow. */
+    if (!horse_tx_vhf_refused(1, 0)) {
+        std::printf("horse_tx_fail: VHF-only must refuse TX\n");
+        return -7;
+    }
+    if (horse_tx_vhf_refused(0, 1)) {
+        std::printf("horse_tx_fail: UHF-only must allow TX\n");
+        return -8;
+    }
+    if (horse_tx_vhf_refused(1, 1)) {
+        std::printf("horse_tx_fail: dual-band must allow TX\n");
+        return -9;
+    }
+    if (horse_tx_vhf_refused(0, 0)) {
+        std::printf("horse_tx_fail: no-band must allow TX\n");
+        return -10;
+    }
     return 0;
 }
