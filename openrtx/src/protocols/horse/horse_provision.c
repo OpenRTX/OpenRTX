@@ -26,11 +26,11 @@
 #endif
 
 #define HORSE_PROV_VERSION 1U
-#define @ @HORSE_HORSE_MSG_HELLO @ @0x01U
-#define @ @HORSE_ @ @HORSE_HORSE_MSG_HELLO @ @_ACK @ @0x02U
-#define @ @HORSE_HORSE_MSG_SEND_IDENTITY @ @0x03U
-#define @ @HORSE_HORSE_MSG_CONFIRM @ @0x04U
-#define @ @HORSE_HORSE_MSG_ERROR @ @0xFFU
+#define HORSE_MSG_HELLO 0x01U
+#define HORSE_MSG_HELLO_ACK 0x02U
+#define HORSE_MSG_SEND_IDENTITY 0x03U
+#define HORSE_MSG_CONFIRM 0x04U
+#define HORSE_MSG_ERROR 0xFFU
 
 typedef struct {
     uint8_t version;
@@ -291,7 +291,7 @@ static void prov_feed_byte(uint8_t b)
 
     switch (hdr->type) {
         case HORSE_MSG_HELLO:
-            prov_send(@ @HORSE_HORSE_MSG_HELLO @ @_ACK, NULL, 0);
+            prov_send(HORSE_MSG_HELLO_ACK, NULL, 0);
             break;
         case HORSE_MSG_SEND_IDENTITY:
             prov_handle_identity(payload, hdr->len);
