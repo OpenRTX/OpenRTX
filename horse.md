@@ -124,8 +124,9 @@ are a sidecar table (`horse_peer_t`, 64 slots), not `contact_t`.
 `horse_provision.py` writes both formats. Identity fingerprint is
 BLAKE2b-256 keyed `"HORSE-IDFP"` over `ed25519_pk || x25519_pk` (public
 keys only); CONFIRM must match. Linux emulator provisioning uses a Unix
-stream socket (`/tmp/openrtx_horse_prov.sock` or
-`OPENRTX_HORSE_PROV_SOCK`), not a FIFO. Passphrase via TTY,
+stream socket under `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` (or a
+per-user state dir fallback), overridable with `OPENRTX_HORSE_PROV_SOCK`
+— not a FIFO and not a fixed path in `/tmp`. Passphrase via TTY,
 `--passphrase-fd`, or `HORSE_PASSPHRASE` (tests) — not argv.
 
 All libsodium work (X25519, Ed25519, BLAKE2b, XChaCha20, Argon2id) runs

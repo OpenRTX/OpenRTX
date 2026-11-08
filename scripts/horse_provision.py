@@ -92,7 +92,25 @@ HORSE_PEER_MAX = 64
 HORSE_PEER_BYTES = 70
 HORSE_ID_PACKED = 164
 LABEL_RE = re.compile(r"^[A-Za-z0-9._-]+$")
-DEFAULT_SOCK = "/tmp/openrtx_horse_prov.sock"
+def default_sock_path():
+    """Match firmware horse_provision_default_sock_path()."""
+    env = os.environ.get("OPENRTX_HORSE_PROV_SOCK")
+    if env:
+        return env
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime:
+        return os.path.join(runtime, "openrtx_horse_prov.sock")
+    state = os.environ.get("XDG_STATE_HOME")
+    if state:
+        return os.path.join(state, "OpenRTX", "openrtx_horse_prov.sock")
+    home = os.environ.get("HOME")
+    if home:
+        return os.path.join(home, ".local", "state", "OpenRTX",
+                            "openrtx_horse_prov.sock")
+    return None
+
+
+DEFAULT_SOCK = None  # resolved at use via default_sock_path()
 
 # X25519 low-order / reject points from RFC 7748 section 6.1 (public).
 _X25519_BAD_PK = {
@@ -897,11 +915,9 @@ def main(argv=None):
                 raise RuntimeError(
                     "specify --port or --sock "
                     "(use --list-ports for serial candidates; "
-                    "default emulator socket is %s)" % DEFAULT_SOCK
+                    "emulator default is $XDG_RUNTIME_DIR/"
+                    "openrtx_horse_prov.sock or OPENRTX_HORSE_PROV_SOCK)"
                 )
-            if sock is None and port == DEFAULT_SOCK:
-                sock = port
-                port = None
             if not provision_to_radio(
                 ident, port=port, sock=sock, baudrate=args.baudrate,
                 json_mode=json_mode

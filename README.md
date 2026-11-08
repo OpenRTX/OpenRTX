@@ -54,7 +54,7 @@ The `Supermagnum/OpenRTX` fork adds a small number of **experimental** features 
 
 - An encrypted digital voice mode called **Horse**, implemented for the TYT MD-3x0 family and integrated as an additional operating mode alongside M17. The implementation lives primarily under `openrtx/include/protocols/horse/` and `openrtx/src/protocols/horse/`, with runtime wiring in `openrtx/src/rtx/OpMode_Horse.cpp` and unit tests in `tests/unit/horse_frame.cpp` and `tests/unit/horse_crypto.cpp`.
 - Horse supports **encrypted** (XChaCha20 + X25519 ECDH), **signed** (Ed25519 session signature + per-frame auth), and **combined** modes, selectable per channel via codeplug `encrypt_en` / `sign_en` flags.
-- Key provisioning tool `scripts/horse_provision.py` generates Ed25519/X25519 identities and provisions them to radios over USB serial or the Linux emulator socket (see `horse.md`).
+- Key provisioning tool `scripts/horse_provision.py` generates Ed25519/X25519 identities and provisions them to radios over USB serial (`--port`) or the Linux emulator Unix socket (`--sock`, default `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock`; see `horse.md`).
 - For protocol, modulation, cryptography and key-handling details see the dedicated [horse documentation](./horse.md).
 - Audit, design notes, device matrix, DSP UB, and PR text live under [docs/horse/](./docs/horse/) (including [DEVICE_SUPPORT.md](./docs/horse/DEVICE_SUPPORT.md)).
 - Horse libFuzzer targets (`fuzz_horse_frame`, `fuzz_horse_voice`): see [FUZZING.md](./FUZZING.md); build with `-Dfuzzing=true` (requires clang).

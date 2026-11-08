@@ -27,7 +27,7 @@ work list. Finding status:
 | C12 encrypted RX without session | fixed in `c6bdad06` |
 | C13 MD-3x0 C5000 TX enable | fixed (driver `OPMODE_HORSE`); untested on hardware |
 | C14 RTX 512 B stack | mitigated: `txState` off RTX; sodium on 16 KiB worker (Argon2 HWM 4120 B) |
-| C15 keystore race | fixed in `fb86c4ed` |
+| C15 keystore race / oversized hdr | mutex `fb86c4ed`; oversized `hdr->len` resets parser; host socket test |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
 | C17 LDPC name vs repeat-2 | closed in v2: M17 option-C voice `0de39b89`; `ldpc_horse` removed |
 | C18 tests vs claims | improved: loopback; forge tests reject `"HVOICETAG"` (`horse_crypto.cpp`) |
@@ -54,7 +54,7 @@ Linux Horse enablement (Task 2 compile-only) was committed as `7a2d775f`.
 `CONFIG_HORSE` and `horse_src` were only on the MD-3x0 target. That
 matches the known issue: the emulator did not compile Horse even though
 `horse.md` and `README.md` describe emulator encrypt/sign, `/tmp/horse_output.raw`
-and the provisioning FIFO.
+and the provisioning Unix socket.
 
 Enabling Horse for Linux (`linux_def` `CONFIG_HORSE`, `linux_src += horse_src`)
 produced these **errors** (gcc 13.3, then remaining after include fixes):
@@ -287,18 +287,17 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
   the RTX stack. Codec uses a sized stack. Remaining risk: any new
   Horse work accidentally placed on the 512 B RTX thread.
 
-### C15. Provision parser and keystore have no mutex; `hdr->len` vs 320-byte buffer -- high / medium
+### C15. Provision parser and keystore have no mutex; `hdr->len` vs 320-byte buffer -- mitigated
 
-- **Where:** `horse_provision.c`; `horse_keystore.c` static identity;
-  `threads.c` poll on the main thread vs RTX `enable`/`txState`.
-- **What is wrong:** If `len` exceeds the remaining buffer the parser
-  resets at 320 and never completes. `MSG_SEND_IDENTITY` is
-  unauthenticated. `store_plaintext` can replace identity while RTX
-  holds `horse_keystore_get_identity()`. RTX also reads
-  `state.channel.horse.*` and `state.settings.horse_passphrase` without
-  `state_mutex`.
-- **Proposed fix:** Cap `hdr->len`; mutex around the keystore; copy Horse
-  flags into `rtxStatus` under `rtx_mutex`.
+- **Was:** oversized `hdr->len` could confuse the parser; keystore races
+  with RTX; unauthenticated `MSG_SEND_IDENTITY`.
+- **Now:** `hdr->len` above the remaining 320-byte buffer clears
+  `rx_len` (host socket test covers this). Keystore mutex in
+  `fb86c4ed`. Linux transport uses a Unix socket with `MSG_NOSIGNAL`,
+  short-write/`EAGAIN` loops, and client drop that resets `rx_len`
+  (SIGPIPE / mid-message disconnect). Remaining: identity replace
+  while TX is live is still a product concern; unauthenticated
+  provision over USB remains by design for a local cable.
 
 ### C16. Mode cycle leaves garbage in `horseInfo_t` -- medium
 
@@ -504,11 +503,15 @@ session-keyed voice MAC (C1).
 
 - `HORSE_IDENTITY_NVM_OFFSET 0x00FE0000` on 16 MB W25Qx: not traced
   against every MD-3x0 partition map.
-- Linux provisioning transport (Unix socket / PTY; was FIFO): must be
-  exercised against the emulator endpoint.
+- Linux provisioning socket path defaults to
+  `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` (mode 0600); override
+  `OPENRTX_HORSE_PROV_SOCK`. Host tests cover SIGPIPE-safe disconnect
+  and path mode; emulator end-to-end with `openrtx_linux` still manual.
 - Identity fingerprint is BLAKE2b keyed `"HORSE-IDFP"` over
   `ed25519_pk || x25519_pk` only (public keys). Older CONFIRM hashes
   that covered the full identity including secrets are obsolete.
+- OpenPGP card-stub detection must use gpg colon field 15 (`+` / `#` /
+  card serial) on **subkeys only**; see `horse_openpgp.py`.
 - MDx `data[1024]` overlay vs 128 KB sector 11: likely pre-existing;
   passphrase makes blocks larger.
 - `horse_identity_store_t` is not packed: Linux vs ARM padding if both

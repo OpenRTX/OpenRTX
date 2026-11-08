@@ -11,9 +11,12 @@ attenuators. Do not key a transmitter into an antenna until step 4.
 ## 1. Provisioning and passphrase unlock
 
 **Do:** Flash firmware. Provision an identity with
-`scripts/horse_provision.py` (passphrase 8 to 32 bytes). Power on,
-enter Horse, unlock. Confirm that an empty or shorter-than-8-byte
-passphrase is rejected by the tool and by the radio unlock path.
+`scripts/horse_provision.py` over USB (`--port`) or, for the Linux
+emulator, `--sock` at `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock`
+(passphrase 8 to 32 bytes via TTY / `--passphrase-fd` /
+`HORSE_PASSPHRASE`). Power on, enter Horse, unlock. Confirm that an
+empty or shorter-than-8-byte passphrase is rejected by the tool and by
+the radio unlock path.
 
 **Observe:** UI accepts a valid passphrase or reports a Horse error;
 the radio does not crash or reboot; unlock completes in a few seconds.
