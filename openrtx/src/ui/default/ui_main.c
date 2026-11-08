@@ -256,6 +256,9 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
                 else if(rtxStatus.horseError == HORSE_ERR_RNG)
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse: RNG");
+                else if(rtxStatus.horseError == HORSE_ERR_VHF)
+                    gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                              color_white, "Horse: VHF TX");
                 else
                     gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                               color_white, "Horse #%s", dst);

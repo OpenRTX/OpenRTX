@@ -70,6 +70,7 @@ rtxStatus_t;
 #define HORSE_ERR_CALL_LIMIT 3
 #define HORSE_ERR_TX_CRYPTO  4
 #define HORSE_ERR_RNG        5
+#define HORSE_ERR_VHF        6
 #endif
 
 /**
