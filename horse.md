@@ -221,14 +221,15 @@ meson test -C build_linux --no-rebuild
 See `AGENTS.md` for the target list. `HORSE_FALSE_LOCK_LONG=1` extends
 the loopback Hamming-0 false-lock table to ten minutes.
 
-Horse tests: Frame, Crypto, Crypto Worker (stack HWM + PTT cancel),
-Info, Codec, Peers, Keystore, Host Interop (OpenPGP extract required
-when the helper is present), Loopback (including late entry, three-mode,
-long-clock), CPS layout vs upstream, Provision Pack, Provision Socket,
-Horse Provision pytest (OpenPGP + store). FEC binary: `horse_fec_v2_sim`
-(floors, owner targets, streamloss). Fixture listings:
-`tests/fixtures/openpgp/`. CI tip and results:
-[docs/horse/TEST_RESULTS.md](./docs/horse/TEST_RESULTS.md).
+Horse tests: Frame, Crypto (voice encrypt/decrypt), Crypto Worker
+(stack HWM + PTT cancel), Info, Codec, Peers, Keystore, Host Interop
+(OpenPGP extract required when the helper is present), Loopback
+(including late entry, three-mode, long-clock), CPS layout vs upstream,
+Provision Pack, Provision Socket, Horse Provision pytest (OpenPGP +
+store), Horse OpenPGP encrypt/decrypt (gpg store-v3 wrap/unwrap + CLI
+`openpgp-wrap`). FEC binary: `horse_fec_v2_sim` (floors, owner targets,
+streamloss). Fixture listings: `tests/fixtures/openpgp/`. CI tip and
+results: [docs/horse/TEST_RESULTS.md](./docs/horse/TEST_RESULTS.md).
 
 Sanitizer: `meson setup build_linux_address -Dasan=true` with
 `ASAN_OPTIONS=detect_leaks=0`.

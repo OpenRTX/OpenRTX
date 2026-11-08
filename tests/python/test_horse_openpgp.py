@@ -234,6 +234,73 @@ def test_store_version3_roundtrip(gnupg_home, monkeypatch):
     assert opened["x25519_pk"] == ident["x25519_pk"]
 
 
+def test_openpgp_encrypt_decrypt_roundtrip(gnupg_home, monkeypatch):
+    """gpg encrypt then decrypt of packed identity (store v3 payload)."""
+    if not shutil.which("gpg"):
+        _skip_or_fail("gpg missing")
+    pytest.importorskip("nacl")
+    fpr = _make_radio_key(gnupg_home)
+    monkeypatch.setenv("HORSE_PASSPHRASE", "pytest-pass-ok")
+    ident = hp.generate_identity("encdec")
+    packed = hp.pack_identity_binary(ident)
+    ct = hopg.wrap_identity_openpgp(packed, fpr)
+    assert ct and ct != packed
+    pt = hopg.unwrap_identity_openpgp(ct)
+    assert pt == packed
+    store = hp.wrap_identity_openpgp_store(ident, fpr)
+    opened = hp.unwrap_identity(store)
+    assert opened["ed25519_pk"] == ident["ed25519_pk"]
+    assert opened["x25519_pk"] == ident["x25519_pk"]
+    assert opened["ed25519_sk"] == ident["ed25519_sk"]
+    assert opened["x25519_sk"] == ident["x25519_sk"]
+
+
+def test_openpgp_decrypt_rejects_garbage(gnupg_home, monkeypatch):
+    if not shutil.which("gpg"):
+        _skip_or_fail("gpg missing")
+    _make_radio_key(gnupg_home)
+    monkeypatch.setenv("HORSE_PASSPHRASE", "pytest-pass-ok")
+    with pytest.raises(RuntimeError):
+        hopg.unwrap_identity_openpgp(b"\x00not-openpgp-ciphertext\x00" * 8)
+
+
+def test_openpgp_wrap_cli_encrypt_decrypt(gnupg_home, monkeypatch, tmp_path):
+    """CLI: generate (v2) -> openpgp-wrap (v3 encrypt) -> unwrap (decrypt)."""
+    if not shutil.which("gpg"):
+        _skip_or_fail("gpg missing")
+    pytest.importorskip("nacl")
+    fpr = _make_radio_key(gnupg_home)
+    monkeypatch.setenv("HORSE_PASSPHRASE", "pytest-pass-ok")
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    err = __import__("io").StringIO()
+    from contextlib import redirect_stderr
+
+    with redirect_stderr(err):
+        rc_gen = hp.main(["--json", "generate", "wrapcli"])
+    assert rc_gen == 0, err.getvalue()
+    path = hp.identity_path("wrapcli")
+    assert path.is_file()
+    assert hp.identity_store_version(path.read_bytes()) == 2
+
+    err2 = __import__("io").StringIO()
+    with redirect_stderr(err2):
+        rc_wrap = hp.main([
+            "--json", "openpgp-wrap", "wrapcli",
+            "--recipient", fpr, "--force",
+        ])
+    assert rc_wrap == 0, err2.getvalue()
+    blob = path.read_bytes()
+    assert hp.identity_store_version(blob) == 3
+    opened = hp.unwrap_identity(blob)
+    assert len(opened["ed25519_pk"]) == 64
+    assert len(opened["x25519_pk"]) == 64
+    # show must work on v3 without Horse passphrase
+    err3 = __import__("io").StringIO()
+    with redirect_stderr(err3):
+        rc_show = hp.main(["--json", "show", "wrapcli"])
+    assert rc_show == 0, err3.getvalue()
+
+
 def test_openpgp_extract_identity_cli(gnupg_home, helper_path, monkeypatch,
                                       tmp_path):
     fpr = _make_radio_key(gnupg_home)

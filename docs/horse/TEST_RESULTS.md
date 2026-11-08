@@ -50,6 +50,16 @@ merged to fork `master` as `b30805cb` and superseded by the tip above.
 
 `HORSE_REQUIRE_CRYPTO=1` was set; OpenPGP tests ran (not skipped).
 
+## Encrypt / decrypt
+
+| Test | Scope | Local (`build_linux`) | CI |
+|------|-------|------------------------|----|
+| `Horse OpenPGP encrypt/decrypt` | gpg encrypt/decrypt of packed identity; store v3 roundtrip; CLI `openpgp-wrap` then unwrap/`show`; garbage ciphertext rejected | **pass** (4 pytest cases, 0.59s) | pending push |
+| `Horse Crypto Unit Test` | voice XChaCha20 encrypt/decrypt roundtrip; bad tag / bad ciphertext rejected; LSF key-bind | **pass** | pass on tip `2f41a2f0` / `c3ed4a41` |
+
+OpenPGP encrypt/decrypt is a dedicated meson test (also included in
+`Horse Provision pytest`) so unit-test job logs show it by name.
+
 ## Coverage notes
 
 - Horse host interop, provision socket, crypto, loopback, FEC v2 sims:

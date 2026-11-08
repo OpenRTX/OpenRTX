@@ -142,6 +142,11 @@ Under `--allow-unmarked`, the helper retries sequoia `StandardPolicy` at
 skewed reference times and falls back to `NullPolicy` so freshly minted
 gpg keys are usable in CI; subkeys are still selected by key flags.
 
+Store v3 encrypt/decrypt (gpg `--encrypt` / `--decrypt` over pipes, plus
+CLI `openpgp-wrap`) is exercised by the meson test
+`Horse OpenPGP encrypt/decrypt`. Voice-frame encrypt/decrypt is
+`Horse Crypto Unit Test`. Results: [TEST_RESULTS.md](./TEST_RESULTS.md).
+
 ## Safety
 
 - Never commit, log, or write secret key material outside the encrypted

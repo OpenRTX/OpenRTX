@@ -1464,6 +1464,19 @@ test('Horse Provision pytest', py3,
      env : horse_test_env,
      workdir : meson.project_source_root(),
      timeout : 300)
+# Named OpenPGP encrypt/decrypt so CI logs show the result explicitly.
+_hopg_encdec = join_paths(meson.project_source_root(),
+                          'tests/python/test_horse_openpgp.py')
+test('Horse OpenPGP encrypt/decrypt', py3,
+     args : [meson.project_source_root() / 'tests/python/run_pytest.py',
+             '-q',
+             _hopg_encdec + '::test_openpgp_encrypt_decrypt_roundtrip',
+             _hopg_encdec + '::test_openpgp_decrypt_rejects_garbage',
+             _hopg_encdec + '::test_openpgp_wrap_cli_encrypt_decrypt',
+             _hopg_encdec + '::test_store_version3_roundtrip'],
+     env : horse_test_env,
+     workdir : meson.project_source_root(),
+     timeout : 120)
 test('Horse settings.h matches upstream', py3,
      args : [meson.project_source_root() / 'tests/unit/horse_settings_upstream.py'],
      workdir : meson.project_source_root(),
