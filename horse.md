@@ -121,7 +121,12 @@ chosen keypad-feasible floor, not a high-entropy policy.
 Passphrase is RAM-only. Linux files are
 `$XDG_STATE_HOME/OpenRTX/horse_identity.bin` mode 0600. Peer public keys
 are a sidecar table (`horse_peer_t`, 64 slots), not `contact_t`.
-`horse_provision.py` writes both formats.
+`horse_provision.py` writes both formats. Identity fingerprint is
+BLAKE2b-256 keyed `"HORSE-IDFP"` over `ed25519_pk || x25519_pk` (public
+keys only); CONFIRM must match. Linux emulator provisioning uses a Unix
+stream socket (`/tmp/openrtx_horse_prov.sock` or
+`OPENRTX_HORSE_PROV_SOCK`), not a FIFO. Passphrase via TTY,
+`--passphrase-fd`, or `HORSE_PASSPHRASE` (tests) — not argv.
 
 All libsodium work (X25519, Ed25519, BLAKE2b, XChaCha20, Argon2id) runs
 on a dedicated 16 KiB worker thread. RTX posts a job under a mutex,
