@@ -48,6 +48,7 @@ path = [
     "tests/fuzz/corpus/**/*",
     "tests/fuzz/dict/**/*",
     "tests/unit/horse_fec_v2_*.txt",
+    "tests/python/**/*",
 ]
 SPDX-License-Identifier = "GPL-3.0-or-later"
 SPDX-FileCopyrightText = "OpenRTX Contributors"

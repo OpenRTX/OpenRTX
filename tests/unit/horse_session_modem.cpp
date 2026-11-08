@@ -321,6 +321,6 @@ int test_three_mode_loopback(void)
 int test_three_mode_loopback(void)
 {
     std::printf("modes: skipped (no libsodium)\n");
-    return 0;
+    return 77;
 }
 #endif
