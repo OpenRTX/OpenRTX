@@ -66,7 +66,6 @@ openrtx/include/protocols/M17/ClockRecovery.hpp
 openrtx/include/protocols/M17/CodePuncturing.hpp
 openrtx/include/protocols/M17/Constants.hpp
 openrtx/include/protocols/M17/ConvolutionalEncoder.hpp
-openrtx/include/protocols/M17/Correlator.hpp
 openrtx/include/protocols/M17/DSP.hpp
 openrtx/include/protocols/M17/Datatypes.hpp
 openrtx/include/protocols/M17/Decorrelator.hpp

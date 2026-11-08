@@ -93,14 +93,12 @@ void Modulator::sendPreamble()
         symbols[i + 1] = -3;
     }
 
-    // Generate baseband signal and then start transmission
-    symbolsToBaseband();
-    sendBaseband();
-
-    // Repeat baseband generation and transmission, this makes the preamble to
-    // be long 80ms (two frames)
-    symbolsToBaseband();
-    sendBaseband();
+    // Generate and transmit a 160 ms preamble (four 40 ms frames).
+    for (size_t frame = 0; frame < 4; frame++)
+    {
+        symbolsToBaseband();
+        sendBaseband();
+    }
 }
 
 void Modulator::sendFrame(const frame_t& frame)

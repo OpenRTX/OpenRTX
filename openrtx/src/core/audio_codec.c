@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "core/dsp.h"
+#include "core/utils.h"
 #include "hwconfig.h"
 
 #define BUF_SIZE 4
@@ -107,6 +108,14 @@ void codec_stop(const pathId path)
 bool codec_running()
 {
     return running;
+}
+
+bool codec_queueEmpty(const pathId path)
+{
+    if ((running == false) || (audioPath != path))
+        return true;
+
+    return numElements == 0;
 }
 
 int codec_popFrame(uint8_t *frame, const bool blocking)
@@ -216,7 +225,7 @@ static void *encodeFunc(void *arg)
 #endif
 
             sample = dsp_dcBlockFilter(&dcBlock, sample);
-            audio.data[outIdx++] = sample * CONFIG_MIC_GAIN;
+            audio.data[outIdx++] = s16_mulSat(sample, CONFIG_MIC_GAIN);
         }
 
         // CODEC2 encodes 160 speech samples (20 ms), into 8 bytes: here we

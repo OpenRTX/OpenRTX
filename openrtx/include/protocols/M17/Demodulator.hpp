@@ -114,7 +114,8 @@ private:
     void reset();
 
     /**
-     * State handler function for DemodState::UNLOCKED
+     * State handler function for DemodState::UNLOCKED: search for an LSF or
+     * stream syncword to acquire a lock on.
      */
     void unlockedState();
 
@@ -131,7 +132,8 @@ private:
     void lockedState(int16_t sample);
 
     /**
-     * State handler function for DemodState::SYNC_UPDATE
+     * State handler function for DemodState::SYNC_UPDATE: check the syncword
+     * of the frame just completed, to verify a new lock and then to keep it.
      */
     void syncUpdateState();
 
@@ -142,6 +144,14 @@ private:
      * @param samplePoint: sampling point within the symbol period.
      */
     void quantizeSyncword(const uint32_t samplePoint);
+
+    /**
+     * Check a syncword by its symbol signs, independent of the deviation.
+     *
+     * @param frame: frame starting with the syncword.
+     * @return true if the signs match an LSF, stream or packet syncword.
+     */
+    bool validSyncSigns(const frame_t &frame);
 
     /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
@@ -183,16 +193,16 @@ private:
     uint16_t                       frameIndex;      ///< Index for filling the raw frame.
     uint32_t                       sampleIndex;     ///< Sample index, from 0 to (SAMPLES_PER_SYMBOL - 1)
     uint32_t                       samplingPoint;   ///< Symbol sampling point
+    int8_t                         syncSign;        ///< Sign of the last syncword correlation peak
     uint32_t                       sampleCount;     ///< Free-running sample counter
-    uint8_t                        missedSyncs;     ///< Counter of missed synchronizations
+    uint8_t                        missedSyncs;     ///< Missed syncs left before the lock is lost
+    bool                           lastSyncValid;   ///< Signs of the last syncword are valid
     uint32_t                       initCount;       ///< Downcounter for initialization
     float                          corrThreshold;   ///< Correlation threshold
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
 
     Correlator   < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
     Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +3, +3, +3, +3, -3, -3, +3, -3 }};
-    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > streamSync{{ -3, -3, -3, -3, +3, +3, -3, +3 }};
-    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > packetSync{{ +3, -3, +3, +3, -3, -3, -3, -3 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
     ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;
