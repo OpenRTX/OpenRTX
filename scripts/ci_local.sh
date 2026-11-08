@@ -41,6 +41,28 @@ else
     echo "reuse not installed; skipping (CI runs fsfe/reuse-action@v6)" >&2
 fi
 
+echo "== horse-openpgp (cargo) =="
+if command -v cargo >/dev/null 2>&1; then
+    # Keep target/ out of the tree so REUSE lint does not scan build artifacts.
+    export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/.cache/horse-openpgp-target}"
+    mkdir -p "$CARGO_TARGET_DIR"
+    (
+        cd tools/horse-openpgp
+        cargo test --locked
+        cargo build --release --locked
+    )
+    export HORSE_OPENPGP_HELPER="$CARGO_TARGET_DIR/release/horse-openpgp"
+    echo "HORSE_OPENPGP_HELPER=$HORSE_OPENPGP_HELPER"
+else
+    echo "cargo not installed; OpenPGP helper tests will fail under HORSE_REQUIRE_CRYPTO=1" >&2
+fi
+
+if command -v sq >/dev/null 2>&1; then
+    echo "== sq $($(command -v sq) --version 2>/dev/null | head -1 || true) =="
+else
+    echo "sq not installed; apt package 'sq' (0.33 on Ubuntu 24.04) is used in CI" >&2
+fi
+
 if [[ ! -d "$BUILD_DIR" ]]; then
     meson setup "$BUILD_DIR"
 else
@@ -61,5 +83,24 @@ meson compile -C "$BUILD_DIR" linux \
 echo "== meson test --test-args '--reporter junit' =="
 meson test -C "$BUILD_DIR" --no-rebuild --print-errorlogs \
   --test-args '--reporter junit'
+
+echo "== cross-ARM byte-identical (optional) =="
+if command -v arm-miosix-eabi-gcc >/dev/null 2>&1 \
+    && [[ -f cross_cm4.txt ]]; then
+    GV=ci-local-byte-identical
+    meson setup --cross-file cross_cm4.txt build_cm4_byte -Dgit_version="$GV" \
+        || meson setup --reconfigure --cross-file cross_cm4.txt build_cm4_byte \
+            -Dgit_version="$GV"
+    meson compile -C build_cm4_byte openrtx_mduv3x0 openrtx_gd77 openrtx_md3x0
+    arm-miosix-eabi-objcopy -O binary build_cm4_byte/openrtx_mduv3x0 \
+        /tmp/openrtx_mduv3x0_fork.bin
+    arm-miosix-eabi-objcopy -O binary build_cm4_byte/openrtx_gd77 \
+        /tmp/openrtx_gd77_fork.bin
+    arm-miosix-eabi-size build_cm4_byte/openrtx_md3x0
+    echo "Local fork images built; full fork-vs-upstream cmp runs in CI"
+else
+    echo "arm-miosix-eabi toolchain not present; skipping cross-ARM byte-identical"
+    echo "(CI job byte-identical covers this)"
+fi
 
 echo "ci_local.sh: all checks passed"
