@@ -12,7 +12,7 @@ use sequoia_openpgp::crypto::mpi;
 use sequoia_openpgp::crypto::Password;
 use sequoia_openpgp::packet::key::SecretKeyMaterial;
 use sequoia_openpgp::parse::Parse;
-use sequoia_openpgp::policy::StandardPolicy;
+use sequoia_openpgp::policy::{NullPolicy, StandardPolicy};
 use sequoia_openpgp::types::KeyFlags;
 use sequoia_openpgp::Cert;
 use serde::Serialize;
@@ -272,35 +272,75 @@ fn notations_from_sig(sig: &sequoia_openpgp::packet::Signature) -> Vec<(String, 
 /// Reference time for policy checks. A few seconds ahead absorbs gpg
 /// second-rounding so freshly minted keys are not "not yet valid".
 fn policy_time() -> SystemTime {
-    SystemTime::now() + Duration::from_secs(30)
+    SystemTime::now() + Duration::from_secs(60)
+}
+
+/// Run `f` with a ValidCert. Fresh gpg keys sometimes fail StandardPolicy
+/// with "No binding signature"; retry a few reference times and, when
+/// `--allow-unmarked` is set, fall back to NullPolicy (still selects by
+/// key flags; marking is already relaxed). Policy must outlive ValidCert,
+/// so this owns it for the callback.
+fn with_valid_cert<R, F>(cert: &Cert, allow_unmarked: bool, f: F) -> Result<R>
+where
+    F: FnOnce(ValidCert<'_>) -> Result<R>,
+{
+    let std = StandardPolicy::new();
+    let times = [
+        Some(policy_time()),
+        Some(SystemTime::now()),
+        None,
+    ];
+    let mut last = None;
+    for t in times {
+        match cert.with_policy(&std, t) {
+            Ok(vc) => return f(vc),
+            Err(e) => last = Some(e),
+        }
+    }
+    if allow_unmarked {
+        // SAFETY: explicit opt-in for throwaway/CI radio keys. Callers still
+        // select subkeys by key flags after accepting any binding signature.
+        let null = unsafe { NullPolicy::new() };
+        for t in times {
+            if let Ok(vc) = cert.with_policy(&null, t) {
+                return f(vc);
+            }
+        }
+    }
+    Err(anyhow!(
+        "certificate policy: {}",
+        last.map(|e| e.to_string()).unwrap_or_else(|| "unknown".into())
+    ))
 }
 
 fn inspect(allowlist: Option<PathBuf>) -> Result<()> {
     let allow = load_allowlist(&allowlist)?;
     let cert = Cert::from_bytes(&read_stdin()?).context("parse certificate")?;
-    let policy = &StandardPolicy::new();
-    let vc = cert.with_policy(policy, Some(policy_time()))?;
-
-    let mut subkeys = Vec::new();
-    for ka in vc.keys().subkeys() {
-        let fpr = ka.key().fingerprint().to_string();
-        let flags = ka.key_flags().unwrap_or_else(KeyFlags::empty);
-        let can_sign = flags.for_signing();
-        let can_encrypt =
-            flags.for_transport_encryption() || flags.for_storage_encryption();
-        let notations = notations_from_sig(ka.binding_signature());
-        let marked = horse_marked(&notations, &fpr, &allow, can_sign);
-        subkeys.push(SubkeyInfo {
-            fingerprint: fpr,
-            algo: format!("{:?}", ka.key().pk_algo()),
-            version: ka.key().version(),
-            can_sign,
-            can_encrypt,
-            creation_time: format!("{:?}", ka.key().creation_time()),
-            expiration_time: ka.key_expiration_time().map(|t| format!("{:?}", t)),
-            horse_marked: marked,
-        });
-    }
+    let subkeys = with_valid_cert(&cert, true, |vc| {
+        let mut subkeys = Vec::new();
+        for ka in vc.keys().subkeys() {
+            let fpr = ka.key().fingerprint().to_string();
+            let flags = ka.key_flags().unwrap_or_else(KeyFlags::empty);
+            let can_sign = flags.for_signing();
+            let can_encrypt = flags.for_transport_encryption()
+                || flags.for_storage_encryption();
+            let notations = notations_from_sig(ka.binding_signature());
+            let marked = horse_marked(&notations, &fpr, &allow, can_sign);
+            subkeys.push(SubkeyInfo {
+                fingerprint: fpr,
+                algo: format!("{:?}", ka.key().pk_algo()),
+                version: ka.key().version(),
+                can_sign,
+                can_encrypt,
+                creation_time: format!("{:?}", ka.key().creation_time()),
+                expiration_time: ka
+                    .key_expiration_time()
+                    .map(|t| format!("{:?}", t)),
+                horse_marked: marked,
+            });
+        }
+        Ok(subkeys)
+    })?;
 
     println!(
         "{}",
@@ -345,21 +385,22 @@ fn pick_fps(
 fn extract_public(allow_unmarked: bool, allowlist: Option<PathBuf>) -> Result<()> {
     let allow = load_allowlist(&allowlist)?;
     let cert = Cert::from_bytes(&read_stdin()?).context("parse certificate")?;
-    let policy = &StandardPolicy::new();
-    let vc = cert.with_policy(policy, Some(policy_time()))?;
-    let (sign_fpr, enc_fpr) = pick_fps(&vc, &allow, allow_unmarked)?;
-
-    let mut ed_pk = [0u8; 32];
-    let mut x_pk = [0u8; 32];
-    for ka in vc.keys().subkeys() {
-        let fpr = ka.key().fingerprint().to_string();
-        if fpr == sign_fpr {
-            ed_pk = pk_bytes(ka.key().mpis())?;
-        }
-        if fpr == enc_fpr {
-            x_pk = pk_bytes(ka.key().mpis())?;
-        }
-    }
+    let (sign_fpr, enc_fpr, ed_pk, x_pk) =
+        with_valid_cert(&cert, allow_unmarked, |vc| {
+            let (sign_fpr, enc_fpr) = pick_fps(&vc, &allow, allow_unmarked)?;
+            let mut ed_pk = [0u8; 32];
+            let mut x_pk = [0u8; 32];
+            for ka in vc.keys().subkeys() {
+                let fpr = ka.key().fingerprint().to_string();
+                if fpr == sign_fpr {
+                    ed_pk = pk_bytes(ka.key().mpis())?;
+                }
+                if fpr == enc_fpr {
+                    x_pk = pk_bytes(ka.key().mpis())?;
+                }
+            }
+            Ok((sign_fpr, enc_fpr, ed_pk, x_pk))
+        })?;
     let horse_fp = horse_blake2b_keyed(&ed_pk, &x_pk);
     println!(
         "{}",
@@ -445,9 +486,9 @@ fn extract_secret(
     let pass_bytes: &[u8] = pass.as_ref();
     let password = Password::from(pass_bytes.to_vec());
     let cert = Cert::from_bytes(&read_stdin()?).context("parse secret key")?;
-    let policy = &StandardPolicy::new();
-    let vc = cert.with_policy(policy, Some(policy_time()))?;
-    let (sign_fpr, enc_fpr) = pick_fps(&vc, &allow, allow_unmarked)?;
+    let (sign_fpr, enc_fpr) = with_valid_cert(&cert, allow_unmarked, |vc| {
+        pick_fps(&vc, &allow, allow_unmarked)
+    })?;
 
     let mut ed_seed = [0u8; 32];
     let mut ed_pk = [0u8; 32];

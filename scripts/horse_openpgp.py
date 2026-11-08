@@ -372,16 +372,21 @@ def cmd_openpgp_extract_identity(args, json_mode, passphrase,
             "--with-colons", "--with-secret", "--list-secret-keys", keyid,
         )).stdout.decode("utf-8", errors="replace")
         reject_subkey_stub_or_card(listing)
-        # Full secret export keeps binding signatures that sequoia needs.
-        secret = _run(_gpg_cmd("--export-secret-keys", keyid)).stdout
+        # Full secret export keeps primary binding signatures sequoia needs.
+        secrets = [_run(_gpg_cmd("--export-secret-keys", keyid)).stdout]
+        sub = _run(_gpg_cmd("--export-secret-subkeys", keyid)).stdout
+        if sub and sub != secrets[0]:
+            secrets.append(sub)
     else:
         if not shutil.which("sq"):
             raise RuntimeError("sq not found")
         secret = _run(["sq", "key", "export", args.sq], check=False).stdout
         if not secret:
             raise RuntimeError("sq key export empty")
+        secrets = [secret]
 
-    if not secret:
+    secrets = [s for s in secrets if s]
+    if not secrets:
         raise RuntimeError("empty secret key export")
 
     # Horse identity passphrase is separate (store wrap).
@@ -391,27 +396,42 @@ def cmd_openpgp_extract_identity(args, json_mode, passphrase,
     # Never argv or environment for the secret itself; HORSE_OPENPGP_PASSPHRASE
     # is only for throwaway CI keys (empty when unprotected).
     opgp_pass = os.environ.get("HORSE_OPENPGP_PASSPHRASE", "")
-    r_fd, w_fd = os.pipe()
-    try:
-        os.write(w_fd, opgp_pass.encode("utf-8"))
-        os.close(w_fd)
-        w_fd = -1
-        allow = ["--allow-unmarked"] if args.allow_unmarked else []
-        al = allowlist_path()
-        argv = ["extract-secret", "--passphrase-fd", str(r_fd)] + allow
-        if al.is_file():
-            argv += ["--allowlist", str(al)]
-        proc = _helper_run(argv, input_bytes=secret, pass_fds=(r_fd,))
-    finally:
+    allow = ["--allow-unmarked"] if args.allow_unmarked else []
+    al = allowlist_path()
+    argv_base = ["extract-secret"] + allow
+    if al.is_file():
+        argv_base += ["--allowlist", str(al)]
+
+    proc = None
+    last_err = None
+    for secret in secrets:
+        r_fd, w_fd = os.pipe()
         try:
-            os.close(r_fd)
-        except OSError:
-            pass
-        if w_fd >= 0:
+            os.write(w_fd, opgp_pass.encode("utf-8"))
+            os.close(w_fd)
+            w_fd = -1
+            argv = argv_base + ["--passphrase-fd", str(r_fd)]
             try:
-                os.close(w_fd)
+                proc = _helper_run(
+                    argv, input_bytes=secret, pass_fds=(r_fd,),
+                )
+                last_err = None
+                break
+            except RuntimeError as e:
+                last_err = e
+                proc = None
+        finally:
+            try:
+                os.close(r_fd)
             except OSError:
                 pass
+            if w_fd >= 0:
+                try:
+                    os.close(w_fd)
+                except OSError:
+                    pass
+    if proc is None:
+        raise last_err if last_err else RuntimeError("extract-secret failed")
 
     data = json.loads(proc.stdout.decode("utf-8"))
     identity = {

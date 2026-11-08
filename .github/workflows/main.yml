@@ -56,12 +56,17 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             tools/horse-openpgp/target
-          key: horse-openpgp-${{ runner.os }}-${{ hashFiles('tools/horse-openpgp/Cargo.lock') }}
+          # Include sources so a restored target/ cannot skip rebuilding
+          # an outdated release binary (mtime from cache looks "fresh").
+          key: horse-openpgp-${{ runner.os }}-${{ hashFiles('tools/horse-openpgp/Cargo.lock', 'tools/horse-openpgp/Cargo.toml', 'tools/horse-openpgp/src/**') }}
       - name: Build horse-openpgp helper
         run: |
           cd tools/horse-openpgp
+          # Drop the binary so cargo always relinks after cache restore.
+          rm -f target/release/horse-openpgp target/release/horse-openpgp.d
           cargo test --locked
           cargo build --release --locked
+          test -x target/release/horse-openpgp
           echo "HORSE_OPENPGP_HELPER=${{ github.workspace }}/tools/horse-openpgp/target/release/horse-openpgp" >> "$GITHUB_ENV"
           echo "${{ github.workspace }}/tools/horse-openpgp/target/release" >> "$GITHUB_PATH"
       - name: setup meson

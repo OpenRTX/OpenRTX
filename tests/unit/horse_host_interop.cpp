@@ -220,24 +220,24 @@ int main()
                                 + "\" --json openpgp-extract-identity opgp "
                                 + "--gpg " + fpr + " --allow-unmarked --force";
                 std::string ext_out;
-                if (run_cmd(ext, ext_out) == 0) {
-                    std::string src2 = openrtx + "/horse_identity_opgp.bin";
-                    cmd = "cp \"" + src2 + "\" \"" + dst + "\"";
-                    run_cmd(cmd, unused);
-                    horse_keystore_init();
-                    if (!horse_keystore_unlock(pass, strlen(pass))) {
-                        std::printf(
-                            "horse_host_interop: OpenPGP identity unlock failed\n");
-                        return -1;
-                    }
-                    horse_keystore_lock();
+                if (run_cmd(ext, ext_out) != 0) {
                     std::printf(
-                        "horse_host_interop: OpenPGP extract unlocked\n");
-                } else {
-                    std::printf(
-                        "horse_host_interop: OpenPGP extract skipped/failed\n%s\n",
+                        "horse_host_interop: OpenPGP extract failed\n%s\n",
                         ext_out.c_str());
+                    return -1;
                 }
+                std::string src2 = openrtx + "/horse_identity_opgp.bin";
+                cmd = "cp \"" + src2 + "\" \"" + dst + "\"";
+                run_cmd(cmd, unused);
+                horse_keystore_init();
+                if (!horse_keystore_unlock(pass, strlen(pass))) {
+                    std::printf(
+                        "horse_host_interop: OpenPGP identity unlock failed\n");
+                    return -1;
+                }
+                horse_keystore_lock();
+                std::printf(
+                    "horse_host_interop: OpenPGP extract unlocked\n");
             }
         }
         unsetenv("GNUPGHOME");
