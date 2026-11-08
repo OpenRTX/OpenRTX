@@ -19,22 +19,23 @@ work list. Finding status:
 | C4 signature chunk overflow | fixed in `c3f68754`; packing `13ac0cef` (5x12+4) |
 | C5 20 ms DMA vs 40 ms codec | fixed in `8b965e29` |
 | C6 FN / nonce layout | fixed in `08e6c3cb` / `4e789cbf` |
-| C7 Argon2 RAM / PBKDF2 | 16 KiB Argon2id heap; remaining largeram heap 89600 B vs 16+16+16 KiB |
+| C7 Argon2 RAM / PBKDF2 | mitigated: 16 KiB Argon2id; no PBKDF2; heap headroom ~40 KiB (HWM unverified) |
 | C8 passphrase in `settings_t` | fixed in `4015daa2` (RAM-only); empty/short rejected (`HORSE_PASSPHRASE_MIN` 8) |
 | C9 `contact_t` growth | fixed in `1b79bbdb` (sidecar peers) |
 | C10 Ed25519 seed padded to 64 | fixed in `80404ce2` |
-| C11 keyring hex/JSON | fixed in `80404ce2` / `31495ec7` |
+| C11 keyring hex/JSON | fixed in `80404ce2` / `31495ec7` (XDG files; `show` publics only) |
 | C12 encrypted RX without session | fixed in `c6bdad06` |
-| C13 MD-3x0 C5000 TX enable | implemented `465707c4`; untested on hardware |
-| C14 RTX 512 B stack | ARM `txState` 128 B; sodium worker deepest Argon2 4120 B / Ed25519 4048 B |
+| C13 MD-3x0 C5000 TX enable | fixed (driver `OPMODE_HORSE`); untested on hardware |
+| C14 RTX 512 B stack | mitigated: `txState` off RTX; sodium on 16 KiB worker (Argon2 HWM 4120 B) |
 | C15 keystore race | fixed in `fb86c4ed` |
 | C16 `horseInfo_t` garbage on mode switch | fixed in `1ca16357` |
 | C17 LDPC name vs repeat-2 | closed in v2: M17 option-C voice `0de39b89`; `ldpc_horse` removed |
-| C18 tests vs claims | analog loopback; three-mode; late entry; NCC floor dropped `18a4d420`; LSF replace `34d9d292` |
+| C18 tests vs claims | improved: loopback; forge tests reject `"HVOICETAG"` (`horse_crypto.cpp`) |
 | C19 `sodium_memzero` | fixed in `c6bdad06` / `fb86c4ed` |
 | C20 LSF has no FEC and no checksum | closed in v2: three M17-coded opening frames + CRC-16 `4003bcf2`; fragments `d2e4405d` |
+| C21 MD-3x0 Horse BW 12.5 vs M17 25 kHz | open; analysis below; no code change without measurement |
 | M17 `dsp.cpp:19` UBSan | upstream; see `UPSTREAM_ISSUE_dsp.md` (do not patch in this fork) |
-| `horse_keytool.py` | removed; identities are XDG files `31495ec7` |
+| `horse_keytool.py` | removed (`31495ec7`); use `scripts/horse_provision.py` |
 | LSF bind / channel flags | `b1f207f5` |
 | False-lock Hamming 0 + tag drop | `b9f6331c`; NCC floor removed `18a4d420` |
 | Native meson test vs ARM firmware | reverted `a5fc2f08`; procedure in `AGENTS.md` (`--no-rebuild`) |
@@ -244,13 +245,13 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
 - **Proposed fix:** Pack `bytes(signing_key) + bytes(verify_key)`.
   Validate sk/pk consistency on store.
 
-### C11. Kernel keyring round-trip is broken; `show` prints secret material -- high / medium
+### C11. Kernel keyring round-trip is broken; `show` prints secret material -- fixed
 
-- **Where:** `scripts/horse_provision.py` store/load (`payload.hex()`
-  then `json.loads` without `unhexlify`); `show` prints truncated
-  secret-key hex.
-- **Proposed fix:** Store raw JSON or hex with matching decode. Never
-  print `ed25519_sk` / `x25519_sk`.
+- **Was:** kernel keyring store used `payload.hex()` then `json.loads`
+  without `unhexlify`; `show` printed secret-key hex.
+- **Fix:** `31495ec7` / `80404ce2` replaced the keyring with XDG state
+  files (`horse_identity_*.bin` mode 0600). `show` prints public keys
+  and fingerprint only.
 
 ### C12. Encrypted RX without a session still starts audio -- high
 
@@ -262,27 +263,29 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
 - **Proposed fix:** If LSF encrypted and `!sessionValid`, do not open
   RX audio and do not push frames.
 
-### C13. Horse TX never enables RF TX on MD-3x0 -- high
+### C13. Horse TX never enables RF TX on MD-3x0 -- fixed (untested on hardware)
 
-- **Where:** `OpMode_Horse.cpp` has `radio_enableRx()` only; no
-  `radio_enableTx()`. `radio_MD3x0.cpp:254-280`: `C5000.startAnalogTx`
-  is FM and M17 only; `OPMODE_HORSE` hits `default` and skips analog TX.
-  `radio_setOpmode` does have a Horse case (12.5 kHz).
-- **Confirmed:** Grep of `OpMode_Horse.cpp` for `radio_enableTx` is empty.
-  M17 calls `radio_enableTx()`.
-- **Proposed fix:** Call `radio_enableTx()` in Horse `txState` like M17;
-  handle `OPMODE_HORSE` the same as M17 LINE_IN (with the intended BW).
+- **Was:** OpMode never called `radio_enableTx()`. Commit `465707c4`
+  added the OpMode call after key agreement and `abortTx` →
+  `radio_disableRtx()`, but left `radio_MD3x0.cpp` `radio_enableTx()`
+  with only `OPMODE_FM` / `OPMODE_M17`. Horse still hit `default`:
+  `TX_STG_EN` keyed the PA while `C5000.startAnalogTx()` was never
+  called (likely an unmodulated carrier on a real radio).
+- **Fix:** `#ifdef CONFIG_HORSE` `case OPMODE_HORSE:` starts analog TX
+  from `LINE_IN` with `FmConfig::BW_12p5kHz`, matching
+  `radio_setOpmode` BW_12_5 / mod factor `0x1E`. Every abort/EOT path
+  still goes through `radio_disableRtx()` → `C5000.stopAnalogTx()`.
+- **Untested on hardware.** Bandwidth vs M17 25 kHz is C21.
 
-### C14. RTX stack 512 B vs LDPC scratch; Horse codec thread has no 16 kB stack -- critical on MD-3x0
+### C14. RTX stack 512 B vs Horse work -- mitigated
 
-- **Where:** `threads.h:16-17` `RTX_THREAD_STKSIZE 512`;
-  `ldpc_horse.c:30-31` `in_bits[184]`, `out_bits[368]` on the RTX
-  thread; `horse_codec.c` `pthread_create` without
-  `CODEC2_THREAD_STKSIZE`.
-- **Confirmed:** Encoder/decoder are called from `txState`/`rxState`.
-  `audio_codec.c` sets 16 kB for codec2; Horse does not.
-- **Proposed fix:** Static LDPC scratch. Set codec thread stack to
-  `CODEC2_THREAD_STKSIZE`. Increase RTX stack if Horse stays there.
+- **Was:** RTX stack 512 B with LDPC scratch and codec work on the RTX
+  thread. `ldpc_horse` (repeat-2) has since been removed (C17).
+- **Now:** Voice coding is M17 option-C on existing encoder/Viterbi;
+  libsodium runs on a dedicated 16 KiB worker (deepest Argon2 ~4120 B /
+  Ed25519 ~4048 B on host). `txState` / large buffers were moved off
+  the RTX stack. Codec uses a sized stack. Remaining risk: any new
+  Horse work accidentally placed on the 512 B RTX thread.
 
 ### C15. Provision parser and keystore have no mutex; `hdr->len` vs 320-byte buffer -- high / medium
 
@@ -327,20 +330,15 @@ succeeds and `OpMode_Horse.cpp` is part of the emulator binary.
   and new sync words (`dc8c906a`).
 - **Normative:** `docs/horse/HORSE_FEC_V2.md` section 7b.
 
-### C18. Tests do not cover the claims -- medium (quality)
+### C18. Tests do not cover the claims -- improved (medium remains for RF)
 
-Host analog loopback (`tests/unit/horse_loopback.cpp`) now covers:
-
-- Layer a: `byteToSymbols` / `setSymbol` inverses and the horse.md dibit table.
-- Layer b: RRC TX 48 kHz / RX 24 kHz at group delay 40 (24 kHz), SER 0.
-- Layer c: demod timing recovery of LSF, voice and EOT.
-- Layer d: preamble, LSF, six signature frames, 300 voice frames, EOT.
-- Firmware DC-block path (`test_layer_dc_block`): passes in the unsanitized
-  meson suite. Under UBSan it aborts on the known `dsp.cpp:19` shift.
-- **DC settle + SP jump (mitigated):** forcing `samplingPoint += 1` right
-  after LSF acquire made voice sync HD=4 with DC on (no voice); HD=1
-  with DC skipped. Mitigated by `CLOCK_HOLD_FRAMES=3` then bounded TED
-  (`69d97b54`). Not tracked as a separate open C-item.
+Host analog loopback (`tests/unit/horse_loopback.cpp`) covers layers a–d
+(symbols, RRC, demod, full stream). Session-keyed voice MAC (C1) is
+covered by `tests/unit/horse_crypto.cpp`: a tag forged with the old
+public string `"HVOICETAG"` is rejected by
+`horse_crypto_voice_auth_verify` with the session `k_tag`. Firmware
+DC-block under UBSan still hits upstream `dsp.cpp:19`. RF / C5000
+paths remain untested on hardware.
 
 ### Cost figures (host, protocol v2)
 
@@ -479,22 +477,42 @@ session-keyed voice MAC (C1).
 - **Proposed fix:** `sodium_memzero` on wrap keys, eph_sk, session_key,
   identity copies.
 
+### C21. Horse MD-3x0 channel bandwidth 12.5 kHz vs M17 25 kHz -- open
+
+- **Where:** `radio_MD3x0.cpp` `radio_setOpmode`: M17 calls
+  `_setBandwidth(BW_25)` (WN_SW set, `setModFactor(0x3C)`) with the
+  comment "for proper deviation"; Horse calls `_setBandwidth(BW_12_5)`
+  (WN_SW clear, `setModFactor(0x1E)`). `radio_enableTx` passes
+  `FmConfig::BW_25kHz` for M17 and `FmConfig::BW_12p5kHz` for Horse
+  into `C5000.startAnalogTx` (register 0x34 bit 4).
+- **Analysis (no meter):** Horse is the same 4800 sym/s 4-FSK outer
+  constellation as M17. Halving the FM modulation factor from `0x3C`
+  to `0x1E` is expected to roughly halve TX deviation for the same
+  LINE_IN level. M17 deliberately used 25 kHz for deviation, not for
+  a 25 kHz regulatory channel claim alone. A ±2.4 kHz-class 4-FSK
+  signal fits inside a 12.5 kHz channel filter in theory, but if TX
+  deviation is half of what the demodulator / correlator was tuned
+  for under M17 levels, acquire and SER can degrade. The RX path uses
+  the same WN_SW setting as TX for the selected opmode.
+- **Decision:** Do **not** change Horse to BW_25 without a deviation
+  meter or SDR capture comparing both settings. Measurement steps are
+  in `HARDWARE_TEST_PLAN.md`. Untested on hardware.
+
 ---
 
 ## Suspicions (not filed as confirmed bugs)
 
 - `HORSE_IDENTITY_NVM_OFFSET 0x00FE0000` on 16 MB W25Qx: not traced
   against every MD-3x0 partition map.
-- FIFO `serial.Serial("/tmp/openrtx_horse_prov.fifo")` vs firmware
-  `open(O_RDWR|O_NONBLOCK)`: not executed.
-- Fingerprint hashes the entire identity including secrets
-  (`horse_crypto.c`); CONFIRM sends only the hash.
+- Linux provisioning transport (Unix socket / PTY; was FIFO): must be
+  exercised against the emulator endpoint.
+- Identity fingerprint is BLAKE2b keyed `"HORSE-IDFP"` over
+  `ed25519_pk || x25519_pk` only (public keys). Older CONFIRM hashes
+  that covered the full identity including secrets are obsolete.
 - MDx `data[1024]` overlay vs 128 KB sector 11: likely pre-existing;
   passphrase makes blocks larger.
 - `horse_identity_store_t` is not packed: Linux vs ARM padding if both
   used for the same blob.
-- `horse_keytool.py` dumps OpenPGP blobs; it does not produce
-  `horseContact_t` X25519/Ed25519 fields.
 
 ---
 

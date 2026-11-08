@@ -136,8 +136,38 @@ sensitivity specification.
 **Closes:** device demod under noise; flywheel/tag-decided path on ADC
 samples (host campaign remains the quantitative record).
 
+## 10. Deviation / bandwidth (C21)
+
+**Do:** UHF MD-3x0 only (VHF TX is refused). Dummy load. Capture TX
+with a deviation meter or SDR while PTT in Horse encrypt mode. Repeat
+builds or a temporary A/B of `_setBandwidth(BW_12_5)` / mod `0x1E` /
+`FmConfig::BW_12p5kHz` versus M17-matching `_setBandwidth(BW_25)` /
+mod `0x3C` / `FmConfig::BW_25kHz`. Record peak deviation and occupied
+bandwidth for both. Do not change the default in tree from a single
+subjective listen test.
+
+**Observe:** Peak FM deviation of the 4-FSK outer symbols; whether the
+12.5 kHz IF/WN path clips or under-deviates relative to a known-good
+M17 capture on the same radio.
+
+**Pass:** Written numbers for both settings; a decision to keep 12.5
+or switch Horse to 25 kHz grounded in those numbers.
+
+**Closes:** C21 only after measurement. Untested until then.
+
+## 11. VHF MD-3x0 TX refuse
+
+**Do:** VHF MD-380/390 (vhf_band set, uhf_band clear). Enter Horse, PTT.
+
+**Observe:** Display `Horse: VHF TX`; PA must not key; RX of a cabled
+UHF peer (if available) still works.
+
+**Pass:** TX refused; RX unaffected. Untested on hardware until run.
+
 ## Not closed by these steps
 
 - RF into an antenna, type approval, or occupied-bandwidth plots
+  beyond the C21 measurement above
 - Exact Cortex-M4 cycle counts (estimates only until a DWT/ITM trace)
-- Other radio families (`CONFIG_HORSE` is Linux and MD-3x0 only)
+- Other radio families (`CONFIG_HORSE` is Linux and MD-3x0 only); see
+  `DEVICE_SUPPORT.md`

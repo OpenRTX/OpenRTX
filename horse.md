@@ -163,13 +163,20 @@ Limits:
 - False LSF/voice locks on open FM are expected at the measured rate.
   They are harmless: no audio without a valid tag and LSF CRC.
 - Gain 2.0 fails in the impairment test because the samples clip.
-- C13 C5000 TX enable is implemented and untested on hardware.
+- C13: OpMode calls `radio_enableTx()` and MD-3x0 has an
+  `OPMODE_HORSE` C5000 `LINE_IN` case; still **untested on hardware**.
+- C21: Horse uses 12.5 kHz / mod factor `0x1E` while M17 uses 25 kHz /
+  `0x3C` "for proper deviation". Do not treat either as measured.
+- VHF-only MD-3x0: Horse TX is refused (`HORSE_ERR_VHF` / `Horse: VHF
+  TX`); RX is unaffected. Matches upstream M17 TX support. Untested
+  on hardware.
 - MD-3x0 flash, RTX stack, libsodium, Argon2 heap, and C5000 keying:
   see the unverified list in `docs/horse/PR_DESCRIPTION.md`. Host
   decoder BSS is 8872 B; fragment soft accumulator is int16.
 
 Normative FEC, gates, and measured stack: `docs/horse/HORSE_FEC_V2.md`.
-Audit: `docs/horse/HORSE_AUDIT.md`.
+Audit: `docs/horse/HORSE_AUDIT.md`. Device matrix:
+`docs/horse/DEVICE_SUPPORT.md`.
 
 ---
 
