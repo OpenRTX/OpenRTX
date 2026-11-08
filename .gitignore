@@ -91,3 +91,4 @@ scripts/get_demod_log
 
 # OpenRTX Codeplugs
 *.rtxc
+__pycache__/

@@ -19,8 +19,10 @@ concurrency:
 
 jobs:
   unit-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      HORSE_REQUIRE_CRYPTO: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +31,9 @@ jobs:
       - name: install-deps
         run: |
           sudo apt update
-          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2 libsodium-dev gnupg
+          # sequoia-sq from apt when available; otherwise cargo install is cached below
+          sudo apt install -y sq || sudo apt install -y sequoia-sq || true
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       # gcovr is a standalone CLI rather than an import dependency, so install
@@ -38,6 +42,25 @@ jobs:
         run: |
           uv tool install "gcovr>=7.2"
           uv --color never tool dir --bin >> "$GITHUB_PATH"
+          uv venv .venv
+          # shellcheck disable=SC1091
+          source .venv/bin/activate
+          uv pip install pynacl pyserial pytest ruff
+          uv pip install pysequoia || true
+          echo "${{ github.workspace }}/.venv/bin" >> "$GITHUB_PATH"
+      - name: Cache sequoia-sq (cargo)
+        if: hashFiles('/usr/bin/sq') == ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/sq
+          key: sequoia-sq-${{ runner.os }}-v1
+      - name: Install sq via cargo if missing
+        run: |
+          if ! command -v sq >/dev/null 2>&1; then
+            cargo install sequoia-sq --locked
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+          sq version || sq --version || true
       - name: setup meson
         run: |
           cd ${{github.workspace}}

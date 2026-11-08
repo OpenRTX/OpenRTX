@@ -1413,6 +1413,8 @@ horse_fec_v2_sim = executable('horse_fec_v2_sim',
 py3 = find_program('python3', required : true)
 horse_test_env = environment()
 horse_test_env.set('ASAN_OPTIONS', 'detect_leaks=0')
+# Missing PyNaCl/libsodium must fail (not silently pass). CI also exports this.
+horse_test_env.set('HORSE_REQUIRE_CRYPTO', '1')
 test('Horse FEC v2 sim selftest', horse_fec_v2_sim,
      args : ['selftest'],
      env : horse_test_env, timeout : 60)
@@ -1438,6 +1440,13 @@ test('Horse Provision Pack Test', py3,
      args : [meson.project_source_root() / 'scripts/horse_provision.py', 'selftest'],
      env : horse_test_env,
      timeout : 30)
+# Wrapper strips Catch2 --reporter from meson --test-args.
+test('Horse Provision pytest', py3,
+     args : [meson.project_source_root() / 'tests/python/run_pytest.py',
+             '-q', meson.project_source_root() / 'tests/python'],
+     env : horse_test_env,
+     workdir : meson.project_source_root(),
+     timeout : 120)
 test('Horse settings.h matches upstream', py3,
      args : [meson.project_source_root() / 'tests/unit/horse_settings_upstream.py'],
      workdir : meson.project_source_root(),
