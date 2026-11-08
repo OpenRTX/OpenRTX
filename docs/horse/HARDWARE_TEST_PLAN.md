@@ -13,6 +13,7 @@ attenuators. Do not key a transmitter into an antenna until step 4.
 **Do:** Flash firmware. Provision an identity with
 `scripts/horse_provision.py` over USB (`--port`) or, for the Linux
 emulator, `--sock` at `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock`
+(mode 0600; override `OPENRTX_HORSE_PROV_SOCK`)
 (passphrase 8 to 32 bytes via TTY / `--passphrase-fd` /
 `HORSE_PASSPHRASE`). Power on, enter Horse, unlock. Confirm that an
 empty or shorter-than-8-byte passphrase is rejected by the tool and by

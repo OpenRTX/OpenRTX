@@ -121,13 +121,26 @@ chosen keypad-feasible floor, not a high-entropy policy.
 Passphrase is RAM-only. Linux files are
 `$XDG_STATE_HOME/OpenRTX/horse_identity.bin` mode 0600. Peer public keys
 are a sidecar table (`horse_peer_t`, 64 slots), not `contact_t`.
-`horse_provision.py` writes both formats. Identity fingerprint is
+`horse_provision.py` writes both formats. Store version 2 is
+Argon2id+XChaCha20; store version 3 is the same packed identity
+encrypted to an OpenPGP recipient (decrypt via gpg/sq agent, pipes
+only). Identity fingerprint is
 BLAKE2b-256 keyed `"HORSE-IDFP"` over `ed25519_pk || x25519_pk` (public
 keys only); CONFIRM must match. Linux emulator provisioning uses a Unix
-stream socket under `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` (or a
-per-user state dir fallback), overridable with `OPENRTX_HORSE_PROV_SOCK`
-— not a FIFO and not a fixed path in `/tmp`. Passphrase via TTY,
-`--passphrase-fd`, or `HORSE_PASSPHRASE` (tests) — not argv.
+stream socket under `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` (mode
+0600; or a per-user state dir fallback), overridable with
+`OPENRTX_HORSE_PROV_SOCK` — not a FIFO and not a fixed path in `/tmp`.
+Passphrase via TTY, `--passphrase-fd`, or `HORSE_PASSPHRASE` (tests) —
+not argv.
+
+Optional OpenPGP import uses `tools/horse-openpgp` (sequoia-openpgp):
+locate via `HORSE_OPENPGP_HELPER`, then
+`tools/horse-openpgp/target/release/horse-openpgp`, then `PATH`. Radio
+subkeys may be marked with notation `horse-radio@NOTATION-DOMAIN`
+(placeholder until an owner domain is chosen) or listed in
+`$XDG_STATE_HOME/OpenRTX/horse_radio_subkeys.json` (public fingerprints
+only). `openpgp-new-radio-key` requires `--yes` and defaults to a 2-year
+expiry.
 
 All libsodium work (X25519, Ed25519, BLAKE2b, XChaCha20, Argon2id) runs
 on a dedicated 16 KiB worker thread. RTX posts a job under a mutex,

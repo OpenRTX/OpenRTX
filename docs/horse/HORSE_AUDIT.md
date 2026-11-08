@@ -506,12 +506,17 @@ session-keyed voice MAC (C1).
 - Linux provisioning socket path defaults to
   `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` (mode 0600); override
   `OPENRTX_HORSE_PROV_SOCK`. Host tests cover SIGPIPE-safe disconnect
-  and path mode; emulator end-to-end with `openrtx_linux` still manual.
+  (`send(..., MSG_NOSIGNAL)` + drop client on `EPIPE`/`ECONNRESET`),
+  short-write/`EAGAIN` bounded send, and path mode; emulator
+  end-to-end with `openrtx_linux` still manual.
 - Identity fingerprint is BLAKE2b keyed `"HORSE-IDFP"` over
   `ed25519_pk || x25519_pk` only (public keys). Older CONFIRM hashes
   that covered the full identity including secrets are obsolete.
-- OpenPGP card-stub detection must use gpg colon field 15 (`+` / `#` /
-  card serial) on **subkeys only**; see `horse_openpgp.py`.
+- OpenPGP card-stub detection uses gpg colon field 15 (`+` / `#` /
+  card serial) on **ssb subkeys only** (primary may be offline/token);
+  see `horse_openpgp.py`. Extraction is `tools/horse-openpgp`
+  (sequoia), not pysequoia. Store version 3 is OpenPGP-wrapped packed
+  identity (pipes only).
 - MDx `data[1024]` overlay vs 128 KB sector 11: likely pre-existing;
   passphrase makes blocks larger.
 - `horse_identity_store_t` is not packed: Linux vs ARM padding if both
