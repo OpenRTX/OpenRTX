@@ -31,8 +31,11 @@ jobs:
       - name: install-deps
         run: |
           sudo apt update
-          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2 libsodium-dev gnupg sq cargo rustc
-          sq --version
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2 libsodium-dev gnupg sq
+          # Ubuntu 24.04 ships sequoia-sq 0.33 (`sq version`, not --version).
+          sq version
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       # gcovr is a standalone CLI rather than an import dependency, so install
@@ -272,15 +275,15 @@ jobs:
               https://github.com/OpenRTX/OpenRTX.git /tmp/openrtx-upstream
             meson setup --cross-file cross_cm4.txt build_cm4_fork -Dgit_version="$GV"
             meson compile -C build_cm4_fork openrtx_mduv3x0 openrtx_gd77 openrtx_md3x0
-            arm-none-eabi-objcopy -O binary build_cm4_fork/openrtx_mduv3x0 /tmp/fork_mduv3x0.bin
-            arm-none-eabi-objcopy -O binary build_cm4_fork/openrtx_gd77 /tmp/fork_gd77.bin
-            arm-none-eabi-size build_cm4_fork/openrtx_md3x0 | tee /tmp/md3x0_size.txt
+            arm-miosix-eabi-objcopy -O binary build_cm4_fork/openrtx_mduv3x0 /tmp/fork_mduv3x0.bin
+            arm-miosix-eabi-objcopy -O binary build_cm4_fork/openrtx_gd77 /tmp/fork_gd77.bin
+            arm-miosix-eabi-size build_cm4_fork/openrtx_md3x0 | tee /tmp/md3x0_size.txt
             (
               cd /tmp/openrtx-upstream
               meson setup --cross-file cross_cm4.txt build_cm4 -Dgit_version="$GV"
               meson compile -C build_cm4 openrtx_mduv3x0 openrtx_gd77
-              arm-none-eabi-objcopy -O binary build_cm4/openrtx_mduv3x0 /tmp/up_mduv3x0.bin
-              arm-none-eabi-objcopy -O binary build_cm4/openrtx_gd77 /tmp/up_gd77.bin
+              arm-miosix-eabi-objcopy -O binary build_cm4/openrtx_mduv3x0 /tmp/up_mduv3x0.bin
+              arm-miosix-eabi-objcopy -O binary build_cm4/openrtx_gd77 /tmp/up_gd77.bin
             )
             cmp -s /tmp/fork_mduv3x0.bin /tmp/up_mduv3x0.bin
             cmp -s /tmp/fork_gd77.bin /tmp/up_gd77.bin
