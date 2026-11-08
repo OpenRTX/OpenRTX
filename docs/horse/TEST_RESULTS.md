@@ -9,14 +9,14 @@ Snapshot of automated checks for this fork. Update when re-running CI or
 `scripts/ci_local.sh`. RF and on-radio behaviour remain **untested on
 hardware** unless a row says otherwise.
 
-## GitHub Actions (fork tip `2f41a2f0`)
+## GitHub Actions (fork tip `cda59c1a`)
 
 Branch: `master` / `upstream-sync` (same tip).
 
 | Workflow | Run | Result |
 |----------|-----|--------|
-| Build and test | https://github.com/Supermagnum/OpenRTX/actions/runs/42445660168 | pass |
-| Format sources | https://github.com/Supermagnum/OpenRTX/actions/runs/42445660175 | pass |
+| Build and test | https://github.com/Supermagnum/OpenRTX/actions/runs/42446884239 | pass |
+| Format sources (prior tip `2f41a2f0`) | https://github.com/Supermagnum/OpenRTX/actions/runs/42445660175 | pass |
 
 | Job | Result |
 |-----|--------|
@@ -52,10 +52,10 @@ merged to fork `master` as `b30805cb` and superseded by the tip above.
 
 ## Encrypt / decrypt
 
-| Test | Scope | Local (`build_linux`) | CI |
-|------|-------|------------------------|----|
-| `Horse OpenPGP encrypt/decrypt` | gpg encrypt/decrypt of packed identity; store v3 roundtrip; CLI `openpgp-wrap` then unwrap/`show`; garbage ciphertext rejected | **pass** (4 pytest cases, 0.59s) | pending push |
-| `Horse Crypto Unit Test` | voice XChaCha20 encrypt/decrypt roundtrip; bad tag / bad ciphertext rejected; LSF key-bind | **pass** | pass on tip `2f41a2f0` / `c3ed4a41` |
+| Test | Scope | Local (`build_linux`) | CI (`cda59c1a`) |
+|------|-------|------------------------|----------------|
+| `Horse OpenPGP encrypt/decrypt` | gpg encrypt/decrypt of packed identity; store v3 roundtrip; CLI `openpgp-wrap` then unwrap/`show`; garbage ciphertext rejected | **pass** (4 pytest cases, 0.59s) | **pass** (0.50s) on [run 42446884239](https://github.com/Supermagnum/OpenRTX/actions/runs/42446884239) |
+| `Horse Crypto Unit Test` | voice XChaCha20 encrypt/decrypt roundtrip; bad tag / bad ciphertext rejected; LSF key-bind | **pass** | **pass** (0.01s) on same run |
 
 OpenPGP encrypt/decrypt is a dedicated meson test (also included in
 `Horse Provision pytest`) so unit-test job logs show it by name.
