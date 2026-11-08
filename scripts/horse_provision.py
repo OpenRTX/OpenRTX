@@ -55,6 +55,8 @@ try:
         cmd_openpgp_import_peer,
         cmd_openpgp_new_radio_key,
         openpgp_available,
+        unwrap_identity_openpgp,
+        wrap_identity_openpgp,
     )
 except ImportError:
     openpgp_available = lambda: False
@@ -70,6 +72,12 @@ except ImportError:
 
     def cmd_openpgp_export(*_a, **_k):
         raise RuntimeError("OpenPGP support unavailable (install gpg/sq)")
+
+    def wrap_identity_openpgp(*_a, **_k):
+        raise RuntimeError("OpenPGP support unavailable (install gpg)")
+
+    def unwrap_identity_openpgp(*_a, **_k):
+        raise RuntimeError("OpenPGP support unavailable (install gpg)")
 
 
 PROTOCOL_VERSION = 1
@@ -438,8 +446,72 @@ def wrap_identity(identity, passphrase):
     return header + blob + bytes(HORSE_STORE_BLOB_MAX - len(blob))
 
 
-def unwrap_identity(data, passphrase):
-    if not passphrase_ok(passphrase):
+def _identity_from_packed(packed):
+    if len(packed) != HORSE_ID_PACKED:
+        raise ValueError("identity plaintext size")
+    _ver, _res2, ed_pk, ed_sk, x_pk, x_sk = struct.unpack(
+        "<B3s32s64s32s32s", packed)
+    ed25519_sk_libsodium(ed_pk.hex(), ed_sk.hex())
+    validate_x25519_pair(x_pk, x_sk)
+    return {
+        "version": _ver,
+        "ed25519_pk": ed_pk.hex(),
+        "ed25519_sk": ed_sk.hex(),
+        "x25519_pk": x_pk.hex(),
+        "x25519_sk": x_sk.hex(),
+    }
+
+
+def wrap_identity_openpgp_store(identity, recipient):
+    """Store version 3: packed identity encrypted to an OpenPGP recipient."""
+    packed = pack_identity_binary(identity)
+    ct = wrap_identity_openpgp(packed, recipient)
+    header = struct.pack(
+        "<IB3sI",
+        HORSE_STORE_MAGIC,
+        HORSE_IDENTITY_STORE_VERSION_OPENPGP,
+        b"\x00\x00\x00",
+        len(ct),
+    )
+    return header + ct
+
+
+def store_identity_openpgp_file(identity, recipient, label=None, force=False):
+    path = identity_path(label)
+    if path.exists() and not force:
+        raise RuntimeError(
+            "identity file exists (%s); pass --force to overwrite" % path
+        )
+    data = wrap_identity_openpgp_store(identity, recipient)
+    return atomic_write(path, data)
+
+
+def identity_store_version(data):
+    if len(data) < 5:
+        raise ValueError("identity file too short")
+    magic, ver = struct.unpack_from("<IB", data)
+    if magic != HORSE_STORE_MAGIC:
+        raise ValueError("unsupported identity blob header")
+    return ver
+
+
+def unwrap_identity(data, passphrase=None):
+    if len(data) < 5:
+        raise ValueError("identity file too short")
+    magic, ver = struct.unpack_from("<IB", data)
+    if magic != HORSE_STORE_MAGIC:
+        raise ValueError("unsupported identity blob header")
+
+    if ver == HORSE_IDENTITY_STORE_VERSION_OPENPGP:
+        if len(data) < 12:
+            raise ValueError("OpenPGP identity file too short")
+        _magic, _ver, _res, ct_len = struct.unpack_from("<IB3sI", data)
+        if 12 + ct_len > len(data):
+            raise ValueError("OpenPGP ciphertext length exceeds file")
+        packed = unwrap_identity_openpgp(data[12:12 + ct_len])
+        return _identity_from_packed(packed)
+
+    if passphrase is None or not passphrase_ok(passphrase):
         raise RuntimeError(
             "passphrase must be %u to %u bytes" %
             (HORSE_PASSPHRASE_MIN, HORSE_PASSPHRASE_MAX)
@@ -450,12 +522,6 @@ def unwrap_identity(data, passphrase):
         raise ValueError("identity file too short")
     magic, ver, kdf, _res, ops, mem, salt, blen = struct.unpack_from(
         "<IBB2sII16sH", data)
-    if magic != HORSE_STORE_MAGIC:
-        raise ValueError("unsupported identity blob header")
-    if ver == HORSE_IDENTITY_STORE_VERSION_OPENPGP:
-        raise ValueError(
-            "OpenPGP-wrapped identity: use openpgp-extract-identity / gpg"
-        )
     if (ver != HORSE_IDENTITY_STORE_VERSION or kdf != HORSE_KDF_VERSION
             or ops != HORSE_ARGON2ID_OPSLIMIT
             or mem != HORSE_ARGON2ID_MEMLIMIT):
@@ -477,19 +543,7 @@ def unwrap_identity(data, passphrase):
     )
     packed = nacl.bindings.crypto_aead_xchacha20poly1305_ietf_decrypt(
         blob[npub:], None, blob[:npub], key)
-    if len(packed) != HORSE_ID_PACKED:
-        raise ValueError("identity plaintext size")
-    _ver, _res2, ed_pk, ed_sk, x_pk, x_sk = struct.unpack(
-        "<B3s32s64s32s32s", packed)
-    ed25519_sk_libsodium(ed_pk.hex(), ed_sk.hex())
-    validate_x25519_pair(x_pk, x_sk)
-    return {
-        "version": _ver,
-        "ed25519_pk": ed_pk.hex(),
-        "ed25519_sk": ed_sk.hex(),
-        "x25519_pk": x_pk.hex(),
-        "x25519_sk": x_sk.hex(),
-    }
+    return _identity_from_packed(packed)
 
 
 def store_identity_file(identity, passphrase, label=None, force=False):
@@ -807,6 +861,18 @@ def build_parser():
     op_new = sub.add_parser("openpgp-new-radio-key")
     op_new.add_argument("--gpg", metavar="KEYID", default=None)
     op_new.add_argument("--sq", metavar="KEYID", default=None)
+    op_new.add_argument("--expire", default="2y",
+                        help="subkey expiry (default 2y)")
+    op_new.add_argument("--yes", action="store_true",
+                        help="actually edit the keyring after printing plan")
+    op_wrap = sub.add_parser(
+        "openpgp-wrap",
+        help="re-wrap a v2 identity as store version 3 (OpenPGP ciphertext)",
+    )
+    op_wrap.add_argument("label")
+    op_wrap.add_argument("--recipient", required=True,
+                         help="OpenPGP recipient fingerprint or keyid")
+    op_wrap.add_argument("--force", action="store_true")
     op_ext = sub.add_parser("openpgp-extract-identity")
     op_ext.add_argument("label")
     op_ext.add_argument("--gpg", metavar="KEYID", default=None)
@@ -882,9 +948,13 @@ def main(argv=None):
                 emit({"names": names}, False)
             return 0
         if args.command == "show":
-            passphrase = resolve_passphrase(args)
             path = identity_path(args.label)
-            ident = unwrap_identity(path.read_bytes(), passphrase)
+            raw = path.read_bytes()
+            if identity_store_version(raw) == HORSE_IDENTITY_STORE_VERSION_OPENPGP:
+                ident = unwrap_identity(raw)
+            else:
+                passphrase = resolve_passphrase(args)
+                ident = unwrap_identity(raw, passphrase)
             emit(public_view(ident, args.label), json_mode)
             return 0
         if args.command == "export-peer":
@@ -906,9 +976,13 @@ def main(argv=None):
                 emit({"peer_index": args.index}, False)
             return 0
         if args.command == "provision":
-            passphrase = resolve_passphrase(args)
             path = identity_path(args.label)
-            ident = unwrap_identity(path.read_bytes(), passphrase)
+            raw = path.read_bytes()
+            if identity_store_version(raw) == HORSE_IDENTITY_STORE_VERSION_OPENPGP:
+                ident = unwrap_identity(raw)
+            else:
+                passphrase = resolve_passphrase(args)
+                ident = unwrap_identity(raw, passphrase)
             port = args.port
             sock = args.sock
             if not port and not sock:
@@ -923,6 +997,17 @@ def main(argv=None):
                 json_mode=json_mode
             ):
                 return 1
+            return 0
+        if args.command == "openpgp-wrap":
+            passphrase = resolve_passphrase(args)
+            path = identity_path(args.label)
+            ident = unwrap_identity(path.read_bytes(), passphrase)
+            out = store_identity_openpgp_file(
+                ident, args.recipient, args.label, force=args.force
+            )
+            emit({"path": str(out),
+                  "store_version": HORSE_IDENTITY_STORE_VERSION_OPENPGP},
+                 json_mode)
             return 0
         if args.command == "openpgp-new-radio-key":
             return cmd_openpgp_new_radio_key(args, json_mode)
