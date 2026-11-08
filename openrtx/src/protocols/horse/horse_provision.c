@@ -13,7 +13,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #elif defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
     || defined(PLATFORM_MD9600)
 #include "usb_vcom.h"
@@ -36,15 +37,38 @@ static uint8_t rx_buf[320];
 static size_t rx_len;
 
 #ifdef PLATFORM_LINUX
+static int prov_listen_fd = -1;
 static int prov_fd = -1;
+
+static void prov_accept_client(void)
+{
+    int cfd;
+
+    if (prov_listen_fd < 0 || prov_fd >= 0)
+        return;
+    cfd = accept(prov_listen_fd, NULL, NULL);
+    if (cfd < 0)
+        return;
+    fcntl(cfd, F_SETFL, O_NONBLOCK);
+    prov_fd = cfd;
+}
 #endif
 
 static ssize_t prov_read(void *buf, size_t len)
 {
 #ifdef PLATFORM_LINUX
+    ssize_t n;
+
+    prov_accept_client();
     if (prov_fd < 0)
         return -1;
-    return read(prov_fd, buf, len);
+    n = read(prov_fd, buf, len);
+    if (n == 0) {
+        close(prov_fd);
+        prov_fd = -1;
+        return -1;
+    }
+    return n;
 #elif defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0) \
     || defined(PLATFORM_MD9600)
     return vcom_readBlock(buf, len);
@@ -179,12 +203,38 @@ void horse_provision_init(void)
 {
     rx_len = 0;
 #ifdef PLATFORM_LINUX
-    const char *path = getenv("OPENRTX_HORSE_PROV_FIFO");
-    if (path == NULL)
-        path = "/tmp/openrtx_horse_prov.fifo";
+    /*
+     * Unix stream socket (not a FIFO): pyserial cannot open a FIFO, and a
+     * single FIFO is not duplex. Default path can be overridden for tests.
+     */
+    struct sockaddr_un addr;
+    const char *path = getenv("OPENRTX_HORSE_PROV_SOCK");
 
-    mkfifo(path, 0600);
-    prov_fd = open(path, O_RDWR | O_NONBLOCK);
+    if (path == NULL)
+        path = "/tmp/openrtx_horse_prov.sock";
+
+    unlink(path);
+    memset(&addr, 0, sizeof addr);
+    addr.sun_family = AF_UNIX;
+    if (strlen(path) >= sizeof addr.sun_path)
+        return;
+    strncpy(addr.sun_path, path, sizeof addr.sun_path - 1);
+
+    prov_listen_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (prov_listen_fd < 0)
+        return;
+    fcntl(prov_listen_fd, F_SETFL, O_NONBLOCK);
+    if (bind(prov_listen_fd, (struct sockaddr *)&addr, sizeof addr) < 0) {
+        close(prov_listen_fd);
+        prov_listen_fd = -1;
+        return;
+    }
+    if (listen(prov_listen_fd, 1) < 0) {
+        close(prov_listen_fd);
+        prov_listen_fd = -1;
+        unlink(path);
+        return;
+    }
 #endif
 }
 
