@@ -280,7 +280,24 @@ jobs:
             arm-miosix-eabi-size build_cm4_fork/openrtx_md3x0 | tee /tmp/md3x0_size.txt
             (
               cd /tmp/openrtx-upstream
-              meson setup --cross-file cross_cm4.txt build_cm4 -Dgit_version="$GV"
+              # upstream/master has no -Dgit_version; pin GIT_VERSION the same way.
+              python3 - <<PY
+from pathlib import Path
+import re
+gv = "$GV"
+p = Path("meson.build")
+t = p.read_text()
+t2, n = re.subn(
+    r"git_version\s*=\s*'\"'\s*\+\s*r\.stdout\(\)\.strip\(\)\s*\+\s*'\"'",
+    f'git_version = \'"{gv}"\'',
+    t,
+    count=1,
+)
+if n != 1:
+    raise SystemExit(f"failed to pin upstream GIT_VERSION (n={n})")
+p.write_text(t2)
+PY
+              meson setup --cross-file cross_cm4.txt build_cm4
               meson compile -C build_cm4 openrtx_mduv3x0 openrtx_gd77
               arm-miosix-eabi-objcopy -O binary build_cm4/openrtx_mduv3x0 /tmp/up_mduv3x0.bin
               arm-miosix-eabi-objcopy -O binary build_cm4/openrtx_gd77 /tmp/up_gd77.bin
