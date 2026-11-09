@@ -56,6 +56,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/voicePromptUtils.c',
                'openrtx/src/core/voicePromptData.S',
                'openrtx/src/core/nvmem_access.c',
+               'openrtx/src/crypt/aes.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -1242,6 +1243,10 @@ audio_codec_test = executable('audio_codec_test',
                               sources : unit_test_src + ['tests/unit/audio_codec.cpp'],
                               kwargs  : unit_test_opts)
 
+aes_encryption_test = executable('aes_encryption_test',
+                              sources : unit_test_src + ['tests/unit/aes_test.cpp'],
+                              kwargs  : unit_test_opts)
+
 # Baseband replay (tests/platform/M17Replay.hpp): a command line tool and a
 # unit test replaying a committed recording through the same class. The test
 # gets the asset directory as an absolute path so it does not depend on the
@@ -1278,3 +1283,4 @@ test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('Audio Codec Test',     audio_codec_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
+test('AES Encryption Test', aes_encryption_test)

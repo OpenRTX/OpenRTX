@@ -221,7 +221,7 @@ static bool GetSymbolVPIfItShouldBeAnnounced(char symbol, enum vpFlags flags,
                                          true :
                                          false;
 
-    char *symbolPtr = strchr(indexedSymbols, symbol);
+    const char *symbolPtr = strchr(indexedSymbols, symbol);
 
     if (symbolPtr == NULL) { // we don't have a prompt for this character.
         return (flags & vpAnnounceASCIIValueForUnknownChars) ? true : false;

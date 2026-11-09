@@ -9,7 +9,7 @@
 #include "interfaces/nvmem.h"
 #include <stdio.h>
 #include "core/gps.h"
-#include "emulator.h"
+#include "emulator/emulator.h"
 #include "toneGenerator_sdl.h"
 
 /*
