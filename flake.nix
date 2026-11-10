@@ -50,9 +50,10 @@
 
       # The sources the builds actually read: tracked files minus the Nix
       # code, CI/editor configuration and documentation, so that editing those
-      # does not rebuild the firmware. Non-git flake sources (path:, tarballs)
-      # may also carry build directories, `result` links and wrap checkouts
-      # under subprojects/, which are dropped as well.
+      # in a dirty tree does not rebuild the firmware (a new commit always
+      # does: gitVersion is part of every image). Non-git flake sources (path:,
+      # tarballs) may also carry build directories, `result` links and wrap
+      # checkouts under subprojects/, which are dropped as well.
       src = lib.cleanSourceWith {
         name = "openrtx-src";
         src = self;

@@ -48,7 +48,8 @@ serve it afterwards.
 | `devShells.<sys>.{default,zephyr}` | development environments |
 | `overlays.default` | the `pkgs.openrtx.*` scope, for other flakes |
 | `nixosModules.default` | installs the udev rules (`services.udev.packages`) |
-| `formatter.<sys>` | `nixfmt` |
+| `formatter.<sys>` | `nixfmt-tree` (`nix fmt`) |
+| `githubActions` | the job matrix of `.github/workflows/nix.yml` |
 
 Radios: `md3x0 mduv3x0 md9600 dm1701 gd77 dm1801 mod17 cs7000 rt4d`
 (Cortex-M4, `cross_cm4.txt`), `cs7000p` (Cortex-M7, `cross_cm7.txt`),
@@ -79,9 +80,11 @@ arguments are passed through to `radio_tool`, `dfu-util`, the GD-77 loader or
 
 ## Design notes
 
-* `nixpkgs` is the only input. It follows `nixpkgs-unstable` (newest meson,
-  nixfmt and Python packages) and `flake.lock` pins the revision on which the
-  toolchain, emulator, tests and Zephyr build were verified.
+* `nixpkgs` is the only input the builds use. It follows `nixpkgs-unstable`
+  (newest meson, nixfmt and Python packages) and `flake.lock` pins the
+  revision on which the toolchain, emulator, tests and Zephyr build were
+  verified. The second input, `nix-github-actions`, only generates the CI job
+  matrix.
 * Every component is a `callPackage`-style file under `nix/`, instantiated in
   the `pkgs.openrtx` scope defined by `overlays.default`; `packages`, `apps`,
   `checks` and `devShells` are views on that scope.
