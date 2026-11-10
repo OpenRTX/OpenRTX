@@ -269,10 +269,11 @@ public:
      *
      * @param in: input data.
      * @param out: destination array where decoded data are written.
-     * @return number of bit errors corrected.
+     * @return distance of the input from the decoded sequence, in fully
+     * confident bits: the number of corrected bit errors for hard input.
      */
     template < size_t IN, size_t OUT >
-    uint32_t decode(const std::array< uint16_t, IN >& in,
+    uint16_t decode(const std::array< uint16_t, IN >& in,
                           std::array< uint8_t, OUT >& out)
     {
         static_assert(IN < 244*2, "Input size exceeds max history");
@@ -289,7 +290,7 @@ public:
             pos++;
         }
 
-        return chainback(out, pos);
+        return chainback(out, pos) / BIT_COST;
     }
 
     /**
@@ -298,7 +299,8 @@ public:
      * @param in: input data.
      * @param out: destination array where decoded data are written.
      * @param punctureMatrix: puncturing matrix.
-     * @return number of bit errors corrected.
+     * @return distance of the input from the decoded sequence, in fully
+     * confident bits: the number of corrected bit errors for hard input.
      */
     template < size_t IN, size_t OUT, size_t P >
     uint16_t decodePunctured(const std::array< uint16_t, IN >& in,
@@ -316,7 +318,8 @@ public:
      * @param in: returns the input value at a position, from 0 to IN - 1.
      * @param out: destination array where decoded data are written.
      * @param punctureMatrix: puncturing matrix.
-     * @return number of bit errors corrected.
+     * @return distance of the input from the decoded sequence, in fully
+     * confident bits: the number of corrected bit errors for hard input.
      */
     template < size_t IN, typename Input, size_t OUT, size_t P >
     uint16_t decodePunctured(const Input& in,
@@ -347,7 +350,7 @@ public:
                 }
                 else
                 {
-                    sym[i] = 0x7FFF; //half range for punctured out bit
+                    sym[i] = ERASED;
                     punctBitCnt++;
                 }
 
@@ -358,7 +361,9 @@ public:
             histPos++;
         }
 
-        return chainback(out, histPos) - punctBitCnt;
+        // A punctured bit costs ERASED or one more on every path
+        uint32_t cost = chainback(out, histPos) - (punctBitCnt * ERASED);
+        return cost / BIT_COST;
     }
 
 private:
@@ -435,7 +440,7 @@ private:
      *
      * @param out: destination byte array for decoded data.
      * @param pos: starting position for the chainback.
-     * @return minimum Viterbi cost at the end of the decode sequence.
+     * @return cost of the decoded path, which ends in state zero.
      */
     template < size_t OUT >
     uint32_t chainback(std::array< uint8_t, OUT >& out, size_t pos)
@@ -453,15 +458,7 @@ private:
             setBit(out, bitPos, bit);
         }
 
-        uint32_t cost = (*prevMetrics)[0];
-
-        for(size_t i = 0; i < NumStates; i++)
-        {
-            uint32_t m = (*prevMetrics)[i];
-            if(m < cost) cost = m;
-        }
-
-        return cost;
+        return (*prevMetrics)[0];
     }
 
     /**
@@ -481,6 +478,9 @@ private:
 
     static constexpr size_t K = 5;
     static constexpr size_t NumStates = (1 << (K - 1));
+
+    static constexpr uint32_t BIT_COST = 0xFFFF; ///< Fully confident wrong bit.
+    static constexpr uint16_t ERASED   = 0x7FFF; ///< Punctured bit, half way.
 
     std::array< uint32_t, NumStates > *prevMetrics;
     std::array< uint32_t, NumStates > *currMetrics;

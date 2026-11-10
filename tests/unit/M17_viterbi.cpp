@@ -9,6 +9,7 @@
 #include <cmath>
 #include <random>
 #include <array>
+#include "core/utils.h"
 #include "protocols/M17/ConvolutionalEncoder.hpp"
 #include "protocols/M17/CodePuncturing.hpp"
 #include "protocols/M17/Viterbi.hpp"
@@ -187,4 +188,52 @@ TEST_CASE("Viterbi decode starts the trellis in the encoder's start state",
 
     CAPTURE(decoded);
     REQUIRE(decoded >= 250);
+}
+
+TEST_CASE("Soft Viterbi decode returns the corrected bits of confident input",
+          "[m17][viterbi]")
+{
+    array<uint8_t, 18> source;
+    for (size_t i = 0; i < source.size(); i++)
+        source[i] = static_cast<uint8_t>(53 * i + 7);
+
+    array<uint8_t, 37> encoded;
+    array<uint8_t, 34> punctured;
+    encodeStream(source, encoded, punctured);
+
+    // Fully confident bits, with k of them flipped well apart
+    static constexpr size_t FLIPS[] = {
+        20,
+        90,
+        160,
+        230,
+    };
+    for (size_t k = 0; k <= ARRAY_SIZE(FLIPS); k++) {
+        array<uint16_t, 34 * 8> soft;
+        for (size_t i = 0; i < soft.size(); i++)
+            soft[i] = M17::getBit(punctured, i) ? 0xFFFF : 0x0000;
+        for (size_t f = 0; f < k; f++)
+            soft[FLIPS[f]] = 0xFFFF - soft[FLIPS[f]];
+
+        array<uint8_t, 18> result;
+        M17::SoftViterbi decoder;
+        uint16_t corrected = decoder.decodePunctured(soft, result,
+                                                     M17::DATA_PUNCTURE);
+        CAPTURE(k);
+        REQUIRE(result == source);
+        REQUIRE(corrected == k);
+    }
+
+    // Unpunctured, one confident and one half confident error: only the
+    // confident one counts as a whole bit
+    array<uint16_t, 37 * 8> soft;
+    for (size_t i = 0; i < soft.size(); i++)
+        soft[i] = M17::getBit(encoded, i) ? 0xFFFF : 0x0000;
+    soft[30] = 0xFFFF - soft[30];
+    soft[150] = M17::getBit(encoded, 150) ? 0x7000 : 0x8FFF;
+
+    array<uint8_t, 18> result;
+    M17::SoftViterbi decoder;
+    REQUIRE(decoder.decode(soft, result) == 1);
+    REQUIRE(result == source);
 }
