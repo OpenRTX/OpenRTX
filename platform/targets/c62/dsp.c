@@ -19,6 +19,10 @@ LOG_MODULE_REGISTER(dsp, LOG_LEVEL_DBG);
 
 #include "dsp.h"
 
+/*
+ * The DSP's shared audio bank and boot address, from ListenAI's DSP loader:
+ * https://github.com/OpenRTX/lsf-zephyr-sdk/blob/2ac605527dcde3e90c814bb4175546cc7fbd36da/src/dsp.c
+ */
 #define AP_SYS_RAM_BANK_IDX 4
 #define AP_SYS_RAM_BANK_SIZE 0x00010000
 #define AP_SYS_RAM_BANK_ADDR \
@@ -27,7 +31,8 @@ LOG_MODULE_REGISTER(dsp, LOG_LEVEL_DBG);
 /* Code and data addresses can refer to the same SRAM through aliases
  * differing by bit 29. Normalize both before comparing their ranges.
  */
-#define AP_RAM_CANONICAL_ADDR(addr) ((addr) & ~0x20000000UL)
+#define AP_RAM_ALIAS_BIT BIT(29)
+#define AP_RAM_CANONICAL_ADDR(addr) ((addr) & ~AP_RAM_ALIAS_BIT)
 #define AP_RAM_START AP_RAM_CANONICAL_ADDR(CONFIG_SRAM_BASE_ADDRESS)
 #define AP_RAM_END (AP_RAM_START + CONFIG_SRAM_SIZE * 1024UL)
 #define DSP_RAM_START AP_RAM_CANONICAL_ADDR(AP_SYS_RAM_BANK_ADDR)
@@ -36,11 +41,11 @@ LOG_MODULE_REGISTER(dsp, LOG_LEVEL_DBG);
 /* Fail the build if application SRAM includes the DSP's shared audio bank.
  * This checks the configured layout; it does not reserve memory at runtime.
  */
-BUILD_ASSERT(AP_RAM_END <= DSP_RAM_START || AP_RAM_START >= DSP_RAM_END,
+BUILD_ASSERT((AP_RAM_END <= DSP_RAM_START) || (AP_RAM_START >= DSP_RAM_END),
              "Application SRAM overlaps DSP shared audio bank 4");
 
-#define AP_PSRAM_BASE (0x30000000)
-#define CP_PSRAM_BASE (0x60000000)
+/* PSRAM_BASE as the DSP addresses it */
+#define CP_PSRAM_BASE 0x60000000
 
 #define AP_FLASH_BASE DT_REG_ADDR(DT_CHOSEN(zephyr_flash))
 
@@ -48,7 +53,7 @@ BUILD_ASSERT(AP_RAM_END <= DSP_RAM_START || AP_RAM_START >= DSP_RAM_END,
 #define DSP_FIRMWARE_NODE DT_CHOSEN(lsf_dsp_firmware)
 #endif /* CONFIG_LSF_DSP_LOAD_ON_BOOT */
 
-void lsf_dsp_load(const void *addr, uint32_t size)
+static void lsf_dsp_load(const void *addr, uint32_t size)
 {
     /* Enable clock for DSP */
     __HAL_CRM_CP_CLK_ENABLE();
@@ -70,8 +75,8 @@ void lsf_dsp_load(const void *addr, uint32_t size)
     __DMB();
 
     /* Load DSP firmware to boot address */
-    memcpy((void *)AP_PSRAM_BASE, addr, size);
-    dcache_clean_range(AP_PSRAM_BASE, AP_PSRAM_BASE + size);
+    memcpy((void *)PSRAM_BASE, addr, size);
+    dcache_clean_range(PSRAM_BASE, PSRAM_BASE + size);
 
     __DSB();
 
@@ -101,17 +106,17 @@ int lsf_dsp_init(void)
     __HAL_SYS_CP_STALL();
 
     /* Configure share memory bank 4 to be accessed by AHB-S */
-    IP_SYSCTRL->REG_AP_CTRL1.bit.AP_RAM_SEL = (1 << AP_SYS_RAM_BANK_IDX);
+    IP_SYSCTRL->REG_AP_CTRL1.bit.AP_RAM_SEL = BIT(AP_SYS_RAM_BANK_IDX);
 
     /* Zero memory bank 4 */
-    memset((void *)AP_SYS_RAM_BANK_ADDR, 0x00, AP_SYS_RAM_BANK_SIZE);
+    memset((void *)AP_SYS_RAM_BANK_ADDR, 0, AP_SYS_RAM_BANK_SIZE);
     dcache_invalidate_range(AP_SYS_RAM_BANK_ADDR,
                             AP_SYS_RAM_BANK_ADDR + AP_SYS_RAM_BANK_SIZE);
 
 #if defined(CONFIG_LSF_DSP_LOAD_ON_BOOT)
     LOG_DBG("Auto load DSP firmware from %s (offset: 0x%08x, size: %u)",
-            DT_LABEL(DSP_FIRMWARE_NODE), DT_REG_ADDR(DSP_FIRMWARE_NODE),
-            DT_REG_SIZE(DSP_FIRMWARE_NODE));
+            DT_NODE_FULL_NAME(DSP_FIRMWARE_NODE),
+            DT_REG_ADDR(DSP_FIRMWARE_NODE), DT_REG_SIZE(DSP_FIRMWARE_NODE));
 
     /* Load DSP firmware */
     lsf_dsp_load((void *)(AP_FLASH_BASE + DT_REG_ADDR(DSP_FIRMWARE_NODE)),

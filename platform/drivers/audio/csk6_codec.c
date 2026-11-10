@@ -30,8 +30,29 @@
 LOG_MODULE_REGISTER(csk6_codec, LOG_LEVEL_INF);
 
 #define DSP_SAMPLE_RATE 48000
-#define CAPTURE_FRAME_SAMPLES (DSP_SAMPLE_RATE / 100)
+/* Stereo transport channels, indexed by the AudioSource and AudioSink values */
+#define CODEC_CHANNELS 2
+BUILD_ASSERT(((int)SOURCE_MIC == (int)SINK_SPK)
+                 && ((int)SOURCE_RTX == (int)SINK_RTX)
+                 && (SOURCE_MCU == CODEC_CHANNELS)
+                 && (SINK_MCU == CODEC_CHANNELS),
+             "Codec channels must match the audio source and sink values");
+#define CAPTURE_FRAME_MS 10
+#define CAPTURE_FRAME_SAMPLES \
+    (DSP_SAMPLE_RATE * CAPTURE_FRAME_MS / MSEC_PER_SEC)
 #define RECORD_CHANNELS (CHANNEL_IN_LEFT | CHANNEL_IN_RIGHT)
+/* Longest key=value string sent to the DSP */
+#define DSP_PARAM_LEN 128
+/*
+ * Default arguments of the LSF audio API, as ListenAI's audio_recorder sample
+ * passes them: parameters for every stream, the default input source, the
+ * default playback buffer size and no wait for a playback buffer.
+ * https://github.com/OpenRTX/lsf-zephyr-sdk/blob/2ac605527dcde3e90c814bb4175546cc7fbd36da/samples/audio_recorder/src/main.c
+ */
+#define DSP_IO_ALL 0
+#define DSP_INPUT_SOURCE_DEFAULT 0
+#define DSP_TRACK_FRAMES_DEFAULT 0
+#define DSP_BUFFER_NO_WAIT 0
 /* Capacity per FM output; not a target fill level. */
 #define QUEUE_MS 160
 #define QUEUE_SAMPLES (DSP_SAMPLE_RATE * QUEUE_MS / MSEC_PER_SEC)
@@ -43,62 +64,87 @@ LOG_MODULE_REGISTER(csk6_codec, LOG_LEVEL_INF);
 /* Above the rtx and UI threads (Zephyr priority 14 as POSIX default), below
  * main, so the DSP streams are paced on time */
 #define WORKER_PRIORITY 5
-#define WORKER_STACK_SIZE (8 * 1024)
+/* Static worst case about 0.9 KiB, with immediate-mode logging and an FPU
+ * exception frame, from -fcallgraph-info=su */
+#define WORKER_STACK_SIZE 2048
+
+/*
+ * CSK6 audio codec ADC01, the AON codec, not the CP's ADC23. Not in
+ * hal_listenai: from ListenAI's Venus HAL codec driver, as used by OE3ANC in
+ * https://github.com/OE3ANC/OpenRTX-c62/commit/8a160732f36755d2d42e3673cb10c7243c8f32a2
+ */
+#define CODEC_ADC01_BASE (AON_VAD_BASE + 0x20000)
+
+/** Codec ADC register offsets. */
+enum codecAdcReg {
+    CODEC_ADC_R5 = 0x14, ///< Enable and reset
+    CODEC_ADC_R6 = 0x18, ///< Filters
+};
+
+/**
+ * Codec ADC register fields. The source names R5 bits 7 and 8 together, as
+ * enable and reset release, without saying which is which.
+ */
+enum codecAdcField {
+    CODEC_ADC_R5_ACTIVE = BIT(7) | BIT(8), ///< Enabled and out of reset
+    CODEC_ADC_R6_HPF2 = BIT(14),           ///< HPF2 on both channels
+    CODEC_ADC_R6_HPF1 = BIT(15),           ///< HPF1, left as it is
+};
 
 /* FM passthrough only: bridge separately available capture/playback frames. */
 struct sampleQueue {
-    int16_t samples[QUEUE_SAMPLES];
-    size_t head;
-    size_t count;
+    int16_t samples[QUEUE_SAMPLES]; ///< Ring of 48 kHz samples
+    size_t head;                    ///< Oldest sample
+    size_t count;                   ///< Samples queued
 };
 
 /* The worker continuously traverses the attached application buffer, like
  * DMA. sync() observes half/full boundaries; it does not submit transfers. */
 struct endpoint {
-    struct streamCtx *ctx;
-    size_t position;     /* Next application sample to read or write. */
-    uint32_t boundaries; /* Completed halves, or linear completions. */
-    uint32_t observed;   /* Last boundary acknowledged by sync(). */
-    unsigned int divisor;
-    unsigned int channel;
-    int error;
-    bool input;
-    bool busy; /* A sync/stop callback is waiting on this endpoint. */
-    bool stop; /* Finish the current output block, then drain. */
+    struct streamCtx *ctx; ///< Attached stream, or NULL
+    size_t position;       ///< Next application sample to read or write
+    size_t channel;        ///< Codec channel: SINK_* or SOURCE_* value
+    uint32_t boundaries;   ///< Completed halves, or linear completions
+    uint32_t observed;     ///< Last boundary acknowledged by sync()
+    unsigned int divisor;  ///< 48 kHz samples per application sample
+    int error;             ///< Error that stopped the stream, or 0
+    bool input;            ///< Capture endpoint
+    bool busy;             ///< A sync/stop callback is waiting on it
+    bool stop;             ///< Finish the current output block, then drain
 };
 
 struct inputState {
-    struct endpoint endpoint;
-    unsigned int phase;
+    struct endpoint endpoint; ///< Stream state
+    unsigned int phase;       ///< 48 kHz samples since the last one kept
 };
 
 struct outputState {
-    struct endpoint endpoint;
-    struct sampleQueue fmQueue;
-    unsigned int phase;
-    int64_t deadline;
-    bool draining;
+    int64_t deadline;           ///< Drain end, or 0 until it is estimated
+    struct endpoint endpoint;   ///< Stream state
+    struct sampleQueue fmQueue; ///< FM passthrough samples
+    unsigned int phase;         ///< Repeats of the current sample played
+    bool draining;              ///< Last block sent, waiting for the DAC
 };
 
-static struct inputState inputs[2] __attribute__((section(".psram_section")));
-static struct outputState outputs[2] __attribute__((section(".psram_section")));
+static struct inputState inputs[CODEC_CHANNELS]
+    __attribute__((section(".psram_section")));
+static struct outputState outputs[CODEC_CHANNELS]
+    __attribute__((section(".psram_section")));
 /* Protect routing, endpoint state and worker accesses to application buffers.
  * Callers access only the idle half; they must finish before it becomes active.
  * Condition waits release this mutex so the worker and cancellation can run. */
 static K_MUTEX_DEFINE(audioMutex);
 static K_CONDVAR_DEFINE(changed);
-/* Given by the worker once the DSP streams are open, or failed to open */
-static K_SEM_DEFINE(workerStarted, 0, 1);
 /* Wakes an idle worker: a route or stream changed, or a stop was requested */
 static K_SEM_DEFINE(workerWake, 0, 1);
 static atomic_t stopRequested;
 static bool running;
-static int initResult;
 /* Desired routing, written by board callbacks and applied by the worker. */
-static bool inputEnabled[2];
-static int outputSource[2] = { NO_SOURCE, NO_SOURCE };
+static bool inputEnabled[CODEC_CHANNELS];
+static int outputSource[CODEC_CHANNELS] = { NO_SOURCE, NO_SOURCE };
 static bool routesDirty;
-/* Only the worker accesses vendor objects and actual device state. */
+/* Only openDsp(), from csk6codec_init(), and then the worker access vendor
+ * objects and actual device state. */
 static AudioRecord record;
 static AudioTrack playbackTrack;
 static bool captureRunning;
@@ -106,14 +152,15 @@ static bool playbackRunning;
 static int64_t playbackDeadline;
 static uint32_t playbackFraction;
 static struct k_thread worker;
-K_THREAD_STACK_DEFINE(workerStack, WORKER_STACK_SIZE);
+static K_THREAD_STACK_DEFINE(workerStack, WORKER_STACK_SIZE);
 
 /**
  * Empty an FM queue.
  */
 static void queueReset(struct sampleQueue *q)
 {
-    q->head = q->count = 0;
+    q->head = 0;
+    q->count = 0;
 }
 
 /**
@@ -207,7 +254,7 @@ static size_t blockRemaining(const struct endpoint *ep)
  */
 static bool endpointActive(const struct endpoint *ep)
 {
-    return ep->ctx != NULL && ep->ctx->running;
+    return (ep->ctx != NULL) && ep->ctx->running;
 }
 
 /**
@@ -270,11 +317,11 @@ static bool waitForChange(int64_t deadline)
 /**
  * Check whether an output channel has something to play.
  */
-static bool outputEnabled(unsigned int channel)
+static bool outputEnabled(size_t channel)
 {
     if (outputSource[channel] == SOURCE_MCU)
-        return outputs[channel].endpoint.ctx != NULL
-            && outputs[channel].endpoint.error == 0;
+        return (outputs[channel].endpoint.ctx != NULL)
+            && (outputs[channel].endpoint.error == 0);
     return outputSource[channel] != NO_SOURCE;
 }
 
@@ -294,26 +341,24 @@ static struct ICStreamShare *refreshStreamLayout(ICStream *stream)
 }
 
 /**
- * Bypass ADC HPF2 after each capture start, to keep the received baseband.
- * Venus HAL: ADC01 is the AON codec at 0x46e20000, not CP ADC23. R6 bit 14
- * controls HPF2 for both channels; bit 15 is the separate HPF1. Apply after
- * the synchronous DSP start, which may configure the codec.
+ * Bypass the codec ADC's HPF2 after each capture start, to keep the received
+ * baseband. Apply after the synchronous DSP start, which may configure the
+ * codec.
  */
 static void disableAdcHpf2(void)
 {
-    const uintptr_t adc = AON_VAD_BASE + 0x20000;
-    uint32_t r5 = sys_read32(adc + 0x14);
-    uint32_t before = sys_read32(adc + 0x18);
-    /* Only touch an enabled ADC that has been released from reset. */
-    if ((r5 & (BIT(7) | BIT(8))) != (BIT(7) | BIT(8))) {
-        LOG_ERR("ADC01 HPF2 bypass skipped: inactive R5=%08x R6=%08x", r5,
-                before);
+    uint32_t r5 = sys_read32(CODEC_ADC01_BASE + CODEC_ADC_R5);
+    uint32_t r6 = sys_read32(CODEC_ADC01_BASE + CODEC_ADC_R6);
+    uint32_t bypass = r6 & ~CODEC_ADC_R6_HPF2;
+
+    /* Only touch an ADC that is both enabled and out of reset */
+    if ((r5 & CODEC_ADC_R5_ACTIVE) != CODEC_ADC_R5_ACTIVE) {
+        LOG_ERR("ADC01 HPF2 bypass skipped: inactive R5=%08x R6=%08x", r5, r6);
         return;
     }
-    sys_write32(before & ~BIT(14), adc + 0x18);
+    sys_write32(bypass, CODEC_ADC01_BASE + CODEC_ADC_R6);
     __DSB();
-    uint32_t after = sys_read32(adc + 0x18);
-    if (after != (before & ~BIT(14)))
+    if (sys_read32(CODEC_ADC01_BASE + CODEC_ADC_R6) != bypass)
         LOG_ERR("ADC01 HPF2 bypass readback mismatch");
 }
 
@@ -327,7 +372,7 @@ static int setDspParam(const char *kv)
 {
     String8 param;
     String8_ctor_char(&param, kv);
-    int ret = AudioSystem_setParameters(0, &param);
+    int ret = AudioSystem_setParameters(DSP_IO_ALL, &param);
     String8_dtor(&param);
     return ret;
 }
@@ -339,7 +384,7 @@ static int setDspParam(const char *kv)
  */
 static int configureAdcGain(void)
 {
-    char kv[128];
+    char kv[DSP_PARAM_LEN];
     snprintf(kv, sizeof(kv),
              "ADC_PDM_GAIN_A_LEFT=%d;ADC_PDM_GAIN_D_LEFT=%d;"
              "ADC_PDM_GAIN_A_RIGHT=%d;ADC_PDM_GAIN_D_RIGHT=%d",
@@ -355,7 +400,7 @@ static int configureAdcGain(void)
  */
 static int configureDacGain(void)
 {
-    char kv[128];
+    char kv[DSP_PARAM_LEN];
     snprintf(kv, sizeof(kv),
              "DAC_GAIN_A_LEFT=%d;DAC_GAIN_D_LEFT=%d;"
              "DAC_GAIN_A_RIGHT=%d;DAC_GAIN_D_RIGHT=%d",
@@ -372,7 +417,7 @@ static int configureDacGain(void)
  */
 static int configureSampleFormat(void)
 {
-    char kv[64];
+    char kv[DSP_PARAM_LEN];
     snprintf(kv, sizeof(kv), "samplingRate=%u;channels=%u",
              (unsigned int)DSP_SAMPLE_RATE, (unsigned int)RECORD_CHANNELS);
     return setDspParam(kv);
@@ -388,11 +433,11 @@ static int configureSampleFormat(void)
 static int checkRecordLayout(const AudioRecord *rec)
 {
     struct ICStreamShare *share = refreshStreamLayout(rec->mICStream);
-    if (share->sampleCountPerFrame != rec->mCblk->frameCount
-        || share->channelCount != rec->mCblk->channels
-        || share->sampleCountPerFrame <= 0
-        || share->sampleCountPerFrame > QUEUE_SAMPLES
-        || share->channelCount < 2) {
+    if ((share->sampleCountPerFrame != rec->mCblk->frameCount)
+        || (share->channelCount != rec->mCblk->channels)
+        || (share->sampleCountPerFrame <= 0)
+        || (share->sampleCountPerFrame > QUEUE_SAMPLES)
+        || (share->channelCount < CODEC_CHANNELS)) {
         LOG_ERR("DSP capture layout mismatch: frames=%d/%d channels=%d/%d",
                 (int)share->sampleCountPerFrame, (int)rec->mCblk->frameCount,
                 (int)share->channelCount, (int)rec->mCblk->channels);
@@ -411,10 +456,11 @@ static int checkRecordLayout(const AudioRecord *rec)
 static int checkPlaybackLayout(const AudioTrack *track)
 {
     struct ICStreamShare *share = refreshStreamLayout(track->mICStream);
-    if (track->mCblk->channels != 2
-        || track->mCblk->frameSize != 2 * sizeof(int16_t)
-        || share->channelCount != 2 || share->cellSize != sizeof(int16_t)
-        || share->sampleCountPerFrame <= 0) {
+    if ((track->mCblk->channels != CODEC_CHANNELS)
+        || (track->mCblk->frameSize != CODEC_CHANNELS * sizeof(int16_t))
+        || (share->channelCount != CODEC_CHANNELS)
+        || (share->cellSize != sizeof(int16_t))
+        || (share->sampleCountPerFrame <= 0)) {
         LOG_ERR("DSP playback layout mismatch: channels=%d frameSize=%d "
                 "shared channels=%d cellSize=%d",
                 track->mCblk->channels, track->mCblk->frameSize,
@@ -426,7 +472,7 @@ static int checkPlaybackLayout(const AudioTrack *track)
 
 /**
  * Set the codec gains and open the 48 kHz capture and playback streams.
- * Worker only; on failure, closes whatever it opened.
+ * Called by csk6codec_init(); on failure, closes whatever it opened.
  *
  * @param rec: capture stream to open.
  * @param track: playback stream to open.
@@ -446,8 +492,9 @@ static int openDsp(AudioRecord *rec, AudioTrack *track)
         return ret;
     }
 
-    ret = AudioRecord_ctor(rec, 0, DSP_SAMPLE_RATE, PCM_16_BIT, RECORD_CHANNELS,
-                           CAPTURE_FRAME_SAMPLES, NULL);
+    ret = AudioRecord_ctor(rec, DSP_INPUT_SOURCE_DEFAULT, DSP_SAMPLE_RATE,
+                           PCM_16_BIT, RECORD_CHANNELS, CAPTURE_FRAME_SAMPLES,
+                           NULL);
     if (ret != 0) {
         LOG_ERR("Opening the 48 kHz capture stream failed: %d", ret);
         return ret;
@@ -458,7 +505,7 @@ static int openDsp(AudioRecord *rec, AudioTrack *track)
         goto closeRecord;
 
     ret = AudioTrack_ctor(track, DSP_SAMPLE_RATE, PCM_16_BIT,
-                          CHANNEL_OUT_STEREO, 0, NULL);
+                          CHANNEL_OUT_STEREO, DSP_TRACK_FRAMES_DEFAULT, NULL);
     if (ret != 0) {
         LOG_ERR("Opening the 48 kHz playback stream failed: %d", ret);
         goto closeRecord;
@@ -534,11 +581,11 @@ static void setPlayback(AudioTrack *track, bool enable)
  */
 static void applyRoutes(AudioRecord *rec, AudioTrack *track)
 {
-    bool capture = inputEnabled[0] || inputEnabled[1];
+    bool capture = false;
     bool playback = false;
-    for (unsigned int i = 0; i < 2; i++) {
-        capture |= outputSource[i] == SOURCE_MIC
-                || outputSource[i] == SOURCE_RTX;
+    for (size_t i = 0; i < CODEC_CHANNELS; i++) {
+        capture |= inputEnabled[i] || (outputSource[i] == SOURCE_MIC)
+                || (outputSource[i] == SOURCE_RTX);
         playback |= outputEnabled(i);
     }
 
@@ -596,7 +643,7 @@ static void captureToStream(struct inputState *in, const int16_t *src,
     size_t next = (divisor - in->phase) % divisor; /* First sample kept */
     in->phase = (in->phase + count) % divisor;
 
-    while (next < count && endpointActive(ep)) {
+    while ((next < count) && endpointActive(ep)) {
         size_t run = MIN(DIV_ROUND_UP(count - next, divisor),
                          blockRemaining(ep));
         stream_sample_t *dst = &ep->ctx->buffer[ep->position];
@@ -617,10 +664,10 @@ static void captureToStream(struct inputState *in, const int16_t *src,
  * @param stride: distance between samples, in samples.
  * @param count: samples.
  */
-static void captureToFmQueues(unsigned int source, const int16_t *src,
-                              size_t stride, size_t count)
+static void captureToFmQueues(size_t source, const int16_t *src, size_t stride,
+                              size_t count)
 {
-    for (unsigned int sink = 0; sink < 2; sink++) {
+    for (size_t sink = 0; sink < CODEC_CHANNELS; sink++) {
         if (outputSource[sink] == (int)source)
             queueWrite(&outputs[sink].fmQueue, src, stride, count);
     }
@@ -631,7 +678,7 @@ static void captureToFmQueues(unsigned int source, const int16_t *src,
  */
 static void failInputs(int error)
 {
-    for (unsigned int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         if (inputs[i].endpoint.ctx != NULL)
             failStream(&inputs[i].endpoint, error);
     }
@@ -661,7 +708,7 @@ static void captureFrame(AudioRecord *rec)
     const int16_t *samples = frame;
     const size_t stride = ic->share->channelCount;
     const size_t count = rec->mCblk->frameCount;
-    for (unsigned int source = 0; source < 2; source++) {
+    for (size_t source = 0; source < CODEC_CHANNELS; source++) {
         const int16_t *src = &samples[rec->mChannelOutIdx[source]];
         captureToStream(&inputs[source], src, stride, count);
         captureToFmQueues(source, src, stride, count);
@@ -690,10 +737,10 @@ static void outputAdvance(struct outputState *out, size_t count)
 
     ep->position += repeats / ep->divisor;
     out->phase = repeats % ep->divisor;
-    if (out->phase != 0 || ep->position % blockSamples(ep->ctx) != 0)
+    if ((out->phase != 0) || (ep->position % blockSamples(ep->ctx) != 0))
         return;
 
-    if (ep->stop || ep->ctx->bufMode == BUF_LINEAR) {
+    if (ep->stop || (ep->ctx->bufMode == BUF_LINEAR)) {
         out->draining = true;
         out->deadline = 0;
     } else {
@@ -719,7 +766,7 @@ static size_t playStream(struct outputState *out, int16_t *dst, size_t stride,
     struct endpoint *ep = &out->endpoint;
     size_t done = 0;
 
-    while (done < count && endpointActive(ep) && !out->draining) {
+    while ((done < count) && endpointActive(ep) && !out->draining) {
         const unsigned int divisor = ep->divisor;
         size_t left = blockRemaining(ep) * divisor - out->phase;
         size_t run = MIN(count - done, left);
@@ -749,7 +796,7 @@ static size_t playStream(struct outputState *out, int16_t *dst, size_t stride,
  * @param stride: distance between samples, in samples.
  * @param count: samples.
  */
-static void playChannel(unsigned int channel, int16_t *dst, size_t stride,
+static void playChannel(size_t channel, int16_t *dst, size_t stride,
                         size_t count)
 {
     struct outputState *out = &outputs[channel];
@@ -769,9 +816,9 @@ static void playChannel(unsigned int channel, int16_t *dst, size_t stride,
  */
 static bool outputsPending(void)
 {
-    for (unsigned int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         const struct outputState *out = &outputs[i];
-        if (out->fmQueue.count
+        if ((out->fmQueue.count != 0)
             || (endpointActive(&out->endpoint) && !out->draining))
             return true;
     }
@@ -805,17 +852,19 @@ static void pacePlayback(size_t frames)
 static void playFrame(AudioTrack *track)
 {
     if (!outputsPending() || !playbackRunning
-        || k_uptime_get() < playbackDeadline)
+        || (k_uptime_get() < playbackDeadline))
         return;
 
     AudioTrack_Buffer buffer = {
-        .frameCount = track->mICStream->share->sampleCountPerFrame
+        .frameCount = track->mICStream->share->sampleCountPerFrame,
     };
-    if (AudioTrack_obtainBuffer(track, &buffer, 0) != 0)
+    if (AudioTrack_obtainBuffer(track, &buffer, DSP_BUFFER_NO_WAIT) != 0)
         return;
 
-    playChannel(SINK_SPK, &buffer.i16[0], 2, buffer.frameCount);
-    playChannel(SINK_RTX, &buffer.i16[1], 2, buffer.frameCount);
+    playChannel(SINK_SPK, &buffer.i16[SINK_SPK], CODEC_CHANNELS,
+                buffer.frameCount);
+    playChannel(SINK_RTX, &buffer.i16[SINK_RTX], CODEC_CHANNELS,
+                buffer.frameCount);
     /* Always publish a complete frame, padding the final tail with silence. */
     AudioTrack_releaseBuffer(track, &buffer);
     pacePlayback(buffer.frameCount);
@@ -832,7 +881,8 @@ static int64_t drainDeadline(AudioTrack *track)
 {
     ICStream_Producer_fetchRemote(track->mICStream);
     const ICStreamFifo *fifo = &track->mICStream->share->fifo;
-    size_t frames = (fifo->size - fifo_avail(fifo)) / (2 * sizeof(int16_t));
+    size_t frames = (fifo->size - fifo_avail(fifo))
+                  / (CODEC_CHANNELS * sizeof(int16_t));
     return k_uptime_get() + DIV_ROUND_UP(frames * MSEC_PER_SEC, DSP_SAMPLE_RATE)
          + track->mLatency + DRAIN_MARGIN_MS;
 }
@@ -845,7 +895,7 @@ static int64_t drainDeadline(AudioTrack *track)
  */
 static void finishOutputs(AudioTrack *track)
 {
-    for (unsigned int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         struct outputState *out = &outputs[i];
         struct endpoint *ep = &out->endpoint;
         if (!endpointActive(ep) || !out->draining)
@@ -862,8 +912,8 @@ static void finishOutputs(AudioTrack *track)
 }
 
 /**
- * Codec worker: opens the DSP streams, then moves samples every millisecond
- * while anything is captured or played, until csk6codec_terminate().
+ * Codec worker: moves samples every millisecond while anything is captured
+ * or played, until csk6codec_terminate().
  */
 static void audioWorker(void *a, void *b, void *c)
 {
@@ -871,16 +921,8 @@ static void audioWorker(void *a, void *b, void *c)
     (void)b;
     (void)c;
 
-    initResult = openDsp(&record, &playbackTrack);
-    running = initResult == 0;
-    k_sem_give(&workerStarted);
-    if (!running)
-        return;
-
-    for (;;) {
+    while (!atomic_get(&stopRequested)) {
         k_mutex_lock(&audioMutex, K_FOREVER);
-        if (atomic_get(&stopRequested))
-            break;
         applyRoutes(&record, &playbackTrack);
         if (captureRunning)
             captureFrame(&record);
@@ -895,8 +937,8 @@ static void audioWorker(void *a, void *b, void *c)
             k_sleep(K_MSEC(1));
     }
 
-    /* Still holding audioMutex from the last iteration */
-    for (unsigned int i = 0; i < 2; i++) {
+    k_mutex_lock(&audioMutex, K_FOREVER);
+    for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         detach(&inputs[i].endpoint);
         detach(&outputs[i].endpoint);
     }
@@ -916,30 +958,30 @@ static void initEndpoints(void)
 {
     memset(inputs, 0, sizeof(inputs));
     memset(outputs, 0, sizeof(outputs));
-    for (unsigned int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         inputs[i].endpoint.input = true;
-        inputs[i].endpoint.channel = outputs[i].endpoint.channel = i;
+        inputs[i].endpoint.channel = i;
+        outputs[i].endpoint.channel = i;
     }
 }
 
-/* Called once at startup. Wait for the worker to construct the DSP streams
- * so initialization failures are reported to the board caller. */
 int csk6codec_init(void)
 {
     initEndpoints();
+    int ret = openDsp(&record, &playbackTrack);
+    if (ret != 0)
+        return ret;
+
+    running = true;
     k_thread_create(&worker, workerStack, K_THREAD_STACK_SIZEOF(workerStack),
                     audioWorker, NULL, NULL, NULL, WORKER_PRIORITY, 0,
                     K_NO_WAIT);
     k_thread_name_set(&worker, "csk6_codec");
-    k_sem_take(&workerStarted, K_FOREVER);
-    return initResult;
+    return 0;
 }
 
 void csk6codec_terminate(void)
 {
-    if (!running)
-        return;
-
     /* The worker cancels the streams as it exits */
     atomic_set(&stopRequested, 1);
     k_sem_give(&workerWake);
@@ -955,7 +997,7 @@ void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
         return;
     }
 
-    if (sink == SINK_MCU && source != SOURCE_MCU) {
+    if ((sink == SINK_MCU) && (source != SOURCE_MCU)) {
         /* Capture into an application buffer */
         inputEnabled[source] = enabled;
         if (!enabled)
@@ -982,7 +1024,8 @@ void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
  */
 static bool streamValid(uint8_t channel, const struct streamCtx *ctx)
 {
-    if (channel >= 2 || ctx->buffer == NULL || ctx->bufSize == 0)
+    if ((channel >= CODEC_CHANNELS) || (ctx->buffer == NULL)
+        || (ctx->bufSize == 0))
         return false;
 
     switch (ctx->bufMode) {
@@ -1018,7 +1061,8 @@ static void attach(struct endpoint *ep, struct streamCtx *ctx, bool rearm)
     ep->error = 0;
     ep->stop = false;
     ep->position = 0;
-    ep->boundaries = ep->observed = 0;
+    ep->boundaries = 0;
+    ep->observed = 0;
     ep->divisor = DSP_SAMPLE_RATE / ctx->sampleRate;
 
     if (ep->input) {
@@ -1052,14 +1096,14 @@ static int csk6codec_start(uint8_t channel, const void *config,
 
     k_mutex_lock(&audioMutex, K_FOREVER);
     const bool routed = input ? inputEnabled[channel] :
-                                outputSource[channel] == SOURCE_MCU;
+                                (outputSource[channel] == SOURCE_MCU);
     if (!running || !routed) {
         ret = -ENODEV;
-    } else if (ep->busy || (ep->ctx != NULL && ep->ctx != ctx)) {
+    } else if (ep->busy || ((ep->ctx != NULL) && (ep->ctx != ctx))) {
         ret = -EBUSY;
     } else {
-        bool rearm = ep->ctx == ctx && ctx->bufMode == BUF_LINEAR;
-        if (rearm && ep->error)
+        bool rearm = (ep->ctx == ctx) && (ctx->bufMode == BUF_LINEAR);
+        if (rearm && (ep->error != 0))
             ret = ep->error;
         else
             attach(ep, ctx, rearm);
@@ -1081,12 +1125,12 @@ static int csk6codec_data(struct streamCtx *ctx, stream_sample_t **buffer)
     struct endpoint *ep = ctx->priv;
     int count = -EIO;
     *buffer = NULL;
-    if (ep != NULL && ep->ctx == ctx && ep->error == 0) {
+    if ((ep != NULL) && (ep->ctx == ctx) && (ep->error == 0)) {
         count = blockSamples(ctx);
         *buffer = ctx->buffer;
         /* Initially the second half is idle. After each boundary the
          * completed half is available until the next boundary. */
-        if (ctx->bufMode == BUF_CIRC_DOUBLE && ep->position < (size_t)count)
+        if ((ctx->bufMode == BUF_CIRC_DOUBLE) && (ep->position < (size_t)count))
             *buffer += count;
     }
     k_mutex_unlock(&audioMutex);
@@ -1102,7 +1146,7 @@ static int csk6codec_sync(struct streamCtx *ctx, uint8_t dirty)
     (void)dirty; /* Samples are converted by the worker as it traverses them. */
     k_mutex_lock(&audioMutex, K_FOREVER);
     struct endpoint *ep = ctx->priv;
-    if (ep == NULL || ep->ctx != ctx || ep->error || ep->busy) {
+    if ((ep == NULL) || (ep->ctx != ctx) || (ep->error != 0) || ep->busy) {
         k_mutex_unlock(&audioMutex);
         return -EIO;
     }
@@ -1110,8 +1154,8 @@ static int csk6codec_sync(struct streamCtx *ctx, uint8_t dirty)
     ep->busy = true;
     int ret = 0;
     int64_t deadline = ioDeadline(ctx);
-    while (ep->ctx == ctx && ctx->running && ep->error == 0
-           && ep->boundaries == ep->observed) {
+    while ((ep->ctx == ctx) && ctx->running && (ep->error == 0)
+           && (ep->boundaries == ep->observed)) {
         if (!waitForChange(deadline)) {
             ret = -ETIMEDOUT;
             break;
@@ -1144,7 +1188,7 @@ static void csk6codec_halt(struct streamCtx *ctx)
 {
     k_mutex_lock(&audioMutex, K_FOREVER);
     struct endpoint *ep = ctx->priv;
-    if (ep != NULL && ep->ctx == ctx)
+    if ((ep != NULL) && (ep->ctx == ctx))
         detach(ep);
     k_mutex_unlock(&audioMutex);
 }
@@ -1159,15 +1203,15 @@ static void finishOutputStream(struct endpoint *ep, struct streamCtx *ctx)
 {
     /* If another callback is already waiting, the caller detaches at once
      * to cancel it. */
-    if (ep->input || ep->error != 0 || ep->busy)
+    if (ep->input || (ep->error != 0) || ep->busy)
         return;
-    if (ep->channel != SINK_RTX && ctx->bufMode != BUF_LINEAR)
+    if ((ep->channel != SINK_RTX) && (ctx->bufMode != BUF_LINEAR))
         return;
 
     ep->busy = true;
     ep->stop = true;
     int64_t deadline = ioDeadline(ctx);
-    while (ep->ctx == ctx && ctx->running && ep->error == 0) {
+    while ((ep->ctx == ctx) && ctx->running && (ep->error == 0)) {
         if (!waitForChange(deadline))
             break;
     }
@@ -1181,7 +1225,7 @@ static void csk6codec_stop(struct streamCtx *ctx)
 {
     k_mutex_lock(&audioMutex, K_FOREVER);
     struct endpoint *ep = ctx->priv;
-    if (ep != NULL && ep->ctx == ctx) {
+    if ((ep != NULL) && (ep->ctx == ctx)) {
         finishOutputStream(ep, ctx);
         if (ep->ctx == ctx)
             detach(ep);

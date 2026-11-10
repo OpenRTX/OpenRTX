@@ -18,8 +18,8 @@ extern "C" {
  * a cast to (const void *).
  */
 enum Csk6CodecMode {
-    CSK6_CODEC_MODE_OUTPUT = 0,
-    CSK6_CODEC_MODE_INPUT = 1,
+    CSK6_CODEC_MODE_OUTPUT = 0, ///< Playback to the speaker or radio
+    CSK6_CODEC_MODE_INPUT = 1,  ///< Capture from the microphone or radio
 };
 
 /**
@@ -30,15 +30,18 @@ enum Csk6CodecMode {
 extern const struct audioDriver csk6_codec_audio_driver;
 
 /**
- * Configure the codec and start the DSP audio worker. Call once, at startup.
+ * Configure the codec and open the DSP streams on the calling thread, then
+ * start the audio worker. Call once, at startup.
  *
- * @return zero on success, a negative error code on failure.
+ * @return zero on success, a negative error code on failure, in which case
+ * no worker runs.
  */
 int csk6codec_init(void);
 
 /**
  * Cancel streams, join the worker and release DSP audio resources. Call once,
- * at shutdown; the codec can't be started again.
+ * at shutdown, and only after a successful csk6codec_init(); the codec can't
+ * be started again.
  */
 void csk6codec_terminate(void);
 

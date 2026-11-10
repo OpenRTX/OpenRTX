@@ -4,17 +4,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <zephyr/drivers/uart.h>
 #include <hwconfig.h>
 #include <interfaces/radio.h>
 #include "csk6_codec.h"
 
 /*
- * Board layer: radio AF output and speaker GPIOs, then the codec driver
+ * Board layer: radio AF output and speaker GPIO, then the codec driver
  * connects the sources and sinks. This lock serializes route changes; the
  * codec worker never takes it, so route changes can wait for the worker.
  * audio_init() and audio_terminate() are called once each, so they don't
@@ -22,70 +19,53 @@
  */
 static K_MUTEX_DEFINE(boardMutex);
 static bool initialized;
-static bool paths[3][3]; /* Active routes, by source and sink */
+/* Active routes, by source and sink */
+static bool paths[SOURCE_MCU + 1][SINK_MCU + 1];
 
-/* Both device tables use one driver; the config selects capture or playback */
+/*
+ * Both device tables use one driver: the config selects capture or playback,
+ * and the instance is the codec channel, the same number as the endpoint.
+ */
 const struct audioDevice outputDevices[] = {
-    { NULL, NULL, 0, SINK_MCU },
-    { &csk6_codec_audio_driver, (const void *)CSK6_CODEC_MODE_OUTPUT, SINK_RTX,
-      SINK_RTX },
-    { &csk6_codec_audio_driver, (const void *)CSK6_CODEC_MODE_OUTPUT, SINK_SPK,
-      SINK_SPK },
+    { .driver = NULL, .config = NULL, .instance = 0, .endpoint = SINK_MCU },
+    {
+        .driver = &csk6_codec_audio_driver,
+        .config = (const void *)CSK6_CODEC_MODE_OUTPUT,
+        .instance = SINK_RTX,
+        .endpoint = SINK_RTX,
+    },
+    {
+        .driver = &csk6_codec_audio_driver,
+        .config = (const void *)CSK6_CODEC_MODE_OUTPUT,
+        .instance = SINK_SPK,
+        .endpoint = SINK_SPK,
+    },
 };
 
 const struct audioDevice inputDevices[] = {
-    { NULL, NULL, 0, SOURCE_MCU },
-    { &csk6_codec_audio_driver, (const void *)CSK6_CODEC_MODE_INPUT, SOURCE_RTX,
-      SOURCE_RTX },
-    { &csk6_codec_audio_driver, (const void *)CSK6_CODEC_MODE_INPUT, SOURCE_MIC,
-      SOURCE_MIC },
+    { .driver = NULL, .config = NULL, .instance = 0, .endpoint = SOURCE_MCU },
+    {
+        .driver = &csk6_codec_audio_driver,
+        .config = (const void *)CSK6_CODEC_MODE_INPUT,
+        .instance = SOURCE_RTX,
+        .endpoint = SOURCE_RTX,
+    },
+    {
+        .driver = &csk6_codec_audio_driver,
+        .config = (const void *)CSK6_CODEC_MODE_INPUT,
+        .instance = SOURCE_MIC,
+        .endpoint = SOURCE_MIC,
+    },
 };
 
-PINCTRL_DT_DEFINE(DT_CHOSEN(zephyr_console));
-
 /**
- * Re-apply the console pins and UART settings, which the DSP can change
- * while it sets up audio.
+ * Keep the speaker enabled while any active route plays to it.
  */
-static void restoreConsole(void)
+static void updateSpeaker(void)
 {
-    const struct device *console = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
-    const struct uart_config config = {
-        .baudrate = DT_PROP(DT_CHOSEN(zephyr_console), current_speed),
-        .parity = UART_CFG_PARITY_NONE,
-        .stop_bits = UART_CFG_STOP_BITS_1,
-        .data_bits = UART_CFG_DATA_BITS_8,
-        .flow_ctrl = UART_CFG_FLOW_CTRL_NONE,
-    };
-    int pins = pinctrl_apply_state(
-        PINCTRL_DT_DEV_CONFIG_GET(DT_CHOSEN(zephyr_console)),
-        PINCTRL_STATE_DEFAULT);
-    int uart = uart_configure(console, &config);
-    if (pins != 0 || uart != 0)
-        printk("Console configuration failed: pins=%d uart=%d\n", pins, uart);
-}
-
-/**
- * Keep each physical output enabled while any active route needs it. The
- * radio AF output is only touched when a route from the radio changed, as
- * in the MDx audio driver.
- *
- * @param source: source of the route that changed.
- */
-static void updateMux(enum AudioSource source)
-{
-    bool radio = false;
     bool speaker = false;
-    for (unsigned int i = 0; i < 3; i++) {
-        radio |= paths[SOURCE_RTX][i];
+    for (size_t i = 0; i < ARRAY_SIZE(paths); i++)
         speaker |= paths[i][SINK_SPK];
-    }
-    if (source == SOURCE_RTX) {
-        if (radio)
-            radio_enableAfOutput();
-        else
-            radio_disableAfOutput();
-    }
     gpio_pin_set_dt(&speaker_enable, speaker);
 }
 
@@ -93,9 +73,7 @@ void audio_init(void)
 {
     gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT_INACTIVE);
     gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT_INACTIVE);
-    restoreConsole();
     initialized = csk6codec_init() == 0;
-    restoreConsole();
 }
 
 void audio_terminate(void)
@@ -103,36 +81,40 @@ void audio_terminate(void)
     if (!initialized)
         return;
 
-    memset(paths, 0, sizeof(paths));
-    updateMux(SOURCE_RTX);
+    gpio_pin_set_dt(&speaker_enable, 0);
+    radio_disableAfOutput();
     csk6codec_terminate();
     initialized = false;
 }
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 {
-    if (!initialized || source > SOURCE_MCU || sink > SINK_MCU)
+    if (!initialized)
         return;
 
     k_mutex_lock(&boardMutex, K_FOREVER);
     if (!paths[source][sink]) {
         paths[source][sink] = true;
         csk6codec_setRoute(source, sink, true);
-        updateMux(source);
+        if ((source == SOURCE_RTX) && (sink == SINK_SPK))
+            radio_enableAfOutput();
+        updateSpeaker();
     }
     k_mutex_unlock(&boardMutex);
 }
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 {
-    if (!initialized || source > SOURCE_MCU || sink > SINK_MCU)
+    if (!initialized)
         return;
 
     k_mutex_lock(&boardMutex, K_FOREVER);
     if (paths[source][sink]) {
         paths[source][sink] = false;
         csk6codec_setRoute(source, sink, false);
-        updateMux(source);
+        updateSpeaker();
+        if ((source == SOURCE_RTX) && (sink == SINK_SPK))
+            radio_disableAfOutput();
     }
     k_mutex_unlock(&boardMutex);
 }
@@ -144,6 +126,6 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
 {
     /* Physical sources and sinks are exclusive. MCU is a memory endpoint,
      * so separate capture and playback streams can share it. */
-    return (p1Source != p2Source || p1Source == SOURCE_MCU)
-        && (p1Sink != p2Sink || p1Sink == SINK_MCU);
+    return ((p1Source != p2Source) || (p1Source == SOURCE_MCU))
+        && ((p1Sink != p2Sink) || (p1Sink == SINK_MCU));
 }
