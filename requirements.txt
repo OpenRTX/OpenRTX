@@ -7,3 +7,4 @@ numpy>=1.25.2
 intelhex==2.3.0
 urllib3
 gcovr>=7.2
+ninja>=1.13
