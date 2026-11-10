@@ -118,14 +118,13 @@ void radio_setOpmode(const enum opmode mode)
 {
     // The core calls this before disabling the old mode: unkey first
     radio_disableRtx();
-    radio_disableAfOutput();
 
     if (mode == OPMODE_M17) {
         bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_BYPASS);
         bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
         bk4819_setRfFilter(&c62_bk4819, M17_RF_BW, M17_RF_BW_WEAK);
         bk4819_setTxAudioFilter(&c62_bk4819, M17_TX_LPF2_BW);
-        bk4819_SetFilterBandwidth(&c62_bk4819, 0);
+        bk4819_SetFilterBandwidth(&c62_bk4819, BW_12_5);
         bk4819_setRxAudioGain(&c62_bk4819, M17_RX_AUDIO_GAIN1,
                               M17_RX_AUDIO_GAIN2);
         bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
@@ -143,10 +142,8 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    if (radioMode == OPMODE_M17)
-        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_BYPASS);
-    else
-        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_FM);
+    // Only the RTX to speaker path opens it, and only FM uses that path
+    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_FM);
 }
 
 void radio_disableAfOutput()
@@ -173,8 +170,12 @@ void radio_enableRx()
 
     bk4819_set_freq(&c62_bk4819, config->rxFrequency);
 
-    // M17 sets its bandwidth on the mode change and has no CTCSS
-    if (radioMode != OPMODE_M17) {
+    if (radioMode == OPMODE_M17) {
+        // The DSP takes the baseband from the AF output for the whole
+        // reception. M17 sets its bandwidth on the mode change and has no
+        // CTCSS.
+        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_BYPASS);
+    } else {
         bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
         if (config->rxToneEn)
             bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
@@ -203,7 +204,7 @@ void radio_enableTx()
 
     bk4819_set_freq(&c62_bk4819, config->txFrequency);
 
-    if (radioMode != OPMODE_M17 && config->txToneEn) {
+    if ((radioMode != OPMODE_M17) && config->txToneEn) {
         bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
     }
 
@@ -230,6 +231,11 @@ void radio_disableRtx()
     gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
     gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
     gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+
+    // Leaving RX closes the AF output: M17 opened it in radio_enableRx(),
+    // FM's audio path closes it too
+    if (radioStatus == RX)
+        radio_disableAfOutput();
 
     bk4819_rtx_off(&c62_bk4819);
     radioStatus = OFF;
