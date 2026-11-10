@@ -48,7 +48,19 @@ extern "C" {
 #define BK4819_REG51_AUTO_CTCSS_BW_MOD BIT(8)
 #define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x), 0)
 
-/* Audio path fields set by the bk4819_set* functions, and their reset values */
+/*
+ * Audio path fields set by the bk4819_set* functions and the audio modes, and
+ * their reset values. From the BK4819 (V3) register list and application note:
+ * https://github.com/amnemonic/Quansheng_UV-K5_Firmware/tree/main/hardware
+ */
+#define BK4819_REG2B_AF_RX_HPF300_DISABLE BIT(10)
+#define BK4819_REG2B_AF_RX_LPF3K_DISABLE BIT(9)
+#define BK4819_REG2B_AF_RX_DEEMPH_DISABLE BIT(8)
+#define BK4819_REG2B_AF_TX_HPF300_DISABLE BIT(2)
+#define BK4819_REG2B_AF_TX_LPF1_DISABLE BIT(1)
+#define BK4819_REG2B_AF_TX_PREEMPH_DISABLE BIT(0)
+#define BK4819_REG31_COMPANDER BIT(3)
+#define BK4819_REG31_VOX BIT(2)
 #define BK4819_REG40_TX_DEVIATION_ENABLE BIT(12)
 #define BK4819_REG40_TX_DEVIATION_MASK 0x0fffU
 #define BK4819_REG40_TX_DEVIATION(x) ((x) & BK4819_REG40_TX_DEVIATION_MASK)
@@ -59,14 +71,22 @@ extern "C" {
 #define BK4819_REG43_AF_TX_LPF2_BW_MASK 0x01c0U
 #define BK4819_REG43_AF_TX_LPF2_BW(x) \
     (BITV((x), 6) & BK4819_REG43_AF_TX_LPF2_BW_MASK)
+#define BK4819_REG47_AF_TX_FILTER_BYPASS BIT(0)
+/* Undocumented, "for gain" in the application note's RF_EnterBypass() */
+#define BK4819_REG47_UNDOC1 BIT(1)
 #define BK4819_REG48_AF_RX_GAIN1_MASK 0x0c00U
 #define BK4819_REG48_AF_RX_GAIN1(x) \
     (BITV((x), 10) & BK4819_REG48_AF_RX_GAIN1_MASK)
 #define BK4819_REG48_AF_RX_GAIN2_MASK 0x03f0U
 #define BK4819_REG48_AF_RX_GAIN2(x) \
     (BITV((x), 4) & BK4819_REG48_AF_RX_GAIN2_MASK)
+#define BK4819_REG4B_ALC_DISABLE BIT(5)
 #define BK4819_REG7D_MIC_GAIN_MASK 0x001fU
 #define BK4819_REG7D_MIC_GAIN(x) ((x) & BK4819_REG7D_MIC_GAIN_MASK)
+#define BK4819_REG7E_TX_DCF_BW_MASK 0x0038U
+#define BK4819_REG7E_TX_DCF_BW(x) (BITV((x), 3) & BK4819_REG7E_TX_DCF_BW_MASK)
+#define BK4819_REG7E_RX_DCF_BW_MASK 0x0007U
+#define BK4819_REG7E_RX_DCF_BW(x) ((x) & BK4819_REG7E_RX_DCF_BW_MASK)
 #define BK4819_DEFAULT_TX_DEVIATION 0x4d2
 #define BK4819_DEFAULT_RF_BW 4      /* 3.75 kHz */
 #define BK4819_DEFAULT_RF_BW_WEAK 0 /* 1.7 kHz */
@@ -74,6 +94,8 @@ extern "C" {
 #define BK4819_DEFAULT_RX_AUDIO_GAIN1 0
 #define BK4819_DEFAULT_RX_AUDIO_GAIN2 0x3c
 #define BK4819_DEFAULT_MIC_GAIN 0x19
+#define BK4819_DEFAULT_TX_DCF_BW 5
+#define BK4819_DEFAULT_RX_DCF_BW 6
 
 #define BK4819_SCAN_FRE_TIME_2 0x00
 #define BK4819_SCAN_FRE_TIME_4 0x01

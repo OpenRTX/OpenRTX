@@ -8,6 +8,39 @@
 #include "interfaces/delays.h"
 #include "core/utils.h"
 
+/* Speech filters and emphasis, on transmit and receive */
+#define REG2B_AF_FILTERS_DISABLE                                             \
+    (BK4819_REG2B_AF_RX_HPF300_DISABLE | BK4819_REG2B_AF_RX_LPF3K_DISABLE    \
+     | BK4819_REG2B_AF_RX_DEEMPH_DISABLE | BK4819_REG2B_AF_TX_HPF300_DISABLE \
+     | BK4819_REG2B_AF_TX_LPF1_DISABLE | BK4819_REG2B_AF_TX_PREEMPH_DISABLE)
+#define REG47_BYPASS (BK4819_REG47_AF_TX_FILTER_BYPASS | BK4819_REG47_UNDOC1)
+
+/*
+ * Audio processing fields, with their values by enum bk4819_audioMode: voice
+ * (the values bk4819_init() sets), then bypass, as the application note's
+ * RF_EnterBypass() sets it.
+ */
+struct audioModeFields {
+    bk4819_reg_t reg;
+    uint16_t mask;
+    uint16_t value[2];
+};
+
+static const struct audioModeFields audioModeFields[] = {
+    { BK4819_REG_2B, REG2B_AF_FILTERS_DISABLE, { 0, REG2B_AF_FILTERS_DISABLE } },
+    { BK4819_REG_31, BK4819_REG31_COMPANDER | BK4819_REG31_VOX, { 0, 0 } },
+    { BK4819_REG_47, REG47_BYPASS, { 0, REG47_BYPASS } },
+    { BK4819_REG_4B, BK4819_REG4B_ALC_DISABLE, { 0, BK4819_REG4B_ALC_DISABLE } },
+    { BK4819_REG_70,
+      BK4819_REG_70_MASK_ENABLE_TONE1 | BK4819_REG_70_MASK_ENABLE_TONE2,
+      { 0, 0 } },
+    { BK4819_REG_7E,
+      BK4819_REG7E_TX_DCF_BW_MASK | BK4819_REG7E_RX_DCF_BW_MASK,
+      { BK4819_REG7E_TX_DCF_BW(BK4819_DEFAULT_TX_DCF_BW)
+            | BK4819_REG7E_RX_DCF_BW(BK4819_DEFAULT_RX_DCF_BW),
+        0 } },
+};
+
 uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg)
 {
     const uint8_t cmd = reg | BK4819_REG_READ;
@@ -63,8 +96,8 @@ void bk4819_init(const struct BK4819 *dev)
 
     BK4819_writeReg(dev, BK4819_REG_49, 0x2a38);
     BK4819_writeReg(dev, BK4819_REG_7B, 0x8420);
-    BK4819_writeReg(dev, BK4819_REG_7D, 0xe940);
-    BK4819_writeReg(dev, BK4819_REG_48, 0xb001); // AF DAC gain
+    BK4819_writeReg(dev, BK4819_REG_7D, 0xe959); // Mic sensitivity
+    BK4819_writeReg(dev, BK4819_REG_48, 0xb3c1); // AF Gains
     BK4819_writeReg(dev, BK4819_REG_1E, 0x4c58);
     BK4819_writeReg(dev, BK4819_REG_1F, 0xa656);
     BK4819_writeReg(dev, BK4819_REG_3E, 0xa037); // Band selection threshold
@@ -248,7 +281,7 @@ void bk4819_enable_vox(const struct BK4819 *dev, uint8_t delay_time,
                        uint16_t threshold_off)
 {
     BK4819_writeReg(dev, BK4819_REG_31,
-                    BK4819_readReg(dev, BK4819_REG_31) | BIT(2));
+                    BK4819_readReg(dev, BK4819_REG_31) | BK4819_REG31_VOX);
     BK4819_writeReg(dev, BK4819_REG_79,
                     BITV(interval_time, 10) | threshold_off);
     BK4819_writeReg(dev, BK4819_REG_46, threshold_on);
@@ -318,26 +351,6 @@ void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF)
     BK4819_writeReg(dev, BK4819_REG_47,
                     (value & ~0x0f00u) | ((AF & 0x0fu) << 8));
 }
-
-/*
- * Audio processing fields, with their values by enum bk4819_audioMode: voice
- * (the values bk4819_init() sets), then bypass.
- */
-struct audioModeFields {
-    bk4819_reg_t reg;
-    uint16_t mask;
-    uint16_t value[2];
-};
-
-static const struct audioModeFields audioModeFields[] = {
-    { BK4819_REG_2B, 0x0707, { 0x0000, 0x0707 } }, /* Speech filters, emphasis */
-    { BK4819_REG_31, 0x000c, { 0x0000, 0x0000 } }, /* Compander and VOX */
-    /* TX filter bypass, and bit 1 "for gain" (app note RF_EnterBypass()) */
-    { BK4819_REG_47, 0x0003, { 0x0000, 0x0003 } },
-    { BK4819_REG_4B, 0x0020, { 0x0000, 0x0020 } }, /* ALC disable */
-    { BK4819_REG_70, 0x8080, { 0x0000, 0x0000 } }, /* Tone generators */
-    { BK4819_REG_7E, 0x003f, { 0x002e, 0x0000 } }, /* TX and RX DC filters */
-};
 
 /**
  * Write the bits of a register selected by a mask.
