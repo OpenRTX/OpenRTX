@@ -57,6 +57,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/voicePromptUtils.c',
                'openrtx/src/core/voicePromptData.S',
                'openrtx/src/core/nvmem_access.c',
+               'openrtx/src/core/packet_engine.c',
                'openrtx/src/core/messages.c',
                'openrtx/src/core/m17_sms.cpp',
                'openrtx/src/core/aprs_msg.c',
@@ -1373,6 +1374,12 @@ slip_test = executable('slip_test',
                       sources : unit_test_src + ['tests/unit/slip.cpp'],
                       kwargs  : unit_test_opts)
 
+packet_engine_test = executable('packet_engine_test',
+                                sources : ['openrtx/src/core/packet_engine.c',
+                                           'openrtx/src/core/slip.c',
+                                           'tests/unit/packet_engine.cpp'],
+                                kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1400,3 +1407,4 @@ test('APRS Packet Test', aprs_packet_test)
 test('APRS Test', aprs_test)
 test('APRS OpMode Test', aprs_opmode_test)
 test('Slip Test', slip_test)
+test('Packet Engine Test', packet_engine_test)
