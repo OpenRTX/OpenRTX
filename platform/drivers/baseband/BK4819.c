@@ -445,28 +445,32 @@ void bk4819_setFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
     }
 }
 
+/**
+ * Convert a CTCSS tone to the REG_07 frequency word, for a 26 MHz crystal.
+ *
+ * @param freq: tone frequency, in 0.1 Hz.
+ * @return REG_07 frequency word.
+ */
+static uint16_t ctcssWord(uint16_t freq)
+{
+    // 2064888 / 1000000 reduced by 8, so that the product fits 32 bits
+    return ((uint32_t)freq * 258111) / 125000;
+}
+
 void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq)
 {
-    /* freq is in .1 Hz units */
-    uint32_t regValue = freq * 2064888 / 100000
-                      / 10; /* Register value for 26MHz XTAL */
-
     uint16_t reg = bk4819_readReg(dev, 0x51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     bk4819_writeReg(dev, 0x51, reg);
-    bk4819_writeReg(dev, 0x07, (uint16_t)regValue);
+    bk4819_writeReg(dev, 0x07, ctcssWord(freq));
 }
 
 void bk4819_enableRxCtcss(const struct BK4819 *dev, uint16_t freq)
 {
-    /* freq is in .1 Hz units */
-    uint32_t regValue = freq * 2064888 / 100000
-                      / 10; /* Register value for 26MHz XTAL */
-
     uint16_t reg = bk4819_readReg(dev, 0x51);
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     bk4819_writeReg(dev, 0x51, reg);
-    bk4819_writeReg(dev, 0x07, (uint16_t)regValue);
+    bk4819_writeReg(dev, 0x07, ctcssWord(freq));
 }
 
 void bk4819_enableCtcss2(const struct BK4819 *dev, uint16_t freq)
