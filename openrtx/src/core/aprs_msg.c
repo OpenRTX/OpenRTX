@@ -10,6 +10,7 @@
 #include "core/aprs_msg.h"
 #include "core/crc.h"
 #include "core/messages.h"
+#include "core/packet_engine.h"
 #include "core/state.h"
 #include "interfaces/delays.h"
 #include "protocols/APRS/packet.h"
@@ -100,6 +101,10 @@ static int processRx(const struct pktDesc *pkt)
     struct message msg;
     int32_t seq;
     int ret;
+
+    // A host on the virtual serial port sees every frame heard, stored or
+    // not. With no host reading the frame is just not sent.
+    packetEngine_send(pkt->buffer, (size_t)pkt->res);
 
     ret = aprsPkt_fromFrame(pkt->buffer, (size_t)pkt->res, &aprs);
     if (ret != 0)
