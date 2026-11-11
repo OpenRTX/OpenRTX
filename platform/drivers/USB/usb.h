@@ -16,9 +16,13 @@ extern "C" {
 #endif
 
 /**
- * Initialise the USB driver.
+ * Bring up the MCU's USB device controller and start TinyUSB on it. Each MCU
+ * that runs TinyUSB implements this; vcom_tinyusb.c calls it.
+ *
+ * @return 0 on success, a negative error code when the controller does not
+ * start.
  */
-void usb_init();
+int usb_init();
 
 /**
  * Shut down the USB driver.

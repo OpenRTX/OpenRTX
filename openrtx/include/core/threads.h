@@ -16,6 +16,8 @@
 #define RTX_THREAD_STKSIZE    512
 #define CODEC2_THREAD_STKSIZE 16384
 #define AUDIO_THREAD_STKSIZE  512
+#define USB_THREAD_STKSIZE    1024
+#define USB_THREAD_STKSIZE    1024
 
 /**
  * Thread priority levels, UNIX-like: lower level, higher thread priority
