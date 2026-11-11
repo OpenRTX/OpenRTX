@@ -45,6 +45,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/dsp.cpp',
                'openrtx/src/core/cps.c',
                'openrtx/src/core/crc.c',
+               'openrtx/src/core/slip.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
                'openrtx/src/core/audio_codec.c',
@@ -1368,6 +1369,10 @@ aprs_opmode_test = executable('aprs_opmode_test',
                                         + ['tests/unit/APRS_opmode.cpp'],
                               kwargs  : unit_test_opts)
 
+slip_test = executable('slip_test',
+                      sources : unit_test_src + ['tests/unit/slip.cpp'],
+                      kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1394,3 +1399,4 @@ test('APRS Message Source Test', aprs_msg_test)
 test('APRS Packet Test', aprs_packet_test)
 test('APRS Test', aprs_test)
 test('APRS OpMode Test', aprs_opmode_test)
+test('Slip Test', slip_test)
