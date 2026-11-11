@@ -15,6 +15,7 @@
 #include "usbd_req.h"
 #include "stm32f4xx.h"
 
+#include <errno.h>
 #include "interfaces/delays.h"
 #include "interfaces/vcom.h"
 
@@ -24,6 +25,13 @@
  * this parameter.
  */
 #define RX_RING_BUF_SIZE 1024
+
+/**
+ * How long a write waits for the host to take its data, in milliseconds;
+ * after a write has timed out, until one completes again.
+ */
+#define TX_TIMEOUT_MS         500
+#define TX_STALLED_TIMEOUT_MS 1
 
 /* Common USB OTG handle, also defined as 'extern' in other modules */
 USB_OTG_CORE_HANDLE USB_OTG_dev;
@@ -51,6 +59,10 @@ struct rb
 rxRingBuf;
 
 bool txDone;    /* Flag for end of data transmission. */
+
+/* The last write timed out: no host is reading, the port is unplugged or
+ * closed. Writes then wait only briefly, so their callers carry on. */
+static bool txStalled;
 
 /* USB CDC device Configuration Descriptor */
 uint8_t usbd_cdc_CfgDesc[USB_CDC_CONFIG_DESC_SIZ] =
@@ -214,6 +226,8 @@ int vcom_init()
 
 ssize_t vcom_writeBlock(const void* buf, size_t len)
 {
+    const uint16_t limit = txStalled ? TX_STALLED_TIMEOUT_MS : TX_TIMEOUT_MS;
+
     txDone = false;
     DCD_EP_Tx (&USB_OTG_dev, CDC_IN_EP, (uint8_t*) buf, len);
 
@@ -223,13 +237,15 @@ ssize_t vcom_writeBlock(const void* buf, size_t len)
     {
         delayMs(1);
         timeout++;
-        if(timeout > 500)
+        if(timeout > limit)
         {
             DCD_EP_Flush(&USB_OTG_dev, CDC_IN_EP);
-            return -1;
+            txStalled = true;
+            return -ETIMEDOUT;
         }
     }
 
+    txStalled = false;
     return len;
 }
 
