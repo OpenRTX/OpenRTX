@@ -33,6 +33,7 @@ static const hwInfo_t hwInfo = {
 
 // ADC
 #define ADC_RAW_CHARGING_THRESHOLD 2100
+#define BAT_DET_SETTLE_MS 10 // Measured: settles to 1 LSB in 5 ms
 static int32_t adc_vref = 0;
 static bool is_battery_charging = false;
 
@@ -42,7 +43,7 @@ PINCTRL_DT_DEFINE(DT_CHOSEN(zephyr_console));
 /**
  * Re-apply what the DSP firmware overwrites when it starts and sets up audio:
  * the battery ADC pins, which also read the power knob, and the console pins
- * and UART settings.
+ * and UART settings. Then wait for the battery reading to settle.
  */
 static void restore_dsp_overwrites(void)
 {
@@ -61,6 +62,8 @@ static void restore_dsp_overwrites(void)
     if ((adc != 0) || (pins != 0) || (uart != 0))
         printk("Restore after DSP start failed: adc=%d pins=%d uart=%d\n", adc,
                pins, uart);
+
+    sleepFor(0, BAT_DET_SETTLE_MS);
 }
 
 static int battery_init(void)
