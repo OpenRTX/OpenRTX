@@ -159,14 +159,15 @@ void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data);
 void bk4819_init(const struct BK4819 *dev);
 
 /**
- * Get the status of an interrupt.
+ * Get the pending interrupts among the given ones, and latch the interrupt
+ * status.
  *
  * @param dev: pointer to device data.
- * @param interrupt: interrupt source.
- * @return status.
+ * @param interrupt: interrupt sources.
+ * @return pending interrupts among those given.
  */
-uint8_t bk4819_getInterrupt(const struct BK4819 *dev,
-                            enum bk4819_interrupt interrupt);
+uint16_t bk4819_getInterrupt(const struct BK4819 *dev,
+                             enum bk4819_interrupt interrupt);
 
 /**
  * Enable an interrupt.
@@ -418,15 +419,15 @@ void bk4819_disableFreqScan(const struct BK4819 *dev);
  * Get the frequency scan flag.
  *
  * @param dev: pointer to device data.
- * @return non-zero when the scan found a frequency.
+ * @return true when the scan has found a frequency.
  */
-uint8_t bk4819_getScanFreqFlag(const struct BK4819 *dev);
+bool bk4819_getScanFreqFlag(const struct BK4819 *dev);
 
 /**
  * Get the frequency found by the scan.
  *
  * @param dev: pointer to device data.
- * @return scanned frequency.
+ * @return scanned frequency, in Hz.
  */
 uint32_t bk4819_getScanFreq(const struct BK4819 *dev);
 

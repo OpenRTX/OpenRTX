@@ -31,6 +31,17 @@ enum {
     BK4819_REG07_FREQUENCY_MASK = 0x1fff,
 };
 
+/* REG_0C: status */
+enum {
+    BK4819_REG0C_INTERRUPT = BIT(0),
+};
+
+/* REG_0D: frequency scan result, high word */
+enum {
+    BK4819_REG0D_SCAN_BUSY = BIT(15),
+    BK4819_REG0D_SCAN_FREQ_MASK = 0x07ff,
+};
+
 /* REG_24: DTMF/SelCall */
 enum {
     BK4819_REG24_THRESHOLD_MASK = BITV(0x2f, 7),
@@ -73,6 +84,14 @@ enum {
     BK4819_REG31_COMPANDER = BIT(3),
     BK4819_REG31_VOX = BIT(2),
 };
+
+/* REG_32: frequency scan */
+enum {
+    BK4819_REG32_SCAN_TIME_MASK = 0xc000,
+    BK4819_REG32_SCAN_ENABLE = BIT(0),
+};
+
+#define BK4819_REG32_SCAN_TIME(x) (BITV((x), 14) & BK4819_REG32_SCAN_TIME_MASK)
 
 /* REG_40: TX deviation */
 enum {
@@ -255,6 +274,21 @@ void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data)
     spi_release(dev->spi);
 }
 
+/**
+ * Write the bits of a register selected by a mask.
+ *
+ * @param dev: pointer to device data.
+ * @param reg: register address.
+ * @param mask: bits to write.
+ * @param value: new value of those bits.
+ */
+static void maskSetRegister(const struct BK4819 *dev, uint8_t reg,
+                            uint16_t mask, uint16_t value)
+{
+    uint16_t current = bk4819_readReg(dev, reg);
+    bk4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
+}
+
 void bk4819_init(const struct BK4819 *dev)
 {
     /* Configure CS as output, idle high */
@@ -328,12 +362,18 @@ void bk4819_init(const struct BK4819 *dev)
     bk4819_writeReg(dev, 0x30, power);
 }
 
-uint8_t bk4819_getInterrupt(const struct BK4819 *dev,
-                            enum bk4819_interrupt interrupt)
+uint16_t bk4819_getInterrupt(const struct BK4819 *dev,
+                             enum bk4819_interrupt interrupt)
 {
-    if ((bk4819_readReg(dev, 0x0C) & BIT(0x01)) == 0)
+    if ((bk4819_readReg(dev, 0x0C) & BK4819_REG0C_INTERRUPT) == 0)
         return 0;
-    return bk4819_readReg(dev, 0x02 & interrupt);
+
+    /*
+     * Latch and read the interrupt status, as the UV-K5 firmware does:
+     * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/app/app.c#L509-L513
+     */
+    bk4819_writeReg(dev, 0x02, 0);
+    return bk4819_readReg(dev, 0x02) & interrupt;
 }
 
 void bk4819_enableInterrupt(const struct BK4819 *dev,
@@ -431,8 +471,10 @@ void bk4819_enableRxCtcss(const struct BK4819 *dev, uint16_t freq)
 
 void bk4819_enableCtcss2(const struct BK4819 *dev, uint16_t freq)
 {
-    uint16_t reg = bk4819_readReg(dev, 0x51);
-    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
+    const uint16_t enable = BK4819_REG51_TX_CTCDSS_ENABLE
+                          | BK4819_REG51_CTCSCSS_MODE_SEL;
+
+    maskSetRegister(dev, 0x51, enable, enable);
     bk4819_writeReg(dev, 0x07, freq | BK4819_REG07_MODE_CTC2);
 }
 
@@ -487,21 +529,6 @@ void bk4819_setSquelch(const struct BK4819 *dev, uint8_t rssiOpen,
     bk4819_writeReg(dev, 0x4D, (value & 0xff00) | glitchClose);
     value = bk4819_readReg(dev, 0x4E);
     bk4819_writeReg(dev, 0x4E, (value & 0xff00) | glitchOpen);
-}
-
-/**
- * Write the bits of a register selected by a mask.
- *
- * @param dev: pointer to device data.
- * @param reg: register address.
- * @param mask: bits to write.
- * @param value: new value of those bits.
- */
-static void maskSetRegister(const struct BK4819 *dev, uint8_t reg,
-                            uint16_t mask, uint16_t value)
-{
-    uint16_t current = bk4819_readReg(dev, reg);
-    bk4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
 }
 
 void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode)
@@ -583,23 +610,34 @@ uint16_t bk4819_getMicLevel(const struct BK4819 *dev)
 
 void bk4819_enableFreqScan(const struct BK4819 *dev, enum bk4819_scanTime time)
 {
-    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) | BITV(time, 14));
-    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) | 0x01);
+    const uint16_t mask = BK4819_REG32_SCAN_TIME_MASK
+                        | BK4819_REG32_SCAN_ENABLE;
+
+    maskSetRegister(dev, 0x32, mask,
+                    BK4819_REG32_SCAN_TIME(time) | BK4819_REG32_SCAN_ENABLE);
 }
 
 void bk4819_disableFreqScan(const struct BK4819 *dev)
 {
-    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) & (~0x01));
+    bk4819_writeReg(dev, 0x32,
+                    bk4819_readReg(dev, 0x32) & ~BK4819_REG32_SCAN_ENABLE);
 }
 
-uint8_t bk4819_getScanFreqFlag(const struct BK4819 *dev)
+bool bk4819_getScanFreqFlag(const struct BK4819 *dev)
 {
-    return bk4819_readReg(dev, 0x0D) & BIT(15);
+    return (bk4819_readReg(dev, 0x0D) & BK4819_REG0D_SCAN_BUSY) == 0;
 }
 
 uint32_t bk4819_getScanFreq(const struct BK4819 *dev)
 {
-    return ((bk4819_readReg(dev, 0x0D) << 16) | bk4819_readReg(dev, 0x0E)) / 10;
+    /*
+     * In 10 Hz, as the UV-K5 firmware reads it:
+     * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/driver/bk4819.c#L746-L758
+     */
+    uint32_t high = bk4819_readReg(dev, 0x0D) & BK4819_REG0D_SCAN_FREQ_MASK;
+    uint32_t low = bk4819_readReg(dev, 0x0E);
+
+    return ((high << 16) | low) * 10;
 }
 
 /**
