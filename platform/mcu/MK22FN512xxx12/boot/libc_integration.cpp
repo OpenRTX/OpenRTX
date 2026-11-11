@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <reent.h>
-#include "drivers/usb_vcom.h"
+#include "interfaces/vcom.h"
 #include "filesystem/file_access.h"
 
 using namespace std;

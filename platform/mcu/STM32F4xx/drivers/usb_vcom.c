@@ -16,7 +16,14 @@
 #include "stm32f4xx.h"
 
 #include "interfaces/delays.h"
-#include "usb_vcom.h"
+#include "interfaces/vcom.h"
+
+/**
+ * Size of the reception buffer for incoming data from the USB host, in bytes.
+ * NOTE: value is equal to the size of one USB bulk transfer, do not change
+ * this parameter.
+ */
+#define RX_RING_BUF_SIZE 1024
 
 /* Common USB OTG handle, also defined as 'extern' in other modules */
 USB_OTG_CORE_HANDLE USB_OTG_dev;
