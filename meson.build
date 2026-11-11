@@ -153,6 +153,12 @@ endif
 # XPowersLib, library for x-powers power management series
 xpowerslib_proj = subproject('XPowersLib')
 
+# TinyUSB, USB device stack: source lists, built per MCU below
+tinyusb_proj       = subproject('tinyusb')
+tinyusb_inc        = tinyusb_proj.get_variable('tinyusb_inc')
+tinyusb_device_src = tinyusb_proj.get_variable('tinyusb_device_src')
+tinyusb_dwc2_src   = tinyusb_proj.get_variable('tinyusb_dwc2_src')
+
 ##
 ## RTOS
 ##

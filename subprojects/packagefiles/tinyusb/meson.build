@@ -1,37 +1,22 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 project('tinyusb', 'c')
 
-#
-# HACK
-# This is a workaround for meson not propagating the include directories of the
-# main project to the subprojects. To avoid double-inclusion we force the
-# include paths needed to compile tinyusb and already present in the main
-# program via GCC compile arguments.
-#
-add_project_arguments('-I../platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
-                      language : 'c')
-add_project_arguments('-I../platform/mcu/CMSIS/Include', language : 'c')
-add_project_arguments('-w', language : 'c')
+# Source lists only. Each MCU that uses TinyUSB builds them in the main
+# project with its own device controller driver and MCU defines, so radios
+# with different MCUs can share one build directory.
 
-tinyusb_inc = include_directories('openrtx', 'src', 'hw')
+tinyusb_inc = include_directories('src')
 
-tinyusb_src = ['src/tusb.c',
-               'src/device/usbd.c',
-               'src/common/tusb_fifo.c',
-               'src/device/usbd_control.c',
-               'src/class/cdc/cdc_device.c',
-               'src/portable/st/synopsys/dcd_synopsys.c',
-               'src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c']
+# The device stack and the CDC-ACM class
+tinyusb_device_src = files('src/tusb.c',
+                           'src/common/tusb_fifo.c',
+                           'src/device/usbd.c',
+                           'src/device/usbd_control.c',
+                           'src/class/cdc/cdc_device.c')
 
-# Define CPU type and clock speed via GCC command line arguments               
-add_project_arguments('-DSTM32F405xx',       language : 'c')
-add_project_arguments('-DHSE_VALUE=8000000', language : 'c')
-
-
-
-tinyusb = static_library('tinyusb',
-                         tinyusb_src,
-                         include_directories : tinyusb_inc,
-                         install : false)
-
-tinyusb_dep = declare_dependency(include_directories : tinyusb_inc,
-                                 link_with : tinyusb)
+# Synopsys DWC2 controller: the OTG FS port of the STM32F4 and STM32H7
+tinyusb_dwc2_src = files('src/portable/synopsys/dwc2/dcd_dwc2.c',
+                         'src/portable/synopsys/dwc2/dwc2_common.c')
