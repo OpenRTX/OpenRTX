@@ -9,6 +9,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "core/datatypes.h"
 #include "rtx/rtx.h"
 
@@ -202,6 +203,33 @@ typedef struct
 __attribute__((packed)) m17Contact_t; // 6B
 
 
+#ifdef CONFIG_HORSE
+/******************************************************************************
+ *                         HORSE MODE                                         *
+ ******************************************************************************/
+
+/**
+ * Data structure containing all and only the information for Horse channels.
+ */
+typedef struct
+{
+    uint8_t  rxCan : 4,
+             txCan : 4;
+    uint8_t  encrypt_en : 1,
+             sign_en    : 1,
+             _reserved  : 6;
+    uint16_t contact_index;
+}
+__attribute__((packed)) horseInfo_t; // 4B
+
+static inline void horse_info_reset(horseInfo_t *info)
+{
+    if (info == NULL)
+        return;
+    memset(info, 0, sizeof(*info));
+}
+#endif
+
 
 /******************************************************************************
  *                         COMMON DATA STRUCTURES                             *
@@ -245,9 +273,12 @@ typedef struct
 
     union
     {
-        fmInfo_t  fm;              //< Information block for FM channels
-        dmrInfo_t dmr;             //< Information block for DMR channels
-        m17Info_t m17;             //< Information block for M17 channels
+        fmInfo_t    fm;            //< Information block for FM channels
+        dmrInfo_t   dmr;           //< Information block for DMR channels
+        m17Info_t   m17;           //< Information block for M17 channels
+#ifdef CONFIG_HORSE
+        horseInfo_t horse;         //< Information block for Horse channels
+#endif
     };
 }
 __attribute__((packed)) channel_t; // 59B

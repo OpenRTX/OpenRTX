@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Throwaway gpg --with-colons --with-secret listing (local secrets).
+# Field 15 of sec/ssb is '+' when the secret is present locally.
+sec:u:255:22:AAAAAAAA00000001:1700000000:::u:::c::::::+::ed25519:::0:
+fpr:::::::::AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+ssb:u:255:22:AAAAAAAA00000002:1700000000::::::s:::+::ed25519::
+fpr:::::::::BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB:
+ssb:u:255:18:AAAAAAAA00000003:1700000000::::::e:::+::cv25519::
+fpr:::::::::CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC:

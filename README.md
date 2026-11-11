@@ -22,6 +22,22 @@ The nightly builds are available here:
 
 Finally, the instructions on how to compile the OpenRTX firmware for hardware as well as emulation on Linux, are available on the [compilation instructions](https://openrtx.org/#/compiling) page on our website.
 
+### Building locally with Meson
+
+Meson generates **many targets** in one build directory: Linux emulators, unit tests, and **firmware** binaries for several radios. Running **`ninja -C <builddir>`** with no target name may therefore try to build **embedded** targets (for example `openrtx_md3x0` for TYT MD-3x0). Those firmware builds pull in **Miosix** and require the **ARM cross-compiler and environment** described in the [compilation instructions](https://openrtx.org/#/compiling) and [developers guide](https://openrtx.org/#/developers_guide?id=developers39-guide). On a typical desktop Linux install with only host GCC, that step can stop with an *unsupported compiler* error from Miosix. That is a **toolchain setup** issue, not necessarily a problem with the source tree.
+
+For **host-only** work (emulator and most unit tests on x86_64):
+
+```bash
+meson setup build
+meson compile -C build openrtx_linux
+# optional: meson test -C build "M17 Golay Unit Test"
+```
+
+For **Cortex-M firmware** (including MD-3x0 / Horse hardware), use `meson setup` with the appropriate **`--cross-file`** (`cross_cm4.txt`, `cross_cm7.txt`, …) and the Miosix-supported toolchain, as summarized in [AGENTS.md](./AGENTS.md).
+
+Horse fuzz targets require **Clang**; see [FUZZING.md](./FUZZING.md).
+
 Have a look at the the [dedicated page](https://openrtx.org/#/user_guide) for detailed instructions on flashing the firmware to your radio, look at the OpenRTX website or reach out to us on our channels!
 
 ## M17 support
@@ -31,6 +47,22 @@ From the release version 0.3.3 onwards the OpenRTX firmware provides experimenta
 For information on the radios that currently support M17, see the [Development Status](https://openrtx.org/#/dev_status?id=modes) page on our website.
 
 To make the digital mode work, some modding is required: Refer to the [dedicated page](https://openrtx.org/#/M17/m17?id=hardware-modifications) on our website for the details on that.
+
+## Additional experimental features in this fork
+
+The `Supermagnum/OpenRTX` fork adds a small number of **experimental** features on top of upstream OpenRTX:
+
+- An encrypted digital voice mode called **Horse**, implemented for the TYT MD-3x0 family and integrated as an additional operating mode alongside M17. The implementation lives primarily under `openrtx/include/protocols/horse/` and `openrtx/src/protocols/horse/`, with runtime wiring in `openrtx/src/rtx/OpMode_Horse.cpp` and unit tests in `tests/unit/horse_frame.cpp` and `tests/unit/horse_crypto.cpp`.
+- Horse supports **encrypted** (XChaCha20 + X25519 ECDH), **signed** (Ed25519 session signature + per-frame auth), and **combined** modes, selectable per channel via codeplug `encrypt_en` / `sign_en` flags.
+- **Provisioning tools** (usage: [docs/horse/PROVISIONING.md](./docs/horse/PROVISIONING.md)):
+  - [`scripts/horse_provision.py`](./scripts/horse_provision.py) — generate / show / provision identities over USB (`--port`) or the Linux emulator Unix socket (`--sock`, default `$XDG_RUNTIME_DIR/openrtx_horse_prov.sock` mode 0600), plus OpenPGP import/export commands.
+  - [`scripts/horse_openpgp.py`](./scripts/horse_openpgp.py) — OpenPGP helpers used by the provision tool (pipes only; no secret temp files).
+  - [`tools/horse-openpgp/`](./tools/horse-openpgp/) — Rust sequoia helper for certificate inspect and subkey extract (`HORSE_OPENPGP_HELPER`).
+- Protocol, modulation, cryptography and key-handling details: [horse.md](./horse.md).
+- Docs under [docs/horse/](./docs/horse/): [PROVISIONING.md](./docs/horse/PROVISIONING.md), [DEVICE_SUPPORT.md](./docs/horse/DEVICE_SUPPORT.md), [TEST_RESULTS.md](./docs/horse/TEST_RESULTS.md), [HARDWARE_TEST_PLAN.md](./docs/horse/HARDWARE_TEST_PLAN.md), [HORSE_AUDIT.md](./docs/horse/HORSE_AUDIT.md).
+- Horse libFuzzer targets (`fuzz_horse_frame`, `fuzz_horse_voice`): see [FUZZING.md](./FUZZING.md); build with `-Dfuzzing=true` (requires clang).
+
+These features are intended for experimentation and research only and may change or be removed without notice.
 
 ## Disclaimer
 

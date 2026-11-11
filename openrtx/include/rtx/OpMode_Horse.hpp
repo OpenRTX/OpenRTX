@@ -1,0 +1,113 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#ifndef OPMODE_HORSE_H
+#define OPMODE_HORSE_H
+
+#include "protocols/horse/HorseFrameDecoder.hpp"
+#include "protocols/horse/HorseFrameEncoder.hpp"
+#include "protocols/horse/HorseDemodulator.hpp"
+#include "protocols/horse/HorseModulator.hpp"
+#include "protocols/horse/horse_crypto.h"
+#include "protocols/horse/horse_peers.h"
+#include "core/audio_path.h"
+#include "core/horse_codec.h"
+#include "OpMode.hpp"
+
+#ifndef __cplusplus
+#error This header is C++ only!
+#endif
+
+class OpMode_Horse : public OpMode
+{
+public:
+    OpMode_Horse();
+    ~OpMode_Horse();
+
+    virtual void enable() override;
+    virtual void disable() override;
+    virtual void update(rtxStatus_t *const status, const bool newCfg) override;
+    virtual opmode getID() override
+    {
+        return OPMODE_HORSE;
+    }
+    virtual bool rxSquelchOpen() override
+    {
+        return dataValid;
+    }
+
+private:
+    void offState(rtxStatus_t *const status);
+    void rxState(rtxStatus_t *const status);
+    void txState(rtxStatus_t *const status);
+    void abortTx(rtxStatus_t *const status, bool stop_mod);
+    void resetRxCrypto();
+    void tryFinalizeRxSessionSig();
+    void tryFinalizeRxSigFragments();
+    bool applyLsfIfReady(rtxStatus_t *const status);
+    void maybeStartRxAudio();
+    bool sendTxVoiceFrame(const uint8_t *melpe, bool isLast,
+                          horse::frame_t &outFrame);
+    void failTxCrypto(rtxStatus_t *const status, horse::frame_t &outFrame);
+
+#ifdef PLATFORM_LINUX
+    friend int horse_test_tx_crypto_fail(void);
+#endif
+    bool startRx;
+    bool startTx;
+    bool locked;
+    bool dataValid;
+    bool invertTxPhase;
+    bool invertRxPhase;
+    pathId rxAudioPath;
+    pathId txAudioPath;
+    horse::HorseModulator modulator;
+    horse::HorseDemodulator demodulator;
+    horse::HorseFrameDecoder decoder;
+    horse::HorseFrameEncoder encoder;
+
+    uint8_t sessionKey[HORSE_SESSION_KEY_BYTES];
+    uint8_t frameAuthKey[HORSE_SESSION_KEY_BYTES];
+    uint8_t rxSessionSig[HORSE_ED25519_SIGNATURE_BYTES];
+    uint8_t txSessionSig[HORSE_ED25519_SIGNATURE_BYTES];
+    uint8_t rxLsfEphPk[HORSE_X25519_PUBLICKEY_BYTES];
+    uint8_t rxLsfFlags;
+    uint8_t rxLsfVersion;
+    uint8_t rxSigChunks;
+    horse::call_t rxLsfSrc;
+    horse::call_t rxLsfDst;
+    bool sessionValid;
+    bool encryptTx;
+    bool encryptRx;
+    bool signTx;
+    bool signRx;
+    bool txSigSent;
+    bool rxSigReady;
+    bool haveRxVoiceFn;
+    uint16_t rxLastVoiceFn;
+    horse::frame_t txOutFrame;
+    horse::frame_t txLsfFrames[horse::LSF_OPENING_FRAMES];
+    uint8_t txEphPk[HORSE_X25519_PUBLICKEY_BYTES];
+    uint8_t txEphSk[HORSE_X25519_SECRETKEY_BYTES];
+    uint8_t txMelpe[HORSE_CODEC_FRAME_BYTES];
+    uint8_t txSessionMsg[HORSE_SESSION_MSG_BYTES];
+    uint8_t txZeroTag[HORSE_VOICE_TAG_BYTES];
+    uint16_t rxSoft[horse::FRAME_BITS];
+    horse_peer_t txPeer;
+    horse_identity_keys_t txId;
+    horse_identity_keys_t rxId;
+    horse_peer_t rxPeer;
+    uint8_t rxSessionMsg[HORSE_SESSION_MSG_BYTES];
+    uint8_t rxNonce[12];
+    uint8_t rxPlain[HORSE_CODEC_FRAME_BYTES];
+    uint8_t rxMelpe[HORSE_CODEC_FRAME_BYTES];
+    uint8_t rxTag[HORSE_VOICE_TAG_BYTES];
+    uint8_t txNonce[12];
+    uint8_t txCipher[HORSE_CODEC_FRAME_BYTES];
+    uint8_t txPayload[HORSE_CODEC_FRAME_BYTES];
+};
+
+#endif // OPMODE_HORSE_H
