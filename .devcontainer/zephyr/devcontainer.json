@@ -1,0 +1,41 @@
+{
+  "name": "OpenRTX (zephyr)",
+  "build": {
+    "dockerfile": "../Containerfile",
+    "target": "zephyr",
+    "context": "../..",
+    "args": {
+      "BUILDKIT_STEP_LOG_MAX_SIZE": "10485760" // 10 MiB
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools-extension-pack",
+        "mesonbuild.mesonbuild",
+        "ms-python.python"
+      ]
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/openrtx/OpenRTX,type=bind",
+  "workspaceFolder": "/workspaces/openrtx/OpenRTX",
+  "mounts": [
+    "source=openrtx-workspace,target=/workspaces/openrtx,type=volume",
+
+    /* Optional: X11 forwarding for emulator UI */
+    //"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+    //"source=${localEnv:XAUTHORITY},target=${localEnv:XAUTHORITY},type=bind,readonly",
+    //"source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind,readonly",
+  ],
+  "containerEnv": {
+    /* Optional: X11 forwarding for emulator UI */
+    //"DISPLAY": "${localEnv:DISPLAY}",
+    //"LIBGL_ALWAYS_SOFTWARE": "1",
+    //"SDL_RENDER_DRIVER": "software",
+    //"XAUTHORITY": "${localEnv:XAUTHORITY}",
+    //"XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
+  },
+  "postCreateCommand": [
+    "/bin/bash", ".devcontainer/zephyr/post-create.sh"
+  ]
+}
