@@ -326,6 +326,23 @@ stm32h743_inc = ['platform/mcu/CMSIS/Include',
 
 stm32h743_def = {'STM32H743xx': '', 'HSE_VALUE':'25000000'}
 
+# USB: TinyUSB's DWC2 driver on the OTG FS port, a virtual serial port on top
+stm32h743_src += ['platform/drivers/USB/usb_stm32h7.cpp',
+                  'platform/drivers/USB/usb_descriptors.c',
+                  'platform/drivers/USB/vcom_tinyusb.c']
+stm32h743_inc += ['platform/drivers/USB']
+
+stm32h743_tinyusb_args = ['-DSTM32H743xx', '-DCFG_TUSB_MCU=OPT_MCU_STM32H7']
+stm32h743_tinyusb = static_library('tinyusb_stm32h743',
+                        tinyusb_device_src + tinyusb_dwc2_src,
+                        include_directories : [tinyusb_inc,
+                                               include_directories(stm32h743_inc)],
+                        c_args              : stm32h743_tinyusb_args + ['-w'],
+                        build_by_default    : false)
+stm32h743_tinyusb_dep = declare_dependency(link_with           : stm32h743_tinyusb,
+                                           include_directories : tinyusb_inc,
+                                           compile_args        : stm32h743_tinyusb_args)
+
 stm32h743_src += miosix_cm7_src
 stm32h743_inc += miosix_cm7_inc
 stm32h743_def += miosix_cm7_def
@@ -896,7 +913,7 @@ cs7000_opts = {
 cs7000p_opts = {
   'sources'            : cs7000p_src,
   'include_directories': cs7000p_inc,
-  'dependencies'       : [codec2_dep],
+  'dependencies'       : [codec2_dep, stm32h743_tinyusb_dep],
   'c_args'             : cs7000p_args,
   'cpp_args'           : cs7000p_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32H7xx/linker_script_cs7000p.ld',

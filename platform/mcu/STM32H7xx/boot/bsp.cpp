@@ -10,6 +10,7 @@
 ************************************************************************/
 
 #include "interfaces/bsp.h"
+#include "interfaces/vcom.h"
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
 #include "stm32h743xx.h"
@@ -41,7 +42,7 @@ void IRQbspInit()
 
 void bspInit2()
 {
-
+    vcom_init();
 }
 
 //
