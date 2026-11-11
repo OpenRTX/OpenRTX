@@ -7,6 +7,7 @@
 #include "calibration/calibInfo_Mod17.h"
 #include "interfaces/platform.h"
 #include "interfaces/nvmem.h"
+#include "interfaces/vcom.h"
 #include <stdio.h>
 #include "core/gps.h"
 #include "emulator.h"
@@ -34,6 +35,7 @@ static const hwInfo_t hwInfo = {
 void platform_init()
 {
     nvm_init();
+    vcom_init();
     emulator_start();
 }
 
