@@ -13,7 +13,7 @@
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
 #include "hwconfig.h"
-#include "../drivers/usb_vcom.h"
+#include "interfaces/vcom.h"
 #include "../drivers/USART3.h"
 
 namespace miosix

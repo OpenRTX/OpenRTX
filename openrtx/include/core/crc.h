@@ -33,13 +33,28 @@ extern "C" {
 uint16_t crc_m17(const void *data, const size_t len);
 
 /**
- * Compute the CCITT 16-bit CRC over a given block of data.
+ * Compute the CRC-16/XMODEM CRC over a given block of data.
+ *
+ * width=16, poly=1021, init=0x0000, refin=false, refout=false, xorout=0x0000,
+ * check=0x31c3 residue=0x000 name="CRC-16/XMODEM"
  *
  * @param data: input data.
  * @param len: data length, in bytes.
- * @return CCITT CRC.
+ * @return CRC-16/XMODEM CRC.
  */
 uint16_t crc_ccitt(const void *data, const size_t len);
+
+/**
+ * Compute the CRC-16/IBM-SDLC CRC over a given block of data.
+ *
+ * width=16, poly=1021, init=0xffff, refin=true, refout=true, xorout=0xffff,
+ * check=0x906e, residue=0xf0b8, name="CRC-16/IBM-SDLC"
+ *
+ * @param data: input data.
+ * @param len: data length, in bytes.
+ * @return HDLC CRC.
+ */
+uint16_t crc_hdlc(const void *data, const size_t len);
 
 #ifdef __cplusplus
 }

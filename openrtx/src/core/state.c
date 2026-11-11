@@ -15,6 +15,7 @@
 #include "interfaces/platform.h"
 #include "interfaces/nvmem.h"
 #include "interfaces/delays.h"
+#include "protocols/APRS/packet.h"
 
 state_t state;
 pthread_mutex_t state_mutex;
@@ -36,6 +37,17 @@ void state_init()
     if (nvm_readSettings(&state.settings) < 0) {
         state.settings = default_settings;
     }
+
+#ifdef CONFIG_APRS
+    // Settings saved before the APRS callsign existed may read it back
+    // empty: replace that, or anything else that is not a station address
+    state.settings.aprs_callsign[sizeof(state.settings.aprs_callsign) - 1] =
+        '\0';
+    if (aprsAddr_validate(state.settings.aprs_callsign) != 0) {
+        memcpy(state.settings.aprs_callsign, default_settings.aprs_callsign,
+               sizeof(state.settings.aprs_callsign));
+    }
+#endif
 
     /*
      * Try loading VFO configuration from nonvolatile memory and default to sane

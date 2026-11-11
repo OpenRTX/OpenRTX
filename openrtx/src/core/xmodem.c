@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "drivers/usb_vcom.h"
+#include "interfaces/vcom.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include "core/xmodem.h"

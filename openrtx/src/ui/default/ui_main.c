@@ -221,6 +221,14 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             break;
         }
         #endif
+
+        #ifdef CONFIG_APRS
+        case OPMODE_APRS:
+            gfx_print(layout.line1_pos, layout.line1_font, TEXT_ALIGN_CENTER,
+                      color_white, "APRS");
+            break;
+
+        #endif
     }
 }
 
@@ -337,6 +345,9 @@ void _ui_drawMainBottom()
                            true,
                            yellow_fab413);
             break;
+        #ifdef CONFIG_APRS
+        case OPMODE_APRS:
+        #endif
         case OPMODE_DMR:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,

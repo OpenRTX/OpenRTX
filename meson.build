@@ -45,6 +45,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/dsp.cpp',
                'openrtx/src/core/cps.c',
                'openrtx/src/core/crc.c',
+               'openrtx/src/core/slip.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
                'openrtx/src/core/audio_codec.c',
@@ -56,13 +57,16 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/voicePromptUtils.c',
                'openrtx/src/core/voicePromptData.S',
                'openrtx/src/core/nvmem_access.c',
+               'openrtx/src/core/packet_engine.c',
                'openrtx/src/core/messages.c',
                'openrtx/src/core/m17_sms.cpp',
+               'openrtx/src/core/aprs_msg.c',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
                'openrtx/src/protocols/M17/DSP.cpp',
                'openrtx/src/protocols/M17/Golay.cpp',
+               'openrtx/src/rtx/OpMode_APRS.cpp',
                'openrtx/src/protocols/M17/MetaText.cpp',
                'openrtx/src/protocols/M17/Callsign.cpp',
                'openrtx/src/protocols/M17/Modulator.cpp',
@@ -72,7 +76,11 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
                'openrtx/src/protocols/M17/PacketDeframer.cpp',
                'openrtx/src/protocols/M17/PacketFramer.cpp',
-               'openrtx/src/protocols/M17/SmsPacket.cpp']
+               'openrtx/src/protocols/M17/SmsPacket.cpp',
+               'openrtx/src/protocols/APRS/Slicer.cpp',
+               'openrtx/src/protocols/APRS/FrameDecoder.cpp',
+               'openrtx/src/protocols/APRS/Demodulator.cpp',
+               'openrtx/src/protocols/APRS/packet.c']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -146,6 +154,12 @@ endif
 
 # XPowersLib, library for x-powers power management series
 xpowerslib_proj = subproject('XPowersLib')
+
+# TinyUSB, USB device stack: source lists, built per MCU below
+tinyusb_proj       = subproject('tinyusb')
+tinyusb_inc        = tinyusb_proj.get_variable('tinyusb_inc')
+tinyusb_device_src = tinyusb_proj.get_variable('tinyusb_device_src')
+tinyusb_dwc2_src   = tinyusb_proj.get_variable('tinyusb_dwc2_src')
 
 ##
 ## RTOS
@@ -314,6 +328,23 @@ stm32h743_inc = ['platform/mcu/CMSIS/Include',
 
 stm32h743_def = {'STM32H743xx': '', 'HSE_VALUE':'25000000'}
 
+# USB: TinyUSB's DWC2 driver on the OTG FS port, a virtual serial port on top
+stm32h743_src += ['platform/drivers/USB/usb_stm32h7.cpp',
+                  'platform/drivers/USB/usb_descriptors.c',
+                  'platform/drivers/USB/vcom_tinyusb.c']
+stm32h743_inc += ['platform/drivers/USB']
+
+stm32h743_tinyusb_args = ['-DSTM32H743xx', '-DCFG_TUSB_MCU=OPT_MCU_STM32H7']
+stm32h743_tinyusb = static_library('tinyusb_stm32h743',
+                        tinyusb_device_src + tinyusb_dwc2_src,
+                        include_directories : [tinyusb_inc,
+                                               include_directories(stm32h743_inc)],
+                        c_args              : stm32h743_tinyusb_args + ['-w'],
+                        build_by_default    : false)
+stm32h743_tinyusb_dep = declare_dependency(link_with           : stm32h743_tinyusb,
+                                           include_directories : tinyusb_inc,
+                                           compile_args        : stm32h743_tinyusb_args)
+
 stm32h743_src += miosix_cm7_src
 stm32h743_inc += miosix_cm7_inc
 stm32h743_def += miosix_cm7_def
@@ -357,6 +388,7 @@ linux_src = ['platform/targets/linux/emulator/emulator.c',
              'platform/drivers/GPS/gps_linux.c',
              'platform/mcu/x86_64/drivers/delays.c',
              'platform/mcu/x86_64/drivers/rng.cpp',
+             'platform/mcu/x86_64/drivers/vcom_pty.c',
              'platform/drivers/baseband/radio_linux.cpp',
              'platform/drivers/audio/audio_linux.c',
              'platform/drivers/audio/file_source.c',
@@ -884,7 +916,7 @@ cs7000_opts = {
 cs7000p_opts = {
   'sources'            : cs7000p_src,
   'include_directories': cs7000p_inc,
-  'dependencies'       : [codec2_dep],
+  'dependencies'       : [codec2_dep, stm32h743_tinyusb_dep],
   'c_args'             : cs7000p_args,
   'cpp_args'           : cs7000p_args,
   'link_args'          : ['-Wl,-T../platform/mcu/STM32H7xx/linker_script_cs7000p.ld',
@@ -1313,6 +1345,41 @@ m17_sms_test = executable('m17_sms_test',
                                      'tests/unit/m17_sms.cpp'],
                           kwargs  : unit_test_opts)
 
+aprs_msg_test = executable('aprs_msg_test',
+                           sources : ['openrtx/src/core/messages.c',
+                                      'tests/unit/rtx_packet_stub.cpp',
+                                      'openrtx/src/core/aprs_msg.c',
+                                      'openrtx/src/core/crc.c',
+                                      'tests/unit/aprs_test_frame.cpp',
+                                      'openrtx/src/protocols/APRS/packet.c',
+                                      'tests/unit/aprs_msg.cpp'],
+                           kwargs  : unit_test_opts)
+
+aprs_packet_test = executable('aprs_packet_test',
+                              sources : unit_test_src + ['tests/unit/aprs_test_frame.cpp',
+                                                        'tests/unit/APRS_packet.cpp'],
+                              kwargs  : unit_test_opts)
+aprs_test_opts = unit_test_opts + {'cpp_args' : linux_cpp_args +
+      ['-DAPRS_ASSET_DIR="' + meson.project_source_root() / 'tests/unit/assets' + '"']}
+aprs_test = executable('aprs_test',
+                       sources : unit_test_src + ['tests/unit/APRS.cpp'],
+                       kwargs  : aprs_test_opts)
+
+aprs_opmode_test = executable('aprs_opmode_test',
+                              sources : unit_test_src
+                                        + ['tests/unit/APRS_opmode.cpp'],
+                              kwargs  : unit_test_opts)
+
+slip_test = executable('slip_test',
+                      sources : unit_test_src + ['tests/unit/slip.cpp'],
+                      kwargs  : unit_test_opts)
+
+packet_engine_test = executable('packet_engine_test',
+                                sources : ['openrtx/src/core/packet_engine.c',
+                                           'openrtx/src/core/slip.c',
+                                           'tests/unit/packet_engine.cpp'],
+                                kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1335,3 +1402,9 @@ test('M17 SMS Packet Test', m17_sms_packet_test)
 test('M17 Packet OpMode Test', m17_packet_opmode_test)
 test('Messages Test', messages_test)
 test('M17 SMS Source Test', m17_sms_test)
+test('APRS Message Source Test', aprs_msg_test)
+test('APRS Packet Test', aprs_packet_test)
+test('APRS Test', aprs_test)
+test('APRS OpMode Test', aprs_opmode_test)
+test('Slip Test', slip_test)
+test('Packet Engine Test', packet_engine_test)

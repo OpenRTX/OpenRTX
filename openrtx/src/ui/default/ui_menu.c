@@ -982,6 +982,30 @@ void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state)
 }
 #endif
 
+#if defined(CONFIG_M17) || defined(CONFIG_APRS)
+/**
+ * Draw the box a callsign is typed into.
+ *
+ * @param callsign: callsign being typed.
+ */
+static void _ui_drawCallsignInput(const char *callsign)
+{
+    uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
+    uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
+    point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
+                           (CONFIG_SCREEN_HEIGHT - rect_height) / 2};
+
+    gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                layout.horizontal_pad, layout.menu_font,
+                TEXT_ALIGN_LEFT, color_white, currentLanguage->callsign);
+    gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
+    // Print the callsign being typed
+    gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
+                  layout.horizontal_pad, layout.input_font,
+                  TEXT_ALIGN_CENTER, color_white, callsign);
+}
+#endif
+
 #ifdef CONFIG_M17
 void _ui_drawSettingsM17(ui_state_t* ui_state)
 {
@@ -991,19 +1015,7 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
               color_white, currentLanguage->m17settings);
     if((ui_state->edit_mode) && (ui_state->menu_selected == M17_CALLSIGN))
     {
-        uint16_t rect_width = CONFIG_SCREEN_WIDTH - (layout.horizontal_pad * 2);
-        uint16_t rect_height = (CONFIG_SCREEN_HEIGHT - (layout.top_h + layout.bottom_h))/2;
-        point_t rect_origin = {(CONFIG_SCREEN_WIDTH - rect_width) / 2,
-                               (CONFIG_SCREEN_HEIGHT - rect_height) / 2};
-
-        gfx_printLine(1, 4, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
-                    layout.horizontal_pad, layout.menu_font,
-                    TEXT_ALIGN_LEFT, color_white, currentLanguage->callsign);
-        gfx_drawRect(rect_origin, rect_width, rect_height, color_white, false);
-        // Print M17 callsign being typed
-        gfx_printLine(1, 1, layout.top_h, CONFIG_SCREEN_HEIGHT - layout.bottom_h,
-                      layout.horizontal_pad, layout.input_font,
-                      TEXT_ALIGN_CENTER, color_white, ui_state->new_callsign);
+        _ui_drawCallsignInput(ui_state->new_callsign);
     }
     else
     if((ui_state->edit_meta_text) && (ui_state->menu_selected == M17_METATEXT))
@@ -1044,6 +1056,50 @@ void _ui_drawSettingsM17(ui_state_t* ui_state)
     {
         _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getM17EntryName,
                               _ui_getM17ValueName);
+    }
+}
+#endif
+
+#ifdef CONFIG_APRS
+static int _ui_getAPRSEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_aprs_num) return -1;
+    sniprintf(buf, max_len, "%s", settings_aprs_items[index]);
+    return 0;
+}
+
+static int _ui_getAPRSValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= settings_aprs_num)
+        return -1;
+
+    switch(index)
+    {
+        case APRS_CALLSIGN:
+            sniprintf(buf, max_len, "%s", last_state.settings.aprs_callsign);
+            break;
+    }
+
+    return 0;
+}
+
+void _ui_drawSettingsAPRS(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "APRS Settings" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, currentLanguage->aprsSettings);
+    if((ui_state->edit_mode) && (ui_state->menu_selected == APRS_CALLSIGN))
+    {
+        _ui_drawCallsignInput(ui_state->new_callsign);
+        if(ui_state->callsign_invalid)
+            gfx_print(layout.bottom_pos, layout.bottom_font, TEXT_ALIGN_CENTER,
+                      color_white, currentLanguage->invalidCallsign);
+    }
+    else
+    {
+        _ui_drawMenuListValue(ui_state, ui_state->menu_selected,
+                              _ui_getAPRSEntryName, _ui_getAPRSValueName);
     }
 }
 #endif
@@ -1281,7 +1337,6 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
               yellow_fab413, "5");
 
-    char mode_str[12] = "";
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
@@ -1295,10 +1350,12 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          M17");
             break;
 #endif
+#ifdef CONFIG_APRS
+        case OPMODE_APRS:
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "           APRS");
+            break;
+#endif
     }
-
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
-              color_white, mode_str);
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 5)

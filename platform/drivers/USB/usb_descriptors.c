@@ -29,20 +29,19 @@
  *
  */
 
+#include <string.h>
 #include "interfaces/platform.h"
 #include "tusb.h"
 
-/* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
- * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.
- *
- * Auto ProductID layout's Bitmap:
- *   [MSB]       MIDI | HID | MSC | CDC          [LSB]
+/*
+ * ST's Virtual COM Port IDs, which the STM32F4 radios' USB stack already
+ * reports: host tools such as qdmr recognise the radios by them.
  */
-#define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
-#define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
-
 #define USB_VID 0x0483    // ST Microelectronics
+#define USB_PID 0x5740    // STM32 Virtual COM Port
+
+/* String descriptor index of the product name, the radio's hardware name */
+#define STR_PRODUCT 2
 
 //--------------------------------------------------------------------+
 // Device Descriptors
@@ -126,7 +125,7 @@ static const char* string_desc_arr [] =
 {
     (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
     "OpenRTX",                     // 1: Manufacturer
-    "",                            // 2: Product
+    "",                            // 2: Product, the radio's hardware name
     "",                            // 3: Serials, should use chip ID
     "OpenRTX CDC",                 // 4: CDC Interface
 };
@@ -155,10 +154,15 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
         if(!(index < sizeof(string_desc_arr)/sizeof(string_desc_arr[0]))) return NULL;
 
         const char* str = string_desc_arr[index];
+        size_t maxLen   = 31;
+        if(index == STR_PRODUCT)
+        {
+            str    = platform_getHwInfo()->name;
+            maxLen = sizeof(platform_getHwInfo()->name);
+        }
 
         // Cap at max char
-        chr_count = strlen(str);
-        if(chr_count > 31) chr_count = 31;
+        chr_count = strnlen(str, maxLen);
 
         // Convert ASCII string into UTF-16
         for(uint8_t i=0; i<chr_count; i++)

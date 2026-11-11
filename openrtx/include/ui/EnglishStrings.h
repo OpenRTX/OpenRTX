@@ -102,5 +102,7 @@ const stringsTable_t englishStrings =
     .send              = "Send",
     .to                = "To",
     .message           = "Message",
+    .aprsSettings      = "APRS Settings",
+    .invalidCallsign   = "Invalid callsign",
 };
 #endif  // ENGLISHSTRINGS_H

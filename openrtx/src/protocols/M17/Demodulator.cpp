@@ -19,7 +19,7 @@ using namespace M17;
 #include "core/ringbuf.hpp"
 #include <atomic>
 #ifndef PLATFORM_LINUX
-#include "drivers/usb_vcom.h"
+#include "interfaces/vcom.h"
 #endif
 
 typedef struct

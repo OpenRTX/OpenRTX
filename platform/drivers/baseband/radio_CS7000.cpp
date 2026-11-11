@@ -220,6 +220,7 @@ void radio_setOpmode(const enum opmode mode)
     switch(mode)
     {
         case OPMODE_FM:
+        case OPMODE_APRS:               // AFSK is FM audio
             C6000.fmMode();             // HR_C5000 in FM mode
             C6000.setInputGain(+3);     // Input gain in dB, as per TYT firmware
             break;

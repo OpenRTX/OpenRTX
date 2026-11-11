@@ -35,4 +35,7 @@ enum Mod17Flags {
 #define CONFIG_MESSAGES
 #define CONFIG_M17_SMS
 
+/* APRS operating mode. */
+#define CONFIG_APRS
+
 #endif /* HWCONFIG_H */

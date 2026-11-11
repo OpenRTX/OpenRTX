@@ -83,4 +83,7 @@ extern const struct gpsDevice gps;
 #define CONFIG_MESSAGES_POOL_BYTES 6400
 #define CONFIG_M17_SMS
 
+/* APRS operating mode. */
+#define CONFIG_APRS
+
 #endif /* HWCONFIG_H */

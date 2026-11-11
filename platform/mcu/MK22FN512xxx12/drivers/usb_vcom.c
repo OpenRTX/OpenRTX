@@ -35,7 +35,8 @@
 #include "MK22F51212.h"
 
 #include "usb/usb.h"
-#include "usb_vcom.h"
+#include <errno.h>
+#include "interfaces/vcom.h"
 #include "usb/fsl_common.h"
 #include "usb/usb_device.h"
 #include "usb/usb_device_ch9.h"
@@ -598,7 +599,7 @@ void USB0_IRQHandler(void)
  *                                                                            *
  ******************************************************************************/
 
-void vcom_init()
+int vcom_init()
 {
     SIM->CLKDIV2 = SIM_CLKDIV2_USBDIV(0)
                  | SIM_CLKDIV2_USBFRAC(0);
@@ -616,13 +617,15 @@ void vcom_init()
     if (USB_DeviceInit(kUSB_ControllerKhci0,USB_DeviceCallback,
                                 &cdcVcom.deviceHandle) != kStatus_USB_Success)
     {
-        return;
+        return -EIO;
     }
 
     NVIC_SetPriority(USB0_IRQn, 14);
     NVIC_EnableIRQ(USB0_IRQn);
 
     USB_DeviceRun(cdcVcom.deviceHandle);
+
+    return 0;
 }
 
 ssize_t vcom_writeBlock(const void *buf, size_t len)

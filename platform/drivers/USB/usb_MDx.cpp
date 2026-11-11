@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <errno.h>
 #include "interfaces/platform.h"
 #include "peripherals/gpio.h"
 #include "hwconfig.h"
@@ -19,7 +20,7 @@ void OTG_FS_IRQHandler(void)
 }
 */
 
-void usb_init()
+int usb_init()
 {
     gpio_setMode(GPIOA, 11, ALTERNATE | ALTERNATE_FUNC(10));
     gpio_setMode(GPIOA, 12, ALTERNATE | ALTERNATE_FUNC(10));
@@ -40,7 +41,7 @@ void usb_init()
 
     NVIC_SetPriority(OTG_FS_IRQn, 14);
 
-    tusb_init();
+    return tusb_init() ? 0 : -EIO;
 }
 
 void usb_terminate()
