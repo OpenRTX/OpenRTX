@@ -90,7 +90,7 @@ enum voicePrompt {
     PROMPT_HERTZ,          // hertz
     PROMPT_KILOHERTZ,      // Kilohertz
     PROMPT_MEGAHERTZ,      // Megahertz
-    PROMPT_CHANNEL,
+    PROMPT_CHANNEL,        // Channel
     PROMPT_VFO,            // V F O
     PROMPT_MILLISECONDS,   // Milliseconds
     PROMPT_SECONDS,        // Seconds
