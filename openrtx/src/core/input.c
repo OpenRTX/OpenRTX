@@ -13,6 +13,15 @@ static long long keyTs[KBD_NUM_KEYS]; // Timestamp of each keypress
 static uint32_t longPressSent;        // Flags to manage long-press events
 static keyboard_t prevKeys = 0;       // Previous keyboard status
 
+// Keys currently eligible for auto-repeat while held, see
+// input_setRepeatableKeys()
+static keyboard_t repeatableKeys = INPUT_DEFAULT_REPEATABLE_KEYS;
+
+void input_setRepeatableKeys(keyboard_t mask)
+{
+    repeatableKeys = mask;
+}
+
 bool input_scanKeyboard(kbd_msg_t *msg)
 {
     msg->value = 0;
@@ -41,17 +50,36 @@ bool input_scanKeyboard(kbd_msg_t *msg)
     }
     // Some key is kept pressed
     else if (keys != 0) {
-        // Check for saved timestamp to trigger long-presses
+        // Check for saved timestamp to trigger long-presses and, once a key
+        // has been held past the long-press threshold, keep generating
+        // auto-repeat events at a fixed rate for as long as it stays pressed.
         for (uint8_t k = 0; k < KBD_NUM_KEYS; k++) {
             keyboard_t mask = 1 << k;
 
-            // The key is pressed and its long-press timer is over
-            if (((keys & mask) != 0) && ((longPressSent & mask) == 0)
-                && ((now - keyTs[k]) >= input_longPressTimeout)) {
-                msg->long_press = 1;
+            if ((keys & mask) == 0)
+                continue;
+
+            long long elapsed = now - keyTs[k];
+
+            if ((longPressSent & mask) == 0) {
+                // The key is pressed and its long-press timer is over:
+                // send the (one-shot) long-press event and start the
+                // auto-repeat timer.
+                if (elapsed >= input_longPressTimeout) {
+                    msg->long_press = 1;
+                    msg->keys = keys;
+                    kbd_event = true;
+                    longPressSent |= mask;
+                    keyTs[k] = now;
+                }
+            } else if (((mask & repeatableKeys) != 0)
+                       && (elapsed >= input_repeatInterval)) {
+                // Long-press event already sent and this key supports
+                // auto-repeat: keep repeating plain keypress events so
+                // value-stepping menus keep advancing.
                 msg->keys = keys;
                 kbd_event = true;
-                longPressSent |= mask;
+                keyTs[k] = now;
             }
         }
     }
