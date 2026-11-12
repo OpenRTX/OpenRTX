@@ -16,6 +16,7 @@
 #include "protocols/M17/Constants.hpp"
 #include "protocols/M17/Demodulator.hpp"
 #include "protocols/M17/DevEstimator.hpp"
+#include "protocols/M17/Utils.hpp"
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/FrameDecoder.hpp"
 #include "protocols/M17/Synchronizer.hpp"
@@ -372,8 +373,9 @@ static size_t validLsfs(const std::vector<int16_t> &baseband)
         if (!ready)
             continue;
 
-        M17::frame_t frame = demod.getFrame();
-        if (locked && (decoder.decodeFrame(frame) == M17::FrameType::LINK_SETUP)
+        if (locked
+            && (decoder.decodeFrame(demod.getSoftFrame())
+                == M17::FrameType::LINK_SETUP)
             && decoder.getLsf().valid())
             count++;
     }
@@ -483,6 +485,70 @@ TEST_CASE("Demodulator maintains lock across multiple consecutive stream frames"
                                 << (lostSample - lockSample)
                                 << " samples after lock)");
     REQUIRE_FALSE(lostLock);
+}
+
+TEST_CASE("Demodulator soft bits agree with the hard symbols of each frame",
+          "[m17][demodulator][soft]")
+{
+    static constexpr size_t PREAMBLE_SYMS = 200;
+    static constexpr size_t NUM_FRAMES = 4;
+
+    // Encoded stream frames use all four symbol levels
+    std::vector<int8_t> syms;
+    M17Signal::appendPreamble(syms, PREAMBLE_SYMS);
+    auto frames = M17Signal::voiceFrames(NUM_FRAMES, false);
+    for (size_t f = 1; f <= NUM_FRAMES; f++)
+        M17Signal::appendFrame(syms, frames[f]);
+    syms.insert(syms.end(), PREAMBLE_SYMS, 0);
+    auto baseband = M17Signal::rrcBaseband(syms);
+
+    // A DC offset makes the positive and negative outer levels differ, so the
+    // thresholds of both signs are checked
+    for (int16_t offset : { 0, 600 }) {
+        M17::Demodulator demod;
+        demod.init();
+        size_t framesChecked = 0;
+        for (int16_t x : baseband) {
+            if (!demod.sample(static_cast<int16_t>(x + offset), false))
+                continue;
+            const auto &hard = demod.getFrame();
+            const auto &soft = demod.getSoftFrame();
+            for (size_t bit = 0; bit < soft.size(); bit++) {
+                CAPTURE(offset, bit);
+                REQUIRE(M17::hardBit(soft[bit]) == M17::getBit(hard, bit));
+            }
+            framesChecked++;
+        }
+        // The demodulator may deliver one more frame of trailing silence
+        // before it releases the lock; every delivered frame must agree.
+        REQUIRE(framesChecked >= NUM_FRAMES);
+    }
+}
+
+TEST_CASE("Soft bit confidence grows from the boundary to the full scale",
+          "[m17][demodulator][soft]")
+{
+    static constexpr uint32_t FULL = 3000;
+
+    // Half scale on the boundary, half confident half way, fully confident
+    // from the full scale on
+    REQUIRE(M17::softBit(false, 0, FULL) == 0x7FFF);
+    REQUIRE(M17::softBit(true, 0, FULL) == 0x8000);
+    REQUIRE(M17::softBit(false, FULL / 2, FULL) == 0x4000);
+    REQUIRE(M17::softBit(true, FULL / 2, FULL) == 0xBFFF);
+    REQUIRE(M17::softBit(false, FULL, FULL) == 0x0000);
+    REQUIRE(M17::softBit(true, FULL, FULL) == 0xFFFF);
+    REQUIRE(M17::softBit(true, 32 * FULL, FULL) == 0xFFFF);
+
+    // A 0 mirrors a 1, and the confidence never falls with the distance
+    uint16_t last = M17::softBit(true, 0, FULL);
+    for (uint32_t d = 0; d <= FULL; d++) {
+        uint16_t one = M17::softBit(true, d, FULL);
+        CAPTURE(d);
+        REQUIRE(M17::softBit(false, d, FULL) == (0xFFFF - one));
+        REQUIRE(one >= last);
+        last = one;
+    }
 }
 
 // ---------------------------------------------------------------------------

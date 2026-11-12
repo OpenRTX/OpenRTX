@@ -6,8 +6,10 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
+#include <cmath>
 #include <random>
 #include <array>
+#include "core/utils.h"
 #include "protocols/M17/ConvolutionalEncoder.hpp"
 #include "protocols/M17/CodePuncturing.hpp"
 #include "protocols/M17/Viterbi.hpp"
@@ -16,6 +18,21 @@
 using namespace std;
 
 static default_random_engine rng;
+
+/**
+ * Standard normal sample by Box-Muller on the raw mt19937 output, which the
+ * standard fully specifies, unlike std::normal_distribution.
+ *
+ * @param gen: generator.
+ * @return the sample.
+ */
+static double gaussian(mt19937 &gen)
+{
+    constexpr double twoPi = 6.283185307179586;
+    double u1 = (static_cast<double>(gen()) + 1.0) / 4294967297.0;
+    double u2 = static_cast<double>(gen()) / 4294967296.0;
+    return sqrt(-2.0 * log(u1)) * cos(twoPi * u2);
+}
 
 /**
  * Insert random bit flips in input data.
@@ -65,4 +82,158 @@ TEST_CASE("Viterbi decode recovers punctured convolutional encoding",
                          << static_cast<int>(source[i]));
         REQUIRE(source[i] == result[i]);
     }
+}
+
+/**
+ * Encode the frame number and payload of a stream frame and puncture them, as
+ * the transmitter does.
+ *
+ * @param source: frame number and payload.
+ * @param encoded: coded bits before puncturing.
+ * @param punctured: coded bits after puncturing.
+ */
+static void encodeStream(const array<uint8_t, 18> &source,
+                         array<uint8_t, 37> &encoded,
+                         array<uint8_t, 34> &punctured)
+{
+    M17::ConvolutionalEncoder encoder;
+    encoder.reset();
+    encoder.encode(source.data(), encoded.data(), source.size());
+    encoded[36] = encoder.flush();
+
+    M17::puncture(encoded, punctured, M17::DATA_PUNCTURE);
+}
+
+TEST_CASE("Viterbi decoders read their input through a function",
+          "[m17][viterbi]")
+{
+    static constexpr size_t BITS = 34 * 8;
+
+    array<uint8_t, 18> source;
+    for (size_t i = 0; i < source.size(); i++)
+        source[i] = static_cast<uint8_t>(37 * i + 11);
+
+    array<uint8_t, 37> encoded;
+    array<uint8_t, 34> punctured;
+    encodeStream(source, encoded, punctured);
+    M17::setBit(punctured, 40, !M17::getBit(punctured, 40));
+    M17::setBit(punctured, 200, !M17::getBit(punctured, 200));
+
+    // The coded bits stored in reverse order, read back through a function
+    array<bool, BITS> hardBits;
+    array<uint16_t, BITS> softBits;
+    for (size_t i = 0; i < BITS; i++) {
+        bool bit = M17::getBit(punctured, i);
+        hardBits[BITS - 1 - i] = bit;
+        softBits[BITS - 1 - i] = bit ? 0xFFFF : 0x0000;
+    }
+
+    array<uint8_t, 18> fromArray;
+    array<uint8_t, 18> fromFunction;
+
+    M17::HardViterbi hard;
+    uint16_t arrayErrs = hard.decodePunctured(punctured, fromArray,
+                                              M17::DATA_PUNCTURE);
+    uint16_t functionErrs = hard.decodePunctured<BITS>(
+        [&hardBits](size_t pos) { return hardBits[BITS - 1 - pos]; },
+        fromFunction, M17::DATA_PUNCTURE);
+    REQUIRE(fromFunction == source);
+    REQUIRE(fromArray == source);
+    REQUIRE(functionErrs == arrayErrs);
+
+    M17::SoftViterbi soft;
+    soft.decodePunctured<BITS>(
+        [&softBits](size_t pos) { return softBits[BITS - 1 - pos]; },
+        fromFunction, M17::DATA_PUNCTURE);
+    REQUIRE(fromFunction == source);
+}
+
+TEST_CASE("Viterbi decode starts the trellis in the encoder's start state",
+          "[m17][viterbi]")
+{
+    // LSF-sized blocks through Gaussian noise on the soft bits. Knowing that
+    // the encoder starts in state zero decodes 65% of them; letting every
+    // state start equal decodes 58%.
+    static constexpr size_t TRIALS = 400;
+    mt19937 gen(3000);
+    size_t decoded = 0;
+
+    for (size_t t = 0; t < TRIALS; t++) {
+        array<uint8_t, 30> source;
+        for (auto &byte : source)
+            byte = gen() & 0xFF;
+
+        array<uint8_t, 61> encoded;
+        M17::ConvolutionalEncoder encoder;
+        encoder.reset();
+        encoder.encode(source.data(), encoded.data(), source.size());
+        encoded[60] = encoder.flush();
+
+        array<uint8_t, 46> punctured;
+        M17::puncture(encoded, punctured, M17::LSF_PUNCTURE);
+
+        array<uint16_t, 46 * 8> soft;
+        for (size_t i = 0; i < soft.size(); i++) {
+            double v = (M17::getBit(punctured, i) ? 1.0 : 0.0)
+                     + 0.32 * gaussian(gen);
+            soft[i] = static_cast<uint16_t>(65535.0 * min(1.0, max(0.0, v)));
+        }
+
+        array<uint8_t, 30> result;
+        M17::SoftViterbi decoder;
+        decoder.decodePunctured(soft, result, M17::LSF_PUNCTURE);
+        if (result == source)
+            decoded++;
+    }
+
+    CAPTURE(decoded);
+    REQUIRE(decoded >= 250);
+}
+
+TEST_CASE("Soft Viterbi decode returns the corrected bits of confident input",
+          "[m17][viterbi]")
+{
+    array<uint8_t, 18> source;
+    for (size_t i = 0; i < source.size(); i++)
+        source[i] = static_cast<uint8_t>(53 * i + 7);
+
+    array<uint8_t, 37> encoded;
+    array<uint8_t, 34> punctured;
+    encodeStream(source, encoded, punctured);
+
+    // Fully confident bits, with k of them flipped well apart
+    static constexpr size_t FLIPS[] = {
+        20,
+        90,
+        160,
+        230,
+    };
+    for (size_t k = 0; k <= ARRAY_SIZE(FLIPS); k++) {
+        array<uint16_t, 34 * 8> soft;
+        for (size_t i = 0; i < soft.size(); i++)
+            soft[i] = M17::getBit(punctured, i) ? 0xFFFF : 0x0000;
+        for (size_t f = 0; f < k; f++)
+            soft[FLIPS[f]] = 0xFFFF - soft[FLIPS[f]];
+
+        array<uint8_t, 18> result;
+        M17::SoftViterbi decoder;
+        uint16_t corrected = decoder.decodePunctured(soft, result,
+                                                     M17::DATA_PUNCTURE);
+        CAPTURE(k);
+        REQUIRE(result == source);
+        REQUIRE(corrected == k);
+    }
+
+    // Unpunctured, one confident and one half confident error: only the
+    // confident one counts as a whole bit
+    array<uint16_t, 37 * 8> soft;
+    for (size_t i = 0; i < soft.size(); i++)
+        soft[i] = M17::getBit(encoded, i) ? 0xFFFF : 0x0000;
+    soft[30] = 0xFFFF - soft[30];
+    soft[150] = M17::getBit(encoded, 150) ? 0x7000 : 0x8FFF;
+
+    array<uint8_t, 18> result;
+    M17::SoftViterbi decoder;
+    REQUIRE(decoder.decode(soft, result) == 1);
+    REQUIRE(result == source);
 }
