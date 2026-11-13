@@ -40,7 +40,8 @@ static constexpr uint8_t M17_RX_AUDIO_GAIN1 = 1; // -6 dB
 static constexpr uint8_t M17_RX_AUDIO_GAIN2 = 0x3f;
 static constexpr uint8_t M17_MIC_GAIN = 0;
 
-static struct C62Calib calData; // TX power calibration
+static struct C62Calib calData;  // TX calibration
+static struct C62CalPoint txCal; // TX calibration at the TX frequency
 
 /* The BK4819 GPIOs to control the C62 LNA and PA */
 enum {
@@ -52,28 +53,21 @@ enum {
 };
 
 /**
- * Set the TX power control (APC) voltage through the PWM on pin A03. The band
+ * Set the TX power control (APC) voltage through the PWM on pin A03. The TX
  * calibration gives the duty cycles of the low and high power settings at the
- * frequency; the power is interpolated linearly between them, from the low
+ * TX frequency; the power is interpolated linearly between them, from the low
  * setting at 1 W to the high one at 5 W, as on the MD-3x0 and MD-UV3x0. The
  * PWM runs at 100 kHz, as in the stock firmware: at 1 kHz the APC voltage
  * follows the ripple and the output power stops tracking the duty cycle.
  *
- * @param freq: TX frequency, in Hz.
  * @param power: TX power, in mW.
  */
-static void set_tx_power(const freq_t freq, const uint32_t power)
+static void set_tx_power(const uint32_t power)
 {
-    const struct C62BandCalib *band = &calData.uhf;
-    if (freq < 174000000)
-        band = &calData.vhf;
-
-    struct C62CalPoint cal = calibC62_interp(band, freq);
-
     float pwr = static_cast<float>(power) / 1000.0f;
     pwr = std::max(std::min(pwr, 5.0f), 1.0f);
-    float pwrHi = static_cast<float>(cal.hiPwr);
-    float pwrLo = static_cast<float>(cal.loPwr);
+    float pwrHi = static_cast<float>(txCal.hiPwr);
+    float pwrLo = static_cast<float>(txCal.loPwr);
     uint8_t duty =
         static_cast<uint8_t>(pwrLo + (pwrHi - pwrLo) / 4.0f * (pwr - 1.0f));
 
@@ -215,7 +209,7 @@ void radio_enableTx()
 
     gpioDev_set(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
 
-    set_tx_power(config->txFrequency, config->txPower);
+    set_tx_power(config->txPower);
 
     bk4819_enableTx(&c62_bk4819);
     radioStatus = TX;
@@ -242,15 +236,24 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    // TX calibration at the TX frequency, from the band its PA is in
+    const struct C62BandCalib *band = &calData.uhf;
+    if (config->txFrequency < 174000000)
+        band = &calData.vhf;
+
+    txCal = calibC62_interp(band, config->txFrequency);
+
     // Set bandwidth, only for analog FM mode
     if (config->opMode == OPMODE_FM) {
         switch (config->bandwidth) {
             case BW_12_5:
                 bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
+                bk4819_setTxDeviation(&c62_bk4819, true, txCal.txDevNarrow);
                 break;
 
             case BW_25:
                 bk4819_setBandwidth(&c62_bk4819, BK4819_BW_25);
+                bk4819_setTxDeviation(&c62_bk4819, true, txCal.txDevWide);
                 break;
 
             default:
