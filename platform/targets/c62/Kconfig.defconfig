@@ -5,7 +5,7 @@
 if BOARD_C62
 
 config BOARD
-   default "c62"
+	default "c62"
 
 DT_CHOSEN_Z_PSRAM := zephyr,psram
 

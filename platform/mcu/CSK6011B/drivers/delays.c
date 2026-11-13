@@ -10,7 +10,7 @@
 
 void delayUs(unsigned int useconds)
 {
-    /* 
+    /*
      * For short delays, k_usleep() would round up to at least one full
      * system tick (100us in our case CONFIG_SYS_CLOCK_TICKS_PER_SEC).
      * Therefore we use busy-wait for delays smaller than 1ms.
