@@ -17,6 +17,7 @@
 #include <interfaces/audio.h>
 #include <interfaces/nvmem.h>
 #include "drivers/SPI/spi_zephyr.h"
+#include "drivers/audio/csk6_codec.h"
 #include "controller.h"
 #include "dsp.h"
 
@@ -213,7 +214,9 @@ uint16_t platform_getVbat()
 
 uint8_t platform_getMicLevel()
 {
-    return 0;
+    /* The meter is shown only in the M17 and DMR modes: scale it by the
+     * software gain to show what the encoder sees, so full scale is clipping */
+    return MIN((csk6codec_getMicPeak() * CONFIG_MIC_GAIN) >> 7, UINT8_MAX);
 }
 
 uint8_t platform_getVolumeLevel()
