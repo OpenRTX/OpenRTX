@@ -182,12 +182,11 @@
 	status = "okay";
 
 	st7735r: st7735r@0 {
-		compatible = "sitronix,st7735r";
+		/* The RESET pin is not connected, the driver does a software reset */
+		compatible = "retevis,c62-st7735r", "sitronix,st7735r";
 		spi-max-frequency = <20000000>;
 		reg = <0>;
-		cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>; /* or dc-gpios */
-		/* TODO: the default driver requires this element, but it kills SWD */
-		reset-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>;
+		cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>;  /* or dc-gpios */
 		width = <160>;
 		height = <128>;
 		x-offset = <0>;
