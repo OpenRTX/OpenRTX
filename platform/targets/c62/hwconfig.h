@@ -39,7 +39,7 @@ extern "C" {
 
 #define CONFIG_M17
 
-/* Microphone audio input, set for C62_ADC_MIC_GAIN_D below */
+/* Software gain of the M17 microphone input, set for C62_ADC_MIC_GAIN_A/D */
 #define CONFIG_MIC_GAIN 13
 
 /*
