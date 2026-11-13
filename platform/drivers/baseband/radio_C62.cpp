@@ -28,6 +28,13 @@ static enum opstatus radioStatus; // Current operating status
 static enum opmode radioMode;     // Current operating mode
 
 /*
+ * CTCSS/CDCSS TX gain of the stock C62 firmware, REG_51 <6:0> "CTCSS/CDCSS
+ * Tx Gain1 Tuning" (0 = min, 127 = max) in the BK4819 notes of
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L463-L471
+ */
+static constexpr uint8_t SUBAUDIO_TX_GAIN = 65;
+
+/*
  * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
  * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
  */
@@ -198,7 +205,7 @@ void radio_enableTx()
     bk4819_setFrequency(&c62_bk4819, config->txFrequency);
 
     if ((radioMode != OPMODE_M17) && config->txToneEn) {
-        bk4819_enableTxCtcss(&c62_bk4819, config->txTone);
+        bk4819_enableTxCtcss(&c62_bk4819, config->txTone, SUBAUDIO_TX_GAIN);
     }
 
     if (config->txFrequency < 174000000) {

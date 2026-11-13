@@ -153,9 +153,11 @@ enum {
     BK4819_REG51_1050HZ_DET_MOD = BIT(10),
     BK4819_REG51_AUTO_CDCSS_BW_MOD = BIT(9),
     BK4819_REG51_AUTO_CTCSS_BW_MOD = BIT(8),
+    BK4819_REG51_CTCDCSS_TX_GAIN1T_MASK = 0x007f,
 };
 
-#define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x), 0)
+#define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) \
+    ((x) & BK4819_REG51_CTCDCSS_TX_GAIN1T_MASK)
 
 /* REG_70: tone generator */
 enum {
@@ -451,10 +453,12 @@ static uint16_t ctcssWord(uint16_t freq)
     return ((uint32_t)freq * 258111) / 125000;
 }
 
-void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq)
+void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq, uint8_t gain)
 {
     uint16_t reg = bk4819_readReg(dev, 0x51);
-    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
+    reg &= ~BK4819_REG51_CTCDCSS_TX_GAIN1T_MASK;
+    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL
+         | BK4819_REG51_CTCDCSS_TX_GAIN1T(gain);
     bk4819_writeReg(dev, 0x51, reg);
     bk4819_writeReg(dev, 0x07, ctcssWord(freq));
 }
@@ -477,11 +481,12 @@ void bk4819_enableCtcss2(const struct BK4819 *dev, uint16_t freq)
 }
 
 void bk4819_enableTxCdcss(const struct BK4819 *dev, uint8_t negative,
-                          uint8_t bits24, uint32_t code)
+                          uint8_t bits24, uint32_t code, uint8_t gain)
 {
     bk4819_writeReg(dev, 0x51,
                     BK4819_REG51_TX_CTCDSS_ENABLE | BITV(negative, 13)
-                        | BITV(bits24, 11));
+                        | BITV(bits24, 11)
+                        | BK4819_REG51_CTCDCSS_TX_GAIN1T(gain));
     bk4819_writeReg(dev, 0x07, BK4819_REG07_MODE_CDCSS | 0x0AD7);
     bk4819_writeReg(dev, 0x08, BIT(15) | ((code >> 12) & 0xFFF));
     bk4819_writeReg(dev, 0x08, code & 0xFFF);
