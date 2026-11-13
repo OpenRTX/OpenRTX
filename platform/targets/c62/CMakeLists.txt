@@ -49,6 +49,9 @@ target_include_directories(app
 
 target_compile_definitions(app PRIVATE PLATFORM_C62)
 
+# Activate SWD (Serial Wire Debug) for the C62 platform
+#target_compile_definitions(app PRIVATE C62_ENABLE_SWD)
+
 #
 # DSP firmware, flashed separately at 0x100000 (dsp_firmware partition). The
 # firmware does not boot without it, and it must match the audio code, so the

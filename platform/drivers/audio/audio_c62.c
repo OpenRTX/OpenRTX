@@ -66,12 +66,16 @@ static void updateSpeaker(void)
     bool speaker = false;
     for (size_t i = 0; i < ARRAY_SIZE(paths); i++)
         speaker |= paths[i][SINK_SPK];
+#ifndef C62_ENABLE_SWD
     gpio_pin_set_dt(&speaker_enable, speaker);
+#endif
 }
 
 void audio_init(void)
 {
+#ifndef C62_ENABLE_SWD
     gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT_INACTIVE);
+#endif
     gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT_INACTIVE);
     initialized = csk6codec_init() == 0;
 }
@@ -81,7 +85,9 @@ void audio_terminate(void)
     if (!initialized)
         return;
 
+#ifndef C62_ENABLE_SWD
     gpio_pin_set_dt(&speaker_enable, 0);
+#endif
     radio_disableAfOutput();
     csk6codec_terminate();
     initialized = false;
