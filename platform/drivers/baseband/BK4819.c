@@ -613,7 +613,7 @@ static uint16_t scaleFreq(const uint16_t freq)
     return (((uint32_t)freq * 1048576u) + 50000u) / 100000u; /* with rounding */
 }
 
-void BK4819_BeepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain)
+void bk4819_beepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain)
 {
     (void)tuningGain;
     bk4819_writeReg(dev, 0x50, 0x3B20);
@@ -629,7 +629,7 @@ void BK4819_BeepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain)
     bk4819_writeReg(dev, 0x50, 0x3B20);
 }
 
-void BK4819_BeepStop(const struct BK4819 *dev)
+void bk4819_beepStop(const struct BK4819 *dev)
 {
     bk4819_writeReg(dev, 0x50, 0xBB20);
 }
