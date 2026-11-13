@@ -16,23 +16,23 @@ extern "C" {
 #endif
 
 /**
- * Maximum number of TX power calibration points per band.
+ * Maximum number of TX calibration points per band.
  */
 #define C62_CAL_POINTS 10
 
 /**
- * TX power calibration point: the APC PWM duty cycle, in percent, of the
- * stock low and high power settings at a frequency. Same layout as the start
- * of a calibration record in the stock firmware's settings journal.
+ * TX calibration at a frequency.
  */
 struct C62CalPoint {
-    uint32_t freq;
-    uint16_t loPwr;
-    uint16_t hiPwr;
+    uint32_t freq;        ///< Frequency, in Hz.
+    uint16_t loPwr;       ///< APC duty cycle of stock low power, in percent.
+    uint16_t hiPwr;       ///< APC duty cycle of stock high power, in percent.
+    uint16_t txDevNarrow; ///< BK4819 REG_40 deviation tuning, 12.5 kHz.
+    uint16_t txDevWide;   ///< BK4819 REG_40 deviation tuning, 25 kHz.
 };
 
 /**
- * TX power calibration of one band, sorted by frequency.
+ * TX calibration of one band, sorted by frequency.
  */
 struct C62BandCalib {
     struct C62CalPoint points[C62_CAL_POINTS];
@@ -48,19 +48,21 @@ struct C62Calib {
 };
 
 /**
- * Read the TX power calibration from the stock firmware's settings journal.
+ * Read the TX calibration from the stock firmware's settings journal.
  *
  * The journal holds back-to-back settings entries, each starting with a 0x5A
  * marker, an 8-bit sum of its payload and its little-endian total length.
  * The newest entry with a valid checksum is used. Records outside the VHF
- * (136-174 MHz) and UHF (400-480 MHz) bands or above 100% duty are skipped.
+ * (136-174 MHz) and UHF (400-480 MHz) bands or above 100% duty are skipped,
+ * and deviations are limited to 4095, as the stock firmware does.
  *
  * @param read: function reading len bytes at offset off of the journal into
  * buf, returning zero on success.
  * @param ctx: context passed to read.
  * @param size: journal size, in bytes.
  * @param cal: destination for the calibration data.
- * @return zero on success, -1 if the journal has no usable calibration.
+ * @return zero on success, -ENOENT if the journal has no usable calibration
+ * or -ENOMEM if the entry buffer cannot be allocated.
  */
 int calibC62_read(int (*read)(void *ctx, uint32_t off, void *buf, size_t len),
                   void *ctx, uint32_t size, struct C62Calib *cal);
