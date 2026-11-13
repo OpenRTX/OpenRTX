@@ -22,6 +22,7 @@
 #include "core/gps.h"
 
 static hwInfo_t hwInfo;
+static bool pwrBtnPressed = true;   // Power button status at the previous call
 
 void platform_init()
 {
@@ -143,18 +144,24 @@ bool platform_pwrButtonStatus()
     /*
      * Power button API requires this function to return true if power is
      * enabled. To comply to the requirement this function behaves in this way:
-     * - if button is not pressed, return current status of PWR_SW.
-     * - if button is pressed and PWR_SW is low, return true as user wants to
-     *   turn the radio on.
-     * - if button is pressed and PWR_SW is high, return false as user wants to
-     *   turn the radio off.
-     */
-
-    /*
+     * - if there is no new press, return current status of PWR_SW. A press
+     *   still held from the previous call is not new, and pwrBtnPressed
+     *   starts true so a press held through the reset that turns the radio
+     *   off is not new either.
+     * - if there is a new press and PWR_SW is low, return true as user wants
+     *   to turn the radio on.
+     * - if there is a new press and PWR_SW is high, return false as user
+     *   wants to turn the radio off.
+     *
      * Power button follows an active-low logic: btnStatus is low when button
      * is pressed
      */
-    if(btnStatus == 0)
+    bool pressed  = (btnStatus == 0);
+    bool newPress = (pressed && (pwrBtnPressed == false));
+
+    pwrBtnPressed = pressed;
+
+    if(newPress)
     {
         if(gpio_readPin(PWR_SW))
         {
@@ -168,7 +175,7 @@ bool platform_pwrButtonStatus()
         }
     }
 
-    /* We get here if power button is not pressed, just return PWR_SW status */
+    /* We get here if there is no new press, just return PWR_SW status */
     return gpio_readPin(PWR_SW) ? true : false;
 }
 
