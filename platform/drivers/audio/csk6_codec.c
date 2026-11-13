@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <csk6_cm33/include/cache.h>
 #include <csk6_cm33/include/venus_ap.h>
@@ -148,6 +149,7 @@ static bool routesDirty;
 static AudioRecord record;
 static AudioTrack playbackTrack;
 static bool captureRunning;
+static uint16_t micPeak;
 static bool playbackRunning;
 static int64_t playbackDeadline;
 static uint32_t playbackFraction;
@@ -546,6 +548,7 @@ static void setCapture(AudioRecord *rec, bool enable)
         disableAdcHpf2();
     } else {
         AudioRecord_stop(rec);
+        micPeak = 0;
     }
     captureRunning = enable;
 }
@@ -674,6 +677,23 @@ static void captureToFmQueues(size_t source, const int16_t *src, size_t stride,
 }
 
 /**
+ * Peak magnitude of a run of samples.
+ *
+ * @param src: first sample.
+ * @param stride: distance between samples, in samples.
+ * @param count: samples.
+ * @return peak magnitude, up to 32768.
+ */
+static uint16_t peakMagnitude(const int16_t *src, size_t stride, size_t count)
+{
+    int peak = 0;
+    for (size_t i = 0; i < count; i++)
+        peak = MAX(peak, abs(src[i * stride]));
+
+    return peak;
+}
+
+/**
  * Fail every attached input stream.
  */
 static void failInputs(int error)
@@ -712,6 +732,8 @@ static void captureFrame(AudioRecord *rec)
         const int16_t *src = &samples[rec->mChannelOutIdx[source]];
         captureToStream(&inputs[source], src, stride, count);
         captureToFmQueues(source, src, stride, count);
+        if (source == SOURCE_MIC)
+            micPeak = peakMagnitude(src, stride, count);
     }
 
     int ret = ICStream_Consumer_releaseFrame(ic, frame);
@@ -986,6 +1008,11 @@ void csk6codec_terminate(void)
     atomic_set(&stopRequested, 1);
     k_sem_give(&workerWake);
     k_thread_join(&worker, K_FOREVER);
+}
+
+uint16_t csk6codec_getMicPeak(void)
+{
+    return micPeak;
 }
 
 void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
