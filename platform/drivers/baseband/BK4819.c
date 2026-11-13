@@ -8,12 +8,182 @@
 #include "interfaces/delays.h"
 #include "core/utils.h"
 
-/* Speech filters and emphasis, on transmit and receive */
-#define REG2B_AF_FILTERS_DISABLE                                             \
-    (BK4819_REG2B_AF_RX_HPF300_DISABLE | BK4819_REG2B_AF_RX_LPF3K_DISABLE    \
-     | BK4819_REG2B_AF_RX_DEEMPH_DISABLE | BK4819_REG2B_AF_TX_HPF300_DISABLE \
-     | BK4819_REG2B_AF_TX_LPF1_DISABLE | BK4819_REG2B_AF_TX_PREEMPH_DISABLE)
-#define REG47_BYPASS (BK4819_REG47_AF_TX_FILTER_BYPASS | BK4819_REG47_UNDOC1)
+#define BITV(x, y) ((x) << (y))
+
+/*
+ * Register fields. From the BK4819 (V3) register list and application note:
+ * https://github.com/amnemonic/Quansheng_UV-K5_Firmware/tree/main/hardware
+ * and the UV-K5 firmware's register header:
+ * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/driver/bk4819-regs.h
+ */
+
+/* Serial bus command */
+enum {
+    BK4819_REG_READ = BIT(7),
+    BK4819_REG_WRITE = 0,
+};
+
+/* REG_07: CTCSS/CDCSS frequency */
+enum {
+    BK4819_REG07_MODE_CTC1 = 0,
+    BK4819_REG07_MODE_CTC2 = BIT(13),
+    BK4819_REG07_MODE_CDCSS = BITV(2, 13),
+    BK4819_REG07_FREQUENCY_MASK = 0x1fff,
+};
+
+/* REG_24: DTMF/SelCall */
+enum {
+    BK4819_REG24_THRESHOLD_MASK = BITV(0x2f, 7),
+    BK4819_REG24_ENABLE = BIT(5),
+    BK4819_REG24_SELECT_DTMF = BIT(4),
+    BK4819_REG24_MAX_SYMBOLS_MASK = 0x000f,
+};
+
+/* REG_2B: AF filters */
+enum {
+    BK4819_REG2B_AF_RX_HPF300_DISABLE = BIT(10),
+    BK4819_REG2B_AF_RX_LPF3K_DISABLE = BIT(9),
+    BK4819_REG2B_AF_RX_DEEMPH_DISABLE = BIT(8),
+    BK4819_REG2B_AF_TX_HPF300_DISABLE = BIT(2),
+    BK4819_REG2B_AF_TX_LPF1_DISABLE = BIT(1),
+    BK4819_REG2B_AF_TX_PREEMPH_DISABLE = BIT(0),
+    /* Speech filters and emphasis, on transmit and receive */
+    BK4819_REG2B_AF_FILTERS_DISABLE =
+        BK4819_REG2B_AF_RX_HPF300_DISABLE | BK4819_REG2B_AF_RX_LPF3K_DISABLE
+        | BK4819_REG2B_AF_RX_DEEMPH_DISABLE | BK4819_REG2B_AF_TX_HPF300_DISABLE
+        | BK4819_REG2B_AF_TX_LPF1_DISABLE | BK4819_REG2B_AF_TX_PREEMPH_DISABLE,
+};
+
+/* REG_30: power and signal path enables */
+enum {
+    BK4819_REG30_VCO_CALIBRATION = BIT(15),
+    BK4819_REG30_REVERSE1_ENABLE = BIT(14),
+    BK4819_REG30_RX_LINK_ENABLE = BITV(0x0f, 10),
+    BK4819_REG30_AF_DAC_ENABLE = BIT(9),
+    BK4819_REG30_REVERSE2_ENABLE = BIT(8), ///< Discriminator mode.
+    BK4819_REG30_PLL_VCO_ENABLE = BITV(0x0f, 4),
+    BK4819_REG30_PA_GAIN_ENABLE = BIT(3),
+    BK4819_REG30_MIC_ADC_ENABLE = BIT(2),
+    BK4819_REG30_TX_DSP_ENABLE = BIT(1),
+    BK4819_REG30_RX_DSP_ENABLE = BIT(0),
+};
+
+/* REG_31: audio processing */
+enum {
+    BK4819_REG31_COMPANDER = BIT(3),
+    BK4819_REG31_VOX = BIT(2),
+};
+
+/* REG_40: TX deviation */
+enum {
+    BK4819_REG40_TX_DEVIATION_ENABLE = BIT(12),
+    BK4819_REG40_TX_DEVIATION_MASK = 0x0fff,
+};
+
+#define BK4819_REG40_TX_DEVIATION(x) ((x) & BK4819_REG40_TX_DEVIATION_MASK)
+
+/* REG_43: RF and AF TX filters */
+enum {
+    BK4819_REG43_RF_BW_MASK = 0x7000,
+    BK4819_REG43_RF_BW_WEAK_MASK = 0x0e00,
+    BK4819_REG43_AF_TX_LPF2_BW_MASK = 0x01c0,
+};
+
+#define BK4819_REG43_RF_BW(x) (BITV((x), 12) & BK4819_REG43_RF_BW_MASK)
+#define BK4819_REG43_RF_BW_WEAK(x) (BITV((x), 9) & BK4819_REG43_RF_BW_WEAK_MASK)
+#define BK4819_REG43_AF_TX_LPF2_BW(x) \
+    (BITV((x), 6) & BK4819_REG43_AF_TX_LPF2_BW_MASK)
+
+/* REG_47: AF output */
+enum {
+    BK4819_REG47_AF_TX_FILTER_BYPASS = BIT(0),
+    /* Undocumented, "for gain" in the application note's RF_EnterBypass() */
+    BK4819_REG47_UNDOC1 = BIT(1),
+    BK4819_REG47_BYPASS = BK4819_REG47_AF_TX_FILTER_BYPASS
+                        | BK4819_REG47_UNDOC1,
+    BK4819_REG47_AF_OUTPUT_MASK = 0x0f00,
+};
+
+#define BK4819_REG47_AF_OUTPUT(x) (BITV((x), 8) & BK4819_REG47_AF_OUTPUT_MASK)
+
+/* REG_48: AF RX gains */
+enum {
+    BK4819_REG48_AF_RX_GAIN1_MASK = 0x0c00,
+    BK4819_REG48_AF_RX_GAIN2_MASK = 0x03f0,
+};
+
+#define BK4819_REG48_AF_RX_GAIN1(x) \
+    (BITV((x), 10) & BK4819_REG48_AF_RX_GAIN1_MASK)
+#define BK4819_REG48_AF_RX_GAIN2(x) \
+    (BITV((x), 4) & BK4819_REG48_AF_RX_GAIN2_MASK)
+
+/* REG_4B: ALC */
+enum {
+    BK4819_REG4B_ALC_DISABLE = BIT(5),
+};
+
+/* REG_51: CTCSS/CDCSS */
+enum {
+    BK4819_REG51_TX_CTCDSS_ENABLE = BIT(15),
+    BK4819_REG51_GPIO6_CDCSS = BIT(14),
+    BK4819_REG51_TRANSMIT_NEG_CDCSS_CODE = BIT(13),
+    BK4819_REG51_CTCSCSS_MODE_SEL = BIT(12),
+    BK4819_REG51_CDCSS_BIT_SEL = BIT(11),
+    BK4819_REG51_1050HZ_DET_MOD = BIT(10),
+    BK4819_REG51_AUTO_CDCSS_BW_MOD = BIT(9),
+    BK4819_REG51_AUTO_CTCSS_BW_MOD = BIT(8),
+};
+
+#define BK4819_REG51_CTCDCSS_TX_GAIN1T(x) BITV((x), 0)
+
+/* REG_70: tone generator */
+enum {
+    BK4819_REG70_ENABLE_TONE1 = BIT(15),
+    BK4819_REG70_TONE1_GAIN_MASK = 0x7f00,
+    BK4819_REG70_ENABLE_TONE2 = BIT(7),
+    BK4819_REG70_TONE2_GAIN_MASK = 0x007f,
+};
+
+#define BK4819_REG70_TONE1_GAIN(x) (BITV((x), 8) & BK4819_REG70_TONE1_GAIN_MASK)
+
+/* REG_7D: microphone sensitivity */
+enum {
+    BK4819_REG7D_MIC_GAIN_MASK = 0x001f,
+};
+
+#define BK4819_REG7D_MIC_GAIN(x) ((x) & BK4819_REG7D_MIC_GAIN_MASK)
+
+/* REG_7E: DC filters */
+enum {
+    BK4819_REG7E_TX_DCF_BW_MASK = 0x0038,
+    BK4819_REG7E_RX_DCF_BW_MASK = 0x0007,
+};
+
+#define BK4819_REG7E_TX_DCF_BW(x) (BITV((x), 3) & BK4819_REG7E_TX_DCF_BW_MASK)
+#define BK4819_REG7E_RX_DCF_BW(x) ((x) & BK4819_REG7E_RX_DCF_BW_MASK)
+
+/* Status flags */
+enum {
+    BK4819_FLAG_DTMF_REV = BITV(0x8, 11),
+    BK4819_FLAG_FSK_RX_SNF = BIT(7),
+    BK4819_FLAG_FSK_RX_SPF = BIT(6),
+    BK4819_FLAG_FSK_RX_CRC = BIT(4),
+    BK4819_FLAG_CDCSS_PCR = BIT(14),
+    BK4819_FLAG_CDCSS_PNR = BIT(15),
+};
+
+/* Field values set by bk4819_init() */
+enum {
+    BK4819_DEFAULT_TX_DEVIATION = 0x4d2,
+    BK4819_DEFAULT_RF_BW = 4,      ///< 3.75 kHz.
+    BK4819_DEFAULT_RF_BW_WEAK = 0, ///< 1.7 kHz.
+    BK4819_DEFAULT_TX_LPF2_BW = 1, ///< 2.5 kHz.
+    BK4819_DEFAULT_RX_AUDIO_GAIN1 = 0,
+    BK4819_DEFAULT_RX_AUDIO_GAIN2 = 0x3c,
+    BK4819_DEFAULT_MIC_GAIN = 0x19,
+    BK4819_DEFAULT_TX_DCF_BW = 5,
+    BK4819_DEFAULT_RX_DCF_BW = 6,
+};
 
 /*
  * Audio processing fields, with their values by enum bk4819_audioMode: voice
@@ -21,27 +191,35 @@
  * RF_EnterBypass() sets it.
  */
 struct audioModeFields {
-    bk4819_reg_t reg;
-    uint16_t mask;
-    uint16_t value[2];
+    uint8_t reg;       ///< Register address.
+    uint16_t mask;     ///< Fields set by the audio mode.
+    uint16_t value[2]; ///< Field values, by audio mode.
 };
 
 static const struct audioModeFields audioModeFields[] = {
-    { BK4819_REG_2B, REG2B_AF_FILTERS_DISABLE, { 0, REG2B_AF_FILTERS_DISABLE } },
-    { BK4819_REG_31, BK4819_REG31_COMPANDER | BK4819_REG31_VOX, { 0, 0 } },
-    { BK4819_REG_47, REG47_BYPASS, { 0, REG47_BYPASS } },
-    { BK4819_REG_4B, BK4819_REG4B_ALC_DISABLE, { 0, BK4819_REG4B_ALC_DISABLE } },
-    { BK4819_REG_70,
-      BK4819_REG_70_MASK_ENABLE_TONE1 | BK4819_REG_70_MASK_ENABLE_TONE2,
-      { 0, 0 } },
-    { BK4819_REG_7E,
-      BK4819_REG7E_TX_DCF_BW_MASK | BK4819_REG7E_RX_DCF_BW_MASK,
-      { BK4819_REG7E_TX_DCF_BW(BK4819_DEFAULT_TX_DCF_BW)
-            | BK4819_REG7E_RX_DCF_BW(BK4819_DEFAULT_RX_DCF_BW),
-        0 } },
+    { .reg = 0x2B,
+      .mask = BK4819_REG2B_AF_FILTERS_DISABLE,
+      .value = { 0, BK4819_REG2B_AF_FILTERS_DISABLE } },
+    { .reg = 0x31,
+      .mask = BK4819_REG31_COMPANDER | BK4819_REG31_VOX,
+      .value = { 0, 0 } },
+    { .reg = 0x47,
+      .mask = BK4819_REG47_BYPASS,
+      .value = { 0, BK4819_REG47_BYPASS } },
+    { .reg = 0x4B,
+      .mask = BK4819_REG4B_ALC_DISABLE,
+      .value = { 0, BK4819_REG4B_ALC_DISABLE } },
+    { .reg = 0x70,
+      .mask = BK4819_REG70_ENABLE_TONE1 | BK4819_REG70_ENABLE_TONE2,
+      .value = { 0, 0 } },
+    { .reg = 0x7E,
+      .mask = BK4819_REG7E_TX_DCF_BW_MASK | BK4819_REG7E_RX_DCF_BW_MASK,
+      .value = { BK4819_REG7E_TX_DCF_BW(BK4819_DEFAULT_TX_DCF_BW)
+                     | BK4819_REG7E_RX_DCF_BW(BK4819_DEFAULT_RX_DCF_BW),
+                 0 } },
 };
 
-uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg)
+uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg)
 {
     const uint8_t cmd = reg | BK4819_REG_READ;
     uint8_t rx[2];
@@ -60,7 +238,7 @@ uint16_t BK4819_readReg(const struct BK4819 *dev, uint8_t reg)
     return ((uint16_t)rx[0] << 8) | rx[1];
 }
 
-void BK4819_writeReg(const struct BK4819 *dev, bk4819_reg_t reg, uint16_t data)
+void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data)
 {
     const uint8_t cmd = reg | BK4819_REG_WRITE;
     const uint8_t tx[2] = { (data >> 8) & 0xFF, data & 0xFF };
@@ -83,334 +261,247 @@ void bk4819_init(const struct BK4819 *dev)
     gpioPin_setMode(&dev->scn, OUTPUT);
     gpioPin_set(&dev->scn);
 
-    BK4819_writeReg(dev, BK4819_REG_00, BIT(15)); // Soft Reset
-    BK4819_writeReg(dev, BK4819_REG_00, 0);       // Normal operation
-    BK4819_writeReg(dev, BK4819_REG_37, 0x1d0f);  // Power mode
+    bk4819_writeReg(dev, 0x00, BIT(15)); // Soft Reset
+    bk4819_writeReg(dev, 0x00, 0);       // Normal operation
+    bk4819_writeReg(dev, 0x37, 0x1d0f);  // Power mode
 
     /* Rx AGC Gain */
-    BK4819_writeReg(dev, BK4819_REG_13, 0x3be);
-    BK4819_writeReg(dev, BK4819_REG_12, 0x37b);
-    BK4819_writeReg(dev, BK4819_REG_11, 0x27b);
-    BK4819_writeReg(dev, BK4819_REG_10, 0x7a);
-    BK4819_writeReg(dev, BK4819_REG_14, 0x19);
+    bk4819_writeReg(dev, 0x13, 0x3be);
+    bk4819_writeReg(dev, 0x12, 0x37b);
+    bk4819_writeReg(dev, 0x11, 0x27b);
+    bk4819_writeReg(dev, 0x10, 0x7a);
+    bk4819_writeReg(dev, 0x14, 0x19);
 
-    BK4819_writeReg(dev, BK4819_REG_49, 0x2a38);
-    BK4819_writeReg(dev, BK4819_REG_7B, 0x8420);
-    BK4819_writeReg(dev, BK4819_REG_7D, 0xe959); // Mic sensitivity
-    BK4819_writeReg(dev, BK4819_REG_48, 0xb3c1); // AF Gains
-    BK4819_writeReg(dev, BK4819_REG_1E, 0x4c58);
-    BK4819_writeReg(dev, BK4819_REG_1F, 0xa656);
-    BK4819_writeReg(dev, BK4819_REG_3E, 0xa037); // Band selection threshold
-    BK4819_writeReg(dev, BK4819_REG_3F, 0x07fe); // Interrupt enable
-    BK4819_writeReg(dev, BK4819_REG_2A, 0x7fff);
-    BK4819_writeReg(dev, BK4819_REG_28, 0x6b00); // Expander
-    BK4819_writeReg(dev, BK4819_REG_53, 59000);
-    BK4819_writeReg(dev, BK4819_REG_2C, 0x5705);
-    BK4819_writeReg(dev, BK4819_REG_4B, 0x7102); // ALC
+    bk4819_writeReg(dev, 0x49, 0x2a38);
+    bk4819_writeReg(dev, 0x7B, 0x8420);
+    bk4819_writeReg(dev, 0x7D, 0xe959); // Mic sensitivity
+    bk4819_writeReg(dev, 0x48, 0xb3c1); // AF Gains
+    bk4819_writeReg(dev, 0x1E, 0x4c58);
+    bk4819_writeReg(dev, 0x1F, 0xa656);
+    bk4819_writeReg(dev, 0x3E, 0xa037); // Band selection threshold
+    bk4819_writeReg(dev, 0x3F, 0x07fe); // Interrupt enable
+    bk4819_writeReg(dev, 0x2A, 0x7fff);
+    bk4819_writeReg(dev, 0x28, 0x6b00); // Expander
+    bk4819_writeReg(dev, 0x53, 59000);
+    bk4819_writeReg(dev, 0x2C, 0x5705);
+    bk4819_writeReg(dev, 0x4B, 0x7102); // ALC
     bk4819_setAudioMode(dev, BK4819_AUDIO_VOICE);
-    BK4819_writeReg(dev, BK4819_REG_77, 0x88ef);
-    BK4819_writeReg(dev, BK4819_REG_26, 0x13a0);
-    BK4819_writeReg(dev, BK4819_REG_4E, 0x6f15); // Squelch
-    BK4819_writeReg(dev, BK4819_REG_4F,
-                    0x3f3e); // Ex-noise threhold for Squelch
+    bk4819_writeReg(dev, 0x77, 0x88ef);
+    bk4819_writeReg(dev, 0x26, 0x13a0);
+    bk4819_writeReg(dev, 0x4E, 0x6f15); // Squelch
+    bk4819_writeReg(dev, 0x4F, 0x3f3e); // Ex-noise threshold for Squelch
 
     /* DTMF Symbol 0 - 15 Coefficient */
-    BK4819_writeReg(dev, BK4819_REG_09, 0x006f);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x106b);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x2067);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x3062);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x4050);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x5047);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x603a);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x702c);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x8041);
-    BK4819_writeReg(dev, BK4819_REG_09, 0x9037);
-    BK4819_writeReg(dev, BK4819_REG_09, 0xa025);
-    BK4819_writeReg(dev, BK4819_REG_09, 0xb017);
-    BK4819_writeReg(dev, BK4819_REG_09, 0xc0e4);
-    BK4819_writeReg(dev, BK4819_REG_09, 0xd0cb);
-    BK4819_writeReg(dev, BK4819_REG_09, 0xe0b5);
-    BK4819_writeReg(dev, BK4819_REG_09, 0xf09f);
+    bk4819_writeReg(dev, 0x09, 0x006f);
+    bk4819_writeReg(dev, 0x09, 0x106b);
+    bk4819_writeReg(dev, 0x09, 0x2067);
+    bk4819_writeReg(dev, 0x09, 0x3062);
+    bk4819_writeReg(dev, 0x09, 0x4050);
+    bk4819_writeReg(dev, 0x09, 0x5047);
+    bk4819_writeReg(dev, 0x09, 0x603a);
+    bk4819_writeReg(dev, 0x09, 0x702c);
+    bk4819_writeReg(dev, 0x09, 0x8041);
+    bk4819_writeReg(dev, 0x09, 0x9037);
+    bk4819_writeReg(dev, 0x09, 0xa025);
+    bk4819_writeReg(dev, 0x09, 0xb017);
+    bk4819_writeReg(dev, 0x09, 0xc0e4);
+    bk4819_writeReg(dev, 0x09, 0xd0cb);
+    bk4819_writeReg(dev, 0x09, 0xe0b5);
+    bk4819_writeReg(dev, 0x09, 0xf09f);
 
-    BK4819_writeReg(dev, BK4819_REG_74,
-                    0xfa02); // 3000Hz AF Response coefficient for Tx
-    BK4819_writeReg(dev, BK4819_REG_44,
-                    0x8f88); // 300Hz AF Response coefficient for Tx
-    BK4819_writeReg(dev, BK4819_REG_45,
-                    0x3201); // 300Hz AF Response coefficient for Rx
-    BK4819_writeReg(dev, BK4819_REG_28, 0x6b38); // Expander
-    BK4819_writeReg(dev, BK4819_REG_29, 0xb4cb); // Compress
-    BK4819_writeReg(
-        dev, BK4819_REG_36,
-        0xdfbf); // Tx Output power Bias 0xdf = 2,8V PA Tuning 0xbf = Enable PACTKoutput + 7,26dBm
-    BK4819_writeReg(dev, BK4819_REG_47, 0x6040); // AF
+    bk4819_writeReg(dev, 0x74, 0xfa02); // 3000Hz AF Response coefficient for Tx
+    bk4819_writeReg(dev, 0x44, 0x8f88); // 300Hz AF Response coefficient for Tx
+    bk4819_writeReg(dev, 0x45, 0x3201); // 300Hz AF Response coefficient for Rx
+    bk4819_writeReg(dev, 0x28, 0x6b38); // Expander
+    bk4819_writeReg(dev, 0x29, 0xb4cb); // Compress
+    // Tx Output power Bias 0xdf = 2,8V PA Tuning 0xbf = Enable PACTKoutput + 7,26dBm
+    bk4819_writeReg(dev, 0x36, 0xdfbf);
+    bk4819_writeReg(dev, 0x47, 0x6040); // AF
 
     /*
      * Let the microphone input bias settle with only the mic ADC enabled,
      * before any audio starts: otherwise the mic AGC can stay at a low gain.
      */
-    uint16_t power = BK4819_readReg(dev, BK4819_REG_30);
-    BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG30_MIC_ADC_ENABLE);
+    uint16_t power = bk4819_readReg(dev, 0x30);
+    bk4819_writeReg(dev, 0x30, BK4819_REG30_MIC_ADC_ENABLE);
     delayMs(250);
-    BK4819_writeReg(dev, BK4819_REG_30, power);
+    bk4819_writeReg(dev, 0x30, power);
 }
 
-uint8_t bk4819_int_get(const struct BK4819 *dev, bk4819_int_t interrupt)
+uint8_t bk4819_getInterrupt(const struct BK4819 *dev,
+                            enum bk4819_interrupt interrupt)
 {
-    if ((BK4819_readReg(dev, BK4819_REG_0C) & BIT(0x01)) == 0)
+    if ((bk4819_readReg(dev, 0x0C) & BIT(0x01)) == 0)
         return 0;
-    return BK4819_readReg(dev, BK4819_REG_02 & interrupt);
+    return bk4819_readReg(dev, 0x02 & interrupt);
 }
 
-void bk4819_int_enable(const struct BK4819 *dev, bk4819_int_t interrupt)
+void bk4819_enableInterrupt(const struct BK4819 *dev,
+                            enum bk4819_interrupt interrupt)
 {
-    BK4819_writeReg(dev, BK4819_REG_3F,
-                    BK4819_readReg(dev, BK4819_REG_3F) | interrupt);
+    bk4819_writeReg(dev, 0x3F, bk4819_readReg(dev, 0x3F) | interrupt);
 }
 
-void bk4819_int_disable(const struct BK4819 *dev, bk4819_int_t interrupt)
+void bk4819_disableInterrupt(const struct BK4819 *dev,
+                             enum bk4819_interrupt interrupt)
 {
-    BK4819_writeReg(dev, BK4819_REG_3F,
-                    BK4819_readReg(dev, BK4819_REG_3F) & (~interrupt));
+    bk4819_writeReg(dev, 0x3F, bk4819_readReg(dev, 0x3F) & (~interrupt));
 }
 
-void bk4819_set_freq(const struct BK4819 *dev, uint32_t freq)
+void bk4819_setFrequency(const struct BK4819 *dev, uint32_t freq)
 {
     freq = freq / 10; /* Convert to 10 Hz units */
-    BK4819_writeReg(dev, BK4819_REG_39, (freq >> 16) & 0xFFFF);
-    BK4819_writeReg(dev, BK4819_REG_38, freq & 0xFFFF);
-    bk4819_rx_on(dev);
+    bk4819_writeReg(dev, 0x39, (freq >> 16) & 0xFFFF);
+    bk4819_writeReg(dev, 0x38, freq & 0xFFFF);
+    bk4819_enableRx(dev);
 }
 
-void bk4819_rx_on(const struct BK4819 *dev)
+void bk4819_enableRx(const struct BK4819 *dev)
 {
-    BK4819_writeReg(dev, BK4819_REG_37, 0x1F0F);
+    bk4819_writeReg(dev, 0x37, 0x1F0F);
     delayUs(1);
-    BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG30_AF_DAC_ENABLE);
-    BK4819_writeReg(dev, BK4819_REG_30, 0xBFF1);
+    bk4819_writeReg(dev, 0x30, BK4819_REG30_AF_DAC_ENABLE);
+    bk4819_writeReg(dev, 0x30, 0xBFF1);
 }
 
-void bk4819_set_modulation(const struct BK4819 *dev, bool is_FM)
+void bk4819_enableTx(const struct BK4819 *dev)
 {
-    BK4819_SetAF(dev, is_FM ? BK4819_AF_TYPE_FM : BK4819_AF_TYPE_AM);
-}
-
-void bk4819_tx_on(const struct BK4819 *dev)
-{
-    BK4819_writeReg(dev, BK4819_REG_30, 0x00); /* reset */
-    BK4819_writeReg(
-        dev, BK4819_REG_30,
+    bk4819_writeReg(dev, 0x30, 0x00); /* reset */
+    bk4819_writeReg(
+        dev, 0x30,
         BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE
             | BK4819_REG30_VCO_CALIBRATION | BK4819_REG30_MIC_ADC_ENABLE
             | BK4819_REG30_TX_DSP_ENABLE | BK4819_REG30_PLL_VCO_ENABLE
             | BK4819_REG30_PA_GAIN_ENABLE);
 }
 
-void bk4819_rtx_off(const struct BK4819 *dev)
+void bk4819_disableRtx(const struct BK4819 *dev)
 {
-    BK4819_writeReg(dev, BK4819_REG_30, 0x00); /* reset */
-    BK4819_writeReg(dev, BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
+    bk4819_writeReg(dev, 0x30, 0x00); /* reset */
+    bk4819_writeReg(dev, 0x30, BK4819_REG30_AF_DAC_ENABLE);
 }
 
-void bk4819_SetFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
+void bk4819_setModulation(const struct BK4819 *dev, bool fm)
 {
-    uint16_t Value = BK4819_readReg(dev, BK4819_REG_43);
-    if (bandwidth) { /* 25kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 32);
-    } else {         /* 12.5kHz */
-        BK4819_writeReg(dev, BK4819_REG_43, (Value & ~0x30) | 0);
+    bk4819_setAfOutput(dev, fm ? BK4819_AF_FM : BK4819_AF_AM);
+}
+
+void bk4819_setAfOutput(const struct BK4819 *dev, enum bk4819_afOutput af)
+{
+    /* Preserve polarity and TX filter bypass when muting/unmuting RX. */
+    uint16_t value = bk4819_readReg(dev, 0x47);
+    bk4819_writeReg(dev, 0x47,
+                    (value & ~BK4819_REG47_AF_OUTPUT_MASK)
+                        | BK4819_REG47_AF_OUTPUT(af));
+}
+
+void bk4819_setFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
+{
+    uint16_t value = bk4819_readReg(dev, 0x43);
+    if (bandwidth) { /* 25 kHz */
+        bk4819_writeReg(dev, 0x43, (value & ~0x30) | 32);
+    } else {         /* 12.5 kHz */
+        bk4819_writeReg(dev, 0x43, (value & ~0x30) | 0);
     }
 }
 
-void bk4819_enable_tx_ctcss(const struct BK4819 *dev, uint16_t frequency)
+void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq)
 {
-    /* frequency is in .1 Hz units */
-    uint32_t ctcss_reg_value = frequency * 2064888 / 100000
-                             / 10; /* Register value for 26MHz XTAL */
+    /* freq is in .1 Hz units */
+    uint32_t regValue = freq * 2064888 / 100000
+                      / 10; /* Register value for 26MHz XTAL */
 
-    uint16_t reg = BK4819_readReg(dev, BK4819_REG_51);
+    uint16_t reg = bk4819_readReg(dev, 0x51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
-    BK4819_writeReg(dev, BK4819_REG_51, reg);
-    BK4819_writeReg(dev, BK4819_REG_07, (uint16_t)ctcss_reg_value);
+    bk4819_writeReg(dev, 0x51, reg);
+    bk4819_writeReg(dev, 0x07, (uint16_t)regValue);
 }
 
-void bk4819_enable_rx_ctcss(const struct BK4819 *dev, uint16_t frequency)
+void bk4819_enableRxCtcss(const struct BK4819 *dev, uint16_t freq)
 {
-    /* frequency is in .1 Hz units */
-    uint32_t ctcss_reg_value = frequency * 2064888 / 100000
-                             / 10; /* Register value for 26MHz XTAL */
+    /* freq is in .1 Hz units */
+    uint32_t regValue = freq * 2064888 / 100000
+                      / 10; /* Register value for 26MHz XTAL */
 
-    uint16_t reg = BK4819_readReg(dev, BK4819_REG_51);
+    uint16_t reg = bk4819_readReg(dev, 0x51);
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
-    BK4819_writeReg(dev, BK4819_REG_51, reg);
-    BK4819_writeReg(dev, BK4819_REG_07, (uint16_t)ctcss_reg_value);
+    bk4819_writeReg(dev, 0x51, reg);
+    bk4819_writeReg(dev, 0x07, (uint16_t)regValue);
 }
 
-void bk4819_enable_ctcss2(const struct BK4819 *dev, uint16_t frequency)
+void bk4819_enableCtcss2(const struct BK4819 *dev, uint16_t freq)
 {
-    uint16_t reg = BK4819_readReg(dev, BK4819_REG_51);
+    uint16_t reg = bk4819_readReg(dev, 0x51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
-    BK4819_writeReg(dev, BK4819_REG_07, frequency | BIT(13));
+    bk4819_writeReg(dev, 0x07, freq | BK4819_REG07_MODE_CTC2);
 }
 
-void bk4819_enable_tx_cdcss(const struct BK4819 *dev, uint8_t code_type,
-                            uint8_t bit_sel, uint32_t cdcss_code)
+void bk4819_enableTxCdcss(const struct BK4819 *dev, uint8_t negative,
+                          uint8_t bits24, uint32_t code)
 {
-    BK4819_writeReg(dev, BK4819_REG_51,
-                    BK4819_REG51_TX_CTCDSS_ENABLE | BITV(code_type, 13)
-                        | BITV(bit_sel, 11));
-    BK4819_writeReg(dev, BK4819_REG_07, BITV(2, 13) | 0x0AD7);
-    BK4819_writeReg(dev, BK4819_REG_08, BIT(15) | ((cdcss_code >> 12) & 0XFFF));
-    BK4819_writeReg(dev, BK4819_REG_08, cdcss_code & 0XFFF);
+    bk4819_writeReg(dev, 0x51,
+                    BK4819_REG51_TX_CTCDSS_ENABLE | BITV(negative, 13)
+                        | BITV(bits24, 11));
+    bk4819_writeReg(dev, 0x07, BK4819_REG07_MODE_CDCSS | 0x0AD7);
+    bk4819_writeReg(dev, 0x08, BIT(15) | ((code >> 12) & 0xFFF));
+    bk4819_writeReg(dev, 0x08, code & 0xFFF);
 }
 
-void bk4819_disable_ctdcss(const struct BK4819 *dev)
+void bk4819_disableCtdcss(const struct BK4819 *dev)
 {
-    uint16_t reg = BK4819_readReg(dev, BK4819_REG_51);
+    uint16_t reg = bk4819_readReg(dev, 0x51);
     reg &= ~BK4819_REG51_TX_CTCDSS_ENABLE;
-    BK4819_writeReg(dev, BK4819_REG_51, reg);
+    bk4819_writeReg(dev, 0x51, reg);
 }
 
-uint16_t bk4819_get_ctcss(const struct BK4819 *dev)
+uint16_t bk4819_getCtcss(const struct BK4819 *dev)
 {
-    return BK4819_readReg(dev, BK4819_REG_0C) & BIT(10);
+    return bk4819_readReg(dev, 0x0C) & BIT(10);
 }
 
-void bk4819_enable_vox(const struct BK4819 *dev, uint8_t delay_time,
-                       uint8_t interval_time, uint16_t threshold_on,
-                       uint16_t threshold_off)
+void bk4819_enableVox(const struct BK4819 *dev, uint8_t delay, uint8_t interval,
+                      uint16_t thresholdOn, uint16_t thresholdOff)
 {
-    BK4819_writeReg(dev, BK4819_REG_31,
-                    BK4819_readReg(dev, BK4819_REG_31) | BK4819_REG31_VOX);
-    BK4819_writeReg(dev, BK4819_REG_79,
-                    BITV(interval_time, 10) | threshold_off);
-    BK4819_writeReg(dev, BK4819_REG_46, threshold_on);
+    bk4819_writeReg(dev, 0x31, bk4819_readReg(dev, 0x31) | BK4819_REG31_VOX);
+    bk4819_writeReg(dev, 0x79, BITV(interval, 10) | thresholdOff);
+    bk4819_writeReg(dev, 0x46, thresholdOn);
 }
 
-uint8_t bk4819_get_vox(const struct BK4819 *dev)
+uint8_t bk4819_getVox(const struct BK4819 *dev)
 {
-    return BK4819_readReg(dev, BK4819_REG_0C) & BIT(2);
+    return bk4819_readReg(dev, 0x0C) & BIT(2);
 }
 
-void bk4819_set_Squelch(const struct BK4819 *dev, uint8_t RTSO, uint8_t RTSC,
-                        uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC)
+void bk4819_setSquelch(const struct BK4819 *dev, uint8_t rssiOpen,
+                       uint8_t rssiClose, uint8_t noiseOpen, uint8_t noiseClose,
+                       uint8_t glitchOpen, uint8_t glitchClose)
 {
-    BK4819_writeReg(dev, BK4819_REG_78, (RTSO << 8) | RTSC);
+    bk4819_writeReg(dev, 0x78, (rssiOpen << 8) | rssiClose);
 
     // Only change threshold fields; preserve timing and reserved bits.
-    uint16_t value = BK4819_readReg(dev, BK4819_REG_4F);
-    BK4819_writeReg(dev, BK4819_REG_4F,
-                    (value & 0x8080) | ((ETSC & 0x7f) << 8) | (ETSO & 0x7f));
-    value = BK4819_readReg(dev, BK4819_REG_4D);
-    BK4819_writeReg(dev, BK4819_REG_4D, (value & 0xff00) | GTSC);
-    value = BK4819_readReg(dev, BK4819_REG_4E);
-    BK4819_writeReg(dev, BK4819_REG_4E, (value & 0xff00) | GTSO);
-}
-
-int16_t bk4819_get_rssi(const struct BK4819 *dev)
-{
-    return ((BK4819_readReg(dev, BK4819_REG_67) & 0x01FF) / 2) - 160;
-}
-
-uint16_t bk4819_get_mic_level(const struct BK4819 *dev)
-{
-    /* bits 6:0 of AF TX/RX Input Amplitude */
-    return (BK4819_readReg(dev, 0x6f) & 0x7f) * 2;
-}
-
-void bk4819_enable_freq_scan(const struct BK4819 *dev, uint8_t scna_time)
-{
-    BK4819_writeReg(dev, BK4819_REG_32,
-                    BK4819_readReg(dev, BK4819_REG_32) | BITV(scna_time, 14));
-    BK4819_writeReg(dev, BK4819_REG_32,
-                    BK4819_readReg(dev, BK4819_REG_32) | 0x01);
-}
-
-void bk4819_disable_freq_scan(const struct BK4819 *dev)
-{
-    BK4819_writeReg(dev, BK4819_REG_32,
-                    BK4819_readReg(dev, BK4819_REG_32) & (~0x01));
-}
-
-uint8_t bk4819_get_scan_freq_flag(const struct BK4819 *dev)
-{
-    return BK4819_readReg(dev, BK4819_REG_0D) & BIT(15);
-}
-
-uint32_t bk4819_get_scan_freq(const struct BK4819 *dev)
-{
-    return ((BK4819_readReg(dev, BK4819_REG_0D) << 16)
-            | BK4819_readReg(dev, BK4819_REG_0E))
-         / 10;
-}
-
-void BK4819_SetAF(const struct BK4819 *dev, uint8_t AF)
-{
-    /* Preserve polarity and TX filter bypass when muting/unmuting RX. */
-    uint16_t value = BK4819_readReg(dev, BK4819_REG_47);
-    BK4819_writeReg(dev, BK4819_REG_47,
-                    (value & ~0x0f00u) | ((AF & 0x0fu) << 8));
+    uint16_t value = bk4819_readReg(dev, 0x4F);
+    bk4819_writeReg(dev, 0x4F,
+                    (value & 0x8080) | ((noiseClose & 0x7f) << 8)
+                        | (noiseOpen & 0x7f));
+    value = bk4819_readReg(dev, 0x4D);
+    bk4819_writeReg(dev, 0x4D, (value & 0xff00) | glitchClose);
+    value = bk4819_readReg(dev, 0x4E);
+    bk4819_writeReg(dev, 0x4E, (value & 0xff00) | glitchOpen);
 }
 
 /**
  * Write the bits of a register selected by a mask.
  *
  * @param dev: pointer to device data.
- * @param reg: register.
+ * @param reg: register address.
  * @param mask: bits to write.
  * @param value: new value of those bits.
  */
-static void maskSetRegister(const struct BK4819 *dev, bk4819_reg_t reg,
+static void maskSetRegister(const struct BK4819 *dev, uint8_t reg,
                             uint16_t mask, uint16_t value)
 {
-    uint16_t current = BK4819_readReg(dev, reg);
-    BK4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
-}
-
-void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
-                           uint16_t tuning)
-{
-    const uint16_t mask = BK4819_REG40_TX_DEVIATION_ENABLE
-                        | BK4819_REG40_TX_DEVIATION_MASK;
-    uint16_t value = BK4819_REG40_TX_DEVIATION(tuning);
-
-    if (enable)
-        value |= BK4819_REG40_TX_DEVIATION_ENABLE;
-
-    maskSetRegister(dev, BK4819_REG_40, mask, value);
-}
-
-void bk4819_setRfFilter(const struct BK4819 *dev, uint8_t bw, uint8_t weakBw)
-{
-    const uint16_t mask = BK4819_REG43_RF_BW_MASK
-                        | BK4819_REG43_RF_BW_WEAK_MASK;
-    const uint16_t value = BK4819_REG43_RF_BW(bw)
-                         | BK4819_REG43_RF_BW_WEAK(weakBw);
-
-    maskSetRegister(dev, BK4819_REG_43, mask, value);
-}
-
-void bk4819_setTxAudioFilter(const struct BK4819 *dev, uint8_t bw)
-{
-    maskSetRegister(dev, BK4819_REG_43, BK4819_REG43_AF_TX_LPF2_BW_MASK,
-                    BK4819_REG43_AF_TX_LPF2_BW(bw));
-}
-
-void bk4819_setRxAudioGain(const struct BK4819 *dev, uint8_t gain1,
-                           uint8_t gain2)
-{
-    const uint16_t mask = BK4819_REG48_AF_RX_GAIN1_MASK
-                        | BK4819_REG48_AF_RX_GAIN2_MASK;
-    const uint16_t value = BK4819_REG48_AF_RX_GAIN1(gain1)
-                         | BK4819_REG48_AF_RX_GAIN2(gain2);
-
-    maskSetRegister(dev, BK4819_REG_48, mask, value);
-}
-
-void bk4819_setMicGain(const struct BK4819 *dev, uint8_t gain)
-{
-    maskSetRegister(dev, BK4819_REG_7D, BK4819_REG7D_MIC_GAIN_MASK,
-                    BK4819_REG7D_MIC_GAIN(gain));
+    uint16_t current = bk4819_readReg(dev, reg);
+    bk4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
 }
 
 void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode)
@@ -433,30 +524,112 @@ void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode)
     bk4819_setMicGain(dev, BK4819_DEFAULT_MIC_GAIN);
 }
 
-__inline uint16_t scale_freq(const uint16_t freq)
+void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
+                           uint16_t tuning)
+{
+    const uint16_t mask = BK4819_REG40_TX_DEVIATION_ENABLE
+                        | BK4819_REG40_TX_DEVIATION_MASK;
+    uint16_t value = BK4819_REG40_TX_DEVIATION(tuning);
+
+    if (enable)
+        value |= BK4819_REG40_TX_DEVIATION_ENABLE;
+
+    maskSetRegister(dev, 0x40, mask, value);
+}
+
+void bk4819_setRfFilter(const struct BK4819 *dev, uint8_t bw, uint8_t weakBw)
+{
+    const uint16_t mask = BK4819_REG43_RF_BW_MASK
+                        | BK4819_REG43_RF_BW_WEAK_MASK;
+    const uint16_t value = BK4819_REG43_RF_BW(bw)
+                         | BK4819_REG43_RF_BW_WEAK(weakBw);
+
+    maskSetRegister(dev, 0x43, mask, value);
+}
+
+void bk4819_setTxAudioFilter(const struct BK4819 *dev, uint8_t bw)
+{
+    maskSetRegister(dev, 0x43, BK4819_REG43_AF_TX_LPF2_BW_MASK,
+                    BK4819_REG43_AF_TX_LPF2_BW(bw));
+}
+
+void bk4819_setRxAudioGain(const struct BK4819 *dev, uint8_t gain1,
+                           uint8_t gain2)
+{
+    const uint16_t mask = BK4819_REG48_AF_RX_GAIN1_MASK
+                        | BK4819_REG48_AF_RX_GAIN2_MASK;
+    const uint16_t value = BK4819_REG48_AF_RX_GAIN1(gain1)
+                         | BK4819_REG48_AF_RX_GAIN2(gain2);
+
+    maskSetRegister(dev, 0x48, mask, value);
+}
+
+void bk4819_setMicGain(const struct BK4819 *dev, uint8_t gain)
+{
+    maskSetRegister(dev, 0x7D, BK4819_REG7D_MIC_GAIN_MASK,
+                    BK4819_REG7D_MIC_GAIN(gain));
+}
+
+int16_t bk4819_getRssi(const struct BK4819 *dev)
+{
+    return ((bk4819_readReg(dev, 0x67) & 0x01FF) / 2) - 160;
+}
+
+uint16_t bk4819_getMicLevel(const struct BK4819 *dev)
+{
+    /* bits 6:0 of AF TX/RX Input Amplitude */
+    return (bk4819_readReg(dev, 0x6F) & 0x7f) * 2;
+}
+
+void bk4819_enableFreqScan(const struct BK4819 *dev, enum bk4819_scanTime time)
+{
+    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) | BITV(time, 14));
+    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) | 0x01);
+}
+
+void bk4819_disableFreqScan(const struct BK4819 *dev)
+{
+    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) & (~0x01));
+}
+
+uint8_t bk4819_getScanFreqFlag(const struct BK4819 *dev)
+{
+    return bk4819_readReg(dev, 0x0D) & BIT(15);
+}
+
+uint32_t bk4819_getScanFreq(const struct BK4819 *dev)
+{
+    return ((bk4819_readReg(dev, 0x0D) << 16) | bk4819_readReg(dev, 0x0E)) / 10;
+}
+
+/**
+ * Convert a beep frequency to the tone generator's units.
+ *
+ * @param freq: frequency, in Hz.
+ * @return REG_71 value.
+ */
+static uint16_t scaleFreq(const uint16_t freq)
 {
     return (((uint32_t)freq * 1048576u) + 50000u) / 100000u; /* with rounding */
 }
 
-void BK4819_BeepStart(const struct BK4819 *dev, uint16_t Frequency,
-                      bool bTuningGainSwitch)
+void BK4819_BeepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain)
 {
-    (void)bTuningGainSwitch;
-    BK4819_writeReg(dev, BK4819_REG_50, 0x3B20);
-    BK4819_SetAF(dev, 3); /* AF Beep */
-    uint16_t ToneConfig = BK4819_REG_70_ENABLE_TONE1;
-    ToneConfig |= 96u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
-    BK4819_writeReg(dev, BK4819_REG_70, ToneConfig);
+    (void)tuningGain;
+    bk4819_writeReg(dev, 0x50, 0x3B20);
+    bk4819_setAfOutput(dev, BK4819_AF_BEEP);
+    bk4819_writeReg(dev, 0x70,
+                    BK4819_REG70_ENABLE_TONE1 | BK4819_REG70_TONE1_GAIN(96));
 
-    BK4819_writeReg(dev, BK4819_REG_71, scale_freq(Frequency));
-    BK4819_writeReg(dev, BK4819_REG_30, 0);
-    BK4819_writeReg(dev, BK4819_REG_30,
-                    BK4819_REG_30_ENABLE_AF_DAC | BK4819_REG_30_ENABLE_DISC_MODE
-                        | BK4819_REG_30_ENABLE_TX_DSP);
-    BK4819_writeReg(dev, BK4819_REG_50, 0x3B20);
+    bk4819_writeReg(dev, 0x71, scaleFreq(freq));
+    bk4819_writeReg(dev, 0x30, 0);
+    bk4819_writeReg(dev, 0x30,
+                    BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_REVERSE2_ENABLE
+                        | BK4819_REG30_TX_DSP_ENABLE);
+    bk4819_writeReg(dev, 0x50, 0x3B20);
 }
 
 void BK4819_BeepStop(const struct BK4819 *dev)
 {
-    BK4819_writeReg(dev, BK4819_REG_50, 0xBB20);
+    bk4819_writeReg(dev, 0x50, 0xBB20);
 }
