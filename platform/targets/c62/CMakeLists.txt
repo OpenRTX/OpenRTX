@@ -7,7 +7,7 @@
 #
 cmake_minimum_required(VERSION 3.20.0)
 
-zephyr_compile_definitions(PSRAM_CHIP_SIZE=4) # 4MBytes PSRAM!
+zephyr_compile_definitions(PSRAM_CHIP_SIZE=4) # 4 MiB PSRAM
 
 target_sources(app
   PRIVATE

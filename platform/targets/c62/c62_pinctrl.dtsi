@@ -5,10 +5,6 @@
  */
 #include <csk/csk6_pinctrl.dtsi>
 
-#define c62_pinctrl pinctrl \
-		__PINCTRL_DEPRECATED__("This node has been deprecated," \
-				"please use 'pinctrl' instead of 'c62_pinctrl")
-
 &pinctrl {
 	/* Configure console TX without relying on DSP pin setup. */
 	pinctrl_uart2_tx_default: uart2_tx_default {
@@ -16,16 +12,11 @@
 	};
 
 	/*
-	//TODO -> TX DOESNT WORK IF RX UART IS ENABLED! ??
+	 * Console RX keeps the SoC default, which maps no pin: UART2_RXD would
+	 * be GPIOA_15, the PTT.
+	 */
 
-	pinctrl_uart2_rx_default: uart2_rx_default {
-		pinctrls = <UART2_RXD_GPIOA_15>;
-	};
-
-	*/
-
-	/* SPIC alternate function */
-
+	/* SPI1, the display bus */
 	pinctrl_spi1_cs_default: spi1_cs_default {
 		pinctrls = <SPI1_CS_N_GPIOA_09>;
 	};

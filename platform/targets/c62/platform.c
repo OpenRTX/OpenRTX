@@ -208,7 +208,6 @@ uint16_t platform_getVbat()
     // Adapt for voltage divider 200K and 100K
     uint32_t battery_voltage_mv = bat_det_value * 3;
 
-    //printk("Battery: %d mV\n", battery_voltage_mv);
     return (uint16_t)battery_voltage_mv;
 }
 
