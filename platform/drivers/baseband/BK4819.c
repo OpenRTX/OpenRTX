@@ -1,7 +1,13 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ * SPDX-FileCopyrightText: Copyright 2024 Jamiexu (Jamie793)
+ * SPDX-FileCopyrightText: Copyright 2024 Andrej (Tunas1337)
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-or-later AND MIT
+ *
+ * Based on Jamie793's MIT-licensed BK4819 driver for the Talkpod A36Plus,
+ * https://github.com/Jamie793/A36Plus_Radio, as extended by Andrej in
+ * https://github.com/OpenRTX/OpenRTX/pull/278.
  */
 
 #include "drivers/baseband/BK4819.h"
