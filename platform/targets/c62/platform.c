@@ -282,7 +282,7 @@ void platform_beepStart(uint16_t freq)
 {
     /*
      * No BK4819 beeps: they come out of its AF output, which the speaker
-     * mux doesn't select, and BK4819_BeepStart() stops RX until the next
+     * mux doesn't select, and bk4819_beepStart() stops RX until the next
      * retune.
      */
     (void)freq;

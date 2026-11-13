@@ -443,14 +443,14 @@ uint32_t bk4819_getScanFreq(const struct BK4819 *dev);
  * @param freq: beep frequency, in Hz.
  * @param tuningGain: tuning gain switch, unused.
  */
-void BK4819_BeepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain);
+void bk4819_beepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain);
 
 /**
  * Stop the beeper.
  *
  * @param dev: pointer to device data.
  */
-void BK4819_BeepStop(const struct BK4819 *dev);
+void bk4819_beepStop(const struct BK4819 *dev);
 
 #ifdef __cplusplus
 }
