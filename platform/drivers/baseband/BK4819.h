@@ -65,6 +65,16 @@ enum bk4819_audioMode {
 };
 
 /**
+ * Channel bandwidths, see bk4819_setBandwidth(), as values of the REG_43
+ * bandwidth mode field. From the REG_43 notes of the UV-K5 custom firmware:
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L598-L601
+ */
+enum bk4819_bandwidth {
+    BK4819_BW_12_5 = 0, ///< 12.5 kHz channels.
+    BK4819_BW_25 = 2,   ///< 25 and 20 kHz channels.
+};
+
+/**
  * Frequency scan times, see bk4819_enableFreqScan().
  */
 enum bk4819_scanTime {
@@ -341,7 +351,7 @@ void bk4819_setTxDeviation(const struct BK4819 *dev, bool enable,
 
 /**
  * Set the RX RF filter bandwidths (REG_43). Doubled in 25 kHz channel mode,
- * see bk4819_setFilterBandwidth().
+ * see bk4819_setBandwidth().
  *
  * @param dev: pointer to device data.
  * @param bw: bandwidth, 0 to 7 (1.7 to 4.5 kHz).
@@ -359,12 +369,13 @@ void bk4819_setRfFilter(const struct BK4819 *dev, uint8_t bw, uint8_t weakBw);
 void bk4819_setTxAudioFilter(const struct BK4819 *dev, uint8_t bw);
 
 /**
- * Set the bandwidth mode (REG_43).
+ * Set the bandwidth mode and the RX RF and TX audio filters for a channel
+ * bandwidth (REG_43), to the values of the BK4819 vendor firmwares.
  *
  * @param dev: pointer to device data.
- * @param bandwidth: 0 for 12.5 kHz, any other value for 25 kHz.
+ * @param bw: channel bandwidth.
  */
-void bk4819_setFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth);
+void bk4819_setBandwidth(const struct BK4819 *dev, enum bk4819_bandwidth bw);
 
 /**
  * Set the RX audio gains (REG_48).

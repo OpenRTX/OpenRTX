@@ -122,9 +122,10 @@ void radio_setOpmode(const enum opmode mode)
     if (mode == OPMODE_M17) {
         bk4819_setAudioMode(&c62_bk4819, BK4819_AUDIO_BYPASS);
         bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
+        // 12.5 kHz bandwidth mode; the M17 filters then replace its filters
+        bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
         bk4819_setRfFilter(&c62_bk4819, M17_RF_BW, M17_RF_BW_WEAK);
         bk4819_setTxAudioFilter(&c62_bk4819, M17_TX_LPF2_BW);
-        bk4819_setFilterBandwidth(&c62_bk4819, BW_12_5);
         bk4819_setRxAudioGain(&c62_bk4819, M17_RX_AUDIO_GAIN1,
                               M17_RX_AUDIO_GAIN2);
         bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
@@ -175,10 +176,8 @@ void radio_enableRx()
         // reception. M17 sets its bandwidth on the mode change and has no
         // CTCSS.
         bk4819_setAfOutput(&c62_bk4819, BK4819_AF_BYPASS);
-    } else {
-        bk4819_setFilterBandwidth(&c62_bk4819, config->bandwidth);
-        if (config->rxToneEn)
-            bk4819_enableRxCtcss(&c62_bk4819, config->rxTone);
+    } else if (config->rxToneEn) {
+        bk4819_enableRxCtcss(&c62_bk4819, config->rxTone);
     }
 
     bk4819_enableRx(&c62_bk4819);
@@ -243,6 +242,22 @@ void radio_disableRtx()
 
 void radio_updateConfiguration()
 {
+    // Set bandwidth, only for analog FM mode
+    if (config->opMode == OPMODE_FM) {
+        switch (config->bandwidth) {
+            case BW_12_5:
+                bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12_5);
+                break;
+
+            case BW_25:
+                bk4819_setBandwidth(&c62_bk4819, BK4819_BW_25);
+                break;
+
+            default:
+                break;
+        }
+    }
+
     /*
      * Update VCO frequency and tuning parameters if current operating status
      * is different from OFF.
