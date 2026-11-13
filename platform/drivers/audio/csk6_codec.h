@@ -57,6 +57,13 @@ void csk6codec_terminate(void);
 void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
                         bool enabled);
 
+/**
+ * Peak microphone magnitude of the last captured DSP frame.
+ *
+ * @return peak from 0 to 32768, 0 while the microphone is not captured.
+ */
+uint16_t csk6codec_getMicPeak(void);
+
 #ifdef __cplusplus
 }
 #endif
