@@ -6,8 +6,8 @@
 #include <csk/csk6_pinctrl.dtsi>
 
 #define c62_pinctrl pinctrl \
-        __PINCTRL_DEPRECATED__("This node has been deprecated," \
-                "please use 'pinctrl' instead of 'c62_pinctrl")
+		__PINCTRL_DEPRECATED__("This node has been deprecated," \
+				"please use 'pinctrl' instead of 'c62_pinctrl")
 
 &pinctrl {
 	/* Configure console TX without relying on DSP pin setup. */

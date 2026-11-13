@@ -17,11 +17,11 @@
 	aliases {
 		i2c-0 = &i2c0;
 		flash = &flash0;
-		
+
 		ledwhite = &flashlight;
 		ledgreen = &ledrx;
 	};
-	
+
 	chosen {
 		zephyr,display = &st7735r;
 		zephyr,console = &uart2;
@@ -51,7 +51,7 @@
 			status = "okay";
 		};
 	};
-	
+
 	leds {
 		compatible = "gpio-leds";
 		flashlight: led0 {
@@ -71,25 +71,24 @@
 	pwmleds {
 		compatible = "pwm-leds";
 		pwm_lcd_backlight: pwm_lcd_backlight {
-            pwms = <&gptchannel2 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			pwms = <&gptchannel2 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
 			label = "LCD BAcklight PWM";
 		};
 		pwm_rf_apc: pwm_rf_apc {
-            pwms = <&gptchannel3 3 PWM_USEC(10) PWM_POLARITY_NORMAL>;
+			pwms = <&gptchannel3 3 PWM_USEC(10) PWM_POLARITY_NORMAL>;
 			label = "RF Power APC PWM";
 		};
-
 	};
 
 	gpio_controls {
-        compatible = "gpio-leds";
-        speaker_enable: speaker-enable {
-            gpios = <&gpioa 1 GPIO_ACTIVE_HIGH>;
-        };
-        dtmf_enable: dtmf_enable {
-            gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
-        };
-    };
+		compatible = "gpio-leds";
+		speaker_enable: speaker-enable {
+			gpios = <&gpioa 1 GPIO_ACTIVE_HIGH>;
+		};
+		dtmf_enable: dtmf_enable {
+			gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+		};
+	};
 
 	/*
 	 * BK4819 3-wire serial bus (shared, bidirectional data line), driven
@@ -102,13 +101,13 @@
 		status = "okay";
 		#address-cells = <1>;
 		#size-cells = <0>;
-		clk-gpios  = <&gpioa 13 GPIO_ACTIVE_HIGH>;
+		clk-gpios = <&gpioa 13 GPIO_ACTIVE_HIGH>;
 		mosi-gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
 	};
-	
-	buttons: buttons  {
+
+	buttons: buttons {
 		compatible = "gpio-keys";
-		
+
 		sidekey: button_1 {
 			gpios = <&gpiob 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 			label = "Side Key Button";
@@ -179,15 +178,15 @@
 
 &spi1 {
 	pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default
-	&pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
+		&pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
 	pinctrl-names = "default";
 	status = "okay";
-	
+
 	st7735r: st7735r@0 {
 		compatible = "sitronix,st7735r";
 		spi-max-frequency = <20000000>;
 		reg = <0>;
-		cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>;  /* or dc-gpios */
+		cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>; /* or dc-gpios */
 		reset-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>; /* TODO: default driver requires this element, but it will kill SWD! */
 		width = <160>;
 		height = <128>;
@@ -209,9 +208,8 @@
 		frmctr3 = [01 2c 2d 01 2c 2d];
 		gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
 		gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
-	};	
+	};
 };
-
 
 &i2c0 {
 	status = "disabled";
@@ -246,7 +244,7 @@
 		compatible = "fixed-partitions";
 		#address-cells = <1>;
 		#size-cells = <1>;
-		
+
 		/* Application image, linked and written at flash offset 0
 		 * (no bootloader): 1 MiB, enforced by CONFIG_FLASH_LOAD_SIZE.
 		 */
@@ -299,23 +297,22 @@
 	reg = <0x30000000 DT_SIZE_M(4)>;
 	#address-cells = <1>;
 	#size-cells = <1>;
-	
-	/*psram for cp core (DSP) slot: 2MB */
+
+	/* psram for cp core (DSP) slot: 2MB */
 	psram_cp: psram_cp@30000000 {
 		compatible = "listenai,csk6-psram-partition";
 		reg = <0x30000000 0x200000>;
 		status = "okay";
 	};
-	
+
 	/* Leave the top 256 KiB clear for the DSP stack at CP 0x60400000. */
 	psram_ap: psram_ap@30200000 {
 		compatible = "zephyr,memory-region",
-		"listenai,csk6-psram-partition";
+			"listenai,csk6-psram-partition";
 		reg = <0x30200000 0x1c0000>;
 		status = "okay";
 		zephyr,memory-region = "PSRAMAP";
 	};
-
 };
 
 zephyr_udc0: &usbotg {
@@ -325,37 +322,36 @@ zephyr_udc0: &usbotg {
 	num-out-endpoints = <6>;
 };
 
-
 &adc0 {
 	status = "okay";
-	pinctrl-0 = <&pinctrl_adc0_ch1_default &pinctrl_adc0_ch2_default>; 
+	pinctrl-0 = <&pinctrl_adc0_ch1_default &pinctrl_adc0_ch2_default>;
 	pinctrl-names = "default";
 };
 
 &gpt0 {
-        status = "okay";
+	status = "okay";
 };
 
 &gptchannel2 {
-        compatible = "listenai,csk-pwm";
+	compatible = "listenai,csk-pwm";
 
-        status = "okay";
-        channel_mode = <1>;  /* 0: timer; 1:pwm */
+	status = "okay";
+	channel_mode = <1>; /* 0: timer; 1: pwm */
 
-        clock-prescaler = <128>;
-        pinctrl-0 = <&pinctrl_pwm2_default>;
-        pinctrl-names = "default";
+	clock-prescaler = <128>;
+	pinctrl-0 = <&pinctrl_pwm2_default>;
+	pinctrl-names = "default";
 };
 
 &gptchannel3 {
-        compatible = "listenai,csk-pwm";
+	compatible = "listenai,csk-pwm";
 
-        status = "okay";
-        channel_mode = <1>;  /* 0: timer; 1:pwm */
+	status = "okay";
+	channel_mode = <1>; /* 0: timer; 1: pwm */
 
-        clock-prescaler = <1>;  /* 1000 counts per 100 kHz APC period */
-        pinctrl-0 = <&pinctrl_pwm3_default>;
-        pinctrl-names = "default";
+	clock-prescaler = <1>; /* 1000 counts per 100 kHz APC period */
+	pinctrl-0 = <&pinctrl_pwm3_default>;
+	pinctrl-names = "default";
 };
 
 &crypto {
@@ -372,7 +368,6 @@ zephyr_udc0: &usbotg {
 
 &uart0 {
 	status = "disabled";
-	
 };
 
 &uart1 {
@@ -385,4 +380,3 @@ zephyr_udc0: &usbotg {
 	current-speed = <115200>;
 	status = "okay";
 };
-
