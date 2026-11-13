@@ -14,7 +14,7 @@ LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
 #include <ic_fence.h>
 
 #include <controller.h>
-#include <service.h>
+#include "services/service.h"
 
 /*
  * The DSP firmware's ready fence, as ListenAI's LSF controller requests it:

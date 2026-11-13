@@ -63,45 +63,45 @@ set(C62_DSP_FIRMWARE_SHA256
 set(C62_DSP_FIRMWARE_OUT ${CMAKE_BINARY_DIR}/zephyr/dsp_firmware.bin)
 
 if(NOT DEFINED C62_DSP_FIRMWARE AND DEFINED ENV{C62_DSP_FIRMWARE})
-  set(C62_DSP_FIRMWARE $ENV{C62_DSP_FIRMWARE})
+    set(C62_DSP_FIRMWARE $ENV{C62_DSP_FIRMWARE})
 endif()
 
 # A relative path is from the OpenRTX root. Both branches check the hash
 # themselves: with EXPECTED_HASH, a failed file(DOWNLOAD) stops with CMake's
 # own error before the hint below.
 if(C62_DSP_FIRMWARE)
-  get_filename_component(c62_dsp_local "${C62_DSP_FIRMWARE}" ABSOLUTE
-                         BASE_DIR "${OPENRTX_ROOT}")
-  if(EXISTS "${c62_dsp_local}")
-    file(SHA256 "${c62_dsp_local}" c62_dsp_local_sha256)
-  endif()
-  if(NOT "${c62_dsp_local_sha256}" STREQUAL "${C62_DSP_FIRMWARE_SHA256}")
-    message(FATAL_ERROR "C62_DSP_FIRMWARE ${c62_dsp_local} is missing or is "
-                        "not the pinned DSP firmware (sha256 "
-                        "${C62_DSP_FIRMWARE_SHA256}).")
-  endif()
-  configure_file("${c62_dsp_local}" "${C62_DSP_FIRMWARE_OUT}" COPYONLY)
+    get_filename_component(c62_dsp_local "${C62_DSP_FIRMWARE}" ABSOLUTE
+                           BASE_DIR "${OPENRTX_ROOT}")
+    if(EXISTS "${c62_dsp_local}")
+        file(SHA256 "${c62_dsp_local}" c62_dsp_local_sha256)
+    endif()
+    if(NOT "${c62_dsp_local_sha256}" STREQUAL "${C62_DSP_FIRMWARE_SHA256}")
+        message(FATAL_ERROR "C62_DSP_FIRMWARE ${c62_dsp_local} is missing or "
+                            "is not the pinned DSP firmware (sha256 "
+                            "${C62_DSP_FIRMWARE_SHA256}).")
+    endif()
+    configure_file("${c62_dsp_local}" "${C62_DSP_FIRMWARE_OUT}" COPYONLY)
 else()
-  # Skipped when the file is already there with the expected hash
-  if(EXISTS "${C62_DSP_FIRMWARE_OUT}")
-    file(SHA256 "${C62_DSP_FIRMWARE_OUT}" c62_dsp_sha256)
-  endif()
-  if(NOT "${c62_dsp_sha256}" STREQUAL "${C62_DSP_FIRMWARE_SHA256}")
-    file(DOWNLOAD "${C62_DSP_FIRMWARE_URL}" "${C62_DSP_FIRMWARE_OUT}"
-         TLS_VERIFY ON
-         STATUS c62_dsp_status)
-    list(GET c62_dsp_status 1 c62_dsp_message)
+    # Skipped when the file is already there with the expected hash
     if(EXISTS "${C62_DSP_FIRMWARE_OUT}")
-      file(SHA256 "${C62_DSP_FIRMWARE_OUT}" c62_dsp_sha256)
+        file(SHA256 "${C62_DSP_FIRMWARE_OUT}" c62_dsp_sha256)
     endif()
     if(NOT "${c62_dsp_sha256}" STREQUAL "${C62_DSP_FIRMWARE_SHA256}")
-      file(REMOVE "${C62_DSP_FIRMWARE_OUT}")
-      message(FATAL_ERROR "Could not get the C62 DSP firmware from "
-                          "${C62_DSP_FIRMWARE_URL} (${c62_dsp_message}). Set "
-                          "C62_DSP_FIRMWARE to a local copy with sha256 "
-                          "${C62_DSP_FIRMWARE_SHA256}.")
+        file(DOWNLOAD "${C62_DSP_FIRMWARE_URL}" "${C62_DSP_FIRMWARE_OUT}"
+             TLS_VERIFY ON
+             STATUS c62_dsp_status)
+        list(GET c62_dsp_status 1 c62_dsp_message)
+        if(EXISTS "${C62_DSP_FIRMWARE_OUT}")
+            file(SHA256 "${C62_DSP_FIRMWARE_OUT}" c62_dsp_sha256)
+        endif()
+        if(NOT "${c62_dsp_sha256}" STREQUAL "${C62_DSP_FIRMWARE_SHA256}")
+            file(REMOVE "${C62_DSP_FIRMWARE_OUT}")
+            message(FATAL_ERROR "Could not get the C62 DSP firmware from "
+                                "${C62_DSP_FIRMWARE_URL} (${c62_dsp_message}). "
+                                "Set C62_DSP_FIRMWARE to a local copy with "
+                                "sha256 ${C62_DSP_FIRMWARE_SHA256}.")
+        endif()
     endif()
-  endif()
 endif()
 
 message(STATUS "C62 DSP firmware: ${C62_DSP_FIRMWARE_OUT}, flash at 0x100000")
