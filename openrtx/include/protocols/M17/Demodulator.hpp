@@ -120,7 +120,8 @@ private:
     void unlockedState();
 
     /**
-     * State handler function for DemodState::SYNCED
+     * State handler function for DemodState::SYNCED: lock on a candidate
+     * whose LSF score is high enough, or whose stream syncword matches.
      */
     void syncedState();
 
@@ -154,6 +155,16 @@ private:
     bool validSyncSigns(const frame_t &frame);
 
     /**
+     * Score the end of a preamble and an LSF syncword at a sampling point:
+     * the correlation of their 16 samples with the expected symbols, which
+     * does not depend on the signal level or offset.
+     *
+     * @param samplePoint: sampling point within the symbol period.
+     * @return the correlation coefficient, from -1 to 1.
+     */
+    float lsfScore(const uint32_t samplePoint);
+
+    /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
      * at each update of the demodulator.
      */
@@ -162,6 +173,7 @@ private:
     static constexpr size_t  FRAME_SAMPLES      = FRAME_SYMBOLS * SAMPLES_PER_SYMBOL;
     static constexpr size_t  SAMPLE_BUF_SIZE    = FRAME_SAMPLES / 2;
     static constexpr size_t  SYNCWORD_SAMPLES   = SAMPLES_PER_SYMBOL * SYNCWORD_SYMBOLS;
+    static constexpr float   LSF_SCORE          = 0.92f;  ///< Minimum lsfScore() of an LSF lock
 
     /**
      * Internal state of the demodulator.
@@ -202,7 +214,10 @@ private:
     struct dcBlock                 dcBlock;         ///< State of the DC removal filter
 
     Correlator   < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > correlator;
-    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +3, +3, +3, +3, -3, -3, +3, -3 }};
+    Correlator   < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > preamble;  ///< The 8 symbols before correlator's
+
+    // LSF syncword minus its mean, times four: an offset does not move the peak
+    Synchronizer < SYNCWORD_SYMBOLS, SAMPLES_PER_SYMBOL > lsfSync   {{ +9, +9, +9, +9, -15, -15, +9, -15 }};
     Iir          < 3 >                                        sampleFilter{sfNum, sfDen};
     DevEstimator                                              devEstimator;
     ClockRecovery< SAMPLES_PER_SYMBOL >                       clockRec;

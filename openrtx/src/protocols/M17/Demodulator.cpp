@@ -9,6 +9,7 @@
 #include "protocols/M17/Utils.hpp"
 #include "core/audio_stream.h"
 #include <math.h>
+#include <algorithm>
 #include <cstring>
 #include <stdio.h>
 
@@ -241,6 +242,10 @@ bool Demodulator::sample(int16_t rawSample, bool invertPhase)
     }
 
     clockRec.sample(sample);
+
+    // The oldest sample of the correlator moves on to the preamble memory
+    size_t oldest = (correlator.index() + 1) % SYNCWORD_SAMPLES;
+    preamble.sample(correlator.data()[oldest]);
     correlator.sample(sample);
     corrThreshold = sampleFilter(std::abs(sample));
 
@@ -341,6 +346,7 @@ void Demodulator::reset()
     dsp_resetState(dcBlock);
     rrc_24k.reset();
     correlator.reset();
+    preamble.reset();
     lsfSync.reset();
     sampleFilter.reset();
     devEstimator.init({0, 0});
@@ -349,12 +355,17 @@ void Demodulator::reset()
 
 void Demodulator::unlockedState()
 {
-    int32_t syncThresh = static_cast< int32_t >(corrThreshold * 33.0f);
+    // Thresholds in mean sample magnitudes: 33 for the plain syncword, whose
+    // peak is 24/90 of the mean-removed one. Lower for an LSF, which is then
+    // scored with the preamble before it.
+    float   scale      = corrThreshold * 90.0f / 24.0f;
+    int32_t lsfThresh  = static_cast< int32_t >(scale * 25.0f);
+    int32_t syncThresh = static_cast< int32_t >(scale * 33.0f);
 
     // The stream syncword is the LSF one inverted: the LSF synchronizer
     // detects both, as a positive or a negative correlation peak.
     // Not on the packet syncword: packets need the LSF, and voice mimics it
-    syncSign = lsfSync.update(correlator, syncThresh, -syncThresh);
+    syncSign = lsfSync.update(correlator, lsfThresh, -syncThresh);
     if(syncSign != 0) {
         samplingPoint = lsfSync.samplingIndex();
         missedSyncs   = 0;
@@ -400,13 +411,58 @@ bool Demodulator::validSyncSigns(const frame_t &frame)
     return false;
 }
 
+float Demodulator::lsfScore(const uint32_t samplePoint)
+{
+    static constexpr int8_t SYMBOLS[2 * SYNCWORD_SYMBOLS] = {
+        +3, -3, +3, -3, +3, -3, +3, -3, +3, +3, +3, +3, -3, -3, +3, -3 };
+    static constexpr float N   = 2 * SYNCWORD_SYMBOLS;
+    static constexpr float ST  = 6.0f;      // Sum of SYMBOLS
+    static constexpr float STT = 144.0f;    // Sum of their squares
+
+    // Samples at the sampling point, oldest first
+    float  sx  = 0.0f;
+    float  sxx = 0.0f;
+    float  sxt = 0.0f;
+    size_t n   = 0;
+    for(auto *mem : { &preamble, &correlator }) {
+        for(size_t i = 1; i <= SYNCWORD_SAMPLES; i++) {
+            size_t pos = (mem->index() + i) % SYNCWORD_SAMPLES;
+            if((pos % SAMPLES_PER_SYMBOL) != samplePoint)
+                continue;
+
+            float x = mem->data()[pos];
+            sx  += x;
+            sxx += x * x;
+            sxt += x * SYMBOLS[n++];
+        }
+    }
+
+    // Correlation coefficient: the level and offset cancel out
+    float cxt = sxt - (sx * ST / N);
+    float cxx = sxx - (sx * sx / N);
+    if((cxt <= 0.0f) || (cxx <= 0.0f))
+        return 0.0f;
+
+    return cxt / std::sqrt(cxx * (STT - (ST * ST / N)));
+}
+
 void Demodulator::syncedState()
 {
     quantizeSyncword(samplingPoint);
 
-    // Positive correlation peak: LSF syncword, negative: stream syncword
-    const syncw_t &syncword = (syncSign > 0) ? LSF_SYNC_WORD : STREAM_SYNC_WORD;
-    bool valid = compareSyncwords(demodFrame->data(), syncword, 0);
+    // Positive correlation peak: LSF syncword, scored with the preamble before
+    // it; negative: stream syncword, whose symbols must all match
+    bool valid;
+    if(syncSign > 0) {
+        valid = (lsfScore(samplingPoint) >= LSF_SCORE);
+
+        // Decoded as an LSF even if some syncword symbols read wrong
+        if(valid)
+            std::copy(LSF_SYNC_WORD.begin(), LSF_SYNC_WORD.end(),
+                      demodFrame->begin());
+    } else {
+        valid = compareSyncwords(demodFrame->data(), STREAM_SYNC_WORD, 0);
+    }
 
     if(valid) {
         // Forget the symbol timing gathered before this lock
