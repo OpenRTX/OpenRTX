@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -26,7 +25,7 @@ static int8_t old_pos = 0;
  * @param reference: reference voltage for comparison, in mV.
  * @return true if voltage is equal to reference ± 200mV, false otherwise.
  */
-bool _compareVoltages(const int voltage, const int reference)
+static bool compareVoltages(const int voltage, const int reference)
 {
     int difference = voltage - reference;
     if(abs(difference) <= 200) return true;
@@ -105,23 +104,23 @@ keyboard_t kbd_getKeys()
         old_pos = new_pos;
     }
 
-   /*
-    * Mapping of front buttons:
-    *
-    *       +------+-----+-------+-----+
-    *       | PD0  | PD1 |  PE0  | PE1 |
-    * +-----+------+-----+-------+-----+
-    * | PD2 | ENT  |     |   P1  | P4  |
-    * +-----+------+-----+-------+-----+
-    * | PD3 | down |     |  red  | P3  |
-    * +-----+------+-----+-------+-----+
-    * | PD4 | ESC  | up  | green | P2  |
-    * +-----+------+-----+-------+-----+
-    *
-    * The coloumn lines have pull-up resistors, thus the detection of a button
-    * press follows an active-low logic.
-    *
-    */
+    /*
+     * Mapping of front buttons:
+     *
+     *       +------+-----+-------+-----+
+     *       | PD0  | PD1 |  PE0  | PE1 |
+     * +-----+------+-----+-------+-----+
+     * | PD2 | ENT  |     |   P1  | P4  |
+     * +-----+------+-----+-------+-----+
+     * | PD3 | down |     | EMER  | P3  |
+     * +-----+------+-----+-------+-----+
+     * | PD4 | ESC  | up  | power | P2  |
+     * +-----+------+-----+-------+-----+
+     *
+     * The column lines have pull-up resistors, thus the detection of a button
+     * press follows an active-low logic.
+     *
+     */
 
     gpio_clearPin(KB_ROW1);
 
@@ -131,15 +130,15 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_COL4) == 0) keys |= KEY_F4;
     gpio_setPin(KB_ROW1);
 
-    /* Row 2: button on col. 3 ("red") is not mapped */
     gpio_clearPin(KB_ROW2);
     delayUs(10);
 
     if(gpio_readPin(KB_COL1) == 0) keys |= KEY_DOWN;
+    if(gpio_readPin(KB_COL3) == 0) keys |= KEY_MONI;
     if(gpio_readPin(KB_COL4) == 0) keys |= KEY_F3;
     gpio_setPin(KB_ROW2);
 
-    /* Row 3: button on col. 3 ("green") is not mapped */
+    /* Row 3: col. 3 is the power key, read by platform_pwrButtonStatus() */
     gpio_clearPin(KB_ROW3);
     delayUs(10);
 
@@ -148,44 +147,44 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_COL4) == 0) keys |= KEY_F2;
     gpio_setPin(KB_ROW3);
 
-   /*
-    * Mapping of palmtop mic row/coloumn voltages:
-    *                  +-------+-------+-------+-------+
-    *                  | Col 0 | Col 1 | Col 2 | Col 3 |
-    *                  +-------+-------+-------+-------+
-    *                  | 700mV | 1300mV| 1900mV| 2600mV|
-    * +-------+--------+-------+-------+-------+-------+
-    * | Row 0 | 2600mV |
-    * +-------+--------+
-    * | Row 1 | 2100mV |
-    * +-------+--------+
-    * | Row 2 | 1500mV |
-    * +-------+--------+
-    * | Row 3 | 1000mV |
-    * +-------+--------+
-    * | Row 4 | 500mV  |
-    * +-------+--------+
-    *
-    */
+    /*
+     * Mapping of palmtop mic row/column voltages:
+     *                  +-------+-------+-------+-------+
+     *                  | Col 0 | Col 1 | Col 2 | Col 3 |
+     *                  +-------+-------+-------+-------+
+     *                  | 700mV | 1300mV| 1900mV| 2600mV|
+     * +-------+--------+-------+-------+-------+-------+
+     * | Row 0 | 2600mV |
+     * +-------+--------+
+     * | Row 1 | 2100mV |
+     * +-------+--------+
+     * | Row 2 | 1500mV |
+     * +-------+--------+
+     * | Row 3 | 1000mV |
+     * +-------+--------+
+     * | Row 4 | 500mV  |
+     * +-------+--------+
+     *
+     */
 
-    /* Retrieve row/coloumn voltage measurements. */
+    /* Retrieve row/column voltage measurements. */
     uint16_t row = (uint16_t) (adc_getVoltage(&adc1, ADC_SW2_CH) / 1000);
     uint16_t col = (uint16_t) (adc_getVoltage(&adc1, ADC_SW1_CH) / 1000);
 
     /* Map row voltage to row index. */
     uint8_t rowIdx = 0xFF;
-    if(_compareVoltages(row, 2600)) rowIdx = 0;
-    if(_compareVoltages(row, 2100)) rowIdx = 1;
-    if(_compareVoltages(row, 1500)) rowIdx = 2;
-    if(_compareVoltages(row, 1000)) rowIdx = 3;
-    if(_compareVoltages(row,  500)) rowIdx = 4;
+    if(compareVoltages(row, 2600)) rowIdx = 0;
+    if(compareVoltages(row, 2100)) rowIdx = 1;
+    if(compareVoltages(row, 1500)) rowIdx = 2;
+    if(compareVoltages(row, 1000)) rowIdx = 3;
+    if(compareVoltages(row,  500)) rowIdx = 4;
 
     /* Map col voltage to col index. */
     uint8_t colIdx = 0xFF;
-    if(_compareVoltages(col,  700)) colIdx = 0;
-    if(_compareVoltages(col, 1300)) colIdx = 1;
-    if(_compareVoltages(col, 1900)) colIdx = 2;
-    if(_compareVoltages(col, 2600)) colIdx = 3;
+    if(compareVoltages(col,  700)) colIdx = 0;
+    if(compareVoltages(col, 1300)) colIdx = 1;
+    if(compareVoltages(col, 1900)) colIdx = 2;
+    if(compareVoltages(col, 2600)) colIdx = 3;
 
     /*
      * Get corresponding key.
