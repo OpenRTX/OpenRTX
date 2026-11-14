@@ -54,7 +54,7 @@ static bool compareVoltages(const int voltage, const int reference)
 static const uint32_t micKeymap[5][4] =
 {
     {  KEY_1,  KEY_2,   KEY_3,    KEY_F1   },
-    {  KEY_4,  KEY_5,   KEY_6,    KEY_F2   },
+    {  KEY_4,  KEY_5,   KEY_6,   KEY_MONI  },
     {  KEY_7,  KEY_8,   KEY_9,   KEY_ENTER },
     {KEY_STAR, KEY_0,  KEY_HASH,  KEY_ESC  },
     {   0    , KEY_F5,  KEY_UP,  KEY_DOWN  }
@@ -112,9 +112,9 @@ keyboard_t kbd_getKeys()
      * +-----+------+-----+-------+-----+
      * | PD2 | ENT  |     |   P1  | P4  |
      * +-----+------+-----+-------+-----+
-     * | PD3 | down |     |  red  | P3  |
+     * | PD3 | down |     | EMER  | P3  |
      * +-----+------+-----+-------+-----+
-     * | PD4 | ESC  | up  | green | P2  |
+     * | PD4 | ESC  | up  | power | P2  |
      * +-----+------+-----+-------+-----+
      *
      * The column lines have pull-up resistors, thus the detection of a button
@@ -130,7 +130,7 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_COL4) == 0) keys |= KEY_F4;
     gpio_setPin(KB_ROW1);
 
-    /* Row 2: button on col. 3 ("red") is not mapped */
+    /* Row 2: button on col. 3 ("EMER") is not mapped */
     gpio_clearPin(KB_ROW2);
     delayUs(10);
 
@@ -138,7 +138,7 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_COL4) == 0) keys |= KEY_F3;
     gpio_setPin(KB_ROW2);
 
-    /* Row 3: button on col. 3 ("green") is not mapped */
+    /* Row 3: col. 3 is the power key, read by platform_pwrButtonStatus() */
     gpio_clearPin(KB_ROW3);
     delayUs(10);
 
