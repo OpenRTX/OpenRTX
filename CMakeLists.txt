@@ -29,14 +29,24 @@ endif()
 #
 # Create the board_root folder and the proper folder tree for the targets
 #
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_LIST_DIR}/platform/targets/${BOARD}
-                ${CMAKE_CURRENT_LIST_DIR}/build/board_root/boards/${ARCH}/${BOARD})
+set(BOARD_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/platform/targets/${BOARD})
+# configure_file makes every copied file a configure dependency, so editing a
+# board file in the source tree refreshes the copy on the next build.
+file(GLOB_RECURSE BOARD_FILES
+     RELATIVE ${BOARD_SRC_DIR}
+     CONFIGURE_DEPENDS
+     ${BOARD_SRC_DIR}/*)
+
+foreach (BOARD_FILE IN LISTS BOARD_FILES)
+    configure_file(${BOARD_SRC_DIR}/${BOARD_FILE}
+                   ${CMAKE_BINARY_DIR}/board_root/boards/${ARCH}/${BOARD}/${BOARD_FILE}
+                   COPYONLY)
+endforeach()
 
 #
 # Set the BOARD_ROOT and OPENRTX_ROOT variables
 #
-set(BOARD_ROOT ${CMAKE_CURRENT_LIST_DIR}/build/board_root)
+set(BOARD_ROOT ${CMAKE_BINARY_DIR}/board_root)
 set(OPENRTX_ROOT ${CMAKE_CURRENT_LIST_DIR})
 
 #
