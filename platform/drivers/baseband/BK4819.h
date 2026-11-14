@@ -27,29 +27,6 @@ extern "C" {
 #endif
 
 /**
- * Interrupt sources, as the bits of the interrupt enable (REG_3F) and status
- * (REG_02) registers. From the UV-K5 firmware's register header:
- * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/driver/bk4819-regs.h#L236-L284
- */
-enum bk4819_interrupt {
-    BK4819_INT_FSKTF = BIT(15),   ///< FSK TX finished.
-    BK4819_INT_FSKFFAE = BIT(14), ///< FSK FIFO almost empty.
-    BK4819_INT_FSKRXF = BIT(13),  ///< FSK RX finished.
-    BK4819_INT_FSKFFAF = BIT(12), ///< FSK FIFO almost full.
-    BK4819_INT_DTMFTF = BIT(11),  ///< DTMF/5-tone found.
-    BK4819_INT_CTDSTF = BIT(10),  ///< CTCSS/CDCSS tail found.
-    BK4819_INT_CDCSF = BIT(9),    ///< CDCSS found.
-    BK4819_INT_CDCSL = BIT(8),    ///< CDCSS lost.
-    BK4819_INT_CTSSF = BIT(7),    ///< CTCSS found.
-    BK4819_INT_CTCSL = BIT(6),    ///< CTCSS lost.
-    BK4819_INT_VOXF = BIT(5),     ///< VOX found.
-    BK4819_INT_VOXL = BIT(4),     ///< VOX lost.
-    BK4819_INT_SECF = BIT(3),     ///< Squelch found.
-    BK4819_INT_SECL = BIT(2),     ///< Squelch lost.
-    BK4819_INT_FSKRS = BIT(1),    ///< FSK RX sync.
-};
-
-/**
  * AF output modes, see bk4819_setAfOutput(). From the UV-K5 firmware:
  * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/driver/bk4819.h#L24-L32
  * and, for bypass, the application note's RF_EnterBypass().
@@ -68,16 +45,6 @@ enum bk4819_afOutput {
 enum bk4819_audioMode {
     BK4819_AUDIO_VOICE,  ///< Audio filters on, voice levels.
     BK4819_AUDIO_BYPASS, ///< Audio filters bypassed, for digital modes.
-};
-
-/**
- * Frequency scan times, see bk4819_enableFreqScan().
- */
-enum bk4819_scanTime {
-    BK4819_SCAN_TIME_200MS = 0,  ///< 0.2 s.
-    BK4819_SCAN_TIME_400MS = 1,  ///< 0.4 s.
-    BK4819_SCAN_TIME_800MS = 2,  ///< 0.8 s.
-    BK4819_SCAN_TIME_1600MS = 3, ///< 1.6 s.
 };
 
 /**
@@ -165,34 +132,6 @@ void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data);
 void bk4819_init(const struct BK4819 *dev);
 
 /**
- * Get the status of an interrupt.
- *
- * @param dev: pointer to device data.
- * @param interrupt: interrupt source.
- * @return status.
- */
-uint8_t bk4819_getInterrupt(const struct BK4819 *dev,
-                            enum bk4819_interrupt interrupt);
-
-/**
- * Enable an interrupt.
- *
- * @param dev: pointer to device data.
- * @param interrupt: interrupt source.
- */
-void bk4819_enableInterrupt(const struct BK4819 *dev,
-                            enum bk4819_interrupt interrupt);
-
-/**
- * Disable an interrupt.
- *
- * @param dev: pointer to device data.
- * @param interrupt: interrupt source.
- */
-void bk4819_disableInterrupt(const struct BK4819 *dev,
-                             enum bk4819_interrupt interrupt);
-
-/**
  * Set the frequency and turn on RX.
  *
  * @param dev: pointer to device data.
@@ -252,14 +191,6 @@ void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq);
  * @param freq: tone frequency, in 0.1 Hz.
  */
 void bk4819_enableRxCtcss(const struct BK4819 *dev, uint16_t freq);
-
-/**
- * Enable CTCSS2.
- *
- * @param dev: pointer to device data.
- * @param freq: raw tone frequency value.
- */
-void bk4819_enableCtcss2(const struct BK4819 *dev, uint16_t freq);
 
 /**
  * Enable the TX CDCSS code.
@@ -404,37 +335,6 @@ int16_t bk4819_getRssi(const struct BK4819 *dev);
  * @return microphone level.
  */
 uint16_t bk4819_getMicLevel(const struct BK4819 *dev);
-
-/**
- * Start the frequency scan.
- *
- * @param dev: pointer to device data.
- * @param time: scan time.
- */
-void bk4819_enableFreqScan(const struct BK4819 *dev, enum bk4819_scanTime time);
-
-/**
- * Stop the frequency scan.
- *
- * @param dev: pointer to device data.
- */
-void bk4819_disableFreqScan(const struct BK4819 *dev);
-
-/**
- * Get the frequency scan flag.
- *
- * @param dev: pointer to device data.
- * @return non-zero when the scan found a frequency.
- */
-uint8_t bk4819_getScanFreqFlag(const struct BK4819 *dev);
-
-/**
- * Get the frequency found by the scan.
- *
- * @param dev: pointer to device data.
- * @return scanned frequency.
- */
-uint32_t bk4819_getScanFreq(const struct BK4819 *dev);
 
 /**
  * Start the beeper.

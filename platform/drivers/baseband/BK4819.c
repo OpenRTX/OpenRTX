@@ -387,26 +387,6 @@ void bk4819_init(const struct BK4819 *dev)
     bk4819_writeReg(dev, 0x30, power);
 }
 
-uint8_t bk4819_getInterrupt(const struct BK4819 *dev,
-                            enum bk4819_interrupt interrupt)
-{
-    if ((bk4819_readReg(dev, 0x0C) & BK4819_REG0C_SQUELCH_LINK) == 0)
-        return 0;
-    return bk4819_readReg(dev, 0x02 & interrupt);
-}
-
-void bk4819_enableInterrupt(const struct BK4819 *dev,
-                            enum bk4819_interrupt interrupt)
-{
-    bk4819_writeReg(dev, 0x3F, bk4819_readReg(dev, 0x3F) | interrupt);
-}
-
-void bk4819_disableInterrupt(const struct BK4819 *dev,
-                             enum bk4819_interrupt interrupt)
-{
-    bk4819_writeReg(dev, 0x3F, bk4819_readReg(dev, 0x3F) & (~interrupt));
-}
-
 void bk4819_setFrequency(const struct BK4819 *dev, uint32_t freq)
 {
     freq = freq / 10; /* Convert to 10 Hz units */
@@ -490,13 +470,6 @@ void bk4819_enableRxCtcss(const struct BK4819 *dev, uint16_t freq)
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     bk4819_writeReg(dev, 0x51, reg);
     bk4819_writeReg(dev, 0x07, (uint16_t)regValue);
-}
-
-void bk4819_enableCtcss2(const struct BK4819 *dev, uint16_t freq)
-{
-    uint16_t reg = bk4819_readReg(dev, 0x51);
-    reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
-    bk4819_writeReg(dev, 0x07, freq | BK4819_REG07_MODE_CTC2);
 }
 
 void bk4819_enableTxCdcss(const struct BK4819 *dev, uint8_t negative,
@@ -656,27 +629,6 @@ uint16_t bk4819_getMicLevel(const struct BK4819 *dev)
 {
     /* bits 6:0 of AF TX/RX Input Amplitude */
     return (bk4819_readReg(dev, 0x6F) & 0x7f) * 2;
-}
-
-void bk4819_enableFreqScan(const struct BK4819 *dev, enum bk4819_scanTime time)
-{
-    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) | BITV(time, 14));
-    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) | 0x01);
-}
-
-void bk4819_disableFreqScan(const struct BK4819 *dev)
-{
-    bk4819_writeReg(dev, 0x32, bk4819_readReg(dev, 0x32) & (~0x01));
-}
-
-uint8_t bk4819_getScanFreqFlag(const struct BK4819 *dev)
-{
-    return bk4819_readReg(dev, 0x0D) & BIT(15);
-}
-
-uint32_t bk4819_getScanFreq(const struct BK4819 *dev)
-{
-    return ((bk4819_readReg(dev, 0x0D) << 16) | bk4819_readReg(dev, 0x0E)) / 10;
 }
 
 /**
