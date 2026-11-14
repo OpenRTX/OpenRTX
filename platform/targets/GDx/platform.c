@@ -48,18 +48,18 @@ void platform_init()
     gpio_setMode(PWR_SW, OUTPUT);
     #endif
 
-    backlight_init();                /* Initialise backlight driver        */
-    audio_init();                    /* Initialise audio management module */
-    adc0_init();                     /* Initialise ADC                     */
-    nvm_init();                      /* Initialise NVM manager             */
-    pthread_mutex_init(&adc_mutex, NULL);
-
     /*
      * Initialise I2C driver, once for all the modules
      */
     gpio_setMode(I2C_SDA, OPEN_DRAIN | ALTERNATE_FUNC(5));
     gpio_setMode(I2C_SCL, OPEN_DRAIN | ALTERNATE_FUNC(5));
     i2c0_init();
+
+    backlight_init();                /* Initialise backlight driver        */
+    audio_init();                    /* Initialise audio management module */
+    adc0_init();                     /* Initialise ADC                     */
+    nvm_init();                      /* Initialise NVM manager             */
+    pthread_mutex_init(&adc_mutex, NULL);
 }
 
 void platform_terminate()
