@@ -586,7 +586,7 @@ usb_status_t USB_DeviceConfigureEndpointStatus(usb_device_handle handle, uint8_t
  *
  * @return None.
  */
-void USB0_IRQHandler(void)
+void _Z15USB0_IRQHandlerv(void)
 {
     USB_DeviceKhciIsrFunction(cdcVcom.deviceHandle);
 }
