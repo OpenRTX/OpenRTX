@@ -156,27 +156,15 @@ bool platform_pwrButtonStatus()
      * Power button follows an active-low logic: btnStatus is low when button
      * is pressed
      */
-    bool pressed  = (btnStatus == 0);
-    bool newPress = (pressed && (pwrBtnPressed == false));
+    bool newPress = ((btnStatus == 0) && (pwrBtnPressed == false));
 
-    pwrBtnPressed = pressed;
+    pwrBtnPressed = (btnStatus == 0);
 
     if(newPress)
-    {
-        if(gpio_readPin(PWR_SW))
-        {
-            /* Power switch high and button pressed: request to turn off */
-            return false;
-        }
-        else
-        {
-            /* Power switch low and button pressed: request to turn on */
-            return true;
-        }
-    }
+        return !gpio_readPin(PWR_SW);
 
     /* We get here if there is no new press, just return PWR_SW status */
-    return gpio_readPin(PWR_SW) ? true : false;
+    return gpio_readPin(PWR_SW);
 }
 
 void platform_ledOn(led_t led)
