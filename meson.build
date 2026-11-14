@@ -866,6 +866,15 @@ ttwrplus_opts = {
   'link_args'          : [],
 }
 
+c62_opts = {
+  'sources'            : ['CMakeLists.txt'],
+  'include_directories': [],
+  'dependencies'       : [codec2_dep],
+  'c_args'             : [],
+  'cpp_args'           : [],
+  'link_args'          : [],
+}
+
 cs7000_opts = {
   'sources'            : cs7000_src,
   'include_directories': cs7000_inc,
@@ -982,6 +991,13 @@ targets = [
     'cpu'      : 'lx7'
   },
   {
+    'name'     : 'c62',
+    'opts'     : c62_opts,
+    'flashable': true,
+    'wrap'     : ' ',
+    'load_addr': ' '
+  },
+  {
     'name'     : 'cs7000',
     'opts'     : cs7000_opts,
     'flashable': true,
@@ -1046,6 +1062,12 @@ foreach t : targets
                               build_by_default : true)
       endif
 
+      deps = custom_target(name+'_deps',
+                          output  : name+'_deps.stamp',
+                          capture : true,
+                          command : [west,
+                                    'update',
+                                    '--group-filter', '+esp32'])
 
       bin = custom_target(name,
                           input   : txt,
@@ -1070,6 +1092,19 @@ foreach t : targets
                     output  : name+'_flash',
                     command : [uf2conv, '-D', '@INPUT@'])
 
+  # C62 is a Zephyr target, we compile it using west and package it in uf2 format
+  elif name == 'openrtx_c62'
+      c62_modules = custom_target('c62_west_update',
+                                  output  : 'c62_west_update.stamp',
+                                  command : ['sh', '-c', 'west update --group-filter +csk6 && touch @OUTPUT@'])
+
+      bin = custom_target(name,
+                          input   : [txt, c62_modules],
+                          output  : name+'_bin',
+                          command : [west,
+                                    'build',
+                                    '-b', 'c62',
+                                    '-d', '.', '..'])
   else
 
     target_opts = t['opts']
@@ -1230,6 +1265,11 @@ m17_packet_test = executable('m17_packet_test',
                               sources : unit_test_src + ['tests/unit/M17_packet.cpp'],
                               kwargs  : unit_test_opts)
 
+c62_calib_test = executable('c62_calib_test',
+                            sources : ['tests/unit/C62_calib.cpp',
+                                       'platform/targets/c62/calib_C62.c'],
+                            kwargs  : unit_test_opts)
+
 dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
@@ -1278,6 +1318,7 @@ test('Codeplug Test',         cps_test)
 test('minmea conversion Test', minmea_conversion_test)
 test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
+test('C62 Calibration Test', c62_calib_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('DSP DC Block Test',    dsp_dcblock_test)
 test('GFX Text Test',        gfx_text_test)
