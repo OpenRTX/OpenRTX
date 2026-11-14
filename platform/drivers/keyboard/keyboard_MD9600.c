@@ -112,9 +112,9 @@ keyboard_t kbd_getKeys()
      * +-----+------+-----+-------+-----+
      * | PD2 | ENT  |     |   P1  | P4  |
      * +-----+------+-----+-------+-----+
-     * | PD3 | down |     |  red  | P3  |
+     * | PD3 | down |     | EMER  | P3  |
      * +-----+------+-----+-------+-----+
-     * | PD4 | ESC  | up  | green | P2  |
+     * | PD4 | ESC  | up  | power | P2  |
      * +-----+------+-----+-------+-----+
      *
      * The column lines have pull-up resistors, thus the detection of a button
@@ -130,15 +130,15 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_COL4) == 0) keys |= KEY_F4;
     gpio_setPin(KB_ROW1);
 
-    /* Row 2: button on col. 3 ("red") is not mapped */
     gpio_clearPin(KB_ROW2);
     delayUs(10);
 
     if(gpio_readPin(KB_COL1) == 0) keys |= KEY_DOWN;
+    if(gpio_readPin(KB_COL3) == 0) keys |= KEY_MONI;
     if(gpio_readPin(KB_COL4) == 0) keys |= KEY_F3;
     gpio_setPin(KB_ROW2);
 
-    /* Row 3: button on col. 3 ("green") is not mapped */
+    /* Row 3: col. 3 is the power key, read by platform_pwrButtonStatus() */
     gpio_clearPin(KB_ROW3);
     delayUs(10);
 
