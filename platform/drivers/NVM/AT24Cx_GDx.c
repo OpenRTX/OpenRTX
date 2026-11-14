@@ -48,9 +48,6 @@ int AT24Cx_readData(uint32_t addr, void* buf, size_t len)
 
 int AT24Cx_writeData(uint32_t addr, const void *buf, size_t len)
 {
-    size_t  toWrite;
-    uint8_t writeBuf[PAGE_SIZE + 2];
-
     /*
      * On GDx devices the I2C bus is shared between the EEPROM and the AT1846S,
      * so we have to acquire exclusive ownership before exchanging data
@@ -59,9 +56,12 @@ int AT24Cx_writeData(uint32_t addr, const void *buf, size_t len)
 
     while(len > 0)
     {
-        toWrite = len;
-        if(toWrite >= PAGE_SIZE)
-            toWrite = PAGE_SIZE;
+        size_t pageRemaining = PAGE_SIZE - (addr & (PAGE_SIZE - 1));
+        size_t toWrite = len;
+        uint8_t writeBuf[PAGE_SIZE + 2];
+
+        if (toWrite > pageRemaining)
+            toWrite = pageRemaining;
 
         writeBuf[0] = (addr >> 8) & 0xFF;   /* High address byte */
         writeBuf[1] = (addr & 0xFF);        /* Low address byte  */
