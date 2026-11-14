@@ -15,6 +15,8 @@
 #include "drivers/ADC/adc_stm32.h"
 #include "hwconfig.h"
 
+static int8_t old_pos = 0;
+
 /**
  * \internal
  * Helper function which compares two voltages and tells if they're equal within
@@ -74,6 +76,9 @@ void kbd_init()
     gpio_setPin(KB_ROW1);
     gpio_setPin(KB_ROW2);
     gpio_setPin(KB_ROW3);
+
+    /* Initialise old position */
+    old_pos = platform_getChSelector();
 }
 
 void kbd_terminate()
@@ -88,15 +93,15 @@ keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
 
-    /* Use absolute position knob to emulate left and right buttons */
-    static uint8_t old_pos = 0;
-    uint8_t new_pos = platform_getChSelector();
+    /* Read channel knob to send KNOB_LEFT and KNOB_RIGHT events */
+    int8_t new_pos = platform_getChSelector();
     if (old_pos != new_pos)
     {
-        if (new_pos < old_pos)
-            keys |= KEY_LEFT;
+        int8_t diff = new_pos - old_pos;
+        if (diff < 0)
+            keys |= KNOB_LEFT;
         else
-            keys |= KEY_RIGHT;
+            keys |= KNOB_RIGHT;
         old_pos = new_pos;
     }
 

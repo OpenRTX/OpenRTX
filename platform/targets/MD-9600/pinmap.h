@@ -32,9 +32,12 @@ extern "C" {
 #define AIN_RSSI2  GPIOB,1
 #define AIN_HTEMP  GPIOC,5
 
-/* Channel selection rotary encoder */
-#define CH_SELECTOR_0 GPIOB,10
-#define CH_SELECTOR_1 GPIOB,11
+/*
+ * Channel selection rotary encoder, in the order that makes the position
+ * count up when turned clockwise, as on the MD-UV3x0
+ */
+#define CH_SELECTOR_0 GPIOB,11
+#define CH_SELECTOR_1 GPIOB,10
 
 /* Push-to-talk switch */
 #define PTT_SW GPIOE,10
