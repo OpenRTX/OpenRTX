@@ -17,7 +17,7 @@ Pre-built binary images of the OpenRTX firmware for each one of the supported de
 
 Between releases, pre-built binary images containing the latest firmware updates are available through nightly builds from the master branch.
 The nightly builds are available here:
-- on [Phil DF5PMF's page](https://openrtx.schinken-radio.de/nightly/)
+- on [Lilly DF5PMF's page](https://openrtx.schinken-radio.de/nightly/)
 - on the [OpenRTX nightly builds page](https://files.openrtx.org/nightly/)
 
 Finally, the instructions on how to compile the OpenRTX firmware for hardware as well as emulation on Linux, are available on the [compilation instructions](https://openrtx.org/#/compiling) page on our website.
