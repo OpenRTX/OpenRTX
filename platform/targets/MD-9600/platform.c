@@ -32,13 +32,14 @@ void platform_init()
 
     gpio_setMode(PTT_SW, INPUT);
 
-    gpio_setMode(AIN_VBAT,  ANALOG);
-    gpio_setMode(AIN_MIC,   ANALOG);
-    gpio_setMode(AIN_RSSI,  ANALOG);
-    gpio_setMode(AIN_SW2,   ANALOG);
-    gpio_setMode(AIN_SW1,   ANALOG);
-    gpio_setMode(AIN_RSSI2, ANALOG);
-    gpio_setMode(AIN_HTEMP, ANALOG);
+    gpio_setMode(AIN_VBAT,    ANALOG);
+    gpio_setMode(AIN_MIC,     ANALOG);
+    gpio_setMode(AIN_RSSI_V,  ANALOG);
+    gpio_setMode(AIN_RSSI_U,  ANALOG);
+    gpio_setMode(AIN_SW2,     ANALOG);
+    gpio_setMode(AIN_SW1,     ANALOG);
+    gpio_setMode(AIN_NOISE_U, ANALOG);
+    gpio_setMode(AIN_NOISE_V, ANALOG);
 
     /* Initialise ADC1, for vbat, RSSI, ... */
     adcStm32_init(&adc1);
