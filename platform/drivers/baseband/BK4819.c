@@ -280,12 +280,15 @@ void bk4819_setAfOutput(const struct BK4819 *dev, enum bk4819_afOutput af)
                            BK4819_REG47_AF_OUTPUT(af));
 }
 
-void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq)
+void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq, uint8_t gain)
 {
-    const uint16_t enable = BK4819_REG51_CXCSS_TX_ENABLE
-                          | BK4819_REG51_CTCSS_MODE;
+    const uint16_t mask = BK4819_REG51_CXCSS_TX_ENABLE | BK4819_REG51_CTCSS_MODE
+                        | BK4819_REG51_CXCSS_TX_GAIN_MASK;
+    const uint16_t value = BK4819_REG51_CXCSS_TX_ENABLE
+                         | BK4819_REG51_CTCSS_MODE
+                         | BK4819_REG51_CXCSS_TX_GAIN(gain);
 
-    bk4819_maskSetRegister(dev, 0x51, enable, enable);
+    bk4819_maskSetRegister(dev, 0x51, mask, value);
     bk4819_writeReg(dev, 0x07, ctcssWord(freq));
 }
 
@@ -297,14 +300,15 @@ void bk4819_enableRxCtcss(const struct BK4819 *dev, uint16_t freq)
 }
 
 void bk4819_enableTxCdcss(const struct BK4819 *dev, uint8_t negative,
-                          uint8_t bits24, uint32_t code)
+                          uint8_t bits24, uint32_t code, uint8_t gain)
 {
     const uint16_t mode = BK4819_REG07_MODE_CDCSS
                         | BK4819_REG07_CDCSS_BAUD_134_4HZ;
     const uint16_t high = BK4819_REG08_CDCSS_HIGH
                         | ((code >> 12) & BK4819_REG08_CDCSS_CODE_MASK);
     const uint16_t low = code & BK4819_REG08_CDCSS_CODE_MASK;
-    uint16_t reg = BK4819_REG51_CXCSS_TX_ENABLE;
+    uint16_t reg = BK4819_REG51_CXCSS_TX_ENABLE
+                 | BK4819_REG51_CXCSS_TX_GAIN(gain);
 
     if (negative != 0)
         reg |= BK4819_REG51_TX_CDCSS_NEGATIVE;
