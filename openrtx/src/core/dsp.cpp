@@ -4,7 +4,35 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <cerrno>
+
 #include "core/dsp.h"
+#include "core/fir.hpp"
+
+// Low pass decimator taps, Q15, generated with scipy.signal as
+//   round(firwin(len, 0.4625 * 48000 / ratio, window=('kaiser', 7),
+//                fs=48000) * 32768)
+// with len = 8 * ratio. The sum of products fits an int32 for any input.
+static constexpr std::array<int16_t, 40> LOWPASS5_TAPS = {
+    -3,   -9,   -13,  -6,   23,  73,  131,  157,  103,  -65,
+    -335, -627, -794, -659, -80, 977, 2399, 3927, 5221, 5963,
+    5963, 5221, 3927, 2399, 977, -80, -659, -794, -627, -335,
+    -65,  103,  157,  131,  73,  23,  -6,   -13,  -9,   -3,
+};
+
+static constexpr std::array<int16_t, 48> LOWPASS6_TAPS = {
+    -2,   -6,   -10,  -10,  -1,   22,  58,  100,  129,  124,  61,   -71,
+    -260, -469, -629, -656, -467, -8,  728, 1687, 2750, 3763, 4557, 4994,
+    4994, 4557, 3763, 2750, 1687, 728, -8,  -467, -656, -629, -469, -260,
+    -71,  61,   124,  129,  100,  58,  22,  -1,   -10,  -10,  -6,   -2,
+};
+
+static_assert((LOWPASS5_TAPS.size() <= DSP_LOWPASS_MAX_TAPS)
+                  && (LOWPASS6_TAPS.size() <= DSP_LOWPASS_MAX_TAPS),
+              "DSP_LOWPASS_MAX_TAPS too small");
+
+// Half an LSB of a Q15 product, to round to nearest
+static constexpr int32_t Q15_HALF = 1 << 14;
 
 int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
 {
@@ -39,4 +67,50 @@ bool dsp_decimator(struct decimatorState *state, int16_t *sample,
     }
 
     return false;
+}
+
+int dsp_lowPassInit(struct lowPassDecimator *state, uint8_t ratio)
+{
+    memset(state, 0, sizeof(*state));
+
+    switch (ratio) {
+        case 5:
+            state->taps = LOWPASS5_TAPS.data();
+            state->len = LOWPASS5_TAPS.size();
+            break;
+
+        case 6:
+            state->taps = LOWPASS6_TAPS.data();
+            state->len = LOWPASS6_TAPS.size();
+            break;
+
+        default:
+            return -ENOTSUP;
+    }
+
+    state->ratio = ratio;
+
+    return 0;
+}
+
+bool dsp_lowPassDecimate(struct lowPassDecimator *state, int16_t *sample)
+{
+    firPush(state->history, state->len, state->pos, *sample);
+    state->count++;
+    if (state->count < state->ratio)
+        return false;
+
+    state->count = 0;
+
+    const int32_t acc = firDot<int32_t>(state->taps, state->history, state->len,
+                                        state->pos);
+    const int32_t out = (acc + Q15_HALF) >> 15;
+    if (out > INT16_MAX)
+        *sample = INT16_MAX;
+    else if (out < INT16_MIN)
+        *sample = INT16_MIN;
+    else
+        *sample = static_cast<int16_t>(out);
+
+    return true;
 }
