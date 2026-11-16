@@ -100,12 +100,7 @@ enum {
     BK4819_REG43_RF_BW_WEAK_MASK = 0x0e00,
     BK4819_REG43_AF_TX_LPF2_BW_MASK = 0x01c0,
     BK4819_REG43_BW_MODE_MASK = 0x0030,
-};
-
-/* REG_43 bandwidth mode values */
-enum {
-    BK4819_BW_MODE_12K5 = 0,
-    BK4819_BW_MODE_25K = 2, ///< 25 or 20 kHz.
+    BK4819_REG43_UNDOC3 = BIT(3),
 };
 
 #define BK4819_REG43_RF_BW(x) (((x) << 12) & BK4819_REG43_RF_BW_MASK)
@@ -215,9 +210,6 @@ enum {
 /* Field values set by bk4819_init() */
 enum {
     BK4819_DEFAULT_TX_DEVIATION = 0x4d2,
-    BK4819_DEFAULT_RF_BW = 4,      ///< 3.75 kHz.
-    BK4819_DEFAULT_RF_BW_WEAK = 0, ///< 1.7 kHz.
-    BK4819_DEFAULT_TX_LPF2_BW = 1, ///< 2.5 kHz.
     BK4819_DEFAULT_RX_AUDIO_GAIN1 = 0,
     BK4819_DEFAULT_RX_AUDIO_GAIN2 = 0x3c,
     BK4819_DEFAULT_MIC_GAIN = 0x19,
