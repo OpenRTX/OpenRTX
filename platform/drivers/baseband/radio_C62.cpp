@@ -4,15 +4,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <interfaces/nvmem.h>
-
 #include <hwconfig.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <interfaces/delays.h>
 
 #include <algorithm>
-#include <string>
 
 #include "calibration/calib_C62.h"
 #include "drivers/baseband/BK4819.h"
@@ -41,15 +38,6 @@ static constexpr uint8_t M17_RX_AUDIO_GAIN2 = 0x3f;
 static constexpr uint8_t M17_MIC_GAIN = 0;
 
 static struct C62Calib calData; // TX power calibration
-
-/* The BK4819 GPIOs to control the C62 LNA and PA */
-enum {
-    GPIO_VHF_RX_LNA = 0,
-    GPIO_UHF_RX_LNA,
-    GPIO_VHF_TX_PA,
-    GPIO_UHF_TX_PA,
-    GPIO_ALC_TX_LED
-};
 
 /**
  * Set the TX power control (APC) voltage through the PWM on pin A03. The band
@@ -95,13 +83,13 @@ void radio_init(const rtxStatus_t *rtxState)
 
     nvm_readCalibData(&calData);
 
-    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
+    bk4819_setAfOutput(&c62_bk4819, BK4819_AF_MUTE);
 
-    gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_RX_LNA, OUTPUT_ACTIVE_LOW);
-    gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_RX_LNA, OUTPUT_ACTIVE_LOW);
-    gpioDev_setMode(&c62_bk4819_gpio, GPIO_VHF_TX_PA, OUTPUT);
-    gpioDev_setMode(&c62_bk4819_gpio, GPIO_UHF_TX_PA, OUTPUT);
-    gpioDev_setMode(&c62_bk4819_gpio, GPIO_ALC_TX_LED, OUTPUT);
+    gpioDev_setMode(LNA_VHF_EN, OUTPUT_ACTIVE_LOW);
+    gpioDev_setMode(LNA_UHF_EN, OUTPUT_ACTIVE_LOW);
+    gpioDev_setMode(PA_VHF_EN, OUTPUT);
+    gpioDev_setMode(PA_UHF_EN, OUTPUT);
+    gpioDev_setMode(ALC_TX_LED_EN, OUTPUT);
 }
 
 void radio_terminate()
@@ -124,7 +112,7 @@ void radio_setOpmode(const enum opmode mode)
         bk4819_setTxDeviation(&c62_bk4819, true, M17_TX_DEVIATION);
         bk4819_setRfFilter(&c62_bk4819, M17_RF_BW, M17_RF_BW_WEAK);
         bk4819_setTxAudioFilter(&c62_bk4819, M17_TX_LPF2_BW);
-        bk4819_SetFilterBandwidth(&c62_bk4819, BW_12_5);
+        bk4819_setFilterBandwidth(&c62_bk4819, BW_12_5);
         bk4819_setRxAudioGain(&c62_bk4819, M17_RX_AUDIO_GAIN1,
                               M17_RX_AUDIO_GAIN2);
         bk4819_setMicGain(&c62_bk4819, M17_MIC_GAIN);
@@ -137,51 +125,51 @@ void radio_setOpmode(const enum opmode mode)
 
 bool radio_checkRxDigitalSquelch()
 {
-    return bk4819_get_ctcss(&c62_bk4819);
+    return bk4819_getCtcss(&c62_bk4819);
 }
 
 void radio_enableAfOutput()
 {
     // Only the RTX to speaker path opens it, and only FM uses that path
-    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_FM);
+    bk4819_setAfOutput(&c62_bk4819, BK4819_AF_FM);
 }
 
 void radio_disableAfOutput()
 {
-    BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_MUTE);
+    bk4819_setAfOutput(&c62_bk4819, BK4819_AF_MUTE);
 }
 
 void radio_enableRx()
 {
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+    gpioDev_clear(LNA_VHF_EN);
+    gpioDev_clear(LNA_UHF_EN);
+    gpioDev_clear(PA_VHF_EN);
+    gpioDev_clear(PA_UHF_EN);
+    gpioDev_clear(ALC_TX_LED_EN);
 
     //Before enable RX path delay to allow hardware to settle
     delayMs(5);
 
     if (config->rxFrequency < 174000000) {
-        gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
+        gpioDev_set(LNA_VHF_EN);
     } else {
-        gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
+        gpioDev_set(LNA_UHF_EN);
     }
 
-    bk4819_set_freq(&c62_bk4819, config->rxFrequency);
+    bk4819_setFrequency(&c62_bk4819, config->rxFrequency);
 
     if (radioMode == OPMODE_M17) {
         // The DSP takes the baseband from the AF output for the whole
         // reception. M17 sets its bandwidth on the mode change and has no
         // CTCSS.
-        BK4819_SetAF(&c62_bk4819, BK4819_AF_TYPE_BYPASS);
+        bk4819_setAfOutput(&c62_bk4819, BK4819_AF_BYPASS);
     } else {
-        bk4819_SetFilterBandwidth(&c62_bk4819, config->bandwidth);
+        bk4819_setFilterBandwidth(&c62_bk4819, config->bandwidth);
         if (config->rxToneEn)
-            bk4819_enable_rx_ctcss(&c62_bk4819, config->rxTone);
+            bk4819_enableRxCtcss(&c62_bk4819, config->rxTone);
     }
 
-    bk4819_rx_on(&c62_bk4819);
+    bk4819_enableRx(&c62_bk4819);
     radioStatus = RX;
 }
 
@@ -190,11 +178,11 @@ void radio_enableTx()
     if (config->txDisable == 1)
         return;
 
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+    gpioDev_clear(LNA_VHF_EN);
+    gpioDev_clear(LNA_UHF_EN);
+    gpioDev_clear(PA_VHF_EN);
+    gpioDev_clear(PA_UHF_EN);
+    gpioDev_clear(ALC_TX_LED_EN);
 
     //Before enable TX path delay to allow hardware to settle
     delayMs(5);
@@ -202,42 +190,42 @@ void radio_enableTx()
     if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
         return;
 
-    bk4819_set_freq(&c62_bk4819, config->txFrequency);
+    bk4819_setFrequency(&c62_bk4819, config->txFrequency);
 
     if ((radioMode != OPMODE_M17) && config->txToneEn) {
-        bk4819_enable_tx_ctcss(&c62_bk4819, config->txTone);
+        bk4819_enableTxCtcss(&c62_bk4819, config->txTone);
     }
 
     if (config->txFrequency < 174000000) {
-        gpioDev_set(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
+        gpioDev_set(PA_VHF_EN);
     } else {
-        gpioDev_set(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
+        gpioDev_set(PA_UHF_EN);
     }
 
-    gpioDev_set(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+    gpioDev_set(ALC_TX_LED_EN);
 
     set_tx_power(config->txFrequency, config->txPower);
 
-    bk4819_tx_on(&c62_bk4819);
+    bk4819_enableTx(&c62_bk4819);
     radioStatus = TX;
 }
 
 void radio_disableRtx()
 {
-    bk4819_disable_ctdcss(&c62_bk4819);
+    bk4819_disableCtdcss(&c62_bk4819);
 
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_RX_LNA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_RX_LNA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_VHF_TX_PA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_UHF_TX_PA);
-    gpioDev_clear(&c62_bk4819_gpio, GPIO_ALC_TX_LED);
+    gpioDev_clear(LNA_VHF_EN);
+    gpioDev_clear(LNA_UHF_EN);
+    gpioDev_clear(PA_VHF_EN);
+    gpioDev_clear(PA_UHF_EN);
+    gpioDev_clear(ALC_TX_LED_EN);
 
     // Leaving RX closes the AF output: M17 opened it in radio_enableRx(),
     // FM's audio path closes it too
     if (radioStatus == RX)
         radio_disableAfOutput();
 
-    bk4819_rtx_off(&c62_bk4819);
+    bk4819_disableRtx(&c62_bk4819);
     radioStatus = OFF;
 }
 
@@ -257,7 +245,7 @@ void radio_updateConfiguration()
 
 rssi_t radio_getRssi()
 {
-    return bk4819_get_rssi(&c62_bk4819);
+    return bk4819_getRssi(&c62_bk4819);
 }
 
 enum opstatus radio_getStatus()

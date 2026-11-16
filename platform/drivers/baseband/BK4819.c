@@ -437,7 +437,7 @@ uint16_t bk4819_getMicLevel(const struct BK4819 *dev)
     return (bk4819_readReg(dev, 0x6F) & BK4819_REG6F_AF_AMPLITUDE_MASK) * 2;
 }
 
-void BK4819_BeepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain)
+void bk4819_beepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain)
 {
     const uint16_t tone = BK4819_REG70_TONE1_ENABLE
                         | BK4819_REG70_TONE1_GAIN(96);
@@ -455,7 +455,7 @@ void BK4819_BeepStart(const struct BK4819 *dev, uint16_t freq, bool tuningGain)
     bk4819_writeReg(dev, 0x50, 0x3B20);
 }
 
-void BK4819_BeepStop(const struct BK4819 *dev)
+void bk4819_beepStop(const struct BK4819 *dev)
 {
     bk4819_writeReg(dev, 0x50, 0xBB20);
 }
