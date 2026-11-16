@@ -61,6 +61,14 @@ extern "C" {
  */
 extern const struct BK4819 c62_bk4819;
 extern const struct gpioDev c62_bk4819_gpio;
+
+/* BK4819 GPIOs */
+#define LNA_VHF_EN &c62_bk4819_gpio, 0
+#define LNA_UHF_EN &c62_bk4819_gpio, 1
+#define PA_VHF_EN &c62_bk4819_gpio, 2
+#define PA_UHF_EN &c62_bk4819_gpio, 3
+#define ALC_TX_LED_EN &c62_bk4819_gpio, 4
+
 extern const struct BK1080 c62_bk1080;
 
 extern const struct gpio_dt_spec speaker_enable;
