@@ -12,6 +12,7 @@
 static long long keyTs[KBD_NUM_KEYS]; // Timestamp of each keypress
 static uint32_t longPressSent;        // Flags to manage long-press events
 static keyboard_t prevKeys = 0;       // Previous keyboard status
+static long long repeatTs;            // Timestamp of the next repeat event
 
 bool input_scanKeyboard(kbd_msg_t *msg)
 {
@@ -35,6 +36,9 @@ bool input_scanKeyboard(kbd_msg_t *msg)
             }
         }
 
+        // Restart repeat timing on every keyboard status change
+        repeatTs = now + input_longPressTimeout + input_repeatInterval;
+
         // New keyboard event
         msg->keys = keys;
         kbd_event = true;
@@ -53,6 +57,15 @@ bool input_scanKeyboard(kbd_msg_t *msg)
                 kbd_event = true;
                 longPressSent |= mask;
             }
+        }
+
+        // Keyboard status unchanged past the long-press threshold: send a
+        // repeat event, unless a long-press event is being sent right now
+        if (!kbd_event && (now >= repeatTs)) {
+            msg->repeat = 1;
+            msg->keys = keys;
+            kbd_event = true;
+            repeatTs = now + input_repeatInterval;
         }
     }
 
