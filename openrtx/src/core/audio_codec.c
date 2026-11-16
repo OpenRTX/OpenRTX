@@ -34,6 +34,25 @@
 #define CONFIG_MIC_OVERSAMPLE 1
 #endif
 
+#ifdef CONFIG_MIC_AGC
+// Speech level the mic AGC aims at, inside codec2 3200's best range and at
+// its louder end, which listeners at a fixed volume prefer
+#define MIC_AGC_TARGET_DB -18.0f
+
+// The AGC's gain at the first transmission, for a target whose usual talker
+// needs more than the fixed mic gain gives; later ones start where the last
+// one ended
+#ifndef CONFIG_MIC_AGC_START_DB
+#define CONFIG_MIC_AGC_START_DB 0.0f
+#endif
+
+// Kept across transmissions, so each one starts at the gain the last ended
+// on, with the noise floor found again; reset when the encoder next starts
+// after codec_init()
+static struct agc micAgc;
+static bool micAgcReset;
+#endif
+
 static pathId audioPath;
 
 static uint8_t initCnt = 0;
@@ -60,6 +79,9 @@ void codec_init()
 {
     pthread_mutex_lock(&init_mutex);
     initCnt += 1;
+#ifdef CONFIG_MIC_AGC
+    micAgcReset = true;
+#endif
     pthread_mutex_unlock(&init_mutex);
 
     if (initCnt > 0)
@@ -235,8 +257,17 @@ static void *encodeFunc(void *arg)
 #endif
 
             sample = dsp_dcBlockFilter(&dcBlock, sample);
+#ifdef CONFIG_MIC_AGC
+            // The AGC applies the mic gain, without saturating
+            audio.data[outIdx++] = sample;
+#else
             audio.data[outIdx++] = s16_mulSat(sample, CONFIG_MIC_GAIN);
+#endif
         }
+
+#ifdef CONFIG_MIC_AGC
+        dsp_agcProcess(&micAgc, audio.data, outIdx);
+#endif
 
         // CODEC2 encodes 160 speech samples (20 ms), into 8 bytes: here we
         // write the new encoded data into a buffer of 16 bytes, writing the
@@ -393,6 +424,19 @@ static bool startThread(const pathId path, void *(*func)(void *))
 
     running = true;
     audioPath = path;
+
+#ifdef CONFIG_MIC_AGC
+    // No encoder is running here: the previous one, if any, has finished
+    if (func == encodeFunc) {
+        if (micAgcReset)
+            dsp_agcInit(&micAgc, MIC_AGC_TARGET_DB, CONFIG_MIC_GAIN / 32768.0f,
+                        CONFIG_MIC_AGC_START_DB);
+        else
+            dsp_agcRestart(&micAgc);
+
+        micAgcReset = false;
+    }
+#endif
     pthread_mutex_unlock(&init_mutex);
 
     readPos = 0;
