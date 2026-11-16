@@ -291,6 +291,17 @@ void vp_queueStringTableEntry(const char *const *stringTableStringPtr);
 void vp_play();
 
 /**
+ * Hold or release prompt playback. While playback is held, calls to vp_play()
+ * only record that playback has been requested. When the hold is released,
+ * playback of the prompt queued at that time is started, if requested in the
+ * meantime. This allows to update a prompt several times in a row, playing
+ * only the final one.
+ *
+ * @param hold: true to hold playback, false to release it.
+ */
+void vp_holdPlayback(const bool hold);
+
+/**
  * Function handling vp data decoding, to be called periodically.
  */
 void vp_tick();
