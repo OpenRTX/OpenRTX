@@ -23,6 +23,28 @@ extern "C" {
  */
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+#ifndef MIN
+/**
+ * Get the smaller of two values.
+ *
+ * @param a: first value.
+ * @param b: second value.
+ * @return the smaller value.
+ */
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef MAX
+/**
+ * Get the larger of two values.
+ *
+ * @param a: first value.
+ * @param b: second value.
+ * @return the larger value.
+ */
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
 /**
  * Perform division of two integer numbers, with rounding up of the result.
  *
