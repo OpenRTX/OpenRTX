@@ -11,6 +11,7 @@
  * This enum describes the event message type:
  * - EVENT_KBD is used to send a keypress
  * - EVENT_STATUS is used to send a status change notification
+ * The event type field is 1 bit wide, see event_t.
  */
 enum eventType_t
 {
@@ -19,20 +20,17 @@ enum eventType_t
 };
 
 /**
- * The event message is constrained to 32 bits size
- * This is necessary to send event messages in uC OS/III Queues
- * That accept a void * type message, which is 32-bits wide on
- * ARM cortex-M MCUs
- * uC OS/III Queues are meant to send pointer to allocated data
- * But if we keep the size under 32 bits, we can sent the
- * entire message, casting it to a void * pointer.
+ * The event message is constrained to 32 bits size, so that it can be
+ * read and written in a single access on 32-bit MCUs.
+ * One bit is enough to encode the event type, leaving 31 bits of payload
+ * for a whole keyboard event (see kbd_msg_t).
  */
 typedef union
 {
     struct
     {
-        uint32_t type    : 2,
-                 payload : 30;
+        uint32_t type    : 1,
+                 payload : 31;
     };
 
     uint32_t value;
