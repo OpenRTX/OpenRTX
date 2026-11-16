@@ -61,6 +61,25 @@ static const struct audioModeField audioModeFields[] = {
     },
 };
 
+/*
+ * REG_43 filters by enum bk4819_bandwidth. 12.5 and 25 kHz are the 0x4048
+ * and 0x3028 of the stock C62 firmware and of the UV-K5 firmware:
+ * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/driver/bk4819.c#L292-L299
+ * 6.25 kHz is the UV-K5 custom firmware's:
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L647-L660
+ */
+struct bandwidthFilter {
+    uint8_t rfBw;     ///< RX RF filter bandwidth.
+    uint8_t rfBwWeak; ///< RX RF filter bandwidth on weak signals.
+    uint8_t txLpf2Bw; ///< TX audio LPF2 bandwidth.
+};
+
+static const struct bandwidthFilter bandwidthFilters[] = {
+    [BK4819_BW_12K5] = { .rfBw = 4, .rfBwWeak = 0, .txLpf2Bw = 1, },
+    [BK4819_BW_6K25] = { .rfBw = 3, .rfBwWeak = 3, .txLpf2Bw = 1, },
+    [BK4819_BW_25K] = { .rfBw = 3, .rfBwWeak = 0, .txLpf2Bw = 0, },
+};
+
 /**
  * Convert a CTCSS tone to the REG_07 frequency word, in CTC1 mode, for a
  * 26 MHz crystal.
@@ -261,17 +280,6 @@ void bk4819_setAfOutput(const struct BK4819 *dev, enum bk4819_afOutput af)
                            BK4819_REG47_AF_OUTPUT(af));
 }
 
-void bk4819_setFilterBandwidth(const struct BK4819 *dev, uint8_t bandwidth)
-{
-    uint8_t mode = BK4819_BW_MODE_12K5;
-
-    if (bandwidth != 0)
-        mode = BK4819_BW_MODE_25K;
-
-    bk4819_maskSetRegister(dev, 0x43, BK4819_REG43_BW_MODE_MASK,
-                           BK4819_REG43_BW_MODE(mode));
-}
-
 void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq)
 {
     const uint16_t enable = BK4819_REG51_CXCSS_TX_ENABLE
@@ -371,11 +379,10 @@ void bk4819_setAudioMode(const struct BK4819 *dev, enum bk4819_audioMode mode)
 
     /*
      * Bypass leaves these to the caller: voice puts back the values of
-     * bk4819_init().
+     * bk4819_init(), and the radio then sets its channel's.
      */
     bk4819_setTxDeviation(dev, true, BK4819_DEFAULT_TX_DEVIATION);
-    bk4819_setRfFilter(dev, BK4819_DEFAULT_RF_BW, BK4819_DEFAULT_RF_BW_WEAK);
-    bk4819_setTxAudioFilter(dev, BK4819_DEFAULT_TX_LPF2_BW);
+    bk4819_setBandwidth(dev, BK4819_BW_12K5);
     bk4819_setRxAudioGain(dev, BK4819_DEFAULT_RX_AUDIO_GAIN1,
                           BK4819_DEFAULT_RX_AUDIO_GAIN2);
     bk4819_setMicGain(dev, BK4819_DEFAULT_MIC_GAIN);
@@ -408,6 +415,20 @@ void bk4819_setTxAudioFilter(const struct BK4819 *dev, uint8_t bw)
 {
     bk4819_maskSetRegister(dev, 0x43, BK4819_REG43_AF_TX_LPF2_BW_MASK,
                            BK4819_REG43_AF_TX_LPF2_BW(bw));
+}
+
+void bk4819_setBandwidth(const struct BK4819 *dev, enum bk4819_bandwidth bw)
+{
+    const struct bandwidthFilter *filters = &bandwidthFilters[bw];
+    const uint16_t mask = BK4819_REG43_RF_BW_MASK | BK4819_REG43_RF_BW_WEAK_MASK
+                        | BK4819_REG43_AF_TX_LPF2_BW_MASK
+                        | BK4819_REG43_BW_MODE_MASK | BK4819_REG43_UNDOC3;
+    const uint16_t value = BK4819_REG43_RF_BW(filters->rfBw)
+                         | BK4819_REG43_RF_BW_WEAK(filters->rfBwWeak)
+                         | BK4819_REG43_AF_TX_LPF2_BW(filters->txLpf2Bw)
+                         | BK4819_REG43_BW_MODE(bw) | BK4819_REG43_UNDOC3;
+
+    bk4819_maskSetRegister(dev, 0x43, mask, value);
 }
 
 void bk4819_setRxAudioGain(const struct BK4819 *dev, uint8_t gain1,
