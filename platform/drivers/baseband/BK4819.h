@@ -203,8 +203,11 @@ void bk4819_setAfOutput(const struct BK4819 *dev, enum bk4819_afOutput af);
  *
  * @param dev: pointer to device data.
  * @param freq: tone frequency, in 0.1 Hz.
+ * @param gain: CTCSS/CDCSS TX gain (REG_51), 0 to 127; the reset value 0 is
+ * the minimum, far below the usual 10-20% of the peak deviation.
  */
-void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq);
+void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq,
+                          uint8_t gain);
 
 /**
  * Enable the RX CTCSS detector.
@@ -221,9 +224,10 @@ void bk4819_enableRxCtcss(const struct BK4819 *dev, uint16_t freq);
  * @param negative: 0 for a positive code, 1 for a negative code.
  * @param bits24: 0 for a 23-bit code, 1 for a 24-bit code.
  * @param code: CDCSS code.
+ * @param gain: CTCSS/CDCSS TX gain (REG_51), 0 to 127.
  */
 void bk4819_enableTxCdcss(const struct BK4819 *dev, uint8_t negative,
-                          uint8_t bits24, uint32_t code);
+                          uint8_t bits24, uint32_t code, uint8_t gain);
 
 /**
  * Disable the TX CTCSS/CDCSS.
