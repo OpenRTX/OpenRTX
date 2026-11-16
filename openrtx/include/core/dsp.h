@@ -135,6 +135,69 @@ bool dsp_lowPassDecimate(struct lowPassDecimator *state, int16_t *sample);
  */
 void dsp_lowPassTerminate(struct lowPassDecimator *state);
 
+/**
+ * Number of windows over which the AGC tracks the noise floor.
+ */
+#define DSP_AGC_WINDOWS 4
+
+/**
+ * Data structure holding the state of an automatic gain control, which
+ * levels speech in blocks of 20 ms at 8 kHz. Levels are in dBFS.
+ */
+struct agc {
+    float targetDb;                ///< Speech level aimed at
+    float baseGain;                ///< Gain from samples to full scale (1.0)
+    float gainDb;                  ///< Gain at the end of the last block
+    float levelDb;                 ///< Speech level before the AGC, smoothed
+    float floorDb;                 ///< Noise floor before the AGC
+    float winMin[DSP_AGC_WINDOWS]; ///< Quietest block of each recent window
+    uint16_t winCount;             ///< Blocks into the current window
+    uint16_t run;                  ///< Consecutive blocks above the gate
+    uint16_t acquire;              ///< Blocks left of faster rise
+};
+
+/**
+ * Initialise an automatic gain control at a starting gain, as if the last
+ * speech had needed it. During its first second of speech the gain may rise
+ * faster than afterwards, so that the first transmission settles quickly; a
+ * start near a radio's usual talker saves even that rise.
+ *
+ * @param agc: pointer to the AGC state.
+ * @param targetDb: speech level to aim at, in dBFS. The level estimate rises
+ * fast and falls slowly, so it follows the louder syllables: the speech's
+ * RMS settles about 3 dB under the target.
+ * @param baseGain: fixed gain applied to the samples before the AGC's own,
+ * in units of full scale per sample (for example, mic gain / 32768).
+ * @param startGainDb: the AGC's own gain to start at, in dB.
+ */
+void dsp_agcInit(struct agc *agc, float targetDb, float baseGain,
+                 float startGainDb);
+
+/**
+ * Start a new transmission: forget the noise floor, which may have changed
+ * since the last one, and keep the gain and the speech level.
+ *
+ * @param agc: pointer to the AGC state.
+ */
+void dsp_agcRestart(struct agc *agc);
+
+/**
+ * Level a block of 20 ms of 8 kHz samples in place, then limit its peaks
+ * below -1 dBFS.
+ *
+ * The noise floor is the quietest block of the last 1.6 s, and a block more
+ * than 5 dB above it counts as speech. The gain may fall on any speech block,
+ * and on any block more than 6 dB over the target, but rises only after
+ * 120 ms of speech in a row, so that bursts of noise and pauses do not pump
+ * the background up. The gain is ramped across the block.
+ *
+ * @param agc: pointer to the AGC state.
+ * @param block: samples, processed in place.
+ * @param len: number of samples in the block, 160: the time constants are
+ * set for blocks of 20 ms.
+ */
+void dsp_agcProcess(struct agc *agc, int16_t *block, size_t len);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

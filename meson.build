@@ -1246,6 +1246,10 @@ dsp_dcblock_test = executable('dsp_dcblock_test',
                               sources : unit_test_src + ['tests/unit/dsp_dcblock.cpp'],
                               kwargs  : unit_test_opts)
 
+dsp_agc_test = executable('dsp_agc_test',
+                          sources : unit_test_src + ['tests/unit/dsp_agc.cpp'],
+                          kwargs  : unit_test_opts)
+
 gfx_text_test = executable('gfx_text_test',
                             sources : unit_test_src + ['tests/unit/gfx_text.cpp'],
                             kwargs  : unit_test_opts)
@@ -1294,6 +1298,7 @@ test('M17 Frame Decoder Test', m17_decoder_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('DSP Low Pass Decimator Test', dsp_lowpass_test)
 test('DSP DC Block Test',    dsp_dcblock_test)
+test('DSP AGC Test',         dsp_agc_test)
 test('GFX Text Test',        gfx_text_test)
 test('S-Level Test', slevel_test)
 test('Audio Codec Test',     audio_codec_test)
