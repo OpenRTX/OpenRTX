@@ -69,8 +69,11 @@ extern const struct gpsDevice gps;
 /* Device has a vibration motor */
 #define CONFIG_VIBRATION
 
-/* Microphone audio input */
-#define CONFIG_MIC_GAIN 32
+/*
+ * Microphone audio input. The ADC oversamples in hardware to 15 bit samples,
+ * eight times the 12 bit scale, hence a gain of 4.
+ */
+#define CONFIG_MIC_GAIN 4
 #define CONFIG_MIC_OVERSAMPLE 6
 
 #ifdef __cplusplus
