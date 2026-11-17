@@ -189,9 +189,20 @@ void stm32adc_init(const uint8_t instance)
 
     while((adc->ISR & ADC_ISR_LDORDY) == 0) ;
 
+    /*
+     * Enable the ADC and wait for ADRDY. ADEN set less than 4 ADC clock
+     * cycles after a calibration ends is cleared again by the calibration
+     * logic, so keep setting it until the ADC is ready: ST's workaround in
+     * ADC_Enable(), STM32CubeH7 HAL v1.11.7,
+     * https://github.com/STMicroelectronics/stm32h7xx-hal-driver/blob/v1.11.7/Src/stm32h7xx_hal_adc.c#L3709-L3724
+     */
     adc->ISR   = ADC_ISR_ADRDY;     // Clear the ADRDY flag
     adc->CR   |= ADC_CR_ADEN;
-    while((adc->ISR & ADC_ISR_ADRDY) != 0) ;
+    while((adc->ISR & ADC_ISR_ADRDY) == 0)
+    {
+        if((adc->CR & ADC_CR_ADEN) == 0)
+            adc->CR |= ADC_CR_ADEN;
+    }
 
     adc->SMPR2 = 0x36DB6DB6;
     adc->SMPR1 = 0x36DB6DB6;
