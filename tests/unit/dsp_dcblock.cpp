@@ -23,10 +23,15 @@ static int32_t prev_in_old(int16_t sample)
 
 /*
  * Reference DC block filter using the old left-shift scaling form,
- * expressed without signed left-shift UB.
+ * expressed without signed left-shift UB, primed on its first sample.
  */
 static int16_t dc_block_old(struct dcBlock *dcb, int16_t sample)
 {
+    if (dcb->initialized == false) {
+        dcb->prevIn = prev_in_old(sample);
+        dcb->initialized = true;
+    }
+
     dcb->accum -= dcb->prevIn;
     dcb->prevIn = prev_in_old(sample);
     dcb->accum += dcb->prevIn;
@@ -121,4 +126,19 @@ TEST_CASE("DC block filter removes a constant negative offset",
         last = dsp_dcBlockFilter(&dcb, dc);
 
     REQUIRE(std::abs(static_cast<int>(last)) < 50);
+}
+
+TEST_CASE("DC block primes on its first sample after a reset", "[dsp][dcblock]")
+{
+    const int16_t bias = 2048; // a 12 bit ADC at mid-scale
+    struct dcBlock dcb;
+
+    dsp_resetState(dcb);
+    for (int i = 0; i < 1000; i++)
+        REQUIRE(dsp_dcBlockFilter(&dcb, bias) == 0);
+
+    // A reset primes it again, on the new level
+    dsp_resetState(dcb);
+    for (int i = 0; i < 1000; i++)
+        REQUIRE(dsp_dcBlockFilter(&dcb, -bias) == 0);
 }

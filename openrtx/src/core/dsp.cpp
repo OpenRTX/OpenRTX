@@ -15,8 +15,16 @@ int16_t dsp_dcBlockFilter(struct dcBlock *dcb, int16_t sample)
      *
      * Code adapted from https://dspguru.com/dsp/tricks/fixed-point-dc-blocking-filter-with-noise-shaping/
      */
+    int32_t in = static_cast<int32_t>(sample) * 32768;
+
+    // Start settled on the first sample, so a DC level gives no step
+    if (dcb->initialized == false) {
+        dcb->prevIn = in;
+        dcb->initialized = true;
+    }
+
     dcb->accum -= dcb->prevIn;
-    dcb->prevIn = static_cast<int32_t>(sample) * 32768;
+    dcb->prevIn = in;
     dcb->accum += dcb->prevIn;
     dcb->accum -= 164 * dcb->prevOut; // 32768.0 * (1.0 - pole)
     dcb->prevOut = dcb->accum >> 15;
