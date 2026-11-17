@@ -183,6 +183,7 @@ static void *encodeFunc(void *arg)
     struct CODEC2 *codec2;
     struct dcBlock dcBlock;
     struct decimatorState decimator;
+    struct lowPassDecimator *lowPass = NULL;
 
     // Allocate on the heap, as the stack isn't big enough for oversampling
     // above 2 or so.
@@ -190,6 +191,20 @@ static void *encodeFunc(void *arg)
                                      * sizeof(stream_sample_t));
     if (adcBuf == NULL)
         goto exit;
+
+#if CONFIG_MIC_OVERSAMPLE > 1
+    // Where there is a low pass filter for the ratio, decimate through it
+    // rather than by averaging, so mic audio above 4 kHz does not fold into
+    // the band
+    lowPass = malloc(sizeof(struct lowPassDecimator));
+    if (lowPass == NULL)
+        goto exit;
+
+    if (dsp_lowPassInit(lowPass, CONFIG_MIC_OVERSAMPLE) < 0) {
+        free(lowPass);
+        lowPass = NULL;
+    }
+#endif
 
     iStream = audioStream_start(iPath, adcBuf,
                                 DMA_BUF_SAMPLES * CONFIG_MIC_OVERSAMPLE,
@@ -214,13 +229,20 @@ static void *encodeFunc(void *arg)
         // Each inputStream_getData call returns exactly
         // CODEC2_FRAME_SAMPLES * CONFIG_MIC_OVERSAMPLE raw samples
         // (one half of the double-buffered DMA transfer).  Decimate
-        // by averaging each group of CONFIG_MIC_OVERSAMPLE samples.
+        // by CONFIG_MIC_OVERSAMPLE.
         size_t outIdx = 0;
         for (size_t i = 0; i < audio.len; i++) {
             int16_t sample = audio.data[i];
 
 #if CONFIG_MIC_OVERSAMPLE > 1
-            if (!dsp_decimator(&decimator, &sample, CONFIG_MIC_OVERSAMPLE))
+            bool ready;
+            if (lowPass != NULL)
+                ready = dsp_lowPassDecimate(lowPass, &sample);
+            else
+                ready = dsp_decimator(&decimator, &sample,
+                                      CONFIG_MIC_OVERSAMPLE);
+
+            if (!ready)
                 continue;
 #endif
 
@@ -258,6 +280,7 @@ static void *encodeFunc(void *arg)
     codec2_destroy(codec2);
 
 exit:
+    free(lowPass);
     free(adcBuf);
 
     // In case thread terminates due to invalid path or stream error, detach it
