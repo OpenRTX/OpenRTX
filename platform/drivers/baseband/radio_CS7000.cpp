@@ -24,19 +24,6 @@
 #define DAC     DAC1
 #endif
 
-/*
- * ADC sampling the CTCSS input. On the H7, PA2 reaches only ADC1 and ADC2
- * (ADC12_INP14 in ST's pin data for the STM32H743,
- * https://github.com/STMicroelectronics/STM32_open_pin_data/blob/45c04599e2e0/mcu/STM32H743VITx.xml),
- * so CTCSS shares ADC2 with the audio streams, which audio_init() sets up and
- * which only run in M17 mode.
- */
-#ifdef PLATFORM_CS7000P
-static constexpr uint8_t CTCSS_ADC = STM32_ADC_ADC2;
-#else
-static constexpr uint8_t CTCSS_ADC = STM32_ADC_ADC3;
-#endif
-
 static constexpr uint32_t CTCSS_SAMPLE_RATE = 2000;
 static constexpr freq_t IF_FREQ = 49950000;    // Intermediate frequency: 49.95MHz
 
@@ -168,7 +155,8 @@ void radio_init(const rtxStatus_t *rtxState)
 
     /*
      * Configure the ADC stream used for CTCSS detection. On the CS7000-PLUS
-     * its ADC is the audio driver's, already set up by audio_init().
+     * PA2 reaches only ADC1 and ADC2: CTCSS uses ADC2, already set up by
+     * audio_init().
      */
     ctcssCtx.buffer = ctcssSamples;
     ctcssCtx.bufSize = ARRAY_SIZE(ctcssSamples);
@@ -176,7 +164,7 @@ void radio_init(const rtxStatus_t *rtxState)
     ctcssCtx.sampleRate = CTCSS_SAMPLE_RATE;
     ctcssCtx.running = 0;
 #ifndef PLATFORM_CS7000P
-    stm32adc_init(CTCSS_ADC);
+    stm32adc_init(STM32_ADC_ADC3);
 #endif
 
     /*
@@ -308,7 +296,13 @@ void radio_enableRx()
 
     // Start sampling of CTCSS signal, if enabled
     if((config->opMode == OPMODE_FM) && (config->rxToneEn == true))
-        stm32_adc_audio_driver.start(CTCSS_ADC, (void *) ADC_CTCSS_CH, &ctcssCtx);
+    {
+#ifdef PLATFORM_CS7000P
+        stm32_adc_audio_driver.start(STM32_ADC_ADC2, (void *) ADC_CTCSS_CH, &ctcssCtx);
+#else
+        stm32_adc_audio_driver.start(STM32_ADC_ADC3, (void *) ADC_CTCSS_CH, &ctcssCtx);
+#endif
+    }
 
     radioStatus = RX;
 }
