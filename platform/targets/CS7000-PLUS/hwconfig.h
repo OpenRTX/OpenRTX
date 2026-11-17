@@ -21,13 +21,13 @@ extern "C" {
 #endif
 
 enum AdcChannels {
-    ADC_VOL_CH = 8,   /* PC5  */
-    ADC_VBAT_CH = 3,  /* PA6  */
-    ADC_RTX_CH = 15,  /* PA3  */
-    ADC_RSSI_CH = 9,  /* PB0  */
-    ADC_MIC_CH = 7,   /* PA7  */
-    ADC_CTCSS_CH = 2, /* PA2  */
-    ADC_VOX_CH = 4,   /* PC4  */
+    ADC_VOL_CH = 8,    /* PC5  */
+    ADC_VBAT_CH = 3,   /* PA6  */
+    ADC_RTX_CH = 15,   /* PA3  */
+    ADC_RSSI_CH = 9,   /* PB0  */
+    ADC_MIC_CH = 7,    /* PA7  */
+    ADC_CTCSS_CH = 14, /* PA2  */
+    ADC_VOX_CH = 4,    /* PC4  */
 };
 
 extern const struct Adc adc1;
