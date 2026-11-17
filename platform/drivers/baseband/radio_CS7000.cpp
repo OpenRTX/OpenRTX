@@ -154,14 +154,18 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_setMode(AIN_CTCSS,ANALOG);
 
     /*
-     * Configure ADC3 stream, used for CTCSS detection
+     * Configure the ADC stream used for CTCSS detection. On the CS7000-PLUS
+     * PA2 reaches only ADC1 and ADC2: CTCSS uses ADC2, already set up by
+     * audio_init().
      */
     ctcssCtx.buffer = ctcssSamples;
     ctcssCtx.bufSize = ARRAY_SIZE(ctcssSamples);
     ctcssCtx.bufMode = BUF_CIRC_DOUBLE;
     ctcssCtx.sampleRate = CTCSS_SAMPLE_RATE;
     ctcssCtx.running = 0;
+#ifndef PLATFORM_CS7000P
     stm32adc_init(STM32_ADC_ADC3);
+#endif
 
     /*
      * Configure and enable DAC
@@ -292,7 +296,13 @@ void radio_enableRx()
 
     // Start sampling of CTCSS signal, if enabled
     if((config->opMode == OPMODE_FM) && (config->rxToneEn == true))
+    {
+#ifdef PLATFORM_CS7000P
+        stm32_adc_audio_driver.start(STM32_ADC_ADC2, (void *) ADC_CTCSS_CH, &ctcssCtx);
+#else
         stm32_adc_audio_driver.start(STM32_ADC_ADC3, (void *) ADC_CTCSS_CH, &ctcssCtx);
+#endif
+    }
 
     radioStatus = RX;
 }
