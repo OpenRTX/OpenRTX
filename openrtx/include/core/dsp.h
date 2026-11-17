@@ -35,10 +35,12 @@ struct dcBlock {
     int32_t accum;
     int32_t prevIn;
     int32_t prevOut;
+    bool initialized; ///< Primed on the first sample after a reset
 };
 
 /**
- * Run a single step of the DC blocking filter.
+ * Run a single step of the DC blocking filter. The first sample after a reset
+ * primes the filter, so a signal starting on a DC level passes without a step.
  *
  * @param dcb: pointer to DC filter state.
  * @param sample: input sample.
