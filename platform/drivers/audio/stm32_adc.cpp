@@ -55,6 +55,46 @@ static constexpr AdcPeriph periph[] =
 };
 
 
+#ifdef STM32H743xx
+/*
+ * The H7's ADC converts at 16 bit and oversamples in hardware: 16 conversions
+ * per trigger, summed and shifted right by 5, a 15 bit sample that fits the
+ * signed 16 bit audio samples. At most 16 x (16.5 + 8.5) = 400 ADC clocks per
+ * trigger: 16 us with the 25 MHz ADC clock (HCLK / 4, halved on rev V; 8 us at
+ * 50 MHz on rev Y), inside the 20.8 us period at 48 kHz, the fastest stream.
+ *
+ * RM0433 (STM32H743 reference manual), ADC chapter, registers ADC_CFGR (RES),
+ * ADC_CFGR2 (ROVSE, OVSR = ratio - 1, OVSS = right shift) and ADC_SMPRx (SMP),
+ * https://www.st.com/resource/en/reference_manual/rm0433-stm32h742-stm32h743753-and-stm32h750-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+ * Minimum sampling time against source impedance: DS12110 (STM32H743xI
+ * datasheet), "ADC characteristics",
+ * https://www.st.com/resource/en/datasheet/stm32h743zi.pdf
+ * The technique: ST AN5537, "How to use ADC oversampling techniques to
+ * improve signal-to-noise ratio on STM32 MCUs".
+ */
+static constexpr uint32_t OVS_RATIO = 16;
+static constexpr uint32_t OVS_SHIFT = 5;
+// SMP = 0b011: 16.5 ADC clock cycles
+static constexpr uint32_t SMP_16_5 = 3;
+static constexpr uint32_t SMPR_FIELDS = 10;
+
+/**
+ * \internal
+ * Build an SMPRx value with the same sampling time in each of its SMP fields.
+ *
+ * @param smp: SMP field value.
+ * @return the SMPRx register value.
+ */
+static constexpr uint32_t smprAll(const uint32_t smp)
+{
+    uint32_t smpr = 0;
+    for(uint32_t i = 0; i < SMPR_FIELDS; i++)
+        smpr |= smp << (i * ADC_SMPR1_SMP1_Pos);
+
+    return smpr;
+}
+#endif
+
 /**
  * \internal
  * Stop an ongoing transfer, deactivating timers and DMA stream.
@@ -189,6 +229,11 @@ void stm32adc_init(const uint8_t instance)
 
     while((adc->ISR & ADC_ISR_LDORDY) == 0) ;
 
+    // Calibrate offset and linearity before enabling, as adc_stm32h7.c does
+    adc->CR |= ADC_CR_ADCAL
+            |  ADC_CR_ADCALLIN;
+    while((adc->CR & ADC_CR_ADCAL) != 0) ;
+
     /*
      * Enable the ADC and wait for ADRDY. ADEN set less than 4 ADC clock
      * cycles after a calibration ends is cleared again by the calibration
@@ -204,15 +249,17 @@ void stm32adc_init(const uint8_t instance)
             adc->CR |= ADC_CR_ADEN;
     }
 
-    adc->SMPR2 = 0x36DB6DB6;
-    adc->SMPR1 = 0x36DB6DB6;
+    adc->SMPR2 = smprAll(SMP_16_5);
+    adc->SMPR1 = smprAll(SMP_16_5);
     adc->SQR1  = 0;                 // Convert one channel
-    adc->CFGR |= ADC_CFGR_DISCEN
+    adc->CFGR |= ADC_CFGR_DISCEN    // RES left at 000: 16-bit resolution
               |  ADC_CFGR_EXTEN_0   // Trigger on rising edge
               |  adcTrig            // Trigger source
-              |  ADC_CFGR_RES_1     // 12-bit resolution
               |  ADC_CFGR_DMNGT_1   // Continuous DMA requests
               |  ADC_CFGR_DMNGT_0;  // Enable DMA data transfer
+    adc->CFGR2 = ADC_CFGR2_ROVSE    // Regular oversampling
+               | ((OVS_RATIO - 1) << ADC_CFGR2_OVSR_Pos)
+               | (OVS_SHIFT << ADC_CFGR2_OVSS_Pos);
     #else
     adc->SMPR2 = ADC_SMPR2_SMP2_2
                | ADC_SMPR2_SMP1_2;
