@@ -6,6 +6,7 @@
 
 #include <new>
 #include <cstddef>
+#include <algorithm>
 #include <cstring>
 #include "protocols/M17/Modulator.hpp"
 #include "protocols/M17/Utils.hpp"
@@ -38,6 +39,7 @@ void Modulator::init()
     baseband_buffer = std::make_unique< int16_t[] >(2 * FRAME_SAMPLES);
     idleBuffer      = baseband_buffer.get();
     txRunning       = false;
+    symbolOut       = false;
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     pwmComp.reset();
     #endif
@@ -69,9 +71,10 @@ bool Modulator::start()
     if(outPath < 0)
         return false;
 
-    outStream = audioStream_start(outPath, baseband_buffer.get(),
-                                  2*FRAME_SAMPLES, TX_SAMPLE_RATE,
-                                  STREAM_OUTPUT | BUF_CIRC_DOUBLE);
+    const size_t   frame = symbolOut ? FRAME_SYMBOLS : FRAME_SAMPLES;
+    const uint32_t rate  = symbolOut ? SYMBOL_RATE : TX_SAMPLE_RATE;
+    outStream = audioStream_start(outPath, baseband_buffer.get(), 2 * frame,
+                                  rate, STREAM_OUTPUT | BUF_CIRC_DOUBLE);
 
     if(outStream < 0)
         return false;
@@ -134,9 +137,23 @@ void Modulator::invertPhase(const bool status)
     invPhase = status;
 }
 
+void Modulator::outputSymbols(const bool status)
+{
+    symbolOut = status;
+}
+
 
 void Modulator::symbolsToBaseband()
 {
+    if(symbolOut)
+    {
+        // One sample per symbol: the radio shapes the pulses
+        const int8_t sign = invPhase ? -1 : 1;
+        std::transform(symbols.begin(), symbols.end(), idleBuffer,
+                       [sign](const int8_t sym) { return sign * sym; });
+        return;
+    }
+
     memset(idleBuffer, 0x00, FRAME_SAMPLES * sizeof(stream_sample_t));
 
     for(size_t i = 0; i < symbols.size(); i++)
