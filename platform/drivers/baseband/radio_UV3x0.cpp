@@ -15,7 +15,19 @@
 #include "radioUtils.h"
 #include "drivers/baseband/HR_C6000.h"
 #include "drivers/baseband/AT1846S.h"
+#ifdef CONFIG_M17_CHIP_MODEM
+#include "drivers/audio/C6000_modem.h"
+#endif
 
+/*
+ * M17 through the HR_C6000's modem: outer deviation of M17 and of DMR, for
+ * which the modulation calibration is set. Measured on an MD-UV390 by
+ * sweeping the modulation at 445.975 MHz: the outer deviation is linear in it
+ * and reaches 2400 Hz at 1.21 times the DMR value; EVM is flat (3.4-4 %) up
+ * to about 2700 Hz. Mod2 changed nothing and stays 0, as for DMR.
+ */
+static constexpr uint32_t M17_DEV_HZ = 2400;
+static constexpr uint32_t DMR_DEV_HZ = 1944;
 
 static const rtxStatus_t *config;                // Pointer to data structure with radio configuration
 
@@ -204,7 +216,10 @@ void radio_enableTx()
             break;
 
         case OPMODE_M17:
-            C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
+            // Baseband from the PWM, unless the chip's own modem sends M17
+            if(config->m17Chip == 0)
+                C6000.startAnalogTx(TxAudioSource::LINE_IN,
+                                    FmConfig::BW_25kHz);
             break;
 
         default:
@@ -310,7 +325,17 @@ void radio_updateConfiguration()
     // HR_C6000 modulation amplitude
     uint8_t Q = interpCalParameter(config->txFrequency, txCalPoints, qRangeCal,
                                                                      calPoints);
+
+    // The chip's modem sends M17 symbols as DMR ones: scale the DMR
+    // calibration from DMR's outer deviation to M17's
+    if((config->opMode == OPMODE_M17) && (config->m17Chip != 0))
+        Q = std::min< uint32_t >((Q * M17_DEV_HZ + DMR_DEV_HZ / 2) / DMR_DEV_HZ,
+                                 UINT8_MAX);
+
     C6000.setModAmplitude(0, Q);
+    #ifdef CONFIG_M17_CHIP_MODEM
+    C6000modem_useChip((config->opMode == OPMODE_M17) && (config->m17Chip != 0));
+    #endif
 
     // Set bandwidth, only for analog FM mode
     if(config->opMode == OPMODE_FM)

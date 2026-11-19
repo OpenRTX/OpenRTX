@@ -98,5 +98,7 @@
 #define DMR_CLK   GPIOE,3
 #define DMR_MOSI  GPIOE,4
 #define DMR_MISO  GPIOE,5
+#define DMR_TS_INT  GPIOC,0 /* Timeslot interrupt */
+#define DMR_SYS_INT GPIOC,1 /* System interrupt */
 
 #endif /* PINMAP_H */
