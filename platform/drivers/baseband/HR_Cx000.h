@@ -12,6 +12,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <array>
+#include <bitset>
 
 /**
  * Configuration options for analog FM mode.
@@ -176,6 +178,19 @@ public:
     }
 
     /**
+     * Get the value last written to a configuration register, or its current
+     * value if it was never written: some registers read back otherwise than
+     * written (0x10, 0x34 and 0x81 on the HR_C6000).
+     *
+     * @param reg: register number.
+     * \return the value last written to the register.
+     */
+    inline uint8_t writtenCfgRegister(const uint8_t reg)
+    {
+        return cfgWritten.test(reg) ? cfgValues[reg] : readCfgRegister(reg);
+    }
+
+    /**
      * Send audio to the DAC FIFO for playback via the "OpenMusic" mode.
      * This function assumes that audio chunk is composed of 64 bytes.
      *
@@ -209,6 +224,12 @@ private:
         data[0] = static_cast< uint8_t >(opMode);
         data[1] = addr;
         data[2] = value;
+
+        if(opMode == M::CONFIG)
+        {
+            cfgValues[addr] = value;
+            cfgWritten.set(addr);
+        }
 
         ScopedChipSelect cs(uSpi, uCs);
         spi_send(uSpi, data, 3);
@@ -259,6 +280,11 @@ protected:
 
     const struct spiDevice *uSpi;
     const struct gpioPin uCs;
+
+private:
+
+    std::array< uint8_t, 256 > cfgValues;   ///< Configuration registers as written
+    std::bitset< 256 >         cfgWritten;  ///< Which of them were written
 };
 
 /**

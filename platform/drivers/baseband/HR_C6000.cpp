@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <array>
 #include "core/utils.h"
 #include "drivers/baseband/HR_C6000.h"
 
@@ -76,4 +77,111 @@ void HR_C6000::sendTone(const uint32_t freq, const uint8_t deviation)
     writeCfgRegister(0xAD, 0x11);
     writeCfgRegister(0x60, 0x00);         // Disable FM transmission
     writeCfgRegister(0x60, 0x80);         // Enable FM transmission, start sending the tone
+}
+
+/*
+ * Registers the symbol transmission and the FM copy change. Radios leave them
+ * in different receive set-ups, so each mode puts back what was written to
+ * them before (some read back otherwise).
+ */
+static constexpr uint8_t SYMBOL_TX_REGS[] = { 0x41, 0x10, 0x20, 0x21, 0x22, 0x40 };
+static constexpr uint8_t FM_COPY_REGS[]   = { 0x41, 0x36, 0x60, 0x34, 0x10, 0x81,
+                                              0x26 };
+
+void HR_C6000::startSymbolTx()
+{
+    for(size_t i = 0; i < ARRAY_SIZE(SYMBOL_TX_REGS); i++)
+        savedRegs[i] = writtenCfgRegister(SYMBOL_TX_REGS[i]);
+
+    std::array< uint8_t, SYMBOL_SLOT_BYTES > idle;
+    idle.fill(SYMBOL_IDLE);
+
+    writeCfgRegister(0x41, 0x00);       // No slot activity during the set-up
+    writeCfgRegister(0x10, 0x66);       // Physical layer mode
+    writeCfgRegister(0x20, 0x00);
+    writeCfgRegister(0x21, 0x02);       // Impolite access
+    writeCfgRegister(0x22, 0x86);
+    writeRam(C6000_SpiOpModes::DATA, 0, idle.data(), idle.size());
+    writeRam(C6000_SpiOpModes::DATA, SYMBOL_SLOT_BYTES, idle.data(),
+             idle.size());
+    writeCfgRegister(0x40, 0xE3);       // Own timing: the slot clock starts
+}
+
+void HR_C6000::writeSymbolSlot(const uint32_t interrupt, const uint8_t *symbols)
+{
+    // Slot n + 1 is set up at interrupt n, from the first half when n is odd
+    const uint8_t addr = ((interrupt & 1) != 0) ? 0 : SYMBOL_SLOT_BYTES;
+
+    writeRam(C6000_SpiOpModes::DATA, addr, symbols, SYMBOL_SLOT_BYTES);
+    writeCfgRegister(0x41, 0x80);       // Send in the next slot
+}
+
+void HR_C6000::stopSymbolTx()
+{
+    writeCfgRegister(0x41, 0x00);       // No more slots
+
+    for(size_t i = ARRAY_SIZE(SYMBOL_TX_REGS); i > 0; i--)
+        writeCfgRegister(SYMBOL_TX_REGS[i - 1], savedRegs[i - 1]);
+}
+
+void HR_C6000::startFmCopy()
+{
+    for(size_t i = 0; i < ARRAY_SIZE(FM_COPY_REGS); i++)
+        savedRegs[i] = writtenCfgRegister(FM_COPY_REGS[i]);
+
+    writeCfgRegister(0x41, 0x00);       // No physical layer slot activity
+    writeCfgRegister(0x36, 0x00);       // FM audio not to the codec
+    writeCfgRegister(0x60, 0x00);       // No transmission
+    writeCfgRegister(0x34, 0x00);       // Receive audio filters off
+    writeCfgRegister(0x10, 0x80);       // FM mode
+    writeCfgRegister(0x81, 0x02);       // Only the copy's system interrupt
+    writeCfgRegister(0x26, 0xFD);       // FM receive on (0xFE is off)
+    writeCfgRegister(0x83, 0xFF);       // Clear the flags
+
+    fmCopyLast[0] = fmCopyLastSample(0);
+    fmCopyLast[1] = fmCopyLastSample(1);
+    fmCopyHalf    = 1;
+}
+
+void HR_C6000::readFmCopy(int16_t *samples)
+{
+    writeCfgRegister(0x83, 0x02);       // Clear the copy's flag
+
+    // The flag does not say which half: the one whose last sample changed.
+    // When both or neither did (a steady input), the other one than last time
+    const int16_t now[2]  = { fmCopyLastSample(0), fmCopyLastSample(1) };
+    const bool changed[2] = { now[0] != fmCopyLast[0], now[1] != fmCopyLast[1] };
+    uint8_t half = fmCopyHalf ^ 1;
+    if(changed[0] != changed[1])
+        half = changed[0] ? 0 : 1;
+
+    const size_t bytes = FM_COPY_SAMPLES * sizeof(int16_t);
+    readRam16(C6000_SpiOpModes::DATA, FM_COPY_RAM + half * bytes,
+              reinterpret_cast< uint8_t * >(samples), bytes);
+
+    for(size_t i = 0; i < FM_COPY_SAMPLES; i++)
+        samples[i] = static_cast< int16_t >(__builtin_bswap16(samples[i]));
+
+    fmCopyLast[0] = now[0];
+    fmCopyLast[1] = now[1];
+    fmCopyHalf    = half;
+}
+
+void HR_C6000::stopFmCopy()
+{
+    for(size_t i = ARRAY_SIZE(FM_COPY_REGS); i > 0; i--)
+        writeCfgRegister(FM_COPY_REGS[i - 1], savedRegs[i - 1]);
+
+    writeCfgRegister(0x83, 0xFF);
+}
+
+int16_t HR_C6000::fmCopyLastSample(const uint8_t half)
+{
+    const size_t bytes = FM_COPY_SAMPLES * sizeof(int16_t);
+    uint8_t b[2];
+
+    readRam16(C6000_SpiOpModes::DATA, FM_COPY_RAM + (half + 1) * bytes - 2,
+              b, sizeof(b));
+
+    return static_cast< int16_t >((b[0] << 8) | b[1]);
 }
