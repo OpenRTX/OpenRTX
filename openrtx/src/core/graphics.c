@@ -823,7 +823,9 @@ void gfx_drawSmeter(point_t start, uint16_t width, uint16_t height, rssi_t rssi,
 
     // Squelch bar
     uint16_t squelch_height = bar_height * 2 / bar_height_divider;
-    uint16_t squelch_width = (width * squelch) / 15;
+    if (squelch > SLEVEL_MAX)
+        squelch = SLEVEL_MAX;
+    uint16_t squelch_width = (squelch * (width - 1)) / SLEVEL_MAX;
     point_t squelch_pos = { start.x, (uint8_t)(start.y + 2 + volume_height) };
     gfx_drawRect(squelch_pos, squelch_width, squelch_height, color, true);
 
