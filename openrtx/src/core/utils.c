@@ -83,6 +83,17 @@ uint8_t rssiToSlevel(const rssi_t rssi)
     return (uint8_t)(127 + rssi) / 6;
 }
 
+rssi_t sLevelToRssi(const uint8_t slevel)
+{
+    uint8_t level = (slevel > SLEVEL_MAX) ? SLEVEL_MAX : slevel;
+
+    // 6 dB per S-point up to S9 (-73 dBm), then 10 dB steps
+    if (level > 9)
+        return -73 + (10 * (rssi_t)(level - 9));
+
+    return -127 + (6 * (rssi_t)level);
+}
+
 uint8_t ctcssFreqToIndex(const uint16_t freq)
 {
     for(uint8_t idx = 0; idx < CTCSS_FREQ_NUM; idx += 1)

@@ -79,6 +79,19 @@ void stripTrailingZeroes(char *str);
 uint8_t rssiToSlevel(const rssi_t rssi);
 
 /**
+ * Highest S-level: S9 + 20 dB, the last mark of the S-meter.
+ */
+#define SLEVEL_MAX 11
+
+/**
+ * Get the lowest RSSI value of an S-level, the inverse of rssiToSlevel().
+ *
+ * @param slevel: S level, from S0 to SLEVEL_MAX.
+ * @return RSSI in dBm; for S0, the bottom of the scale (-127 dBm).
+ */
+rssi_t sLevelToRssi(const uint8_t slevel);
+
+/**
  * Retrieve the CTCSS tone index given its frequency in tenths of Hz.
  *
  * @param freq: CTCSS frequency
