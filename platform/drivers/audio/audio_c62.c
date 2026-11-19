@@ -8,6 +8,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <hwconfig.h>
 #include <interfaces/radio.h>
+#include "audio_c62.h"
 #include "csk6_codec.h"
 
 /*
@@ -19,6 +20,16 @@
  */
 static K_MUTEX_DEFINE(boardMutex);
 static bool initialized;
+static bool beeping;
+
+/*
+ * The speaker stays on after a beep while its end crosses the DSP: FIFO,
+ * latency and margin, as the codec estimates them, are well under this.
+ */
+#define BEEP_SPEAKER_HOLD_MS 200
+
+static void beepEnded(struct k_work *work);
+static K_WORK_DELAYABLE_DEFINE(beepEnd, beepEnded);
 /* Active routes, by source and sink */
 static bool paths[SOURCE_MCU + 1][SINK_MCU + 1];
 
@@ -59,11 +70,12 @@ const struct audioDevice inputDevices[] = {
 };
 
 /**
- * Keep the speaker enabled while any active route plays to it.
+ * Keep the speaker enabled while any active route plays to it, or a beep
+ * sounds.
  */
 static void updateSpeaker(void)
 {
-    bool speaker = false;
+    bool speaker = beeping;
     for (size_t i = 0; i < ARRAY_SIZE(paths); i++)
         speaker |= paths[i][SINK_SPK];
     gpio_pin_set_dt(&speaker_enable, speaker);
@@ -115,6 +127,33 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
         updateSpeaker();
         if ((source == SOURCE_RTX) && (sink == SINK_SPK))
             radio_disableAfOutput();
+    }
+    k_mutex_unlock(&boardMutex);
+}
+
+static void beepEnded(struct k_work *work)
+{
+    (void)work;
+
+    k_mutex_lock(&boardMutex, K_FOREVER);
+    beeping = false;
+    updateSpeaker();
+    k_mutex_unlock(&boardMutex);
+}
+
+void audioC62_beep(uint16_t freq)
+{
+    if (!initialized)
+        return;
+
+    k_mutex_lock(&boardMutex, K_FOREVER);
+    csk6codec_setBeep(freq);
+    if (freq != 0) {
+        k_work_cancel_delayable(&beepEnd);
+        beeping = true;
+        updateSpeaker();
+    } else {
+        k_work_reschedule(&beepEnd, K_MSEC(BEEP_SPEAKER_HOLD_MS));
     }
     k_mutex_unlock(&boardMutex);
 }

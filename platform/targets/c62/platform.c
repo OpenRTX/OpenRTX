@@ -17,6 +17,7 @@
 #include <interfaces/audio.h>
 #include <interfaces/nvmem.h>
 #include "drivers/SPI/spi_zephyr.h"
+#include "drivers/audio/audio_c62.h"
 #include "drivers/audio/csk6_codec.h"
 #include "controller.h"
 #include "dsp.h"
@@ -281,15 +282,16 @@ void platform_ledOff(led_t led)
 void platform_beepStart(uint16_t freq)
 {
     /*
-     * No BK4819 beeps: they come out of its AF output, which the speaker
-     * mux doesn't select, and BK4819_BeepStart() stops RX until the next
-     * retune.
+     * Not the BK4819 beeps: they come out of its AF output, which the
+     * speaker mux doesn't select, and BK4819_BeepStart() stops RX until the
+     * next retune. The codec mixes the tone into the speaker output instead.
      */
-    (void)freq;
+    audioC62_beep(freq);
 }
 
 void platform_beepStop()
 {
+    audioC62_beep(0);
 }
 
 const hwInfo_t *platform_getHwInfo()

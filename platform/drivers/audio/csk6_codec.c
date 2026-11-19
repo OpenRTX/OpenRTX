@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +69,12 @@ BUILD_ASSERT(((int)SOURCE_MIC == (int)SINK_SPK)
 /* Static worst case about 0.9 KiB, with immediate-mode logging and an FPU
  * exception frame, from -fcallgraph-info=su */
 #define WORKER_STACK_SIZE 2048
+/* Beep tone: one sine cycle in BEEP_TABLE_SIZE steps, at about -15 dBFS */
+#define BEEP_TABLE_BITS 8
+#define BEEP_TABLE_SIZE (1 << BEEP_TABLE_BITS)
+#define BEEP_LEVEL 6000
+/* No M_PI: Zephyr builds C as C99 */
+#define TWO_PI 6.28318531f
 
 /*
  * CSK6 audio codec ADC01, the AON codec, not the CP's ADC23. Not in
@@ -155,6 +162,13 @@ static int64_t playbackDeadline;
 static uint32_t playbackFraction;
 static struct k_thread worker;
 static K_THREAD_STACK_DEFINE(workerStack, WORKER_STACK_SIZE);
+/* Beep: phase step per 48 kHz sample, a cycle being 2^32, 0 when off */
+static uint32_t beepStep;
+static uint32_t beepPhase;
+/* A stopped beep still in the DSP FIFO: playback runs until the deadline */
+static bool beepDraining;
+static int64_t beepDeadline;
+static int16_t beepTable[BEEP_TABLE_SIZE];
 
 /**
  * Empty an FM queue.
@@ -585,7 +599,7 @@ static void setPlayback(AudioTrack *track, bool enable)
 static void applyRoutes(AudioRecord *rec, AudioTrack *track)
 {
     bool capture = false;
-    bool playback = false;
+    bool playback = (beepStep != 0) || beepDraining;
     for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         capture |= inputEnabled[i] || (outputSource[i] == SOURCE_MIC)
                 || (outputSource[i] == SOURCE_RTX);
@@ -809,6 +823,24 @@ static size_t playStream(struct outputState *out, int16_t *dst, size_t stride,
 }
 
 /**
+ * Add the beep tone to the speaker samples of a playback frame, saturating.
+ *
+ * @param dst: first sample of the channel.
+ * @param stride: distance between samples, in samples.
+ * @param count: samples.
+ */
+static void mixBeep(int16_t *dst, size_t stride, size_t count)
+{
+    for (size_t i = 0; i < count; i++) {
+        int32_t sample = dst[i * stride]
+                       + beepTable[beepPhase >> (32 - BEEP_TABLE_BITS)];
+
+        dst[i * stride] = (int16_t)CLAMP(sample, INT16_MIN, INT16_MAX);
+        beepPhase += beepStep;
+    }
+}
+
+/**
  * Fill an output channel of a playback frame. FM samples pass through
  * unchanged; TX levels are set by the codec gains in hwconfig.h. Unrouted,
  * empty, inactive or draining channels play silence.
@@ -831,6 +863,9 @@ static void playChannel(size_t channel, int16_t *dst, size_t stride,
 
     for (; done < count; done++)
         dst[done * stride] = 0;
+
+    if ((channel == SINK_SPK) && (beepStep != 0))
+        mixBeep(dst, stride, count);
 }
 
 /**
@@ -838,6 +873,9 @@ static void playChannel(size_t channel, int16_t *dst, size_t stride,
  */
 static bool outputsPending(void)
 {
+    if ((beepStep != 0) || beepDraining)
+        return true;
+
     for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         const struct outputState *out = &outputs[i];
         if ((out->fmQueue.count != 0)
@@ -917,6 +955,14 @@ static int64_t drainDeadline(AudioTrack *track)
  */
 static void finishOutputs(AudioTrack *track)
 {
+    // Stopping playback flushes the DSP FIFO: let a beep play out first
+    if (beepDraining) {
+        if (beepDeadline == 0)
+            beepDeadline = drainDeadline(track);
+        else if (k_uptime_get() >= beepDeadline)
+            beepDraining = false;
+    }
+
     for (size_t i = 0; i < CODEC_CHANNELS; i++) {
         struct outputState *out = &outputs[i];
         struct endpoint *ep = &out->endpoint;
@@ -990,6 +1036,10 @@ static void initEndpoints(void)
 int csk6codec_init(void)
 {
     initEndpoints();
+    for (size_t i = 0; i < BEEP_TABLE_SIZE; i++)
+        beepTable[i] =
+            (int16_t)(BEEP_LEVEL * sinf((TWO_PI * i) / BEEP_TABLE_SIZE));
+
     int ret = openDsp(&record, &playbackTrack);
     if (ret != 0)
         return ret;
@@ -1013,6 +1063,20 @@ void csk6codec_terminate(void)
 uint16_t csk6codec_getMicPeak(void)
 {
     return micPeak;
+}
+
+void csk6codec_setBeep(uint16_t freq)
+{
+    k_mutex_lock(&audioMutex, K_FOREVER);
+    uint32_t step = (uint32_t)(((uint64_t)freq << 32) / DSP_SAMPLE_RATE);
+    if ((step == 0) && (beepStep != 0)) {
+        beepDraining = true;
+        beepDeadline = 0;
+    }
+
+    beepStep = step;
+    k_sem_give(&workerWake);
+    k_mutex_unlock(&audioMutex);
 }
 
 void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
