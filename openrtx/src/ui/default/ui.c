@@ -171,7 +171,10 @@ const char * settings_m17_items[] =
     "Callsign",
     "Meta Txt",
     "CAN",
-    "CAN RX Check"
+    "CAN RX Check",
+#ifdef CONFIG_M17_CHIP_MODEM
+    "Modem",
+#endif
 };
 
 const char* settings_fm_items[] =
@@ -2406,6 +2409,22 @@ void ui_updateFSM(bool *sync_rtx)
                                 ui_state.edit_mode = !ui_state.edit_mode;
                             else if(msg.keys & KEY_ESC)
                                 ui_state.edit_mode = false;
+                            break;
+#ifdef CONFIG_M17_CHIP_MODEM
+                        case M17_CHIP_MODEM:
+                            if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
+                                (ui_state.edit_mode &&
+                                 (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT ||
+                                  msg.keys & KEY_UP || msg.keys & KNOB_RIGHT)))
+                            {
+                                state.settings.m17_chip_modem =
+                                    !state.settings.m17_chip_modem;
+                            }
+                            else if(msg.keys & KEY_ENTER)
+                                ui_state.edit_mode = !ui_state.edit_mode;
+                            else if(msg.keys & KEY_ESC)
+                                ui_state.edit_mode = false;
+#endif
                     }
                 }
                 else

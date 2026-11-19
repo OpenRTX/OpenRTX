@@ -128,6 +128,7 @@ private:
     bool startRx;                      ///< Flag for RX management.
     bool startTx;                      ///< Flag for TX management.
     bool locked;                       ///< Demodulator locked on data stream.
+    bool chipModem;                    ///< M17 through the baseband chip.
     bool dataValid;                    ///< Demodulated data is valid
     bool extendedCall;                 ///< Extended callsign data received
     bool invertTxPhase;                ///< TX signal phase inversion setting.
