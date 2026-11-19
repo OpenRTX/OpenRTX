@@ -19,6 +19,7 @@
 #include "drivers/baseband/HR_C6000.h"
 #include "drivers/baseband/SKY72310.h"
 #include "drivers/baseband/AK2365A.h"
+#include "drivers/audio/C6000_modem.h"
 
 #ifdef PLATFORM_CS7000P
 #define DAC     DAC1
@@ -26,6 +27,13 @@
 
 static constexpr uint32_t CTCSS_SAMPLE_RATE = 2000;
 static constexpr freq_t IF_FREQ = 49950000;    // Intermediate frequency: 49.95MHz
+
+/*
+ * M17 through the HR_C6000's modem: the calibration's DMR modulation pair,
+ * scaled from DMR's outer deviation to M17's
+ */
+static constexpr uint32_t M17_DEV_HZ = 2400;
+static constexpr uint32_t DMR_DEV_HZ = 1944;
 
 static const rtxStatus_t  *config;             // Pointer to data structure with radio configuration
 static struct CS7000Calib calData;             // Calibration data
@@ -342,7 +350,10 @@ void radio_enableTx()
 
         case OPMODE_M17:
             C6000.disableTones();
-            C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
+
+            // Baseband from the DAC, unless the chip's own modem sends M17
+            if(config->m17Chip == 0)
+                C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 
         default:
@@ -372,6 +383,18 @@ void radio_disableRtx()
     radioStatus = OFF;
 }
 
+/**
+ * Scale one value of the DMR modulation pair to M17's deviation, rounding.
+ *
+ * @param cal: calibration value.
+ * @return the scaled value, at most 255.
+ */
+static uint8_t scaleMod(const uint32_t cal)
+{
+    return std::min< uint32_t >((cal * M17_DEV_HZ + DMR_DEV_HZ / 2) / DMR_DEV_HZ,
+                                UINT8_MAX);
+}
+
 void radio_updateConfiguration()
 {
     // Tuning voltage for RX input filter
@@ -384,8 +407,18 @@ void radio_updateConfiguration()
     // HR_C6000 modulation amplitude
     uint8_t qAmp = interpParameter(config->txFrequency, calData.txCalFreq, calData.txDigitalPathQ);
     uint8_t iAmp = interpParameter(config->txFrequency, calData.txCalFreq, calData.txAnalogPathI);
+
+    // The chip's modem sends M17 symbols as DMR ones, from the DMR pair
+    const bool m17Chip = (config->opMode == OPMODE_M17) && (config->m17Chip != 0);
+    if(m17Chip)
+    {
+        qAmp = scaleMod(interpParameter(config->txFrequency, calData.txCalFreq, calData.txDmrMod2));
+        iAmp = scaleMod(interpParameter(config->txFrequency, calData.txCalFreq, calData.txDmrMod1));
+    }
+
     C6000.writeCfgRegister(0x45, qAmp);   // Adjustment of Mod2 amplitude
     C6000.writeCfgRegister(0x46, iAmp);   // Adjustment of Mod1 amplitude
+    C6000modem_useChip(m17Chip);
 
     // RSSI interpolation curve
     rssi = interpRssi(config->rxFrequency, rssiCal);

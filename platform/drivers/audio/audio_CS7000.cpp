@@ -17,21 +17,35 @@
 #include "stm32_dac.h"
 #include "stm32_adc.h"
 #include "Cx000_dac.h"
+#include "C6000_symbols.h"
+#include "C6000_fmcopy.h"
+#include "C6000_modem.h"
 
 #define PATH(x,y) ((x << 4) | y)
 
+// Analog baseband paths, when M17 does not go through the HR_C6000's modem
+static const struct C6000modemPath rtxOutAnalog =
+{
+    &stm32_dac_audio_driver, NULL
+};
+
+static const struct C6000modemPath rtxInAnalog =
+{
+    &stm32_adc_audio_driver, (const void *) ADC_RTX_CH
+};
+
 const struct audioDevice outputDevices[] =
 {
-    {NULL,                    NULL, 0,             SINK_MCU},
-    {&stm32_dac_audio_driver, NULL, STM32_DAC_CH2, SINK_RTX},
-    {&Cx000_dac_audio_driver, NULL, 0,             SINK_SPK},
+    {NULL,                          NULL,          0,             SINK_MCU},
+    {&C6000_modem_out_audio_driver, &rtxOutAnalog, STM32_DAC_CH2, SINK_RTX},
+    {&Cx000_dac_audio_driver,       NULL,          0,             SINK_SPK},
 };
 
 const struct audioDevice inputDevices[] =
 {
-    {NULL,                    0,                          0,              SOURCE_MCU},
-    {&stm32_adc_audio_driver, (const void *) ADC_RTX_CH,  STM32_ADC_ADC2, SOURCE_RTX},
-    {&stm32_adc_audio_driver, (const void *) ADC_MIC_CH,  STM32_ADC_ADC2, SOURCE_MIC},
+    {NULL,                         0,                          0,              SOURCE_MCU},
+    {&C6000_modem_in_audio_driver, &rtxInAnalog,               STM32_ADC_ADC2, SOURCE_RTX},
+    {&stm32_adc_audio_driver,      (const void *) ADC_MIC_CH,  STM32_ADC_ADC2, SOURCE_MIC},
 };
 
 HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
@@ -53,6 +67,76 @@ static inline void selectSpk()
         gpioDev_clear(INT_SPK_MUTE);
 }
 
+// HR_C6000 timeslot interrupt (DMR_TS_INT, PC0), falling edge
+void __attribute__((used)) EXTI0_IRQHandler()
+{
+    #ifdef STM32H743xx
+    EXTI_D1->PR1 = EXTI_PR1_PR0;
+    #else
+    EXTI->PR = EXTI_PR_PR0;
+    #endif
+    C6000symbols_timeslotIrq();
+}
+
+/*
+ * HR_C6000 system interrupt (DMR_SYS_INT), falling edge: PC3 on the
+ * CS7000-PLUS, as in its schematic, PC1 on the CS7000
+ */
+#ifdef STM32H743xx
+void __attribute__((used)) EXTI3_IRQHandler()
+{
+    EXTI_D1->PR1 = EXTI_PR1_PR3;
+    C6000fmcopy_systemIrq();
+}
+#else
+void __attribute__((used)) EXTI1_IRQHandler()
+{
+    EXTI->PR = EXTI_PR_PR1;
+    C6000fmcopy_systemIrq();
+}
+#endif
+
+/**
+ * Route the HR_C6000 timeslot and system interrupts to their EXTI lines,
+ * falling edge.
+ */
+static void chipModemInit()
+{
+    C6000symbols_init(&C6000);
+    C6000fmcopy_init(&C6000);
+
+    gpio_setMode(DMR_TS_INT,  INPUT);
+    gpio_setMode(DMR_SYS_INT, INPUT);
+
+    #ifdef STM32H743xx
+    RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+    __DSB();
+    SYSCFG->PMCR &= ~SYSCFG_PMCR_PC3SO;     // PC3_C pad to the PC3 input
+    SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0]
+                      & ~(SYSCFG_EXTICR1_EXTI0 | SYSCFG_EXTICR1_EXTI3))
+                      | SYSCFG_EXTICR1_EXTI0_PC | SYSCFG_EXTICR1_EXTI3_PC;
+    EXTI->FTSR1   |= EXTI_FTSR1_TR0 | EXTI_FTSR1_TR3;
+    EXTI_D1->PR1   = EXTI_PR1_PR0 | EXTI_PR1_PR3;
+    EXTI_D1->IMR1 |= EXTI_IMR1_IM0 | EXTI_IMR1_IM3;
+    NVIC_SetPriority(EXTI3_IRQn, 10);
+    NVIC_EnableIRQ(EXTI3_IRQn);
+    #else
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    __DSB();
+    SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0]
+                      & ~(SYSCFG_EXTICR1_EXTI0 | SYSCFG_EXTICR1_EXTI1))
+                      | SYSCFG_EXTICR1_EXTI0_PC | SYSCFG_EXTICR1_EXTI1_PC;
+    EXTI->FTSR |= EXTI_FTSR_TR0 | EXTI_FTSR_TR1;
+    EXTI->PR    = EXTI_PR_PR0 | EXTI_PR_PR1;
+    EXTI->IMR  |= EXTI_IMR_MR0 | EXTI_IMR_MR1;
+    NVIC_SetPriority(EXTI1_IRQn, 10);
+    NVIC_EnableIRQ(EXTI1_IRQn);
+    #endif
+
+    NVIC_SetPriority(EXTI0_IRQn, 10);
+    NVIC_EnableIRQ(EXTI0_IRQn);
+}
+
 static void *audio_thread(void *arg)
 {
     (void) arg;
@@ -65,6 +149,7 @@ static void *audio_thread(void *arg)
     {
         selectSpk();
         Cx000dac_task();
+        C6000symbols_task();
 
         now += 4;
         sleepUntil(now);
@@ -99,6 +184,7 @@ void audio_init()
     spiStm32_init(&c6000_spi, 12500000, SPI_FLAG_CPHA);
     C6000.init();
     C6000.fmMode();
+    chipModemInit();
 
     pthread_attr_t attr;
     pthread_t      thread;

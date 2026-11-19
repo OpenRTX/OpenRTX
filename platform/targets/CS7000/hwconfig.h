@@ -57,6 +57,9 @@ extern const struct gpsDevice gps;
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* M17 also through the HR_C6000's own modem, chosen in the M17 settings */
+#define CONFIG_M17_CHIP_MODEM
+
 /* Device has a GPS chip */
 #define CONFIG_GPS
 #define CONFIG_GPS_STM32_USART6

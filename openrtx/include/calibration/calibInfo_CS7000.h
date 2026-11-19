@@ -21,8 +21,8 @@ struct CS7000Calib
     uint8_t  rxSensitivity[8];   // 0x044
     uint8_t  txHighPwr[8];       // 0x06C
     uint8_t  txMiddlePwr[8];     // 0x074
-    uint8_t  mskFreqOffset[8];   // 0x0B4
-    uint8_t  txDigitalPathI[8];  // 0x0BC
+    uint8_t  txDmrMod2[8];       // 0x0B4, DMR modulation pair, Mod2
+    uint8_t  txDmrMod1[8];       // 0x0BC, DMR modulation pair, Mod1
     uint8_t  txDigitalPathQ[8];  // 0x0C4
     uint8_t  txAnalogPathI[8];   // 0x0CC
     uint8_t  txAnalogPathQ[8];   // 0x0D4
