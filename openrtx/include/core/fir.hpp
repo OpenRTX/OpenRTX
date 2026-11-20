@@ -16,6 +16,55 @@
 #include <cstdint>
 
 /**
+ * Store a new input in a FIR history of 2 * len samples. Each input is stored
+ * twice, so the newest len inputs are always contiguous, newest first, from
+ * the updated position.
+ *
+ * @param hist: history, 2 * len samples.
+ * @param len: number of filter taps.
+ * @param pos: position of the newest input, updated.
+ * @param input: new input.
+ */
+template < typename T >
+void firPush(T *hist, const size_t len, size_t &pos, const T input)
+{
+    pos = (pos == 0 ? len - 1 : pos - 1);
+    hist[pos] = input;
+    hist[pos + len] = input;
+}
+
+/**
+ * Sum of the products of the taps with the newest len inputs of a history
+ * filled by firPush(), accumulated in type A.
+ *
+ * @param taps: len filter coefficients.
+ * @param hist: history.
+ * @param len: number of filter taps.
+ * @param pos: position of the newest input.
+ * @return the sum of products.
+ */
+template < typename A, typename T, typename C >
+A firDot(const C *taps, const T *hist, const size_t len, const size_t pos)
+{
+    A acc = 0;
+    size_t i;
+
+    // Unroll loop by 4
+    for (i = 0; i < (len & ~size_t(3)); i += 4) {
+        acc += static_cast< A >(hist[pos + i]) * taps[i];
+        acc += static_cast< A >(hist[pos + i + 1]) * taps[i + 1];
+        acc += static_cast< A >(hist[pos + i + 2]) * taps[i + 2];
+        acc += static_cast< A >(hist[pos + i + 3]) * taps[i + 3];
+    }
+
+    // Remaining taps
+    for (; i < len; i++)
+        acc += static_cast< A >(hist[pos + i]) * taps[i];
+
+    return acc;
+}
+
+/**
  * Class for FIR filter with configurable coefficients.
  * Adapted from the original implementation by Rob Riggs, Mobilinkd LLC.
  */
@@ -49,26 +98,8 @@ public:
      */
     float operator()(const float& input)
     {
-        float acc = 0.0f;
-        size_t i;
-
-        pos = (pos == 0 ? N - 1 : pos - 1);
-        hist[pos] = input;
-        hist[pos + N] = input;
-
-        // Unroll loop by 4
-        for (i = 0; i < (N & ~size_t(3)); i += 4) {
-            acc += hist[pos + i] * taps[i];
-            acc += hist[pos + i + 1] * taps[i + 1];
-            acc += hist[pos + i + 2] * taps[i + 2];
-            acc += hist[pos + i + 3] * taps[i + 3];
-        }
-
-        // Remaining taps
-        for (; i < N; i++)
-            acc += hist[pos + i] * taps[i];
-
-        return acc;
+        firPush(hist.data(), N, pos, input);
+        return firDot< float >(taps.data(), hist.data(), N, pos);
     }
 
     /**
