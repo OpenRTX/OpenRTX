@@ -127,10 +127,11 @@ void nvm_readCalibData(void *buf)
     nvm_devRead(&secReg, 0x2089, vhfCal->analogSendQrange, 5);
     nvm_devRead(&secReg, 0x2000, ((uint8_t *) &freqs), 40);
 
+    // Stored divided by ten, as the UHF ones
     for(uint8_t i = 0; i < 5; i++)
     {
-        vhfCal->rxFreq[i] = ((freq_t) bcdToBin(freqs[2*i]));
-        vhfCal->txFreq[i] = ((freq_t) bcdToBin(freqs[2*i+1]));
+        vhfCal->rxFreq[i] = ((freq_t) bcdToBin(freqs[2*i])) * 10;
+        vhfCal->txFreq[i] = ((freq_t) bcdToBin(freqs[2*i+1])) * 10;
     }
     #endif
 }
