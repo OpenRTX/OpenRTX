@@ -27,8 +27,17 @@ static constexpr std::array<int16_t, 48> LOWPASS6_TAPS = {
     -71,  61,   124,  129,  100,  58,  22,  -1,   -10,  -10,  -6,   -2,
 };
 
+static constexpr std::array<int16_t, 64> LOWPASS8_TAPS = {
+    -2,   -4,   -6,   -8,   -8,   -4,   5,    20,   41,   65,   87,   100,  97,
+    70,   15,   -70,  -178, -297, -407, -484, -499, -428, -247, 52,   468,  982,
+    1562, 2164, 2735, 3222, 3577, 3764, 3764, 3577, 3222, 2735, 2164, 1562, 982,
+    468,  52,   -247, -428, -499, -484, -407, -297, -178, -70,  15,   70,   97,
+    100,  87,   65,   41,   20,   5,    -4,   -8,   -8,   -6,   -4,   -2,
+};
+
 static_assert((LOWPASS5_TAPS.size() <= DSP_LOWPASS_MAX_TAPS)
-                  && (LOWPASS6_TAPS.size() <= DSP_LOWPASS_MAX_TAPS),
+                  && (LOWPASS6_TAPS.size() <= DSP_LOWPASS_MAX_TAPS)
+                  && (LOWPASS8_TAPS.size() <= DSP_LOWPASS_MAX_TAPS),
               "DSP_LOWPASS_MAX_TAPS too small");
 
 // Half an LSB of a Q15 product, to round to nearest
@@ -90,6 +99,11 @@ int dsp_lowPassInit(struct lowPassDecimator *state, uint8_t ratio)
         case 6:
             state->taps = LOWPASS6_TAPS.data();
             state->len = LOWPASS6_TAPS.size();
+            break;
+
+        case 8:
+            state->taps = LOWPASS8_TAPS.data();
+            state->len = LOWPASS8_TAPS.size();
             break;
 
         default:

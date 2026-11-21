@@ -88,7 +88,7 @@ bool dsp_decimator(struct decimatorState *state, int16_t *sample,
 /**
  * Taps of the longest low pass decimator filter.
  */
-#define DSP_LOWPASS_MAX_TAPS 48
+#define DSP_LOWPASS_MAX_TAPS 64
 
 /**
  * Data structure holding the internal state of a low pass decimator.
@@ -106,10 +106,10 @@ struct lowPassDecimator {
  * Set up a low pass decimator for a decimation ratio, clearing its history.
  *
  * The filter has unity gain at DC, -2 dB at 0.375 and -6 dB at 0.4625 of the
- * output rate, and at least 71 dB of rejection from 0.75 of the output rate
+ * output rate, and at least 70 dB of rejection from 0.75 of the output rate
  * up, so content above half the output rate does not fold into the band.
  * Ratio 6 takes 48 kHz to 8 kHz with 48 taps; ratio 5 takes 48 kHz to
- * 9.6 kHz with 40 taps.
+ * 9.6 kHz with 40 taps; ratio 8 takes 64 kHz to 8 kHz with 64 taps.
  *
  * @param state: pointer to the decimator state.
  * @param ratio: decimation ratio.
