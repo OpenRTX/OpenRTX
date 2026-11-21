@@ -130,6 +130,49 @@ inline void setSymbol(std::array< uint8_t, N >& array, const size_t pos,
 
 
 /**
+ * Soft value of a coded bit, from its hard decision and the distance of its
+ * sample from the decision boundary. The confidence grows linearly with the
+ * distance and is full from fullScale on, so a sample far past the nearest
+ * symbol level, such as an FM click, weighs no more than a clean symbol.
+ *
+ * @param bit: hard decision.
+ * @param distance: distance of the sample from the decision boundary.
+ * @param fullScale: distance from which the confidence is full, from 1 to
+ * 65535.
+ * @return soft value, 0x0000 a confident 0 and 0xFFFF a confident 1, 0x7FFF
+ * and 0x8000 on the boundary.
+ */
+inline uint16_t softBit(const bool bit, const uint32_t distance,
+                        const uint32_t fullScale)
+{
+    static constexpr uint32_t MAX_CONFIDENCE = 0x7FFF;
+
+    uint32_t confidence = MAX_CONFIDENCE;
+    if(distance < fullScale)
+        confidence = (distance * MAX_CONFIDENCE) / fullScale;
+
+    if(bit)
+        return static_cast< uint16_t >(MAX_CONFIDENCE + 1 + confidence);
+
+    return static_cast< uint16_t >(MAX_CONFIDENCE - confidence);
+}
+
+
+/**
+ * Hard decision of a soft bit.
+ *
+ * @param soft: soft value, 0x0000 a confident 0 and 0xFFFF a confident 1.
+ * @return the bit the soft value is closer to.
+ */
+inline bool hardBit(const uint16_t soft)
+{
+    static constexpr uint16_t HALF_SCALE = 0x8000;
+
+    return soft >= HALF_SCALE;
+}
+
+
+/**
  * Utility function to encode a given byte of data into 4FSK symbols. Each
  * byte is encoded in four symbols.
  *

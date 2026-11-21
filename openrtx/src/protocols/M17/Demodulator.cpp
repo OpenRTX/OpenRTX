@@ -5,6 +5,7 @@
  */
 
 #include "protocols/M17/Demodulator.hpp"
+#include <cstdlib>
 #include "protocols/M17/DSP.hpp"
 #include "protocols/M17/Utils.hpp"
 #include "core/audio_stream.h"
@@ -153,6 +154,8 @@ void Demodulator::init()
     baseband_buffer = std::make_unique< int16_t[] >(2 * SAMPLE_BUF_SIZE);
     demodFrame      = std::make_unique< frame_t >();
     readyFrame      = std::make_unique< frame_t >();
+    softDemod       = std::make_unique< softFrame_t >();
+    softReady       = std::make_unique< softFrame_t >();
 
     reset();
 
@@ -175,6 +178,8 @@ void Demodulator::terminate()
     baseband_buffer.reset();
     demodFrame.reset();
     readyFrame.reset();
+    softDemod.reset();
+    softReady.reset();
 
     #ifdef ENABLE_DEMOD_LOG
     logRunning = false;
@@ -206,6 +211,13 @@ const frame_t& Demodulator::getFrame()
     // When a frame is read is not new anymore
     newFrame = false;
     return *readyFrame;
+}
+
+const softFrame_t& Demodulator::getSoftFrame()
+{
+    // When a frame is read is not new anymore
+    newFrame = false;
+    return *softReady;
 }
 
 bool Demodulator::isLocked()
@@ -299,6 +311,19 @@ bool Demodulator::update(const bool invertPhase)
 void Demodulator::quantize(stream_sample_t sample)
 {
     auto outerDeviation = devEstimator.outerDeviation();
+    auto soft = softSlice(sample, outerDeviation);
+
+    setSymbol(*demodFrame, frameIndex, hardSlice(sample, outerDeviation));
+    (*softDemod)[2 * frameIndex]     = soft[0];
+    (*softDemod)[2 * frameIndex + 1] = soft[1];
+
+    frameIndex += 1;
+}
+
+int8_t
+Demodulator::hardSlice(const int16_t sample,
+                       const std::pair< int32_t, int32_t >& outerDeviation)
+{
     int8_t symbol;
 
     if(sample > (2 * outerDeviation.first)/3)
@@ -318,8 +343,43 @@ void Demodulator::quantize(stream_sample_t sample)
         symbol = -1;
     }
 
-    setSymbol(*demodFrame, frameIndex, symbol);
-    frameIndex += 1;
+    return symbol;
+}
+
+std::array< uint16_t, 2 >
+Demodulator::softSlice(const int16_t sample,
+                       const std::pair< int32_t, int32_t >& outerDeviation)
+{
+    // Each bit's confidence is measured from its own decision boundary: zero
+    // for the sign bit, hardSlice()'s inner/outer threshold on the side of the
+    // sample for the outer bit. Both decisions come from hardSlice(), so
+    // slicing the soft bits at half scale gives the hard symbol back.
+    int8_t  symbol = hardSlice(sample, outerDeviation);
+    int32_t outer;
+    int32_t outerThr;
+
+    if(symbol < 0)
+    {
+        outer    = -outerDeviation.second;
+        outerThr = (2 * outerDeviation.second) / 3;
+    }
+    else
+    {
+        outer    = outerDeviation.first;
+        outerThr = (2 * outerDeviation.first) / 3;
+    }
+
+    if(outer < 1) outer = 1;
+
+    // As in libm17, a bit is fully confident one symbol step, a third of the
+    // outer level, from its boundary, which keeps FM clicks from outweighing
+    // the other bits. Distances are tripled to keep the step exact.
+    uint32_t signDist  = 3 * std::abs(static_cast< int32_t >(sample));
+    uint32_t outerDist = 3 * std::abs(sample - outerThr);
+    bool     outerSym  = (symbol == +3) || (symbol == -3);
+
+    return { softBit(symbol < 0, signDist, outer),
+             softBit(outerSym, outerDist, outer) };
 }
 
 void Demodulator::reset()
@@ -441,6 +501,7 @@ void Demodulator::lockedState(int16_t sample)
 
     if(frameIndex == FRAME_SYMBOLS) {
         std::swap(readyFrame, demodFrame);
+        std::swap(softReady, softDemod);
 
         frameIndex = 0;
         newFrame = true;
