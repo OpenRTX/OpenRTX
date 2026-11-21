@@ -14,4 +14,12 @@
  */
 int lsf_dsp_init(void);
 
+/**
+ * Stop the DSP and hold it in reset.
+ *
+ * A reset of the application core leaves the DSP running: stop it before
+ * rebooting, so it does not raise interrupts while the next boot starts.
+ */
+void lsf_dsp_terminate(void);
+
 #endif /* LSF_DSP_H */

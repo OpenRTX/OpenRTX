@@ -14,6 +14,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/kernel.h>
+#include <zephyr/sys/reboot.h>
 #include <interfaces/audio.h>
 #include <interfaces/nvmem.h>
 #include "drivers/SPI/spi_zephyr.h"
@@ -154,10 +155,13 @@ void platform_terminate()
     /*
      * C62 does not have a proper power on/off mechanism and the MCU is
      * always powered. Thus, for turn off, perform a system reset.
+     *
+     * With the charger connected the chip stays powered through the reset:
+     * stop the DSP and reset the peripherals along with the core, or the
+     * DSP's UART interrupt halts the next boot.
      */
-    NVIC_SystemReset();
-    while (1)
-        ;
+    lsf_dsp_terminate();
+    sys_reboot(SYS_REBOOT_COLD);
 }
 
 /**
