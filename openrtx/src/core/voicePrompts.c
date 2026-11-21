@@ -23,6 +23,8 @@
 
 static const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;   //'VP'
 static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000; // v1000 OpenRTX
+static const uint32_t VOICE_PROMPTS_DATA_NUMBER =
+    84; // current number of voice prompts generated
 
 #define VOICE_PROMPTS_TOC_SIZE 350
 #define CODEC2_HEADER_SIZE 7
@@ -32,6 +34,7 @@ static const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x1000; // v1000 OpenRTX
 typedef struct {
     uint32_t magic;
     uint32_t version;
+    uint32_t numPrompts;
 } vpHeader_t;
 
 typedef struct {
@@ -174,7 +177,8 @@ static void fetchCodec2Data(uint8_t *data, const size_t offset)
 static inline bool checkVpHeader(const vpHeader_t *header)
 {
     return ((header->magic == VOICE_PROMPTS_DATA_MAGIC)
-            && (header->version == VOICE_PROMPTS_DATA_VERSION));
+            && (header->version == VOICE_PROMPTS_DATA_VERSION)
+            && (header->numPrompts == VOICE_PROMPTS_DATA_NUMBER));
 }
 
 /**
