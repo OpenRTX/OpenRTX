@@ -56,10 +56,6 @@ extern const struct Adc adc1;
 /* M17 also through the HR_C6000's own modem, chosen in the M17 settings */
 #define CONFIG_M17_CHIP_MODEM
 
-/* Microphone audio input */
-#define CONFIG_MIC_GAIN 32
-#define CONFIG_MIC_OVERSAMPLE 8
-
 /*
  * To enable pwm for display backlight dimming uncomment this directive.
  *

@@ -25,6 +25,7 @@
 #include "C6000_symbols.h"
 #include "C6000_fmcopy.h"
 #include "C6000_modem.h"
+#include "stm32_i2s.h"
 #endif
 
 
@@ -75,6 +76,17 @@ static const struct C6000modemPath rtxOutAnalog =
 static const struct C6000modemPath rtxInAnalog =
 {
     &stm32_adc_audio_driver, (const void *) 13
+};
+
+// Microphone: through the HR_C6000's codec with its modem, doubled, else
+// the ADC, sampled 8 times faster and brought up 32 times
+static const struct C6000micPaths micPaths =
+{
+    {&stm32_i2s_audio_driver, (const void *) STM32_I2S_LEFT},
+    2,
+    {&stm32_adc_audio_driver, (const void *) 3},
+    8,
+    32
 };
 
 // HR_C6000 timeslot interrupt, falling edge
@@ -173,10 +185,11 @@ const struct audioDevice inputDevices[] =
     {NULL,                    0,                 0,              SOURCE_MCU},
     #ifdef CONFIG_M17_CHIP_MODEM
     {&C6000_modem_in_audio_driver, &rtxInAnalog, STM32_ADC_ADC2, SOURCE_RTX},
+    {&C6000_modem_mic_audio_driver, &micPaths,   STM32_ADC_ADC2, SOURCE_MIC},
     #else
     {&stm32_adc_audio_driver, (const void *) 13, STM32_ADC_ADC2, SOURCE_RTX},
-    #endif
     {&stm32_adc_audio_driver, (const void *) 3,  STM32_ADC_ADC2, SOURCE_MIC},
+    #endif
 };
 
 void audio_init()
@@ -203,6 +216,9 @@ void audio_init()
 
     stm32pwm_init();
     stm32adc_init(STM32_ADC_ADC2);
+    #ifdef CONFIG_M17_CHIP_MODEM
+    stm32i2s_init();
+    #endif
 
     #if defined(PLATFORM_MDUV3x0) || defined (PLATFORM_DM1701)
     gpio_setMode(DMR_CLK,  OUTPUT);
@@ -239,6 +255,9 @@ void audio_terminate()
 
     stm32pwm_terminate();
     stm32adc_terminate();
+    #ifdef CONFIG_M17_CHIP_MODEM
+    stm32i2s_terminate();
+    #endif
 }
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
