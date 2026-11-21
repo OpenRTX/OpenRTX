@@ -38,6 +38,7 @@ path = [
     "subprojects/catch2.wrap",
     "subprojects/radio_tool.wrap",
     "subprojects/codec2.wrap",
+    "subprojects/libsodium.wrap",
     "subprojects/XPowersLib.wrap",
     "scripts/uf2families.json",
     "scripts/generate_symbols.py",
