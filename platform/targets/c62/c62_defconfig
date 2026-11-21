@@ -24,3 +24,7 @@ CONFIG_LSF_SERVICE_CONTROLLER=y
 # The application is linked at flash offset 0 and must end before the
 # DSP image at 0x100000 (slot0_partition).
 CONFIG_FLASH_LOAD_SIZE=0x100000
+
+# platform_terminate() reboots through the SoC reset, which also resets
+# the peripherals.
+CONFIG_REBOOT=y

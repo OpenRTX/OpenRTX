@@ -125,3 +125,10 @@ int lsf_dsp_init(void)
 
     return 0;
 }
+
+void lsf_dsp_terminate(void)
+{
+    __HAL_SYS_CP_STALL();
+    __HAL_SYS_CP_RESET();
+    __HAL_CRM_CP_CLK_DISABLE();
+}
