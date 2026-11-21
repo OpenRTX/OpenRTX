@@ -7,6 +7,7 @@
 #ifndef HRCx000_H
 #define HRCx000_H
 
+#include <algorithm>
 #include "peripherals/gpio.h"
 #include "peripherals/spi.h"
 #include <stdbool.h>
@@ -266,6 +267,14 @@ private:
      */
     void sendSequence(const uint8_t *seq, const size_t len)
     {
+        // A sequence is a page, its first register and the values from there
+        if(seq[0] == static_cast< uint8_t >(M::CONFIG))
+        {
+            std::copy(&seq[2], &seq[len], &cfgValues[seq[1]]);
+            for(size_t i = 2; i < len; i++)
+                cfgWritten.set(seq[1] + i - 2);
+        }
+
         ScopedChipSelect cs(uSpi, uCs);
         spi_send(uSpi, seq, len);
     }
