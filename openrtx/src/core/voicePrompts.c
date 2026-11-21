@@ -86,6 +86,8 @@ static bool delayBeepUntilTick = false;
 
 static pathId vpAudioPath;
 static long long vpStartTime;
+static bool vpPlaybackHeld = false;
+static bool vpPlayPending = false;
 
 #ifdef VP_USE_FILESYSTEM
 static FILE *vpFile = NULL;
@@ -380,6 +382,7 @@ void vp_flush()
     // Stop the prompt and reset the codec data length
     vp_stop();
     vpCurrentSequence.length = 0;
+    vpPlayPending = false;
 }
 
 void vp_queuePrompt(const uint16_t prompt)
@@ -497,9 +500,37 @@ void vp_play()
     if (vpCurrentSequence.length <= 0)
         return;
 
+    if (vpPlaybackHeld) {
+        vpPlayPending = true;
+        return;
+    }
+
     // TODO: remove this once switching to hardware-based I2C driver for AT1846S
     // management.
     vpStartTime = getTick();
+}
+
+void vp_holdPlayback(const bool hold)
+{
+    if (hold == vpPlaybackHeld)
+        return;
+
+    vpPlaybackHeld = hold;
+
+    if (hold) {
+        // Postpone a playback scheduled but not yet started
+        if (vpStartTime > 0) {
+            vpStartTime = 0;
+            vpPlayPending = true;
+        }
+
+        return;
+    }
+
+    if (vpPlayPending) {
+        vpPlayPending = false;
+        vp_play();
+    }
 }
 
 void vp_tick()

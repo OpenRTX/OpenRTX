@@ -1389,6 +1389,108 @@ static enum vpGPSInfoFlags GetGPSDirectionOrSpeedChanged()
 }
 #endif // CONFIG_GPS
 
+/**
+ * \internal Check whether a repeat keyboard event has to be processed.
+ * Repeats are accepted only by the handlers stepping a value through a range,
+ * any other handler (toggles, menu navigation, text input, ...) ignores them.
+ *
+ * @param msg: repeat keyboard event.
+ * @return true if the event has to be processed, false if it has to be
+ * ignored.
+ */
+static bool _ui_acceptsRepeat(kbd_msg_t msg)
+{
+    const keyboard_t upDown = KEY_UP | KEY_DOWN;
+    const keyboard_t leftRight = KEY_LEFT | KEY_RIGHT;
+    bool upDownPressed = (msg.keys & upDown) != 0;
+    bool leftRightPressed = (msg.keys & leftRight) != 0;
+    bool edit = ui_state.edit_mode;
+
+    // Macro menu: CTCSS tone (2/3), brightness (7/8) and squelch stepping
+    if ((msg.keys & KEY_MONI) || macro_latched) {
+#if !defined(CONFIG_UI_NO_KEYBOARD)
+        if (input_isNumberPressed(msg)) {
+            switch (input_getPressedNumber(msg)) {
+                case 2:
+                case 3:
+#ifdef CONFIG_SCREEN_BRIGHTNESS
+                case 7:
+                case 8:
+#endif
+                    return true;
+                default:
+                    return false;
+            }
+        }
+#endif
+#if defined(PLATFORM_TTWRPLUS)
+        // Squelch is stepped with the same key used to enter the macro menu
+        // with a long press: don't step it when that key is held further.
+        return false;
+#else
+        return upDownPressed || leftRightPressed;
+#endif
+    }
+
+    switch (state.ui_screen) {
+        case MAIN_VFO:
+            // Frequency stepping
+            return !edit && !ui_state.input_locked && upDownPressed;
+
+        case SETTINGS_DISPLAY:
+            switch (ui_state.menu_selected) {
+#ifdef CONFIG_SCREEN_BRIGHTNESS
+                case D_BRIGHTNESS:
+#endif
+#ifdef CONFIG_SCREEN_CONTRAST
+                case D_CONTRAST:
+#endif
+                case D_TIMER:
+                    return leftRightPressed || (edit && upDownPressed);
+                default:
+                    return false;
+            }
+
+#if defined(CONFIG_GPS) && defined(CONFIG_RTC)
+        case SETTINGS_GPS:
+            if (ui_state.menu_selected != G_TIMEZONE)
+                return false;
+
+            return leftRightPressed || (edit && upDownPressed);
+#endif
+
+#ifdef CONFIG_M17
+        case SETTINGS_M17:
+            if (ui_state.menu_selected != M17_CAN)
+                return false;
+
+            return edit ? upDownPressed : leftRightPressed;
+#endif
+
+        case SETTINGS_FM:
+            return edit && (ui_state.menu_selected == CTCSS_Tone)
+                && upDownPressed;
+
+        default:
+            return false;
+    }
+}
+
+/**
+ * \internal Play a beep as feedback for a value stepped by a repeat event.
+ * Voice prompts are held while repeats keep coming (see vp_holdPlayback()), so
+ * the beep stands in for them until the final value is announced. It must be
+ * played after the event has been handled, since queueing a new voice prompt
+ * stops any beep in progress.
+ *
+ * @param msg: keyboard event just handled.
+ */
+static void _ui_repeatBeep(kbd_msg_t msg)
+{
+    if (msg.repeat && (state.settings.vpLevel > vpBeep))
+        vp_beep(BEEP_KEY_GENERIC, SHORT_BEEP);
+}
+
 void ui_updateFSM(bool *sync_rtx)
 {
     // Check for events
@@ -1436,6 +1538,21 @@ void ui_updateFSM(bool *sync_rtx)
         kbd_msg_t msg;
         msg.value = event.payload;
         bool f1Handled = false;
+        // Repeat events are dropped unless a value-stepping handler takes
+        // them. While they keep coming, hold voice prompt playback so that
+        // only the final value is announced, once the keys are released.
+        if (msg.repeat)
+        {
+            if (!_ui_acceptsRepeat(msg))
+                return;
+
+            vp_holdPlayback(true);
+        }
+        else
+        {
+            vp_holdPlayback(false);
+        }
+
         enum vpQueueFlags queueFlags = vp_getVoiceLevelQueueFlags();
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
@@ -1447,7 +1564,7 @@ void ui_updateFSM(bool *sync_rtx)
         {
             macro_menu = true;
 
-            if(state.settings.macroMenuLatch == 1)
+            if((state.settings.macroMenuLatch == 1) && !msg.repeat)
             {
                 // long press moni on its own latches function.
                 if (moniPressed && msg.long_press && !macro_latched)
@@ -1463,6 +1580,7 @@ void ui_updateFSM(bool *sync_rtx)
             }
 
             _ui_fsm_menuMacro(msg, sync_rtx);
+            _ui_repeatBeep(msg);
             return;
         }
         else
@@ -2615,6 +2733,8 @@ void ui_updateFSM(bool *sync_rtx)
         // to beep or you'll get an unwanted click.
         if ((msg.keys &0xffff) && (state.settings.vpLevel == vpBeep))
             vp_beep(BEEP_KEY_GENERIC, SHORT_BEEP);
+        else
+            _ui_repeatBeep(msg);
         // If we exit and re-enter the same menu, we want to ensure it speaks.
         if (msg.keys & KEY_ESC)
             _ui_reset_menu_anouncement_tracking();
