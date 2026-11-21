@@ -23,15 +23,14 @@ extern "C" {
 #define LCD_CS      GPIOD,14
 
 /* Analog inputs */
-#define AIN_VOLUME GPIOA,0
-#define AIN_VBAT   GPIOA,1
-#define AIN_MIC    GPIOA,3
-#define AIN_SW2    GPIOA,6
-#define AIN_SW1    GPIOA,7
-#define AIN_RSSI   GPIOB,0
-#define AIN_RSSI2  GPIOB,1
-#define AIN_HTEMP  GPIOC,5
-
+#define AIN_VBAT    GPIOA,1
+#define AIN_MIC     GPIOA,3
+#define AIN_SW2     GPIOA,6
+#define AIN_SW1     GPIOA,7
+#define AIN_RSSI_U  GPIOB,0
+#define AIN_RSSI_V  GPIOA,0
+#define AIN_NOISE_U GPIOB,1
+#define AIN_NOISE_V GPIOC,5
 /*
  * Channel selection rotary encoder, in the order that makes the position
  * count up when turned clockwise, as on the MD-UV3x0
@@ -62,7 +61,10 @@ extern "C" {
 #define SPI2_SDI GPIOB,15
 
 /* Audio control */
-#define SPK_MUTE GPIOB,6
+#define SPK_MUTE  GPIOB,6
+#define U_V_AF_SW GPIOC,13
+#define FM_MUTE   GPIOE,7
+#define FM_SW     GPIOB,2
 
 /* GPS, for the devices who have it */
 #define GPS_EN   GPIOA,9
@@ -71,8 +73,53 @@ extern "C" {
 /* HR_C6000 control interface */
 #define DMR_CS    GPIOE,2
 #define DMR_CLK   GPIOE,3
-#define DMR_MOSI  GPIOE,4
-#define DMR_MISO  GPIOE,5
+#define DMR_MISO  GPIOE,4
+#define DMR_MOSI  GPIOE,5
+#define DMR_PWD   GPIOE,6
+
+/* HRC600 voice interface */
+#define VOICE_CS  GPIOD,7
+#define VOICE_CLK GPIOB,3
+#define VOICE_SDO GPIOB,4
+#define VOICE_SDI GPIOB,5
+
+/* Radio Interface */
+#define U_V_MOD2_SW GPIOB,7
+#define RX_5V_V_SW  GPIOA,14
+#define RX_5V_U_SW  GPIOA,13
+#define TX_5V_V_SW  GPIOD,5
+#define TX_5V_U_SW  GPIOD,6
+
+#define C5_V_SW     GPIOC,9
+#define C5_U_SW     GPIOA,8
+
+#define VCO_U_SW    GPIOE,8
+#define VCO_V_SW    GPIOE,9
+
+/* PLL */
+#define PLL_V_CS  GPIOD,8
+#define PLL_U_CS  GPIOD,9
+#define PLL_DATA  GPIOD,10
+#define PLL_CLK   GPIOD,11
+
+/* IF */
+#define IF_V_CS   GPIOE,11
+#define IF_U_CS   GPIOE,12
+#define IF_DATA   GPIOE,13
+#define IF_CLK    GPIOE,14
+#define IF_RESET  GPIOE,15
+
+/* Other */
+#define RF_APC_SW GPIOC,4
+#define APC_TV_V  GPIOA,5
+#define TV_U      GPIOA,4
+#define QT_SQT_IN GPIOA,2
+#define RX_2T_5T  GPIOC,3
+
+/* Interrupt Pins */
+#define TIME_SLOT_INTERRUPT GPIOC,0
+#define SYS_INTERRUPT       GPIOC,1
+#define RF_TX_INTERRUPT     GPIOC,2
 
 #ifdef __cplusplus
 }
