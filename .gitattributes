@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Generated together by scripts/generate_voice_prompts.py: never merge them
+# line by line, regenerate them instead (see "Voice Prompts" in
+# CONTRIBUTING.md).
+voiceprompts.vpc binary
+voiceprompts.vpc.manifest merge=binary

@@ -304,7 +304,7 @@ they conflict.
 
 ### String Table
 
-The `stringsTable_t` in `openrtx/include/ui/ui_strings.h` defines UI strings and is indexed by voice prompts. **Never reorder existing entries** — only append new strings at the end (before the closing brace), and add the matching entry to every language table. See [Persistent Data](#persistent-data).
+The `stringsTable_t` in `openrtx/include/ui/ui_strings.h` defines UI strings and is indexed by voice prompts. **Never reorder existing entries** — only append new strings at the end (before the closing brace), and add the matching entry to every language table. See [Persistent Data](#persistent-data). Any change to what the radio says (a string, a `PROMPT_*` entry or its comment) also means regenerating `voiceprompts.vpc` and its manifest; see "Voice Prompts" in CONTRIBUTING.md.
 
 ### Commits and PRs
 
