@@ -463,19 +463,22 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
     DMA2_Stream7->PAR  = ((uint32_t ) frameBuffer + (startRow * CONFIG_SCREEN_WIDTH
                                                      * sizeof(uint16_t)));
     DMA2_Stream7->M0AR = LCD_FSMC_ADDR_DATA;
-    DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
-                     | DMA_SxCR_PINC          /* Increment source pointer    */
-                     | DMA_SxCR_DIR_1         /* Memory to memory            */
-                     | DMA_SxCR_TCIE          /* Transfer complete interrupt */
-                     | DMA_SxCR_TEIE          /* Transfer error interrupt    */
-                     | DMA_SxCR_EN;           /* Start transfer              */
 
     /*
-     * Put the calling thread in waiting status until render completes.
+     * Start the transfer and put the calling thread in waiting status until
+     * render completes. The thread is registered before the transfer starts,
+     * with interrupts disabled: preempted between the two, it would miss the
+     * transfer complete interrupt and wait forever.
      */
     {
         FastInterruptDisableLock dLock;
         lcdWaiting = Thread::IRQgetCurrentThread();
+        DMA2_Stream7->CR = DMA_SxCR_CHSEL         /* Channel 7                   */
+                         | DMA_SxCR_PINC          /* Increment source pointer    */
+                         | DMA_SxCR_DIR_1         /* Memory to memory            */
+                         | DMA_SxCR_TCIE          /* Transfer complete interrupt */
+                         | DMA_SxCR_TEIE          /* Transfer error interrupt    */
+                         | DMA_SxCR_EN;           /* Start transfer              */
         do
         {
             Thread::IRQwait();
