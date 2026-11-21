@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+description: |
+  ST7735R display as wired on the Retevis C62, with the RESET pin not
+  connected to the MCU.
+
+  The stock binding requires reset-gpios, while the driver falls back to a
+  software reset when it is missing. List this compatible before
+  "sitronix,st7735r" so the driver still binds to the node.
+
+compatible: "retevis,c62-st7735r"
+
+include:
+  - name: sitronix,st7735r.yaml
+    property-blocklist:
+      - reset-gpios
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    required: false
+    description: RESET pin, active low. Not connected on the C62.

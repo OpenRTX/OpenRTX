@@ -1,0 +1,26 @@
+{
+	"configurations": [
+		{
+			"type": "cortex-debug",
+			"request": "attach",
+			"cwd": "${workspaceRoot}",
+			"name": "C62 JLink GDB server",
+			"executable": "${workspaceFolder}/build/c62/zephyr/zephyr.elf",
+			"device": "STAR",
+			"servertype": "external",
+			"gdbTarget": "host.docker.internal:2331",
+			"rtos": "Zephyr",
+			"armToolchainPath": "/opt/zephyr-sdk/bin",
+			"toolchainPrefix": "arm-zephyr-eabi",
+			"interface": "swd",
+			"runToMain": true,
+			"runToEntryPoint": "main",
+			"overrideRestartCommands": [
+				"set $sp=((int*)_vector_table)[0]",
+				"monitor reset",
+				"monitor halt",
+			],
+			"gdbPath": "/opt/zephyr-sdk/bin/arm-zephyr-eabi-gdb"
+		}
+	]
+}
