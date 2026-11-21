@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Horse Python tooling only (see format.yml). Keep style close to the
+# existing scripts (percent formatting, shebang on helpers).
+
+target-version = "py311"
+line-length = 88
+
+[lint]
+ignore = [
+    "UP031",  # percent formatting matches existing OpenRTX scripts
+    "UP022",  # PIPE vs capture_output — either is fine
+    "EXE001", # horse_openpgp is imported, not always chmod +x
+    "SIM102", # nested ifs often clearer for stub detection
+    "B017",   # CryptoError vs ValueError from PyNaCl varies
+    "RUF059", # unpack placeholders in protocol tests
+]

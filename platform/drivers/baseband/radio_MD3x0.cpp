@@ -174,6 +174,16 @@ void radio_setOpmode(const enum opmode mode)
             _setBandwidth(BW_25);       // Set bandwidth to 25kHz for proper deviation
             break;
 
+#ifdef CONFIG_HORSE
+        case OPMODE_HORSE:
+            gpio_clearPin(DMR_SW);
+            gpio_setPin(FM_SW);
+            C5000.fmMode();
+            C5000.setInputGain(-3);
+            _setBandwidth(BW_12_5);     // 12.5kHz channel for horse
+            break;
+#endif
+
         default:
             break;
     }
@@ -267,6 +277,20 @@ void radio_enableTx()
         case OPMODE_M17:
             C5000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
+
+#ifdef CONFIG_HORSE
+        /*
+         * Horse uses the same FM LINE_IN path as M17. Without this case,
+         * OPMODE_HORSE hit default: TX_STG_EN still keyed the PA while
+         * C5000.startAnalogTx was never called (C13 regression after
+         * 465707c4). BW matches radio_setOpmode (12.5 kHz / mod 0x1E);
+         * whether that deviation is correct vs M17's 25 kHz is C21 and
+         * untested on hardware.
+         */
+        case OPMODE_HORSE:
+            C5000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_12p5kHz);
+            break;
+#endif
 
         default:
             break;

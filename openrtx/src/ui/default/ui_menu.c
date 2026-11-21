@@ -1219,6 +1219,17 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
                   yellow_fab413, "2");
     }
 #endif
+#ifdef CONFIG_HORSE
+    else if (last_state.channel.mode == OPMODE_HORSE)
+    {
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  yellow_fab413, "1");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "          ");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                  yellow_fab413, "2");
+    }
+#endif
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 2)
 #endif  // CONFIG_UI_NO_KEYBOARD
@@ -1229,6 +1240,14 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     }
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
+    {
+        char encdec_str[9] = "        ";
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white, encdec_str);
+    }
+#endif
+#ifdef CONFIG_HORSE
+    else if (last_state.channel.mode == OPMODE_HORSE)
     {
         char encdec_str[9] = "        ";
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -1271,6 +1290,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 
     }
 #endif
+#ifdef CONFIG_HORSE
+    else if (last_state.channel.mode == OPMODE_HORSE)
+    {
+        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "       ");
+    }
+#endif
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 4)
@@ -1290,6 +1316,11 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #ifdef CONFIG_M17
         case OPMODE_M17:
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          M17");
+            break;
+#endif
+#ifdef CONFIG_HORSE
+        case OPMODE_HORSE:
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "        Horse");
             break;
 #endif
     }

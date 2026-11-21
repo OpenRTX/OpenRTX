@@ -15,6 +15,9 @@
 #include "core/event.h"
 #include "hwconfig.h"
 #include "core/ui.h"
+#ifdef CONFIG_HORSE
+#include "protocols/horse/horse_crypto.h"
+#endif
 
 // Maximum menu entry length
 #define MAX_ENTRY_LEN 21
@@ -234,6 +237,10 @@ typedef struct ui_state_t
 #if defined(CONFIG_UI_NO_KEYBOARD)
     uint8_t macro_menu_selected;
 #endif // UI_NO_KEYBOARD
+#ifdef CONFIG_HORSE
+    bool horse_pass_edit;
+    char horse_pass_input[HORSE_PASSPHRASE_MAX + 1];
+#endif
 }
 ui_state_t;
 

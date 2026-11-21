@@ -56,6 +56,8 @@ extern const struct Adc adc1;
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* CONFIG_HORSE is defined via Meson md3x0_def (avoid redefinition vs -D). */
+
 /* Microphone audio input */
 #define CONFIG_MIC_GAIN 32
 #define CONFIG_MIC_OVERSAMPLE 8
