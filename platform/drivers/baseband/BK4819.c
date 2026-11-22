@@ -94,14 +94,15 @@ static uint16_t ctcssWord(uint16_t freq)
 }
 
 /**
- * Convert a beep frequency to the tone generator's units.
+ * Convert a tone frequency to the tone generator's units, for a 26 MHz
+ * crystal: 10.32444 from the datasheet.
  *
  * @param freq: frequency, in Hz.
  * @return REG_71 value.
  */
 static uint16_t scaleFreq(const uint16_t freq)
 {
-    return (((uint32_t)freq * 1048576u) + 50000u) / 100000u; /* with rounding */
+    return (((uint32_t)freq * 1032444u) + 50000u) / 100000u; /* with rounding */
 }
 
 uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg)
