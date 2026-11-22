@@ -184,10 +184,7 @@ void bk4819_disableRtx(const struct BK4819 *dev);
 
 /**
  * Transmit a tone instead of the microphone, as for the 1750 Hz tone burst,
- * once transmission is on. As the UV-K5 firmware's BK4819_TransmitTone():
- * tone generator 1 into the TX path, the microphone ADC off; without its
- * 50 ms TX mute around the switch, which would hold up the caller.
- * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L1304-L1337
+ * once transmission is on.
  *
  * @param dev: pointer to device data.
  * @param freq: tone frequency, in Hz.

@@ -271,12 +271,15 @@ void bk4819_enableTxTone(const struct BK4819 *dev, uint16_t freq, uint8_t gain)
 
     bk4819_writeReg(dev, 0x70, tone);
     bk4819_writeReg(dev, 0x71, scaleFreq(freq));
+
+    // mute microphone to only send the clean tone
     bk4819_writeReg(dev, 0x30, txPaths & ~BK4819_REG30_MIC_ADC_ENABLE);
 }
 
 void bk4819_disableTxTone(const struct BK4819 *dev)
 {
     bk4819_maskSetRegister(dev, 0x70, BK4819_REG70_TONE1_ENABLE, 0);
+    bk4819_writeReg(dev, 0x30, txPaths);
 }
 
 void bk4819_disableRtx(const struct BK4819 *dev)
