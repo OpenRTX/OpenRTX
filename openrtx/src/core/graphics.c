@@ -49,7 +49,6 @@
 #define DEG_RAD 0.017453292519943295769236907684886
 #define SIN(x) sinf((x) * DEG_RAD)
 #define COS(x) cosf((x) * DEG_RAD)
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 /**
  * Fonts, ordered by the fontSize_t enum.
