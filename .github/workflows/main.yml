@@ -6,7 +6,7 @@ on:
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-  DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-devcontainer
+  DEVCONTAINER_NAME: ghcr.io/openrtx/openrtx-sdk-miosix
 
 # Cancel superseded runs of the same PR, keep all runs on branches. The event
 # name is part of the group key because a push to a same-repo pull request
@@ -176,9 +176,15 @@ jobs:
           submodules: recursive
       - name: Replace slashes in branch name
         run: echo "BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '/' '-')" >> "$GITHUB_ENV"
+      - name: Create stubs for bind mounts
+        run: |
+          XAUTHORITY=$HOME/.Xauthority
+          touch $XAUTHORITY && mkdir -p /tmp/.X11-unix
+          echo "XAUTHORITY=$XAUTHORITY" >> $GITHUB_ENV
       - name: Compile using devcontainer
         uses: devcontainers/ci@v0.3
         with:
+          configFile: ./.devcontainer/miosix/devcontainer.json
           cacheFrom: ${{ env.DEVCONTAINER_NAME }}
           push: never
           runCmd: |
