@@ -65,6 +65,7 @@
 /* Audio control */
 #define AUDIO_AMP_EN GPIOB,9
 #define SPK_MUTE     GPIOB,8
+#define RX_AUDIO_MUX GPIOD,9
 #define MIC_PWR      GPIOA,13
 
 /* RTX stage control */
