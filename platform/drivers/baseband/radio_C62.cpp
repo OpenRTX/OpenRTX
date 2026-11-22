@@ -30,9 +30,8 @@ static enum opmode radioMode;     // Current operating mode
  * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L463-L471
  */
 static constexpr uint8_t CTCSS_TX_GAIN = 65;
-// 1750 Hz tone burst, at the tone gain of the UV-K5 firmware's
-// BK4819_TransmitTone():
-// https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819.c#L1326
+
+// Use the same gain as the CTCSS tone for the tone burst
 static constexpr uint16_t TONE_BURST_FREQ = 1750;
 static constexpr uint8_t TONE_BURST_GAIN = 66;
 
