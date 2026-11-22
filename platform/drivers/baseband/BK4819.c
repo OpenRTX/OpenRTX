@@ -15,6 +15,13 @@
 #include "interfaces/delays.h"
 #include "core/utils.h"
 
+/* REG_30 paths of transmission, microphone included */
+static const uint16_t txPaths =
+    BK4819_REG30_VCO_CALIB_ENABLE | BK4819_REG30_UNDOC14
+    | BK4819_REG30_DISC_MODE_ENABLE | BK4819_REG30_PLL_VCO_ENABLE
+    | BK4819_REG30_PA_GAIN_ENABLE | BK4819_REG30_MIC_ADC_ENABLE
+    | BK4819_REG30_TX_DSP_ENABLE;
+
 /*
  * Audio processing fields, with their values by enum bk4819_audioMode: voice
  * (the values bk4819_init() sets), then bypass, as the application note's
@@ -251,17 +258,25 @@ void bk4819_enableRx(const struct BK4819 *dev)
 
 void bk4819_enableTx(const struct BK4819 *dev)
 {
-    const uint16_t paths = BK4819_REG30_VCO_CALIB_ENABLE | BK4819_REG30_UNDOC14
-                         | BK4819_REG30_DISC_MODE_ENABLE
-                         | BK4819_REG30_PLL_VCO_ENABLE
-                         | BK4819_REG30_PA_GAIN_ENABLE
-                         | BK4819_REG30_MIC_ADC_ENABLE
-                         | BK4819_REG30_TX_DSP_ENABLE;
-
     bk4819_writeReg(dev, 0x37, BK4819_REG37_ACTIVE);
     delayUs(1);
     bk4819_writeReg(dev, 0x30, 0x00); /* reset */
-    bk4819_writeReg(dev, 0x30, paths);
+    bk4819_writeReg(dev, 0x30, txPaths);
+}
+
+void bk4819_enableTxTone(const struct BK4819 *dev, uint16_t freq, uint8_t gain)
+{
+    const uint16_t tone = BK4819_REG70_TONE1_ENABLE
+                        | BK4819_REG70_TONE1_GAIN(gain);
+
+    bk4819_writeReg(dev, 0x70, tone);
+    bk4819_writeReg(dev, 0x71, scaleFreq(freq));
+    bk4819_writeReg(dev, 0x30, txPaths & ~BK4819_REG30_MIC_ADC_ENABLE);
+}
+
+void bk4819_disableTxTone(const struct BK4819 *dev)
+{
+    bk4819_maskSetRegister(dev, 0x70, BK4819_REG70_TONE1_ENABLE, 0);
 }
 
 void bk4819_disableRtx(const struct BK4819 *dev)
