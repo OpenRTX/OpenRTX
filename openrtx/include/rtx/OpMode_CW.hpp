@@ -13,9 +13,10 @@
 /**
  * Specialisation of the OpMode class for CW, sent from a paddle through the
  * iambic keyer. The paddle may share the PTT line, so the PTT does not key
- * anything in this mode. The first key down starts transmitting;
- * transmission ends once the key has been up for longer than a word space.
- * The receiver stays on between transmissions, without audio.
+ * anything in this mode. With break-in on, the first key down starts
+ * transmitting; transmission ends once the key has been up for longer than
+ * a word space. With break-in off, keying only sounds the sidetone. The
+ * receiver stays on between transmissions, without audio.
  */
 class OpMode_CW : public OpMode
 {
@@ -99,6 +100,7 @@ private:
     bool keyDown;          ///< Key state sent to the radio.
     bool sidetone;         ///< Sidetone sounding.
     bool enterRx;          ///< Flag for RX management.
+    bool reverse;          ///< Dit and dah paddles swapped.
 };
 
 #endif /* OPMODE_CW_H */

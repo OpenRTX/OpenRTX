@@ -11,7 +11,12 @@
 #include "rtx/OpMode_CW.hpp"
 
 OpMode_CW::OpMode_CW()
-    : lastKeyDown(0), wpm(1), keyDown(false), sidetone(false), enterRx(false)
+    : lastKeyDown(0)
+    , wpm(1)
+    , keyDown(false)
+    , sidetone(false)
+    , enterRx(false)
+    , reverse(false)
 {
     cwKeyer_init(&keyer, wpm);
 }
@@ -45,6 +50,7 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
 {
     if (newCfg) {
         wpm = status->cwWpm;
+        reverse = status->cwReverse;
         cwKeyer_setSpeed(&keyer, wpm);
         // The radio driver restarts a transmission key up on a new
         // configuration
@@ -54,7 +60,8 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
     long long now = getTick();
     bool down = readKey(now);
 
-    if (down && (status->opStatus != TX) && (status->txDisable == 0))
+    if (down && status->cwBreakIn && (status->opStatus != TX)
+        && (status->txDisable == 0))
         down = startTx(status);
 
     // Sidetone, following the keyer also when it does not transmit
@@ -72,11 +79,15 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
             keyDown = down;
         }
 
-        if (down) {
+        if (down)
             lastKeyDown = now;
-        } else if (now - lastKeyDown > HANG_DITS * keyer.ditTime) {
+
+        // Break-in switched off, or the key up for longer than the hang time
+        if ((status->cwBreakIn == 0)
+            || (now - lastKeyDown > HANG_DITS * keyer.ditTime)) {
             radio_disableRtx();
             status->opStatus = OFF;
+            keyDown = false;
             enterRx = true;
         }
     }
@@ -98,7 +109,15 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
 
 bool OpMode_CW::readKey(long long now)
 {
-    return cwKeyer_update(&keyer, paddle_read(), now);
+    uint8_t paddles = paddle_read();
+
+    if (reverse) {
+        uint8_t dit = (paddles & CW_PADDLE_DAH) ? CW_PADDLE_DIT : 0;
+        uint8_t dah = (paddles & CW_PADDLE_DIT) ? CW_PADDLE_DAH : 0;
+        paddles = dit | dah;
+    }
+
+    return cwKeyer_update(&keyer, paddles, now);
 }
 
 bool OpMode_CW::startTx(rtxStatus_t *const status)

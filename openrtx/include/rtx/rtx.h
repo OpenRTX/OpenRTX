@@ -57,7 +57,9 @@ typedef struct
 #ifdef CONFIG_CW
     uint8_t  cwWpm      : 6,           /**< CW keyer speed, in WPM     */
              cwEmission : 1,           /**< CW emission, enum cwEmission */
-             _cwUnused  : 1;
+             cwBreakIn  : 1;           /**< CW keying transmits        */
+    uint8_t  cwReverse  : 1,           /**< CW dit and dah swapped     */
+             _cwUnused  : 7;
 #endif
 }
 rtxStatus_t;
