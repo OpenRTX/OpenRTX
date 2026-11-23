@@ -13,9 +13,25 @@
 #include "protocols/M17/FrameEncoder.hpp"
 #include "protocols/M17/FrameDecoder.hpp"
 #include "protocols/M17/Datatypes.hpp"
+#include "protocols/M17/Utils.hpp"
 #include "core/crc.h"
 
 using namespace M17;
+
+/**
+ * Soft bits of a frame, every bit fully confident.
+ *
+ * @param frame: frame.
+ * @return the soft bits.
+ */
+static softFrame_t softBits(const frame_t &frame)
+{
+    softFrame_t soft;
+    for (size_t i = 0; i < soft.size(); i++)
+        soft[i] = getBit(frame, i) ? UINT16_MAX : 0;
+
+    return soft;
+}
 
 // Helper: format SMS app data and assemble into PacketFrames.
 static size_t buildSmsFrames(const char *msg, size_t msgLen, uint8_t *buffer,
@@ -124,7 +140,7 @@ TEST_CASE("SMS format: round-trips through encoder/decoder", "[m17][smspacket]")
 
     // Decode
     FrameDecoder decoder;
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
