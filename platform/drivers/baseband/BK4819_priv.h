@@ -86,6 +86,16 @@ enum {
     BK4819_REG37_ACTIVE = 0x1f0f,
 };
 
+/*
+ * REG_3D: undocumented, an IF setting: the UV-K5 custom firmware's
+ * RADIO_SetModulation() writes 0 for USB and 0x2AAB otherwise:
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/radio.c#L847
+ */
+enum {
+    BK4819_REG3D_FM_AM = 0x2aab,
+    BK4819_REG3D_USB = 0,
+};
+
 /* REG_40: TX deviation */
 enum {
     BK4819_REG40_TX_DEVIATION_ENABLE = BIT(12),
@@ -181,6 +191,14 @@ enum {
 };
 
 #define BK4819_REG70_TONE1_GAIN(x) (((x) << 8) & BK4819_REG70_TONE1_GAIN_MASK)
+
+/*
+ * REG_73: AFC, disabled outside FM by the UV-K5 custom firmware:
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/driver/bk4819-regs.h#L30
+ */
+enum {
+    BK4819_REG73_AFC_DISABLE = BIT(4),
+};
 
 /* REG_78: squelch RSSI thresholds, 0.5 dB/step */
 enum {

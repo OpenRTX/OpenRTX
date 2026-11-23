@@ -317,6 +317,13 @@ void bk4819_setAfOutput(const struct BK4819 *dev, enum bk4819_afOutput af)
                            BK4819_REG47_AF_OUTPUT(af));
 }
 
+void bk4819_setUsb(const struct BK4819 *dev, bool usb)
+{
+    bk4819_writeReg(dev, 0x3D, usb ? BK4819_REG3D_USB : BK4819_REG3D_FM_AM);
+    bk4819_maskSetRegister(dev, 0x73, BK4819_REG73_AFC_DISABLE,
+                           usb ? BK4819_REG73_AFC_DISABLE : 0);
+}
+
 void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq, uint8_t gain)
 {
     const uint16_t mask = BK4819_REG51_CXCSS_TX_ENABLE | BK4819_REG51_CTCSS_MODE
