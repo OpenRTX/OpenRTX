@@ -51,8 +51,7 @@ enum Mode
     ALTERNATE       = 7, ///< Alternate function
     ALTERNATE_OD    = 8, ///< Alternate function, open drain
     ALTERNATE_OD_PU = 9, ///< Alternate function, open drain with pull-up
-    OUTPUT_ACTIVE_LOW =
-        10               ///< Output, push pull, set/clear use active-low levels
+    OUTPUT_ACTIVE_LOW = 10, ///< Output, push pull, set/clear are active-low
 };
 
 /**
@@ -79,7 +78,7 @@ struct gpioApi
     int (*mode)(const struct gpioDev *dev, const uint8_t pin, const uint16_t mode);
 
     /**
-    * Set gpio pin to logic high level, or low for OUTPUT_ACTIVE_LOW.
+     * Set gpio pin to logic high level, or low for OUTPUT_ACTIVE_LOW.
      * NOTE: this function does not guarantee that the operation is performed atomically.
      *
      * @param port: device handling the gpio port.
@@ -88,7 +87,7 @@ struct gpioApi
     void (*set)(const struct gpioDev *dev, const uint8_t pin);
 
     /**
-    * Set gpio pin to logic low level, or high for OUTPUT_ACTIVE_LOW.
+     * Set gpio pin to logic low level, or high for OUTPUT_ACTIVE_LOW.
      * NOTE: this function does not guarantee that the operation is performed atomically.
      *
      * @param port: device handling the gpio port.
@@ -97,7 +96,7 @@ struct gpioApi
     void (*clear)(const struct gpioDev *dev, const uint8_t pin);
 
     /**
-    * Read gpio pin's logic level (inverted for OUTPUT_ACTIVE_LOW).
+     * Read gpio pin's logic level (inverted for OUTPUT_ACTIVE_LOW).
      *
      * @param port: device handling the gpio port.
      * @param pin: gpio pin number.

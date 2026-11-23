@@ -4,16 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "drivers/baseband/BK4819.h"
+#include "drivers/baseband/BK4819_priv.h"
 #include <assert.h>
 #include <errno.h>
-
-/* BK4819 GPIO register fields of pin 0; pin n is n bits lower */
-enum {
-    BK4819_REG33_DIRECTION_PIN0 = 0x4000, ///< Set for input.
-    BK4819_REG33_OUTPUT_PIN0 = 0x0040,    ///< Output level.
-    BK4819_REG0A_INPUT_PIN0 = 0x0040,     ///< Input level.
-};
 
 /**
  * Set the mode of a BK4819 GPIO pin.
