@@ -33,7 +33,7 @@ static constexpr uint8_t CTCSS_TX_GAIN = 65;
 
 // Use the same gain as the CTCSS tone for the tone burst
 static constexpr uint16_t TONE_BURST_FREQ = 1750;
-static constexpr uint8_t TONE_BURST_GAIN = 66;
+static constexpr uint8_t TONE_BURST_GAIN = 65;
 
 /*
  * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
