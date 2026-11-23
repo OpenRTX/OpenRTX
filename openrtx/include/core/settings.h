@@ -64,6 +64,9 @@ typedef struct
     uint8_t cw_wpm          : 6,  // CW keyer speed, in words per minute
             cw_emission     : 1,  // CW emission, enum cwEmission
             _reserved_cw    : 1;
+    uint8_t cw_breakin      : 1,  // CW keying transmits
+            cw_reverse      : 1,  // CW dit and dah paddles swapped
+            _reserved_cw2   : 6;
 #endif
 }
 __attribute__((packed)) settings_t;
@@ -96,6 +99,9 @@ static const settings_t default_settings =
 #ifdef CONFIG_CW
     20,                           // CW keyer at 20 WPM
     0,                            // CW emission A1A
+    0,                            // not used
+    1,                            // CW break-in on
+    0,                            // CW paddles not swapped
     0,                            // not used
 #endif
 };

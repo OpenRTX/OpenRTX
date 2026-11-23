@@ -93,6 +93,8 @@ void *ui_threadFunc(void *arg)
             #ifdef CONFIG_CW
             rtx_cfg.cwWpm      = state.settings.cw_wpm;
             rtx_cfg.cwEmission = state.settings.cw_emission;
+            rtx_cfg.cwBreakIn  = state.settings.cw_breakin;
+            rtx_cfg.cwReverse  = state.settings.cw_reverse;
             #endif
 
             pthread_mutex_unlock(&rtx_mutex);
