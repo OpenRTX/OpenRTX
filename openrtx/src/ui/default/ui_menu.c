@@ -482,6 +482,32 @@ int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+#ifdef CONFIG_CW
+int _ui_getCWEntryName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_cw_num)
+        return -1;
+
+    sniprintf(buf, max_len, "%s", settings_cw_items[index]);
+    return 0;
+}
+
+int _ui_getCWValueName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_cw_num)
+        return -1;
+
+    switch (index) {
+        case CW_PADDLE:
+            sniprintf(buf, max_len, "%s",
+                      last_state.settings.cw_reverse ? "Reverse" : "Normal");
+            break;
+    }
+
+    return 0;
+}
+#endif
+
 int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_accessibility_num) return -1;
@@ -1055,6 +1081,19 @@ void _ui_drawSettingsFM(ui_state_t* ui_state)
     _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getFMEntryName,
                           _ui_getFMValueName);
 }
+
+#ifdef CONFIG_CW
+void _ui_drawSettingsCW(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "CW" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
+              "CW");
+    // Print CW settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getCWEntryName,
+                          _ui_getCWValueName);
+}
+#endif
 
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {

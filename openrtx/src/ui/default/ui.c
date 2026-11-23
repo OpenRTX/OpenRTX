@@ -99,6 +99,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsFM(ui_state_t* ui_state);
+extern void _ui_drawSettingsCW(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
@@ -132,6 +133,9 @@ const char *settings_items[] =
     "M17",
 #endif
     "FM",
+#ifdef CONFIG_CW
+    "CW",
+#endif
     "Accessibility",
     "Default Settings"
 };
@@ -179,6 +183,13 @@ const char* settings_fm_items[] =
     "CTCSS Tone",
     "CTCSS En."
 };
+
+#ifdef CONFIG_CW
+const char *settings_cw_items[] =
+{
+    "Paddle",
+};
+#endif
 
 const char * settings_accessibility_items[] =
 {
@@ -265,6 +276,9 @@ const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 #endif
 const uint8_t settings_fm_num = sizeof(settings_fm_items) / sizeof(settings_fm_items[0]);
+#ifdef CONFIG_CW
+const uint8_t settings_cw_num = sizeof(settings_cw_items) / sizeof(settings_cw_items[0]);
+#endif
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -2016,6 +2030,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_FM:
                             state.ui_screen = SETTINGS_FM;
                             break;
+#ifdef CONFIG_CW
+                        case S_CW:
+                            state.ui_screen = SETTINGS_CW;
+                            break;
+#endif
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2553,6 +2572,38 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
 
+#ifdef CONFIG_CW
+            case SETTINGS_CW:
+                if (ui_state.edit_mode)
+                {
+                    if (msg.keys & (KEY_ESC | KEY_ENTER))
+                    {
+                        ui_state.edit_mode = false;
+                    }
+                    else if (msg.keys & (KEY_UP | KEY_DOWN | KNOB_LEFT |
+                                         KNOB_RIGHT))
+                    {
+                        switch (ui_state.menu_selected)
+                        {
+                            case CW_PADDLE:
+                                state.settings.cw_reverse =
+                                    !state.settings.cw_reverse;
+                                *sync_rtx = true;
+                                break;
+                        }
+                    }
+                }
+                else if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_cw_num);
+                else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_cw_num);
+                else if (msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = true;
+                else if (msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
+#endif
+
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2782,6 +2833,12 @@ bool ui_updateGUI()
         case SETTINGS_FM:
             _ui_drawSettingsFM(&ui_state);
             break;
+#ifdef CONFIG_CW
+        // CW settings screen
+        case SETTINGS_CW:
+            _ui_drawSettingsCW(&ui_state);
+            break;
+#endif
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;
