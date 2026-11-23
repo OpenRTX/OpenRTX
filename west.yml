@@ -54,7 +54,8 @@ manifest:
       groups:
         - csk6
 
-    # ListenAI fork-specific modules
+    # ListenAI fork-specific modules. The four libraries are pinned to commits
+    # of their openrtx-c62 branches: they must match the DSP firmware.
     - name: listenai-zephyr
       remote: openrtx
       repo-path: listenai-zephyr
@@ -82,28 +83,28 @@ manifest:
 
     - name: listenai-modules-af
       remote: openrtx
-      revision: openrtx-c62
+      revision: c94c49ffb883b6d15b284b84d0eb13394ac07422
       path: modules/lib/af
       groups:
         - csk6
 
     - name: listenai-modules-freertos_shims
       remote: openrtx
-      revision: openrtx-c62
+      revision: 62e3c7e459c6ad859b2c86a8733ad8dab058806a
       path: modules/lib/freertos_shims
       groups:
         - csk6
 
     - name: listenai-modules-lsf
       remote: openrtx
-      revision: openrtx-c62
+      revision: 1aafb369f7ac5a25f4ea08e004713380eec7c50d
       path: modules/lib/lsf
       groups:
         - csk6
 
     - name: listenai-modules-urpc
       remote: openrtx
-      revision: openrtx-c62
+      revision: 0e450f3ba1cad8f6b677f917f7f158d3122ddbe3
       path: modules/lib/urpc
       groups:
         - csk6
