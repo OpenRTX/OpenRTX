@@ -9,6 +9,7 @@
 #include "interfaces/platform.h"
 #include "interfaces/radio.h"
 #include "rtx/OpMode_CW.hpp"
+#include "rtx/rtx.h"
 
 OpMode_CW::OpMode_CW()
     : lastKeyDown(0)
@@ -17,6 +18,9 @@ OpMode_CW::OpMode_CW()
     , sidetone(false)
     , enterRx(false)
     , reverse(false)
+    , rfSqlOpen(false)
+    , sqlOpen(false)
+    , rxAudioPath(0)
 {
     cwKeyer_init(&keyer, wpm);
 }
@@ -37,6 +41,7 @@ void OpMode_CW::disable()
 {
     platform_ledOff(GREEN);
     platform_ledOff(RED);
+    closeSquelch();
     radio_disableRtx();
     paddle_terminate();
     if (sidetone)
@@ -92,6 +97,9 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
         }
     }
 
+    if (status->opStatus == RX)
+        updateSquelch(status);
+
     if ((status->opStatus == OFF) && enterRx) {
         radio_disableRtx();
         radio_enableRx();
@@ -103,6 +111,11 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
         platform_ledOn(RED);
     else
         platform_ledOff(RED);
+
+    if (rfSqlOpen && (status->opStatus == RX))
+        platform_ledOn(GREEN);
+    else
+        platform_ledOff(GREEN);
 
     sleepFor(0u, POLL_MS);
 }
@@ -122,6 +135,7 @@ bool OpMode_CW::readKey(long long now)
 
 bool OpMode_CW::startTx(rtxStatus_t *const status)
 {
+    closeSquelch();
     radio_disableRtx();
     radio_enableTx();
     status->opStatus = TX;
@@ -132,4 +146,37 @@ bool OpMode_CW::startTx(rtxStatus_t *const status)
     lastKeyDown = now;
 
     return readKey(now);
+}
+
+void OpMode_CW::updateSquelch(const rtxStatus_t *const status)
+{
+    // Squelch 0 to 15 is an RSSI of -127 to -61 dBm, with 1 dB of hysteresis
+    rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
+    rssi_t rssi = rtx_getRssi();
+
+    if (!rfSqlOpen && (rssi > (squelch + 1)))
+        rfSqlOpen = true;
+    if (rfSqlOpen && (rssi < (squelch - 1)))
+        rfSqlOpen = false;
+
+    if (rfSqlOpen && !sqlOpen) {
+        rxAudioPath = audioPath_request(SOURCE_RTX, SINK_SPK, PRIO_RX);
+        sqlOpen = (rxAudioPath > 0);
+    } else if (!rfSqlOpen && sqlOpen) {
+        closeSquelch();
+    }
+}
+
+void OpMode_CW::closeSquelch()
+{
+    if (sqlOpen)
+        audioPath_release(rxAudioPath);
+
+    rfSqlOpen = false;
+    sqlOpen = false;
+}
+
+bool OpMode_CW::rxSquelchOpen()
+{
+    return sqlOpen;
 }

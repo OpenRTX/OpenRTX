@@ -7,6 +7,7 @@
 #ifndef OPMODE_CW_H
 #define OPMODE_CW_H
 
+#include "core/audio_path.h"
 #include "core/cw_keyer.h"
 #include "OpMode.hpp"
 
@@ -15,8 +16,8 @@
  * iambic keyer. The paddle may share the PTT line, so the PTT does not key
  * anything in this mode. With break-in on, the first key down starts
  * transmitting; transmission ends once the key has been up for longer than
- * a word space. With break-in off, keying only sounds the sidetone. The
- * receiver stays on between transmissions, without audio.
+ * a word space. With break-in off, keying only sounds the sidetone. Between
+ * transmissions the receiver plays when the RSSI opens the squelch, as in FM.
  */
 class OpMode_CW : public OpMode
 {
@@ -72,6 +73,13 @@ public:
         return OPMODE_CW;
     }
 
+    /**
+     * Check if RX squelch is open.
+     *
+     * @return true if RX squelch is open.
+     */
+    virtual bool rxSquelchOpen() override;
+
 private:
     /**
      * Read the paddles and run the keyer.
@@ -90,6 +98,19 @@ private:
      */
     bool startTx(rtxStatus_t *const status);
 
+    /**
+     * Open or close the receiver audio on the RSSI squelch, as OpMode_FM does
+     * without tone squelch.
+     *
+     * @param status: current RTX status.
+     */
+    void updateSquelch(const rtxStatus_t *const status);
+
+    /**
+     * Close the receiver audio.
+     */
+    void closeSquelch();
+
     static constexpr unsigned int POLL_MS = 1;   ///< Keyer polling period.
     static constexpr unsigned int HANG_DITS = 8; ///< TX hang, a word space +1.
     static constexpr uint16_t SIDETONE_HZ = 700; ///< Sidetone pitch.
@@ -101,6 +122,9 @@ private:
     bool sidetone;         ///< Sidetone sounding.
     bool enterRx;          ///< Flag for RX management.
     bool reverse;          ///< Dit and dah paddles swapped.
+    bool rfSqlOpen;        ///< RSSI above the squelch level.
+    bool sqlOpen;          ///< Receiver audio playing.
+    pathId rxAudioPath;    ///< Receiver audio path.
 };
 
 #endif /* OPMODE_CW_H */
