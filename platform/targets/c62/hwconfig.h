@@ -29,7 +29,9 @@ extern "C" {
 #define CONFIG_SCREEN_WIDTH DT_PROP(DISPLAY, width)
 #define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
 
+/* The ST7735R takes RGB565 pixels with the high byte first */
 #define CONFIG_PIX_FMT_RGB565
+#define CONFIG_PIX_FMT_RGB565_BE
 
 /* Screen has adjustable brightness */
 #define CONFIG_SCREEN_BRIGHTNESS

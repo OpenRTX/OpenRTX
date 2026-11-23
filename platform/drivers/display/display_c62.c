@@ -10,15 +10,27 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <hwconfig.h>
-#include <string.h>
-#include <math.h>
 
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(display, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(display, LOG_LEVEL_INF);
 
-// ST7735R is a color display using RGB565 format (16 bits per pixel)
-#define FB_SIZE (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH * 2)
+/*
+ * The ST7735R takes RGB565 pixels, 16 bits each, with the high byte first:
+ * the framebuffer is already in that order, see CONFIG_PIX_FMT_RGB565_BE.
+ */
+#define BYTES_PER_PIXEL 2
+#define FB_SIZE (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH * BYTES_PER_PIXEL)
+
+/* Backlight PWM period: 1 kHz */
+#define BACKLIGHT_PERIOD_US 1000
+/*
+ * Backlight curve, quadratic for a finer control of the low levels: duty in
+ * percent = level^2 / BACKLIGHT_CURVE_DIV + BACKLIGHT_MIN_DUTY, which is 100
+ * at level 100.
+ */
+#define BACKLIGHT_CURVE_DIV 105
+#define BACKLIGHT_MIN_DUTY 5
 
 static const struct device *displayDev;
 static struct display_buffer_descriptor displayBufDesc = {
@@ -27,10 +39,6 @@ static struct display_buffer_descriptor displayBufDesc = {
     .height = CONFIG_SCREEN_HEIGHT,
     .pitch = CONFIG_SCREEN_WIDTH,
 };
-
-// Copy of the frame sent to the panel, filled before every transfer, so it
-// can live in PSRAM (not zeroed at boot) to save SRAM.
-__attribute__((section(".psram_section"))) static uint8_t shadowBuffer[FB_SIZE];
 
 void display_init()
 {
@@ -56,49 +64,27 @@ void display_terminate()
 
 void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
-    if (startRow >= CONFIG_SCREEN_HEIGHT || endRow >= CONFIG_SCREEN_HEIGHT
-        || startRow > endRow) {
+    if ((startRow >= CONFIG_SCREEN_HEIGHT) || (endRow >= CONFIG_SCREEN_HEIGHT)
+        || (startRow > endRow)) {
         return;
     }
 
-    uint8_t *frameBuffer = (uint8_t *)fb;
-    uint16_t rowSize = CONFIG_SCREEN_WIDTH * 2; // 2 bytes per pixel
-    uint16_t rowCount = endRow - startRow + 1;
-
-    // Set up buffer descriptor for partial update
-    struct display_buffer_descriptor bufDesc = {
+    const size_t rowSize = CONFIG_SCREEN_WIDTH * BYTES_PER_PIXEL;
+    const uint16_t rowCount = endRow - startRow + 1;
+    const struct display_buffer_descriptor bufDesc = {
         .buf_size = rowSize * rowCount,
         .width = CONFIG_SCREEN_WIDTH,
         .height = rowCount,
         .pitch = CONFIG_SCREEN_WIDTH,
     };
 
-    // Calculate start position in buffer
-    size_t offset = startRow * rowSize;
-    uint8_t *srcPtr = frameBuffer + offset;
-
-    // Copy data to shadow buffer with format conversion if needed
-    // This example assumes input buffer is already in RGB565 format
-    memcpy(shadowBuffer, srcPtr, rowSize * rowCount);
-
-    // Write to display
-    display_write(displayDev, 0, startRow, &bufDesc, shadowBuffer);
+    display_write(displayDev, 0, startRow, &bufDesc,
+                  (const uint8_t *)fb + (startRow * rowSize));
 }
 
 void display_render(void *fb)
 {
-    uint16_t *frameBuffer = (uint16_t *)fb;
-    uint16_t *shadowBuffer16 = (uint16_t *)shadowBuffer;
-
-    // Process each 16-bit pixel
-    for (size_t i = 0; i < FB_SIZE / sizeof(uint16_t); i++) {
-        // Extract the 16-bit RGB565 value
-        // Store in shadow buffer with byte order swapped
-        // This fixes endianness issues which can cause color problems
-        shadowBuffer16[i] = __builtin_bswap16(frameBuffer[i]);
-    }
-
-    display_write(displayDev, 0, 0, &displayBufDesc, shadowBuffer);
+    display_write(displayDev, 0, 0, &displayBufDesc, fb);
 }
 
 void display_setBacklightLevel(uint8_t level)
@@ -106,18 +92,18 @@ void display_setBacklightLevel(uint8_t level)
     if (level > 100)
         level = 100;
 
-    // Calculate duty cycle (1000us period = 1kHz) on pin A02
-    uint32_t period_us = 1000; // 1kHz PWM frequency
-    uint32_t adjusted_brightness_percent = 0;
+    uint32_t duty = 0;
 
+    // Rounded to the nearest percent
     if (level > 0) {
-        // Apply non-linear mapping for better low-end brightness control
-        adjusted_brightness_percent = roundf(level * level / 105.0) + 5;
+        duty = ((level * level) + (BACKLIGHT_CURVE_DIV / 2))
+             / BACKLIGHT_CURVE_DIV;
+        duty += BACKLIGHT_MIN_DUTY;
     }
 
-    uint32_t pulse_us = (period_us * adjusted_brightness_percent) / 100;
+    uint32_t pulse_us = (BACKLIGHT_PERIOD_US * duty) / 100;
 
-    int ret = pwm_set_dt(&pwm_lcd_backlight, PWM_USEC(period_us),
+    int ret = pwm_set_dt(&pwm_lcd_backlight, PWM_USEC(BACKLIGHT_PERIOD_US),
                          PWM_USEC(pulse_us));
 
     if (ret < 0) {
