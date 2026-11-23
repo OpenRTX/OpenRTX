@@ -214,6 +214,16 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
             break;
         }
         #endif
+
+        #ifdef CONFIG_CW
+        case OPMODE_CW:
+            gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
+                      color_white, "CW %s %u WPM",
+                      (last_state.settings.cw_emission == CW_A1A) ? "A1A"
+                                                                  : "F2A",
+                      last_state.settings.cw_wpm);
+            break;
+        #endif
     }
 }
 
@@ -321,6 +331,9 @@ void _ui_drawMainBottom()
     switch(last_state.channel.mode)
     {
         case OPMODE_FM:
+        #ifdef CONFIG_CW
+        case OPMODE_CW:
+        #endif
             gfx_drawSmeter(meter_pos,
                            meter_width,
                            meter_height,

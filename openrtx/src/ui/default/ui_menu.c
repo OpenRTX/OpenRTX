@@ -1227,6 +1227,35 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, " T+");
     }
+#ifdef CONFIG_CW
+    else if (last_state.channel.mode == OPMODE_CW)
+    {
+        // Keyer speed down and up, emission
+#if defined(CONFIG_UI_NO_KEYBOARD)
+        if (ui_state->macro_menu_selected == 0)
+#endif // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      yellow_fab413, "1");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "   -");
+#if defined(CONFIG_UI_NO_KEYBOARD)
+        if (ui_state->macro_menu_selected == 1)
+#endif // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      yellow_fab413, "2");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white, "      +");
+#if defined(CONFIG_UI_NO_KEYBOARD)
+        if (ui_state->macro_menu_selected == 2)
+#endif // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                      yellow_fab413, "3        ");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white, "%s",
+                  (last_state.settings.cw_emission == CW_A1A) ? "A1A"
+                                                              : "F2A");
+    }
+#endif
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
@@ -1241,11 +1270,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +
                     (layout.line3_large_pos.y - layout.line1_pos.y)/2};
 
+    // CW shows its keyer speed in place of key 4, which it does not use
+    if (last_state.channel.mode != OPMODE_CW)
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 3)
 #endif // CONFIG_UI_NO_KEYBOARD
-    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
-              yellow_fab413, "4");
+        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                  yellow_fab413, "4");
 
     if (last_state.channel.mode == OPMODE_FM)
     {
@@ -1271,6 +1302,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 
     }
 #endif
+#ifdef CONFIG_CW
+    else if (last_state.channel.mode == OPMODE_CW)
+    {
+        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "%u WPM", last_state.settings.cw_wpm);
+    }
+#endif
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 4)
@@ -1290,6 +1328,11 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #ifdef CONFIG_M17
         case OPMODE_M17:
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          M17");
+            break;
+#endif
+#ifdef CONFIG_CW
+        case OPMODE_CW:
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          CW");
             break;
 #endif
     }

@@ -944,6 +944,15 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                     state.channel.fm.txToneEn, state.channel.fm.txTone,
                     queueFlags | vpqIncludeDescriptions);
             }
+#ifdef CONFIG_CW
+            // Slower CW keyer
+            else if ((state.channel.mode == OPMODE_CW) &&
+                     (state.settings.cw_wpm > CW_WPM_MIN))
+            {
+                state.settings.cw_wpm--;
+                *sync_rtx = true;
+            }
+#endif
             break;
         case 2:
             if (state.channel.mode == OPMODE_FM)
@@ -966,6 +975,15 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                                  state.channel.fm.txTone,
                                  queueFlags);
             }
+#ifdef CONFIG_CW
+            // Faster CW keyer
+            else if ((state.channel.mode == OPMODE_CW) &&
+                     (state.settings.cw_wpm < CW_WPM_MAX))
+            {
+                state.settings.cw_wpm++;
+                *sync_rtx = true;
+            }
+#endif
             break;
 
         case 3:
@@ -981,6 +999,18 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                                  state.channel.fm.txTone,
                                  queueFlags |vpqIncludeDescriptions);
             }
+#ifdef CONFIG_CW
+            // Toggle the CW emission, A1A or F2A
+            else if (state.channel.mode == OPMODE_CW)
+            {
+                if (state.settings.cw_emission == CW_A1A)
+                    state.settings.cw_emission = CW_F2A;
+                else
+                    state.settings.cw_emission = CW_A1A;
+
+                *sync_rtx = true;
+            }
+#endif
             break;
         case 4:
             if(state.channel.mode == OPMODE_FM)
@@ -992,14 +1022,19 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             }
             break;
         case 5:
-            // Cycle through radio modes
+            // Cycle through radio modes: FM, M17, CW
             #ifdef CONFIG_M17
             if(state.channel.mode == OPMODE_FM)
                 state.channel.mode = OPMODE_M17;
-            else if(state.channel.mode == OPMODE_M17)
-                state.channel.mode = OPMODE_FM;
-            else //catch any invalid states so they don't get locked out
+            else
             #endif
+            #ifdef CONFIG_CW
+            if((state.channel.mode == OPMODE_FM) ||
+               (state.channel.mode == OPMODE_M17))
+                state.channel.mode = OPMODE_CW;
+            else
+            #endif
+            //catch any invalid states so they don't get locked out
                 state.channel.mode = OPMODE_FM;
             *sync_rtx = true;
             vp_announceRadioMode(state.channel.mode, queueFlags);
