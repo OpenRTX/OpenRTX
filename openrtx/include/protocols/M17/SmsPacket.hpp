@@ -31,8 +31,8 @@ namespace M17
  * @return            Number of application-data bytes written (0 on error).
  *                    Pass this value as len to PacketFramer::init().
  */
-size_t sms_format_packet(const char *message, size_t msgLen, uint8_t *buffer,
-                         size_t bufferSize);
+size_t smsPacket_format(const char *message, size_t msgLen, uint8_t *buffer,
+                        size_t bufferSize);
 
 /**
  * Locate the message text inside an SMS packet payload, without copying it.
@@ -48,7 +48,7 @@ size_t sms_format_packet(const char *message, size_t msgLen, uint8_t *buffer,
  * @return         Pointer to the message text inside data, or nullptr if data
  *                 is not a valid SMS packet.
  */
-const char *sms_packet_text(const uint8_t *data, size_t len, size_t *textLen);
+const char *smsPacket_getText(const uint8_t *data, size_t len, size_t *textLen);
 
 } // namespace M17
 

@@ -38,7 +38,7 @@ static size_t buildSmsFrames(const char *msg, size_t msgLen, uint8_t *buffer,
                              size_t bufSize, PacketFrame *frames,
                              size_t maxFrames)
 {
-    size_t appLen = sms_format_packet(msg, msgLen, buffer, bufSize);
+    size_t appLen = smsPacket_format(msg, msgLen, buffer, bufSize);
     if (appLen == 0)
         return 0;
 
@@ -56,25 +56,25 @@ static size_t buildSmsFrames(const char *msg, size_t msgLen, uint8_t *buffer,
 }
 
 // ===========================================================================
-// Format tests (sms_format_packet)
+// Format tests (smsPacket_format)
 // ===========================================================================
 
 TEST_CASE("SMS format: empty message returns zero", "[m17][smspacket]")
 {
     uint8_t buf[32];
-    REQUIRE(sms_format_packet("", 0, buf, sizeof(buf)) == 0);
+    REQUIRE(smsPacket_format("", 0, buf, sizeof(buf)) == 0);
 }
 
 TEST_CASE("SMS format: null message pointer returns zero", "[m17][smspacket]")
 {
     uint8_t buf[32];
-    REQUIRE(sms_format_packet(nullptr, 5, buf, sizeof(buf)) == 0);
+    REQUIRE(smsPacket_format(nullptr, 5, buf, sizeof(buf)) == 0);
 }
 
 TEST_CASE("SMS format: protocol ID byte is 0x05", "[m17][smspacket]")
 {
     uint8_t buf[32];
-    size_t len = sms_format_packet("Hi", 2, buf, sizeof(buf));
+    size_t len = smsPacket_format("Hi", 2, buf, sizeof(buf));
     REQUIRE(len > 0);
     REQUIRE(buf[0] == 0x05);
 }
@@ -82,7 +82,7 @@ TEST_CASE("SMS format: protocol ID byte is 0x05", "[m17][smspacket]")
 TEST_CASE("SMS format: message text follows protocol ID", "[m17][smspacket]")
 {
     uint8_t buf[32];
-    sms_format_packet("AB", 2, buf, sizeof(buf));
+    smsPacket_format("AB", 2, buf, sizeof(buf));
     REQUIRE(buf[1] == 'A');
     REQUIRE(buf[2] == 'B');
 }
@@ -90,7 +90,7 @@ TEST_CASE("SMS format: message text follows protocol ID", "[m17][smspacket]")
 TEST_CASE("SMS format: NUL terminator follows message", "[m17][smspacket]")
 {
     uint8_t buf[32];
-    sms_format_packet("AB", 2, buf, sizeof(buf));
+    smsPacket_format("AB", 2, buf, sizeof(buf));
     REQUIRE(buf[3] == 0x00);
 }
 
@@ -101,7 +101,7 @@ TEST_CASE("SMS format: CRC is computed over protocol ID + message + NUL",
     size_t msgLen = strlen(msg);
 
     uint8_t buf[32];
-    size_t appLen = sms_format_packet(msg, msgLen, buf, sizeof(buf));
+    size_t appLen = smsPacket_format(msg, msgLen, buf, sizeof(buf));
     REQUIRE(appLen == 1 + msgLen + 1);
 
     // Build frames to get CRC verification
@@ -177,7 +177,7 @@ TEST_CASE("SMS format: reference vector matches known-good frame",
 }
 
 // ===========================================================================
-// Text accessor tests (sms_packet_text)
+// Text accessor tests (smsPacket_getText)
 // ===========================================================================
 
 TEST_CASE("SMS text: rejects null, short and foreign payloads",
@@ -187,10 +187,10 @@ TEST_CASE("SMS text: rejects null, short and foreign payloads",
     const uint8_t foreign[] = { 0x04, 'H', 'i', 0x00 };
     size_t len = 0;
 
-    REQUIRE(sms_packet_text(nullptr, sizeof(data), &len) == nullptr);
-    REQUIRE(sms_packet_text(data, sizeof(data), nullptr) == nullptr);
-    REQUIRE(sms_packet_text(data, 1, &len) == nullptr);
-    REQUIRE(sms_packet_text(foreign, sizeof(foreign), &len) == nullptr);
+    REQUIRE(smsPacket_getText(nullptr, sizeof(data), &len) == nullptr);
+    REQUIRE(smsPacket_getText(data, sizeof(data), nullptr) == nullptr);
+    REQUIRE(smsPacket_getText(data, 1, &len) == nullptr);
+    REQUIRE(smsPacket_getText(foreign, sizeof(foreign), &len) == nullptr);
 }
 
 TEST_CASE("SMS text: points into the payload and strips the trailing NUL",
@@ -199,7 +199,7 @@ TEST_CASE("SMS text: points into the payload and strips the trailing NUL",
     const uint8_t data[] = { 0x05, 'H', 'e', 'l', 'l', 'o', 0x00 };
     size_t len = 0;
 
-    const char *text = sms_packet_text(data, sizeof(data), &len);
+    const char *text = smsPacket_getText(data, sizeof(data), &len);
     REQUIRE(text == reinterpret_cast<const char *>(&data[1]));
     REQUIRE(len == 5);
     REQUIRE(memcmp(text, "Hello", 5) == 0);
@@ -210,7 +210,7 @@ TEST_CASE("SMS text: works without trailing NUL in payload", "[m17][smspacket]")
     const uint8_t data[] = { 0x05, 'H', 'i' };
     size_t len = 0;
 
-    const char *text = sms_packet_text(data, sizeof(data), &len);
+    const char *text = smsPacket_getText(data, sizeof(data), &len);
     REQUIRE(text != nullptr);
     REQUIRE(len == 2);
 }
@@ -220,7 +220,7 @@ TEST_CASE("SMS text: an empty message yields zero length", "[m17][smspacket]")
     const uint8_t data[] = { 0x05, 0x00 };
     size_t len = 99;
 
-    const char *text = sms_packet_text(data, sizeof(data), &len);
+    const char *text = smsPacket_getText(data, sizeof(data), &len);
     REQUIRE(text != nullptr);
     REQUIRE(len == 0);
 }
@@ -235,12 +235,12 @@ TEST_CASE("SMS round-trip: format then read back the original message",
 
     // Format
     uint8_t buf[64];
-    size_t appLen = sms_format_packet(original, origLen, buf, sizeof(buf));
+    size_t appLen = smsPacket_format(original, origLen, buf, sizeof(buf));
     REQUIRE(appLen == 1 + origLen + 1);
 
     // Read back
     size_t textLen = 0;
-    const char *text = sms_packet_text(buf, appLen, &textLen);
+    const char *text = smsPacket_getText(buf, appLen, &textLen);
     REQUIRE(text != nullptr);
     REQUIRE(textLen == origLen);
     REQUIRE(memcmp(text, original, origLen) == 0);
@@ -256,7 +256,7 @@ TEST_CASE("SMS pipeline: format/frame/deframe round-trip recovers message",
 
     // Format
     uint8_t buf[64];
-    size_t appLen = sms_format_packet(original, origLen, buf, sizeof(buf));
+    size_t appLen = smsPacket_format(original, origLen, buf, sizeof(buf));
     REQUIRE(appLen > 0);
 
     // Frame
@@ -278,8 +278,8 @@ TEST_CASE("SMS pipeline: format/frame/deframe round-trip recovers message",
 
     // Read back
     size_t textLen = 0;
-    const char *text = sms_packet_text(deframer.data(), deframer.length(),
-                                       &textLen);
+    const char *text = smsPacket_getText(deframer.data(), deframer.length(),
+                                         &textLen);
     REQUIRE(text != nullptr);
     REQUIRE(textLen == origLen);
     REQUIRE(memcmp(text, original, origLen) == 0);

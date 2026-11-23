@@ -11,8 +11,8 @@
 namespace M17
 {
 
-size_t sms_format_packet(const char *message, size_t msgLen, uint8_t *buffer,
-                         size_t bufferSize)
+size_t smsPacket_format(const char *message, size_t msgLen, uint8_t *buffer,
+                        size_t bufferSize)
 {
     if (msgLen == 0 || message == nullptr || buffer == nullptr)
         return 0;
@@ -33,7 +33,7 @@ size_t sms_format_packet(const char *message, size_t msgLen, uint8_t *buffer,
     return appDataLen;
 }
 
-const char *sms_packet_text(const uint8_t *data, size_t len, size_t *textLen)
+const char *smsPacket_getText(const uint8_t *data, size_t len, size_t *textLen)
 {
     if (data == nullptr || len < 2 || textLen == nullptr)
         return nullptr;
