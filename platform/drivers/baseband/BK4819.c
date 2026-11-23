@@ -282,6 +282,24 @@ void bk4819_disableTxTone(const struct BK4819 *dev)
     bk4819_writeReg(dev, 0x30, txPaths);
 }
 
+void bk4819_setTxToneGain(const struct BK4819 *dev, uint8_t gain)
+{
+    const uint16_t mask = BK4819_REG70_TONE1_ENABLE
+                        | BK4819_REG70_TONE1_GAIN_MASK;
+    uint16_t value = 0;
+
+    if (gain != 0)
+        value = BK4819_REG70_TONE1_ENABLE | BK4819_REG70_TONE1_GAIN(gain);
+
+    bk4819_maskSetRegister(dev, 0x70, mask, value);
+}
+
+void bk4819_enablePa(const struct BK4819 *dev, bool enable)
+{
+    bk4819_maskSetRegister(dev, 0x30, BK4819_REG30_PA_GAIN_ENABLE,
+                           enable ? BK4819_REG30_PA_GAIN_ENABLE : 0);
+}
+
 void bk4819_disableRtx(const struct BK4819 *dev)
 {
     bk4819_writeReg(dev, 0x30, 0x00); /* reset */

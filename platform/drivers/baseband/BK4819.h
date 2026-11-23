@@ -201,6 +201,26 @@ void bk4819_enableTxTone(const struct BK4819 *dev, uint16_t freq, uint8_t gain);
 void bk4819_disableTxTone(const struct BK4819 *dev);
 
 /**
+ * Change the gain of the tone transmitted by bk4819_enableTxTone(), as to
+ * key or shape it.
+ *
+ * @param dev: pointer to device data.
+ * @param gain: tone 1 tuning gain (REG_70), 1 to 127, or 0 to switch the
+ * tone off: at its lowest gain it is still heard.
+ */
+void bk4819_setTxToneGain(const struct BK4819 *dev, uint8_t gain);
+
+/**
+ * Switch the power amplifier output on or off while transmitting, as to key
+ * the carrier: only the REG_30 PA enable bit changes, without the REG_30
+ * reset of bk4819_enableTx(), which turns it on.
+ *
+ * @param dev: pointer to device data.
+ * @param enable: true to turn the power amplifier output on.
+ */
+void bk4819_enablePa(const struct BK4819 *dev, bool enable);
+
+/**
  * Select the AM or FM demodulator.
  *
  * @param dev: pointer to device data.
