@@ -46,7 +46,7 @@ enum AdcChannels {
 
 #define CONFIG_M17
 
-/* Software gain of the M17 microphone input, set for C62_ADC_MIC_GAIN_A/D */
+/* Software gain of the M17 microphone input, set for the codec's mic gains */
 #define CONFIG_MIC_GAIN 13
 
 /* GPIO controllers, for the pins driven through the gpioPin API */
