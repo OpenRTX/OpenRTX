@@ -8,6 +8,7 @@
 #define RTX_H
 
 #include "core/datatypes.h"
+#include "hwconfig.h"
 #include <stdint.h>
 #include "core/cps.h"
 #include <pthread.h>
@@ -53,6 +54,11 @@ typedef struct
     char     M17_link[10];             /**  M17 LSF traffic originator */
     char     M17_refl[10];             /**  M17 LSF reflector module   */
     char     M17_meta_text[53];        /**< M17 Meta Text              */
+#ifdef CONFIG_CW
+    uint8_t  cwWpm      : 6,           /**< CW keyer speed, in WPM     */
+             cwEmission : 1,           /**< CW emission, enum cwEmission */
+             _cwUnused  : 1;
+#endif
 }
 rtxStatus_t;
 
@@ -73,7 +79,17 @@ enum opmode
     OPMODE_NONE = 0,        /**< No opMode selected */
     OPMODE_FM   = 1,        /**< Analog FM          */
     OPMODE_DMR  = 2,        /**< DMR                */
-    OPMODE_M17  = 3         /**< M17                */
+    OPMODE_M17  = 3,        /**< M17                */
+    OPMODE_CW   = 6         /**< CW (4: TETRA, 5: D-STAR) */
+};
+
+/**
+ * \enum cwEmission Enumeration type defining how CW is keyed on the air.
+ */
+enum cwEmission
+{
+    CW_A1A = 0,     /**< Carrier keyed on and off              */
+    CW_F2A = 1      /**< Carrier on, keyed tone modulated in FM */
 };
 
 /**

@@ -10,6 +10,9 @@
 #include "rtx/rtx.h"
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/OpMode_M17.hpp"
+#ifdef CONFIG_CW
+#include "rtx/OpMode_CW.hpp"
+#endif
 
 static pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 static const rtxStatus_t *newCnf;       // Pointer for incoming config messages
@@ -22,6 +25,9 @@ static OpMode     noMode;               // Empty opMode handler for opmode::NONE
 static OpMode_FM  fmMode;               // FM mode handler
 #ifdef CONFIG_M17
 static OpMode_M17 m17Mode;              // M17 mode handler
+#endif
+#ifdef CONFIG_CW
+static OpMode_CW  cwMode;               // CW mode handler
 #endif
 
 
@@ -144,6 +150,9 @@ void rtx_task()
                 case OPMODE_FM:   currMode = &fmMode;  break;
                 #ifdef CONFIG_M17
                 case OPMODE_M17:  currMode = &m17Mode; break;
+                #endif
+                #ifdef CONFIG_CW
+                case OPMODE_CW:   currMode = &cwMode;  break;
                 #endif
                 default:   currMode = &noMode;
             }
