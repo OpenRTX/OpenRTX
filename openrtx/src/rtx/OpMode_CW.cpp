@@ -10,7 +10,8 @@
 #include "interfaces/radio.h"
 #include "rtx/OpMode_CW.hpp"
 
-OpMode_CW::OpMode_CW() : lastKeyDown(0), wpm(1), keyDown(false), enterRx(false)
+OpMode_CW::OpMode_CW()
+    : lastKeyDown(0), wpm(1), keyDown(false), sidetone(false), enterRx(false)
 {
     cwKeyer_init(&keyer, wpm);
 }
@@ -23,6 +24,7 @@ void OpMode_CW::enable()
 {
     paddle_init();
     keyDown = false;
+    sidetone = false;
     enterRx = true;
 }
 
@@ -32,7 +34,10 @@ void OpMode_CW::disable()
     platform_ledOff(RED);
     radio_disableRtx();
     paddle_terminate();
+    if (sidetone)
+        platform_beepStop();
     keyDown = false;
+    sidetone = false;
     enterRx = false;
 }
 
@@ -51,6 +56,15 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
 
     if (down && (status->opStatus != TX) && (status->txDisable == 0))
         down = startTx(status);
+
+    // Sidetone, following the keyer also when it does not transmit
+    if (down != sidetone) {
+        if (down)
+            platform_beepStart(SIDETONE_HZ);
+        else
+            platform_beepStop();
+        sidetone = down;
+    }
 
     if (status->opStatus == TX) {
         if (down != keyDown) {

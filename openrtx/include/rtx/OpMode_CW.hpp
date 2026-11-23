@@ -91,11 +91,13 @@ private:
 
     static constexpr unsigned int POLL_MS = 1;   ///< Keyer polling period.
     static constexpr unsigned int HANG_DITS = 8; ///< TX hang, a word space +1.
+    static constexpr uint16_t SIDETONE_HZ = 700; ///< Sidetone pitch.
 
     long long lastKeyDown; ///< Last time the key was down, in ms.
     struct cwKeyer keyer;  ///< Paddle keyer.
     uint8_t wpm;           ///< Keyer speed, in words per minute.
     bool keyDown;          ///< Key state sent to the radio.
+    bool sidetone;         ///< Sidetone sounding.
     bool enterRx;          ///< Flag for RX management.
 };
 
