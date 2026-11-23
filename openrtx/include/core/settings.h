@@ -31,6 +31,15 @@ typedef enum
 }
 display_timer_t;
 
+/**
+ * CW keyer speed range, in words per minute.
+ */
+enum cwSpeed
+{
+    CW_WPM_MIN = 5,
+    CW_WPM_MAX = 50,
+};
+
 typedef struct
 {
     uint8_t brightness;           // Display brightness
@@ -51,6 +60,11 @@ typedef struct
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
     bool    gpsSetTime;           // Use GPS to ajust RTC time
     char    M17_meta_text[53];    // M17 Meta Text to send
+#ifdef CONFIG_CW
+    uint8_t cw_wpm          : 6,  // CW keyer speed, in words per minute
+            cw_emission     : 1,  // CW emission, enum cwEmission
+            _reserved_cw    : 1;
+#endif
 }
 __attribute__((packed)) settings_t;
 
@@ -79,6 +93,11 @@ static const settings_t default_settings =
     false,                        // Display battery icon
     false,                        // Update RTC with GPS
     "OpenRTX",                    // Default M17 meta text
+#ifdef CONFIG_CW
+    20,                           // CW keyer at 20 WPM
+    0,                            // CW emission A1A
+    0,                            // not used
+#endif
 };
 
 #endif /* SETTINGS_H */
