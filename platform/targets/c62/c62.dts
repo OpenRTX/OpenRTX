@@ -17,6 +17,7 @@
 	aliases {
 		i2c-0 = &i2c0;
 		flash = &flash0;
+		flash-controller = &flash;
 
 		ledwhite = &flashlight;
 		ledgreen = &ledrx;

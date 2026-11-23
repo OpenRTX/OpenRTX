@@ -22,6 +22,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK4819.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK1080.c
 
+    ${OPENRTX_ROOT}/platform/drivers/NVM/flash_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/NVM/nvmem_C62.c
     ${OPENRTX_ROOT}/platform/targets/c62/calib_C62.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
