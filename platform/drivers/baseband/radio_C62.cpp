@@ -35,6 +35,21 @@ static constexpr uint8_t CTCSS_TX_GAIN = 65;
 static constexpr uint16_t TONE_BURST_FREQ = 1750;
 static constexpr uint8_t TONE_BURST_GAIN = 65;
 
+// CW keyed tone in F2A, at the deviation of the tone burst
+static constexpr uint16_t CW_TONE_FREQ = 700;
+static constexpr uint8_t CW_TONE_GAIN = TONE_BURST_GAIN;
+
+/*
+ * CW key edges, against key clicks: a raised cosine over 4 ms, the level in
+ * 1/256 of full scale at each 500 us step, applied to the APC in A1A and to
+ * the tone gain in F2A.
+ */
+static constexpr uint16_t KEY_RAMP[] = {
+    0, 10, 37, 79, 128, 177, 219, 246, 256,
+};
+static constexpr uint16_t KEY_RAMP_FULL = 256;
+static constexpr int32_t KEY_RAMP_STEP_US = 500;
+
 /*
  * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
  * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
@@ -50,6 +65,23 @@ static constexpr uint8_t M17_MIC_GAIN = 0;
 
 static struct C62Calib calData;  // TX calibration
 static struct C62CalPoint txCal; // TX calibration at the TX frequency
+static uint32_t apcPulse;        // APC PWM pulse for the TX power, in ns
+
+static constexpr uint32_t APC_PERIOD_NS = 10000;
+
+/**
+ * Set the TX power control (APC) PWM pulse.
+ *
+ * @param pulse_ns: pulse width, in ns, up to APC_PERIOD_NS.
+ */
+static void set_apc(const uint32_t pulse_ns)
+{
+    int ret = pwm_set_dt(&pwm_rf_apc, APC_PERIOD_NS, pulse_ns);
+
+    if (ret < 0) {
+        printk("Failed to set TX power PWM: %d\n", ret);
+    }
+}
 
 /**
  * Set the TX power control (APC) voltage through the PWM on pin A03. The TX
@@ -70,14 +102,8 @@ static void set_tx_power(const uint32_t power)
     uint8_t duty =
         static_cast<uint8_t>(pwrLo + (pwrHi - pwrLo) / 4.0f * (pwr - 1.0f));
 
-    const uint32_t period_ns = 10000;
-    uint32_t pulse_ns = (period_ns * duty) / 100;
-
-    int ret = pwm_set_dt(&pwm_rf_apc, period_ns, pulse_ns);
-
-    if (ret < 0) {
-        printk("Failed to set TX power PWM: %d\n", ret);
-    }
+    apcPulse = (APC_PERIOD_NS * duty) / 100;
+    set_apc(apcPulse);
 }
 
 void radio_init(const rtxStatus_t *rtxState)
@@ -210,10 +236,22 @@ void radio_enableTx()
 
     set_tx_power(config->txPower);
 
+    // CW starts key up: in A1A without carrier
+    bool a1a = (radioMode == OPMODE_CW) && (config->cwEmission == CW_A1A);
+    if (a1a)
+        set_apc(0);
+
     bk4819_enableTx(&c62_bk4819);
 
-    // Tone burst in place of the microphone, while the UI asks for it
-    if ((radioMode == OPMODE_FM) && config->toneEn)
+    if (a1a)
+        bk4819_enablePa(&c62_bk4819, false);
+
+    // CW keying tone off until key down, tone burst while the UI asks for
+    // it, both in place of the microphone
+    if (radioMode == OPMODE_CW) {
+        bk4819_enableTxTone(&c62_bk4819, CW_TONE_FREQ, 0);
+        bk4819_setTxToneGain(&c62_bk4819, 0);
+    } else if ((radioMode == OPMODE_FM) && config->toneEn)
         bk4819_enableTxTone(&c62_bk4819, TONE_BURST_FREQ, TONE_BURST_GAIN);
     else
         bk4819_disableTxTone(&c62_bk4819);
@@ -241,6 +279,33 @@ void radio_disableRtx()
     radioStatus = OFF;
 }
 
+void radio_setCwKey(const bool down)
+{
+    // radio_enableTx() may have refused to transmit
+    if (radioStatus != TX)
+        return;
+
+    bool a1a = (config->cwEmission == CW_A1A);
+    if (a1a && down)
+        bk4819_enablePa(&c62_bk4819, true);
+
+    for (size_t i = 1; i < ARRAY_SIZE(KEY_RAMP); i++) {
+        uint16_t level = down ? KEY_RAMP[i] :
+                                KEY_RAMP[ARRAY_SIZE(KEY_RAMP) - 1 - i];
+
+        if (a1a)
+            set_apc((apcPulse * level) / KEY_RAMP_FULL);
+        else
+            bk4819_setTxToneGain(&c62_bk4819,
+                                 (CW_TONE_GAIN * level) / KEY_RAMP_FULL);
+
+        k_usleep(KEY_RAMP_STEP_US);
+    }
+
+    if (a1a && !down)
+        bk4819_enablePa(&c62_bk4819, false);
+}
+
 void radio_updateConfiguration()
 {
     // TX calibration at the TX frequency, from the band its PA is in
@@ -250,8 +315,8 @@ void radio_updateConfiguration()
 
     txCal = calibC62_interp(band, config->txFrequency);
 
-    // Set bandwidth and deviation, only for analog FM mode
-    if (config->opMode == OPMODE_FM) {
+    // Set bandwidth and deviation, for analog FM and the CW keyed tone
+    if ((config->opMode == OPMODE_FM) || (config->opMode == OPMODE_CW)) {
         switch (config->bandwidth) {
             case BW_12_5:
                 bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12K5);
