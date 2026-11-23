@@ -131,8 +131,7 @@ void rtx_configure(const rtxStatus_t *cfg);
  * Obtain a read-only pointer to the RTX driver's internal status data
  * structure. The pointer is valid for the lifetime of the process.
  * Callers must not write through it.  No copy is made; suitable for
- * use on threads with small stacks (e.g. the 512-byte embedded RTX
- * thread).
+ * use on threads with small stacks (e.g. the embedded RTX thread).
  * @return pointer to the RTX driver's internal status data structure.
  */
 const rtxStatus_t *rtx_getStatus();
