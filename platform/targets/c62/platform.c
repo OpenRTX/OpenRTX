@@ -19,8 +19,8 @@
 #include <interfaces/nvmem.h>
 #include "drivers/SPI/spi_zephyr.h"
 #include "drivers/audio/csk6_codec.h"
-#include "controller.h"
-#include "dsp.h"
+#include "mcu/CSK6011B/drivers/lsf_controller.h"
+#include "mcu/CSK6011B/drivers/lsf_dsp.h"
 
 static const hwInfo_t hwInfo = {
     .name = "c62",
@@ -140,9 +140,9 @@ void platform_init_csk6()
      * It changes pins while it starts and sets up audio: restore them after
      * audio_init(). Nothing reads the battery ADC before then.
      */
-    int ret = lsf_dsp_init();
+    int ret = lsfDsp_init();
     if (ret == 0)
-        ret = lsf_controller_init();
+        ret = lsfController_init();
 
     /* Initialise audio, which runs on the DSP */
     if (ret == 0)
@@ -163,7 +163,7 @@ void platform_terminate()
      * stop the DSP and reset the peripherals along with the core, or the
      * DSP's UART interrupt halts the next boot.
      */
-    lsf_dsp_terminate();
+    lsfDsp_terminate();
     sys_reboot(SYS_REBOOT_COLD);
 }
 

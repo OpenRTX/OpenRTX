@@ -7,7 +7,7 @@
 #include <zephyr/device.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(lsf_controller, LOG_LEVEL_INF);
 
 #include <lsf.h>
 #include <ic_proxy.h>
@@ -15,7 +15,7 @@ LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
 
 #include <AudioSystem.h>
 
-#include <controller.h>
+#include "lsf_controller.h"
 
 /*
  * The DSP firmware's ready fence, as ListenAI's LSF controller requests it:
@@ -23,11 +23,9 @@ LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
  */
 #define DSP_READY_FENCE_ID 0
 
-int lsf_controller_init(void)
+int lsfController_init(void)
 {
     int ret;
-
-    LOG_DBG("Initializing LSF service controller");
 
     /* Initialize LSF. Its calls return LSF and IC codes, not errno values. */
     ret = lsf_init();
@@ -53,7 +51,6 @@ int lsf_controller_init(void)
         LOG_ERR("DSP sync failed: %d", ret);
         return -EIO;
     }
-    LOG_DBG("DSP synced");
 
     uint32_t val;
     ret = ICFence_wait(fence, &val);
@@ -61,7 +58,6 @@ int lsf_controller_init(void)
         LOG_ERR("Waiting for the DSP failed: %d", ret);
         return -EIO;
     }
-    LOG_DBG("DSP ready");
 
     /* The DSP's audio service, the only one OpenRTX uses */
     AudioSystem_initialize();

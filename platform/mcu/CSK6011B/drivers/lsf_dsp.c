@@ -10,14 +10,14 @@
 #include <zephyr/sys/util.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(dsp, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(lsf_dsp, LOG_LEVEL_INF);
 
 #include <csk6_cm33/include/venus_ap.h>
 #include <csk6_cm33/include/cache.h>
 #include <csk6_cm33/include/ClockManager.h>
 #include <csk6_cm33/include/SysManager.h>
 
-#include "dsp.h"
+#include "lsf_dsp.h"
 
 /*
  * The DSP's shared audio bank and boot address, from ListenAI's DSP loader:
@@ -53,7 +53,7 @@ BUILD_ASSERT((AP_RAM_END <= DSP_RAM_START) || (AP_RAM_START >= DSP_RAM_END),
 #define DSP_FIRMWARE_NODE DT_CHOSEN(lsf_dsp_firmware)
 #endif /* CONFIG_LSF_DSP_LOAD_ON_BOOT */
 
-static void lsf_dsp_load(const void *addr, uint32_t size)
+static void loadFirmware(const void *addr, uint32_t size)
 {
     /* Enable clock for DSP */
     __HAL_CRM_CP_CLK_ENABLE();
@@ -88,7 +88,7 @@ static void lsf_dsp_load(const void *addr, uint32_t size)
     __HAL_SYS_CP_RUN();
 }
 
-int lsf_dsp_init(void)
+int lsfDsp_init(void)
 {
 #if !defined(CONFIG_UART_INTERRUPT_DRIVEN) && !defined(CONFIG_UART_ASYNC_API)
     /* DSP logging can trigger UART2 IRQ 10 on the application core.
@@ -114,19 +114,15 @@ int lsf_dsp_init(void)
                             AP_SYS_RAM_BANK_ADDR + AP_SYS_RAM_BANK_SIZE);
 
 #if defined(CONFIG_LSF_DSP_LOAD_ON_BOOT)
-    LOG_DBG("Auto load DSP firmware from %s (offset: 0x%08x, size: %u)",
-            DT_NODE_FULL_NAME(DSP_FIRMWARE_NODE),
-            DT_REG_ADDR(DSP_FIRMWARE_NODE), DT_REG_SIZE(DSP_FIRMWARE_NODE));
-
     /* Load DSP firmware */
-    lsf_dsp_load((void *)(AP_FLASH_BASE + DT_REG_ADDR(DSP_FIRMWARE_NODE)),
+    loadFirmware((void *)(AP_FLASH_BASE + DT_REG_ADDR(DSP_FIRMWARE_NODE)),
                  DT_REG_SIZE(DSP_FIRMWARE_NODE));
 #endif /* CONFIG_LSF_DSP_LOAD_ON_BOOT */
 
     return 0;
 }
 
-void lsf_dsp_terminate(void)
+void lsfDsp_terminate(void)
 {
     __HAL_SYS_CP_STALL();
     __HAL_SYS_CP_RESET();

@@ -12,6 +12,8 @@ zephyr_compile_definitions(PSRAM_CHIP_SIZE=4) # 4 MiB PSRAM
 target_sources(app
   PRIVATE
     ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/delays.c
+    ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/lsf_dsp.c
+    ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/lsf_controller.c
 
     ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_bk4819.c
@@ -35,8 +37,6 @@ target_sources(app
 
     ${OPENRTX_ROOT}/platform/targets/c62/platform.c
     ${OPENRTX_ROOT}/platform/targets/c62/hwconfig.c
-    ${OPENRTX_ROOT}/platform/targets/c62/dsp.c
-    ${OPENRTX_ROOT}/platform/targets/c62/lsf.c
 )
 
 # LSF client and audio framework, which talk to the DSP
