@@ -55,6 +55,16 @@ target_include_directories(app
     ${OPENRTX_ROOT}/platform/targets/c62
 )
 
+#
+# The CSK6 HAL defines a global platform_init(), its SPI flash setup, which
+# its flash driver calls at boot:
+# https://github.com/OpenRTX/listenai-modules-csk6_cm33/blob/9444f3dc2abec4d49e5daa6112a798ee43999222/src/platform-castor.c#L140
+# OpenRTX's own platform_init() would clash with it at link time. Rename the
+# OpenRTX one in the OpenRTX sources only, which never include the HAL's
+# spiflash.h: the vendored HAL stays as it is.
+#
+target_compile_definitions(app PRIVATE platform_init=openrtx_platform_init)
+
 target_compile_definitions(app PRIVATE PLATFORM_C62)
 
 #

@@ -104,7 +104,7 @@ static int battery_init(void)
     return 0;
 }
 
-void platform_init_csk6()
+void platform_init()
 {
     /* Initialise non volatile memory manager */
     nvm_init();

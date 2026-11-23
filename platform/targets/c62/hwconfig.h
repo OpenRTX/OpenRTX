@@ -7,8 +7,6 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#define TARGET_C62
-
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
