@@ -6,10 +6,7 @@
 
 #include "drivers/baseband/BK1080.h"
 #include "interfaces/delays.h"
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-#endif
+#include "core/utils.h"
 
 // 7-bit I2C-like address of the BK1080, as used by the chip's control byte
 // (0x80 = BK1080_I2C_ADDR << 1 | write bit).
@@ -24,7 +21,7 @@ static const uint16_t BK1080_RegisterTable[] = {
 
 static bool gIsInitBK1080;
 
-uint16_t BK1080_BaseFrequency;
+uint32_t BK1080_BaseFrequency;
 uint16_t BK1080_FrequencyDeviation;
 
 enum {
@@ -33,7 +30,7 @@ enum {
 };
 
 uint16_t BK1080_ReadRegister(const struct BK1080 *dev,
-                             BK1080_Register_t Register)
+                             enum BK1080_Register Register)
 {
     uint8_t ctrl = (uint8_t)((Register << 1) | I2C_READ);
     uint8_t value[2];
@@ -46,8 +43,8 @@ uint16_t BK1080_ReadRegister(const struct BK1080 *dev,
     return ((uint16_t)value[0] << 8) | value[1];
 }
 
-void BK1080_WriteRegister(const struct BK1080 *dev, BK1080_Register_t Register,
-                          uint16_t Value)
+void BK1080_WriteRegister(const struct BK1080 *dev,
+                          enum BK1080_Register Register, uint16_t Value)
 {
     uint8_t data[3] = { (uint8_t)((Register << 1) | I2C_WRITE),
                         (uint8_t)(Value >> 8), (uint8_t)Value };
@@ -105,7 +102,7 @@ void BK1080_SetFrequency(const struct BK1080 *dev, uint32_t frequency,
 
     uint16_t regval = BK1080_ReadRegister(dev,
                                           BK1080_REG_05_SYSTEM_CONFIGURATION2);
-    regval = (regval & ~(0b11 << 6)) | ((band & 0b11) << 6);
+    regval = (regval & ~(0x3 << 6)) | ((band & 0x3) << 6);
 
     BK1080_WriteRegister(dev, BK1080_REG_05_SYSTEM_CONFIGURATION2, regval);
 
