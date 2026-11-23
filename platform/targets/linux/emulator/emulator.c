@@ -262,7 +262,7 @@ static int toggleVariable(void *_self, int _argc, char **_argv)
     (void)_argc;
     (void)_argv;
     _climenu_option *self = (_climenu_option *)_self;
-    *(int *)self->var = !*(int *)self->var;
+    *(bool *)self->var = !*(bool *)self->var;
 
     return SH_CONTINUE; // continue
 }
