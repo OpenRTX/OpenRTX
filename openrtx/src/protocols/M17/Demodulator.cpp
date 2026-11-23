@@ -71,7 +71,7 @@ static void *logFunc(void *arg)
             // the dump.
             log_entry_t entry;
             memset(&entry, 0x00, sizeof(log_entry_t));
-            if(logBuf.tryPop(entry) == false) emptyCtr++;
+            if(logBuf.tryPop(entry) != 0) emptyCtr++;
 
             if(emptyCtr >= 100)
             {
