@@ -11,9 +11,25 @@
 #include "protocols/M17/FrameEncoder.hpp"
 #include "protocols/M17/FrameDecoder.hpp"
 #include "protocols/M17/Datatypes.hpp"
+#include "protocols/M17/Utils.hpp"
 #include "core/crc.h"
 
 using namespace M17;
+
+/**
+ * Soft bits of a frame, every bit fully confident.
+ *
+ * @param frame: frame.
+ * @return the soft bits.
+ */
+static softFrame_t softBits(const frame_t &frame)
+{
+    softFrame_t soft;
+    for (size_t i = 0; i < soft.size(); i++)
+        soft[i] = getBit(frame, i) ? UINT16_MAX : 0;
+
+    return soft;
+}
 
 // Helper: run the framer and collect all frames into an array.
 // Returns frame count, or 0 on init failure.
@@ -211,7 +227,7 @@ TEST_CASE("PacketFramer: single frame round-trips through encoder/decoder",
     encoder.encodePacketFrame(frames[0], encoded);
 
     FrameDecoder decoder;
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -241,7 +257,7 @@ TEST_CASE("PacketFramer: multi-frame round-trips through encoder/decoder",
         frame_t encoded;
         encoder.encodePacketFrame(frames[i], encoded);
 
-        FrameType type = decoder.decodeFrame(encoded);
+        FrameType type = decoder.decodeFrame(softBits(encoded));
         REQUIRE(type == FrameType::PACKET);
 
         const PacketFrame &decoded = decoder.getPacketFrame();

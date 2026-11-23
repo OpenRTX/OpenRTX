@@ -552,7 +552,7 @@ TEST_CASE(
     frame_t encoded;
     encoder.encodePacketFrame(frame, encoded);
 
-    FrameType type = decoder.decodeFrame(encoded);
+    FrameType type = decoder.decodeFrame(softBits(encoded));
     REQUIRE(type == FrameType::PACKET);
 
     const PacketFrame &decoded = decoder.getPacketFrame();
@@ -601,7 +601,7 @@ TEST_CASE(
         REQUIRE(encoded[0] == PACKET_SYNC_WORD[0]);
         REQUIRE(encoded[1] == PACKET_SYNC_WORD[1]);
 
-        FrameType type = decoder.decodeFrame(encoded);
+        FrameType type = decoder.decodeFrame(softBits(encoded));
         REQUIRE(type == FrameType::PACKET);
 
         const PacketFrame &rx = decoder.getPacketFrame();
@@ -619,7 +619,7 @@ TEST_CASE(
     {
         frame_t encoded;
         encoder.encodePacketFrame(txFrames[NUM_FRAMES - 1], encoded);
-        decoder.decodeFrame(encoded);
+        decoder.decodeFrame(softBits(encoded));
         const PacketFrame &rx = decoder.getPacketFrame();
 
         REQUIRE(rx.isEof() == true);
