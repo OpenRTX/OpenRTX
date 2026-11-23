@@ -1230,14 +1230,14 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #ifdef CONFIG_CW
     else if (last_state.channel.mode == OPMODE_CW)
     {
-        // Keyer speed down and up, emission
+        // Keyer speed down, speed, speed up, emission
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 0)
 #endif // CONFIG_UI_NO_KEYBOARD
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       yellow_fab413, "1");
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "   -");
+                  color_white, "   -   %u", last_state.settings.cw_wpm);
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 1)
 #endif // CONFIG_UI_NO_KEYBOARD
@@ -1270,13 +1270,11 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
     point_t pos_2 = {layout.line1_pos.x, layout.line1_pos.y +
                     (layout.line3_large_pos.y - layout.line1_pos.y)/2};
 
-    // CW shows its keyer speed in place of key 4, which it does not use
-    if (last_state.channel.mode != OPMODE_CW)
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 3)
 #endif // CONFIG_UI_NO_KEYBOARD
-        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
-                  yellow_fab413, "4");
+    gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+              yellow_fab413, "4");
 
     if (last_state.channel.mode == OPMODE_FM)
     {
@@ -1305,8 +1303,8 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #ifdef CONFIG_CW
     else if (last_state.channel.mode == OPMODE_CW)
     {
-        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
-                  color_white, "%u WPM", last_state.settings.cw_wpm);
+        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT, color_white,
+                  last_state.settings.cw_breakin ? "  BK ON" : "  BK OFF");
     }
 #endif
 

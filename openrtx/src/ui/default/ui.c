@@ -1020,6 +1020,14 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 *sync_rtx = true;
                 vp_announceBandwidth(state.channel.bandwidth, queueFlags);
             }
+#ifdef CONFIG_CW
+            // Toggle CW break-in
+            else if (state.channel.mode == OPMODE_CW)
+            {
+                state.settings.cw_breakin = !state.settings.cw_breakin;
+                *sync_rtx = true;
+            }
+#endif
             break;
         case 5:
             // Cycle through radio modes: FM, M17, CW
