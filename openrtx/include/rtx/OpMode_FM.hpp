@@ -77,9 +77,13 @@ public:
 
 private:
 
+    /// Tone burst frequency, sounded locally while it is sent
+    static constexpr uint16_t TONE_BURST_HZ = 1750;
+
     bool   rfSqlOpen;   ///< Flag for RF squelch status (analog squelch).
     bool   sqlOpen;     ///< Flag for squelch status.
     bool   enterRx;     ///< Flag for RX management.
+    bool   burstBeep;   ///< Tone burst sounded locally.
     pathId rxAudioPath; ///< Audio path ID for RX
     pathId txAudioPath; ///< Audio path ID for TX
 };

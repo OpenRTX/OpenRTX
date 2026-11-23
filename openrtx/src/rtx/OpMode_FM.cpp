@@ -37,7 +37,8 @@ void _setVolume()
 }
 #endif
 
-OpMode_FM::OpMode_FM() : rfSqlOpen(false), sqlOpen(false), enterRx(true)
+OpMode_FM::OpMode_FM() : rfSqlOpen(false), sqlOpen(false), enterRx(true),
+                         burstBeep(false)
 {
 }
 
@@ -61,9 +62,12 @@ void OpMode_FM::disable()
     audioPath_release(rxAudioPath);
     audioPath_release(txAudioPath);
     radio_disableRtx();
+    if(burstBeep)
+        platform_beepStop();
     rfSqlOpen = false;
     sqlOpen   = false;
     enterRx   = false;
+    burstBeep = false;
 }
 
 void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
@@ -135,6 +139,18 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         status->opStatus = OFF;
         enterRx = true;
         sqlOpen = false;  // Force squelch to be redetected.
+    }
+
+    // Sound the tone burst locally while it is sent
+    bool burst = (status->opStatus == TX) && status->toneEn;
+    if(burst != burstBeep)
+    {
+        if(burst)
+            platform_beepStart(TONE_BURST_HZ);
+        else
+            platform_beepStop();
+
+        burstBeep = burst;
     }
 
     // Led control logic
