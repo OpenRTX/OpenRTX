@@ -40,7 +40,10 @@ static constexpr uint8_t TONE_BURST_GAIN = 65;
 // CW keyed tone in F2A, at the deviation of the tone burst. A1A is received
 // in USB this much below the channel, to beat at the same pitch.
 static constexpr uint16_t CW_TONE_FREQ = 700;
-static constexpr uint8_t CW_TONE_GAIN = TONE_BURST_GAIN;
+// Gain of its own: the TX pre-emphasis gives a 700 Hz tone less deviation
+// than the 1750 Hz burst. CW always transmits at 12.5 kHz, where 30 deviates
+// 1.6 kHz, measured off air with an RTL-SDR.
+static constexpr uint8_t CW_TONE_GAIN = 30;
 
 /*
  * CW key edges, against key clicks: a raised cosine over 4 ms, the level in
@@ -342,9 +345,14 @@ void radio_updateConfiguration()
 
     txCal = calibC62_interp(band, config->txFrequency);
 
-    // Set bandwidth and deviation, for analog FM and the CW keyed tone
+    // Set bandwidth and deviation, for analog FM and the CW keyed tone. CW is
+    // always narrow, so that F2A fits a 12.5 kHz channel.
     if ((config->opMode == OPMODE_FM) || (config->opMode == OPMODE_CW)) {
-        switch (config->bandwidth) {
+        uint8_t bandwidth = config->bandwidth;
+        if (config->opMode == OPMODE_CW)
+            bandwidth = BW_12_5;
+
+        switch (bandwidth) {
             case BW_12_5:
                 bk4819_setBandwidth(&c62_bk4819, BK4819_BW_12K5);
                 bk4819_setTxDeviation(&c62_bk4819, true, txCal.txDevNarrow);
