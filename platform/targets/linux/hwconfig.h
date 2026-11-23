@@ -27,6 +27,9 @@ enum Mod17Flags {
 /* Device supports M17 mode */
 #define CONFIG_M17
 
+/* Device supports CW mode, with a paddle */
+#define CONFIG_CW
+
 #ifdef __cplusplus
 }
 #endif

@@ -27,6 +27,7 @@ void radio_setOpmode(const enum opmode mode)
     if(mode == OPMODE_FM)   mStr = "FM";
     if(mode == OPMODE_DMR)  mStr = "DMR";
     if(mode == OPMODE_M17)  mStr = "M17";
+    if(mode == OPMODE_CW)   mStr = "CW";
 
     printf("radio_linux: setting opmode to %s\n", mStr.c_str());
 }
@@ -50,6 +51,11 @@ void radio_enableTx()
 void radio_disableRtx()
 {
     puts("radio_linux: disableRtx() called");
+}
+
+void radio_setCwKey(const bool down)
+{
+    printf("radio_linux: CW key %s\n", down ? "down" : "up");
 }
 
 void radio_updateConfiguration()
