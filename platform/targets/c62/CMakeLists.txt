@@ -38,9 +38,16 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/targets/c62/lsf.c
 )
 
-add_subdirectory(services)
-zephyr_library_link_libraries(lsf_client)
-zephyr_linker_sources(DATA_SECTIONS lsf_service.ld)
+# LSF client and audio framework, which talk to the DSP
+zephyr_library_link_libraries(lsf_client af)
+zephyr_include_directories(${ZEPHYR_LSF_MODULE_DIR}/lsf_client/include)
+zephyr_include_directories(${ZEPHYR_AF_MODULE_DIR})
+
+# ListenAI's audio service requires the flash driver not to stall the DSP:
+# https://github.com/OpenRTX/lsf-zephyr-sdk/blob/2ac605527dcde3e90c814bb4175546cc7fbd36da/src/services/CMakeLists.txt#L13-L15
+if(CONFIG_CSK6_FLASH_STALL_SECOND_CORE)
+    message(FATAL_ERROR "DSP audio needs CONFIG_CSK6_FLASH_STALL_SECOND_CORE=n")
+endif()
 
 target_include_directories(app
   PRIVATE

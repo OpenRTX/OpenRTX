@@ -14,7 +14,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/sys_io.h>
-#include <hwconfig.h>
 #include "csk6_codec.h"
 #include "AudioSystem.h"
 #include "AudioTrack.h"
@@ -380,34 +379,36 @@ static int setDspParam(const char *kv)
 }
 
 /**
- * Set the mic (left) and BK4819 RX audio (right) ADC gains from hwconfig.h.
+ * Set the gains of the left and right ADC channels.
  *
+ * @param cfg: codec configuration.
  * @return 0 on success.
  */
-static int configureAdcGain(void)
+static int configureAdcGain(const struct csk6codecCfg *cfg)
 {
     char kv[DSP_PARAM_LEN];
     snprintf(kv, sizeof(kv),
              "ADC_PDM_GAIN_A_LEFT=%d;ADC_PDM_GAIN_D_LEFT=%d;"
              "ADC_PDM_GAIN_A_RIGHT=%d;ADC_PDM_GAIN_D_RIGHT=%d",
-             C62_ADC_MIC_GAIN_A, C62_ADC_MIC_GAIN_D, C62_ADC_RX_GAIN_A,
-             C62_ADC_RX_GAIN_D);
+             cfg->adcLeft.analog, cfg->adcLeft.digital, cfg->adcRight.analog,
+             cfg->adcRight.digital);
     return setDspParam(kv);
 }
 
 /**
- * Set the speaker (left) and BK4819 TX (right) DAC gains from hwconfig.h.
+ * Set the gains of the left and right DAC channels.
  *
+ * @param cfg: codec configuration.
  * @return 0 on success.
  */
-static int configureDacGain(void)
+static int configureDacGain(const struct csk6codecCfg *cfg)
 {
     char kv[DSP_PARAM_LEN];
     snprintf(kv, sizeof(kv),
              "DAC_GAIN_A_LEFT=%d;DAC_GAIN_D_LEFT=%d;"
              "DAC_GAIN_A_RIGHT=%d;DAC_GAIN_D_RIGHT=%d",
-             C62_DAC_SPK_GAIN_A, C62_DAC_SPK_GAIN_D, C62_DAC_TX_GAIN_A,
-             C62_DAC_TX_GAIN_D);
+             cfg->dacLeft.analog, cfg->dacLeft.digital, cfg->dacRight.analog,
+             cfg->dacRight.digital);
     return setDspParam(kv);
 }
 
@@ -476,13 +477,15 @@ static int checkPlaybackLayout(const AudioTrack *track)
  * Set the codec gains and open the 48 kHz capture and playback streams.
  * Called by csk6codec_init(); on failure, closes whatever it opened.
  *
+ * @param cfg: codec configuration.
  * @param rec: capture stream to open.
  * @param track: playback stream to open.
  * @return 0 on success.
  */
-static int openDsp(AudioRecord *rec, AudioTrack *track)
+static int openDsp(const struct csk6codecCfg *cfg, AudioRecord *rec,
+                   AudioTrack *track)
 {
-    int ret = configureAdcGain();
+    int ret = configureAdcGain(cfg);
     if (ret != 0) {
         LOG_ERR("Setting the ADC gains failed: %d", ret);
         return ret;
@@ -517,7 +520,7 @@ static int openDsp(AudioRecord *rec, AudioTrack *track)
     if (ret != 0)
         goto closePlayback;
 
-    ret = configureDacGain();
+    ret = configureDacGain(cfg);
     if (ret != 0) {
         LOG_ERR("Setting the DAC gains failed: %d", ret);
         goto closePlayback;
@@ -810,7 +813,7 @@ static size_t playStream(struct outputState *out, int16_t *dst, size_t stride,
 
 /**
  * Fill an output channel of a playback frame. FM samples pass through
- * unchanged; TX levels are set by the codec gains in hwconfig.h. Unrouted,
+ * unchanged; TX levels are set by the codec gains of the board. Unrouted,
  * empty, inactive or draining channels play silence.
  *
  * @param channel: SINK_SPK or SINK_RTX.
@@ -987,10 +990,10 @@ static void initEndpoints(void)
     }
 }
 
-int csk6codec_init(void)
+int csk6codec_init(const struct csk6codecCfg *cfg)
 {
     initEndpoints();
-    int ret = openDsp(&record, &playbackTrack);
+    int ret = openDsp(cfg, &record, &playbackTrack);
     if (ret != 0)
         return ret;
 

@@ -38,19 +38,6 @@
 		lsf,dsp-firmware = &dsp_firmware;
 	};
 
-	lsf: service-controller {
-		compatible = "lsf,service-controller";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		label = "LSF";
-
-		lsf_audio: audio-service@0 {
-			compatible = "lsf,audio-service";
-			reg = <0>;
-			status = "okay";
-		};
-	};
-
 	leds {
 		compatible = "gpio-leds";
 		flashlight: led0 {

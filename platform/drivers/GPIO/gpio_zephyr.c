@@ -70,13 +70,9 @@ static bool gpioZephyr_read(const struct gpioDev *dev, const uint8_t pin)
     return gpio_pin_get(zdev, pin) > 0;
 }
 
-static const struct gpioApi gpioZephyr_api = { .mode = &gpioZephyr_mode,
-                                               .set = &gpioZephyr_set,
-                                               .clear = &gpioZephyr_clear,
-                                               .read = &gpioZephyr_read };
-
-const struct gpioDev GpioA = { .api = &gpioZephyr_api,
-                               .priv = DEVICE_DT_GET(DT_NODELABEL(gpioa)) };
-
-const struct gpioDev GpioB = { .api = &gpioZephyr_api,
-                               .priv = DEVICE_DT_GET(DT_NODELABEL(gpiob)) };
+const struct gpioApi gpioZephyr_ops = {
+    .mode = &gpioZephyr_mode,
+    .set = &gpioZephyr_set,
+    .clear = &gpioZephyr_clear,
+    .read = &gpioZephyr_read,
+};

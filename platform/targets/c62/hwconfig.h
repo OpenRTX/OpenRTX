@@ -20,6 +20,7 @@ extern "C" {
 
 #include "drivers/baseband/BK1080.h"
 #include "drivers/baseband/BK4819.h"
+#include "pinmap.h"
 
 /*
  * Display properties are encoded in the devicetree
@@ -37,39 +38,29 @@ extern "C" {
 #define CONFIG_BAT_LIION
 #define CONFIG_BAT_NCELLS 2
 
+/* ADC channels */
+enum AdcChannels {
+    ADC_CHARGE_CH = 1, ///< Charge detection.
+    ADC_VBAT_CH = 2,   ///< Battery voltage, pin B08.
+};
+
 #define CONFIG_M17
 
 /* Software gain of the M17 microphone input, set for C62_ADC_MIC_GAIN_A/D */
 #define CONFIG_MIC_GAIN 13
 
-/*
- * CSK6 codec gains in dB, analog (_A) and digital (_D). The TX DAC sets the
- * level into the BK4819 mic input for both FM and M17; never above 0 dB.
- */
-#define C62_ADC_MIC_GAIN_A 6
-#define C62_ADC_MIC_GAIN_D 10
-#define C62_ADC_RX_GAIN_A 6
-#define C62_ADC_RX_GAIN_D 20
-#define C62_DAC_SPK_GAIN_A -6
-#define C62_DAC_SPK_GAIN_D 0
-#define C62_DAC_TX_GAIN_A -18
-#define C62_DAC_TX_GAIN_D 0
+/* GPIO controllers, for the pins driven through the gpioPin API */
+extern const struct gpioDev GpioA;
+extern const struct gpioDev GpioB;
 
-/**
- * BK4819 and BK1080 device instances. Pin numbers must be kept in sync
- * with the board devicetree (gpioa/gpiob nodes).
- */
+/* BK4819 and BK1080 device instances */
 extern const struct BK4819 c62_bk4819;
 extern const struct gpioDev c62_bk4819_gpio;
 
-/* BK4819 GPIOs */
-#define LNA_VHF_EN &c62_bk4819_gpio, 0
-#define LNA_UHF_EN &c62_bk4819_gpio, 1
-#define PA_VHF_EN &c62_bk4819_gpio, 2
-#define PA_UHF_EN &c62_bk4819_gpio, 3
-#define ALC_TX_LED_EN &c62_bk4819_gpio, 4
-
 extern const struct BK1080 c62_bk1080;
+
+/* CSK6 codec gains: mic and speaker on the left, BK4819 on the right */
+extern const struct csk6codecCfg c62_codecCfg;
 
 extern const struct gpio_dt_spec speaker_enable;
 extern const struct gpio_dt_spec dtmf_enable;

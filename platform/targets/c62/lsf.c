@@ -13,8 +13,9 @@ LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
 #include <ic_proxy.h>
 #include <ic_fence.h>
 
+#include <AudioSystem.h>
+
 #include <controller.h>
-#include "services/service.h"
 
 /*
  * The DSP firmware's ready fence, as ListenAI's LSF controller requests it:
@@ -62,18 +63,8 @@ int lsf_controller_init(void)
     }
     LOG_DBG("DSP ready");
 
-    STRUCT_SECTION_FOREACH(lsf_service, service)
-    {
-        LOG_DBG("Initializing service %s", service->name);
-
-        ret = service->init();
-        if (ret != 0) {
-            LOG_ERR("Failed to initialize service %s: %d", service->name, ret);
-            return ret;
-        }
-    }
-
-    LOG_DBG("All services initialized");
+    /* The DSP's audio service, the only one OpenRTX uses */
+    AudioSystem_initialize();
 
     return 0;
 }

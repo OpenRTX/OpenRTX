@@ -30,13 +30,32 @@ enum Csk6CodecMode {
 extern const struct audioDriver csk6_codec_audio_driver;
 
 /**
+ * Gain of a codec channel, in dB.
+ */
+struct csk6codecGain {
+    int8_t analog;  ///< Analog gain.
+    int8_t digital; ///< Digital gain.
+};
+
+/**
+ * Codec configuration of a board: the gains of its ADC and DAC channels.
+ */
+struct csk6codecCfg {
+    struct csk6codecGain adcLeft;  ///< Left ADC channel.
+    struct csk6codecGain adcRight; ///< Right ADC channel.
+    struct csk6codecGain dacLeft;  ///< Left DAC channel.
+    struct csk6codecGain dacRight; ///< Right DAC channel.
+};
+
+/**
  * Configure the codec and open the DSP streams on the calling thread, then
  * start the audio worker. Call once, at startup.
  *
+ * @param cfg: codec configuration.
  * @return zero on success, a negative error code on failure, in which case
  * no worker runs.
  */
-int csk6codec_init(void);
+int csk6codec_init(const struct csk6codecCfg *cfg);
 
 /**
  * Cancel streams, join the worker and release DSP audio resources. Call once,

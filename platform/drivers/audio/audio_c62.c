@@ -77,7 +77,7 @@ void audio_init(void)
     gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT_INACTIVE);
 #endif
     gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT_INACTIVE);
-    initialized = csk6codec_init() == 0;
+    initialized = csk6codec_init(&c62_codecCfg) == 0;
 }
 
 void audio_terminate(void)
