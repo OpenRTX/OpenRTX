@@ -81,7 +81,9 @@ static const GFXfont fonts[] = {
 
 /* This specialization is meant for an RGB565 little endian pixel format.
  * Thus, to accomodate for the endianness, the fields in struct rgb565_t have to
- * be written in reversed order.
+ * be written in reversed order. Displays taking big endian pixels define
+ * CONFIG_PIX_FMT_RGB565_BE in addition: the framebuffer then holds the pixels
+ * with their bytes swapped, see _fbPixel().
  *
  * For more details about endianness and bitfield structs see the following web
  * page: http://mjfrazer.org/mjfrazer/bitfields/
@@ -104,6 +106,26 @@ static rgb565_t _true2highColor(color_t true_color)
     high_color.b = true_color.b >> 3;
 
     return high_color;
+}
+
+/**
+ * Convert a pixel between its value and the way the framebuffer stores it:
+ * with the bytes swapped for displays taking big endian pixels, unchanged
+ * otherwise. The same conversion applies in both directions.
+ *
+ * @param pixel: pixel to convert.
+ * @return converted pixel.
+ */
+static inline rgb565_t _fbPixel(rgb565_t pixel)
+{
+#ifdef CONFIG_PIX_FMT_RGB565_BE
+    uint16_t raw;
+    memcpy(&raw, &pixel, sizeof(raw));
+    raw = __builtin_bswap16(raw);
+    memcpy(&pixel, &raw, sizeof(raw));
+#endif
+
+    return pixel;
 }
 
 #elif defined CONFIG_PIX_FMT_BW
@@ -202,15 +224,16 @@ inline void gfx_setPixel(point_t pos, color_t color)
     if (color.alpha < 255) {
         uint8_t alpha = color.alpha;
         rgb565_t new_pixel = _true2highColor(color);
-        rgb565_t old_pixel = framebuffer[pos.x + pos.y * CONFIG_SCREEN_WIDTH];
+        rgb565_t old_pixel =
+            _fbPixel(framebuffer[pos.x + pos.y * CONFIG_SCREEN_WIDTH]);
         rgb565_t pixel;
         pixel.r = ((255 - alpha) * old_pixel.r + alpha * new_pixel.r) / 255;
         pixel.g = ((255 - alpha) * old_pixel.g + alpha * new_pixel.g) / 255;
         pixel.b = ((255 - alpha) * old_pixel.b + alpha * new_pixel.b) / 255;
-        framebuffer[pos.x + pos.y * CONFIG_SCREEN_WIDTH] = pixel;
+        framebuffer[pos.x + pos.y * CONFIG_SCREEN_WIDTH] = _fbPixel(pixel);
     } else {
         framebuffer[pos.x + pos.y * CONFIG_SCREEN_WIDTH] =
-            _true2highColor(color);
+            _fbPixel(_true2highColor(color));
     }
 #elif defined CONFIG_PIX_FMT_BW
     // Ignore more than half transparent pixels

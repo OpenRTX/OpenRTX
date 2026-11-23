@@ -7,10 +7,10 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <errno.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/adc.h>
-#include <zephyr/logging/log.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/kernel.h>
@@ -19,8 +19,8 @@
 #include <interfaces/nvmem.h>
 #include "drivers/SPI/spi_zephyr.h"
 #include "drivers/audio/csk6_codec.h"
-#include "controller.h"
-#include "dsp.h"
+#include "mcu/CSK6011B/drivers/lsf_controller.h"
+#include "mcu/CSK6011B/drivers/lsf_dsp.h"
 
 static const hwInfo_t hwInfo = {
     .name = "c62",
@@ -36,6 +36,8 @@ static const hwInfo_t hwInfo = {
 // ADC
 #define ADC_RAW_CHARGING_THRESHOLD 2100
 #define BAT_DET_SETTLE_MS 10 // Measured: settles to 1 LSB in 5 ms
+#define ADC_NUM_CHANNELS 2
+#define ADC_RESOLUTION 11
 static int32_t adc_vref = 0;
 static bool is_battery_charging = false;
 
@@ -72,28 +74,28 @@ static int battery_init(void)
 {
     if (!device_is_ready(adc_dev)) {
         printk("ADC device not ready\n");
-        return -1;
+        return -ENODEV;
     }
 
     // Configure ADC channel
     struct adc_channel_cfg channel_cfg = {
         .gain = ADC_GAIN_1,
         .reference = ADC_REF_INTERNAL,
-        .channel_id = 2, // ADC2 channel (pin B08)
+        .channel_id = ADC_VBAT_CH,
     };
 
     int ret = adc_channel_setup(adc_dev, &channel_cfg);
     if (ret < 0) {
         printk("Failed to setup ADC channel: %d\n", ret);
-        return -2;
+        return ret;
     }
 
-    channel_cfg.channel_id = 1; // ADC1 channel (Charge detection)
+    channel_cfg.channel_id = ADC_CHARGE_CH;
 
     ret = adc_channel_setup(adc_dev, &channel_cfg);
     if (ret < 0) {
         printk("Failed to setup ADC channel: %d\n", ret);
-        return -2;
+        return ret;
     }
 
     // Read ADC reference voltage if supported
@@ -102,7 +104,7 @@ static int battery_init(void)
     return 0;
 }
 
-void platform_init_csk6()
+void platform_init()
 {
     /* Initialise non volatile memory manager */
     nvm_init();
@@ -115,8 +117,9 @@ void platform_init_csk6()
     gpio_pin_configure_dt(&led_green, GPIO_OUTPUT_INACTIVE);
     gpio_pin_configure_dt(&led_keyboard, GPIO_OUTPUT_INACTIVE);
 
-    /* Init ADC for Battery reading */
-    battery_init();
+    /* Init ADC for Battery reading: without it the power knob can't be read */
+    if (battery_init() != 0)
+        printk("Battery ADC init failed, the radio can't turn on\n");
 
     /* C62 can boot with power button off when charging.
      * That's why we put a wait here until the power button is switched on.
@@ -137,9 +140,9 @@ void platform_init_csk6()
      * It changes pins while it starts and sets up audio: restore them after
      * audio_init(). Nothing reads the battery ADC before then.
      */
-    int ret = lsf_dsp_init();
+    int ret = lsfDsp_init();
     if (ret == 0)
-        ret = lsf_controller_init();
+        ret = lsfController_init();
 
     /* Initialise audio, which runs on the DSP */
     if (ret == 0)
@@ -160,7 +163,7 @@ void platform_terminate()
      * stop the DSP and reset the peripherals along with the core, or the
      * DSP's UART interrupt halts the next boot.
      */
-    lsf_dsp_terminate();
+    lsfDsp_terminate();
     sys_reboot(SYS_REBOOT_COLD);
 }
 
@@ -170,20 +173,15 @@ void platform_terminate()
  */
 uint16_t platform_getVbat()
 {
-#define ADC_NUM_CHANNELS 2
+    // Samples of the charge detection and battery channels, in this order
     static int16_t adc_raw_buffer[ADC_NUM_CHANNELS];
-    static struct adc_sequence sequence = {
-        /* individual channels will be added below */
-        /* BIT(2) Channel 2 (BAT_DET), BIT(1) Channel 1 (Charge detection) */
-        .channels = BIT(2) | BIT(1),
+    const struct adc_sequence sequence = {
+        .channels = BIT(ADC_CHARGE_CH) | BIT(ADC_VBAT_CH),
         .buffer = adc_raw_buffer,
         /* buffer size in bytes, not number of samples */
         .buffer_size = sizeof(adc_raw_buffer),
-        .resolution = 11, // 11-bit resolution
+        .resolution = ADC_RESOLUTION,
     };
-
-    // Reset ADC channels to read
-    sequence.channels = BIT(1) | BIT(2);
 
     // Read ADC value
     int ret = adc_read(adc_dev, &sequence);
@@ -207,8 +205,7 @@ uint16_t platform_getVbat()
     int32_t bat_det_value =
         adc_raw_buffer[1]
         - 2048; // Adjust for 11-bit ADC with bipolar range (-2048 to 2047)
-    adc_raw_to_millivolts(adc_vref, ADC_GAIN_1, 11 /* adb resolution */,
-                          &bat_det_value);
+    adc_raw_to_millivolts(adc_vref, ADC_GAIN_1, ADC_RESOLUTION, &bat_det_value);
 
     // Adapt for voltage divider 200K and 100K
     uint32_t battery_voltage_mv = bat_det_value * 3;
@@ -235,7 +232,7 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    return gpio_pin_get_dt(&button_ptt);
+    return gpio_pin_get_dt(&button_ptt) > 0;
 }
 
 bool platform_pwrButtonStatus()

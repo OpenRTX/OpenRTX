@@ -12,6 +12,8 @@ zephyr_compile_definitions(PSRAM_CHIP_SIZE=4) # 4 MiB PSRAM
 target_sources(app
   PRIVATE
     ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/delays.c
+    ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/lsf_dsp.c
+    ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/lsf_controller.c
 
     ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/GPIO/gpio_bk4819.c
@@ -22,6 +24,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK4819.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/BK1080.c
 
+    ${OPENRTX_ROOT}/platform/drivers/NVM/flash_zephyr.c
     ${OPENRTX_ROOT}/platform/drivers/NVM/nvmem_C62.c
     ${OPENRTX_ROOT}/platform/targets/c62/calib_C62.c
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
@@ -34,23 +37,35 @@ target_sources(app
 
     ${OPENRTX_ROOT}/platform/targets/c62/platform.c
     ${OPENRTX_ROOT}/platform/targets/c62/hwconfig.c
-    ${OPENRTX_ROOT}/platform/targets/c62/dsp.c
-    ${OPENRTX_ROOT}/platform/targets/c62/lsf.c
 )
 
-add_subdirectory(services)
-zephyr_library_link_libraries(lsf_client)
-zephyr_linker_sources(DATA_SECTIONS lsf_service.ld)
+# LSF client and audio framework, which talk to the DSP
+zephyr_library_link_libraries(lsf_client af)
+zephyr_include_directories(${ZEPHYR_LSF_MODULE_DIR}/lsf_client/include)
+zephyr_include_directories(${ZEPHYR_AF_MODULE_DIR})
+
+# ListenAI's audio service requires the flash driver not to stall the DSP:
+# https://github.com/OpenRTX/lsf-zephyr-sdk/blob/2ac605527dcde3e90c814bb4175546cc7fbd36da/src/services/CMakeLists.txt#L13-L15
+if(CONFIG_CSK6_FLASH_STALL_SECOND_CORE)
+    message(FATAL_ERROR "DSP audio needs CONFIG_CSK6_FLASH_STALL_SECOND_CORE=n")
+endif()
 
 target_include_directories(app
   PRIVATE
     ${OPENRTX_ROOT}/platform/targets/c62
 )
 
-target_compile_definitions(app PRIVATE PLATFORM_C62)
+#
+# The CSK6 HAL defines a global platform_init(), its SPI flash setup, which
+# its flash driver calls at boot:
+# https://github.com/OpenRTX/listenai-modules-csk6_cm33/blob/9444f3dc2abec4d49e5daa6112a798ee43999222/src/platform-castor.c#L140
+# OpenRTX's own platform_init() would clash with it at link time. Rename the
+# OpenRTX one in the OpenRTX sources only, which never include the HAL's
+# spiflash.h: the vendored HAL stays as it is.
+#
+target_compile_definitions(app PRIVATE platform_init=openrtx_platform_init)
 
-# Activate SWD (Serial Wire Debug) for the C62 platform
-#target_compile_definitions(app PRIVATE C62_ENABLE_SWD)
+target_compile_definitions(app PRIVATE PLATFORM_C62)
 
 #
 # DSP firmware, flashed separately at 0x100000 (dsp_firmware partition). The

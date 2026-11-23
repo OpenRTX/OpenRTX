@@ -59,6 +59,18 @@ const struct audioDevice inputDevices[] = {
 };
 
 /**
+ * Switch the speaker amplifier. With CONFIG_C62_SWD its enable pin, shared
+ * with SWDIO, is left to the debug probe.
+ *
+ * @param on: true to enable the speaker.
+ */
+static void setSpeaker(bool on)
+{
+    if (!IS_ENABLED(CONFIG_C62_SWD))
+        gpio_pin_set_dt(&speaker_enable, on);
+}
+
+/**
  * Keep the speaker enabled while any active route plays to it.
  */
 static void updateSpeaker(void)
@@ -66,18 +78,17 @@ static void updateSpeaker(void)
     bool speaker = false;
     for (size_t i = 0; i < ARRAY_SIZE(paths); i++)
         speaker |= paths[i][SINK_SPK];
-#ifndef C62_ENABLE_SWD
-    gpio_pin_set_dt(&speaker_enable, speaker);
-#endif
+
+    setSpeaker(speaker);
 }
 
 void audio_init(void)
 {
-#ifndef C62_ENABLE_SWD
-    gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT_INACTIVE);
-#endif
+    if (!IS_ENABLED(CONFIG_C62_SWD))
+        gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT_INACTIVE);
+
     gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT_INACTIVE);
-    initialized = csk6codec_init() == 0;
+    initialized = csk6codec_init(&c62_codecCfg) == 0;
 }
 
 void audio_terminate(void)
@@ -85,9 +96,7 @@ void audio_terminate(void)
     if (!initialized)
         return;
 
-#ifndef C62_ENABLE_SWD
-    gpio_pin_set_dt(&speaker_enable, 0);
-#endif
+    setSpeaker(false);
     radio_disableAfOutput();
     csk6codec_terminate();
     initialized = false;

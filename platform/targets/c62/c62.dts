@@ -17,6 +17,7 @@
 	aliases {
 		i2c-0 = &i2c0;
 		flash = &flash0;
+		flash-controller = &flash;
 
 		ledwhite = &flashlight;
 		ledgreen = &ledrx;
@@ -36,19 +37,6 @@
 		zephyr,code-partition = &slot0_partition;
 
 		lsf,dsp-firmware = &dsp_firmware;
-	};
-
-	lsf: service-controller {
-		compatible = "lsf,service-controller";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		label = "LSF";
-
-		lsf_audio: audio-service@0 {
-			compatible = "lsf,audio-service";
-			reg = <0>;
-			status = "okay";
-		};
 	};
 
 	leds {

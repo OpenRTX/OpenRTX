@@ -104,12 +104,18 @@ static uint16_t scaleFreq(const uint16_t freq)
     return (((uint32_t)freq * 1048576u) + 50000u) / 100000u; /* with rounding */
 }
 
-uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg)
+/**
+ * Read a register. The caller holds the SPI bus.
+ *
+ * @param dev: BK4819 device.
+ * @param reg: register address.
+ * @return register value.
+ */
+static uint16_t readReg(const struct BK4819 *dev, uint8_t reg)
 {
     const uint8_t cmd = reg | BK4819_REG_READ;
     uint8_t rx[2];
 
-    spi_acquire(dev->spi);
     gpioPin_clear(&dev->scn);
     delayUs(1);
 
@@ -118,12 +124,18 @@ uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg)
 
     delayUs(1);
     gpioPin_set(&dev->scn);
-    spi_release(dev->spi);
 
     return ((uint16_t)rx[0] << 8) | rx[1];
 }
 
-void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data)
+/**
+ * Write a register. The caller holds the SPI bus.
+ *
+ * @param dev: BK4819 device.
+ * @param reg: register address.
+ * @param data: register value.
+ */
+static void writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data)
 {
     const uint8_t cmd = reg | BK4819_REG_WRITE;
     const uint8_t tx[2] = {
@@ -131,7 +143,6 @@ void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data)
         data & 0xFF,
     };
 
-    spi_acquire(dev->spi);
     gpioPin_clear(&dev->scn);
     delayUs(1);
 
@@ -140,92 +151,127 @@ void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data)
 
     delayUs(1);
     gpioPin_set(&dev->scn);
+}
+
+uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg)
+{
+    spi_acquire(dev->spi);
+    uint16_t value = readReg(dev, reg);
+    spi_release(dev->spi);
+
+    return value;
+}
+
+void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data)
+{
+    spi_acquire(dev->spi);
+    writeReg(dev, reg, data);
     spi_release(dev->spi);
 }
 
 void bk4819_maskSetRegister(const struct BK4819 *dev, uint8_t reg,
                             uint16_t mask, uint16_t value)
 {
-    uint16_t current = bk4819_readReg(dev, reg);
-    bk4819_writeReg(dev, reg, (current & ~mask) | (value & mask));
+    // The bus is held across the read and the write, so that another thread
+    // can't change the register in between
+    spi_acquire(dev->spi);
+    uint16_t current = readReg(dev, reg);
+    writeReg(dev, reg, (current & ~mask) | (value & mask));
+    spi_release(dev->spi);
 }
 
 void bk4819_init(const struct BK4819 *dev)
 {
+    const uint16_t micSens = BK4819_REG7D_UNDOC
+                           | BK4819_REG7D_MIC_GAIN(BK4819_DEFAULT_MIC_GAIN);
+    const uint16_t afGains =
+        BK4819_REG48_UNDOC
+        | BK4819_REG48_AF_RX_GAIN1(BK4819_DEFAULT_RX_AUDIO_GAIN1)
+        | BK4819_REG48_AF_RX_GAIN2(BK4819_DEFAULT_RX_AUDIO_GAIN2);
+    const uint16_t pa = BK4819_REG36_PA_BIAS(BK4819_DEFAULT_PA_BIAS)
+                      | BK4819_REG36_PA_CTL_ENABLE
+                      | BK4819_REG36_PA_GAIN1(BK4819_DEFAULT_PA_GAIN1)
+                      | BK4819_REG36_PA_GAIN2(BK4819_DEFAULT_PA_GAIN2);
+    const uint16_t afOutput = BK4819_REG47_UNDOC
+                            | BK4819_REG47_AF_OUTPUT(BK4819_AF_MUTE);
+
     /* Configure CS as output, idle high */
     gpioPin_setMode(&dev->scn, OUTPUT);
     gpioPin_set(&dev->scn);
 
     /*
+     * This runs once, at startup, before anything else uses the bus: its
+     * register writes don't take the bus lock.
+     *
      * Init sequence of the A36Plus driver's bk4819_init(), except REG_36,
      * REG_47, REG_48 and REG_7D, which differ on the C62:
      * https://github.com/Jamie793/A36Plus_Radio/blob/530a6089c0dba2023c6b7aa9e13d10cd8128ba4a/Drivers/BK4819/bk4819.c#L123-L176
      */
-    bk4819_writeReg(dev, 0x00, BIT(15)); // Soft Reset
-    bk4819_writeReg(dev, 0x00, 0);       // Normal operation
-    bk4819_writeReg(dev, 0x37, 0x1d0f);  // Power mode
+    writeReg(dev, 0x00, BIT(15)); // Soft Reset
+    writeReg(dev, 0x00, 0);       // Normal operation
+    writeReg(dev, 0x37, BK4819_REG37_STARTUP);
 
     /* Rx AGC Gain */
-    bk4819_writeReg(dev, 0x13, 0x3be);
-    bk4819_writeReg(dev, 0x12, 0x37b);
-    bk4819_writeReg(dev, 0x11, 0x27b);
-    bk4819_writeReg(dev, 0x10, 0x7a);
-    bk4819_writeReg(dev, 0x14, 0x19);
+    writeReg(dev, 0x13, 0x3be);
+    writeReg(dev, 0x12, 0x37b);
+    writeReg(dev, 0x11, 0x27b);
+    writeReg(dev, 0x10, 0x7a);
+    writeReg(dev, 0x14, 0x19);
 
-    bk4819_writeReg(dev, 0x49, 0x2a38);
-    bk4819_writeReg(dev, 0x7B, 0x8420);
-    bk4819_writeReg(dev, 0x7D, 0xe959); // Mic sensitivity
-    bk4819_writeReg(dev, 0x48, 0xb3c1); // AF Gains
-    bk4819_writeReg(dev, 0x1E, 0x4c58);
-    bk4819_writeReg(dev, 0x1F, 0xa656);
-    bk4819_writeReg(dev, 0x3E, 0xa037); // Band selection threshold
-    bk4819_writeReg(dev, 0x3F, 0x07fe); // Interrupt enable
-    bk4819_writeReg(dev, 0x2A, 0x7fff);
-    bk4819_writeReg(dev, 0x28, 0x6b00); // Expander
-    bk4819_writeReg(dev, 0x53, 59000);
-    bk4819_writeReg(dev, 0x2C, 0x5705);
-    bk4819_writeReg(dev, 0x4B, 0x7102); // ALC
+    writeReg(dev, 0x49, 0x2a38);
+    writeReg(dev, 0x7B, 0x8420);
+    writeReg(dev, 0x7D, micSens);
+    writeReg(dev, 0x48, afGains);
+    writeReg(dev, 0x1E, 0x4c58);
+    writeReg(dev, 0x1F, 0xa656);
+    writeReg(dev, 0x3E, 0xa037); // Band selection threshold
+    writeReg(dev, 0x3F, 0x07fe); // Interrupt enable
+    writeReg(dev, 0x2A, 0x7fff);
+    writeReg(dev, 0x28, 0x6b00); // Expander
+    writeReg(dev, 0x53, 59000);
+    writeReg(dev, 0x2C, 0x5705);
+    writeReg(dev, 0x4B, 0x7102); // ALC
     bk4819_setAudioMode(dev, BK4819_AUDIO_VOICE);
-    bk4819_writeReg(dev, 0x77, 0x88ef);
-    bk4819_writeReg(dev, 0x26, 0x13a0);
-    bk4819_writeReg(dev, 0x4E, 0x6f15); // Squelch
-    bk4819_writeReg(dev, 0x4F, 0x3f3e); // Ex-noise threshold for Squelch
+    writeReg(dev, 0x77, 0x88ef);
+    writeReg(dev, 0x26, 0x13a0);
+    writeReg(dev, 0x4E, 0x6f15); // Squelch
+    writeReg(dev, 0x4F, 0x3f3e); // Ex-noise threshold for Squelch
 
     /* DTMF Symbol 0 - 15 Coefficient */
-    bk4819_writeReg(dev, 0x09, 0x006f);
-    bk4819_writeReg(dev, 0x09, 0x106b);
-    bk4819_writeReg(dev, 0x09, 0x2067);
-    bk4819_writeReg(dev, 0x09, 0x3062);
-    bk4819_writeReg(dev, 0x09, 0x4050);
-    bk4819_writeReg(dev, 0x09, 0x5047);
-    bk4819_writeReg(dev, 0x09, 0x603a);
-    bk4819_writeReg(dev, 0x09, 0x702c);
-    bk4819_writeReg(dev, 0x09, 0x8041);
-    bk4819_writeReg(dev, 0x09, 0x9037);
-    bk4819_writeReg(dev, 0x09, 0xa025);
-    bk4819_writeReg(dev, 0x09, 0xb017);
-    bk4819_writeReg(dev, 0x09, 0xc0e4);
-    bk4819_writeReg(dev, 0x09, 0xd0cb);
-    bk4819_writeReg(dev, 0x09, 0xe0b5);
-    bk4819_writeReg(dev, 0x09, 0xf09f);
+    writeReg(dev, 0x09, 0x006f);
+    writeReg(dev, 0x09, 0x106b);
+    writeReg(dev, 0x09, 0x2067);
+    writeReg(dev, 0x09, 0x3062);
+    writeReg(dev, 0x09, 0x4050);
+    writeReg(dev, 0x09, 0x5047);
+    writeReg(dev, 0x09, 0x603a);
+    writeReg(dev, 0x09, 0x702c);
+    writeReg(dev, 0x09, 0x8041);
+    writeReg(dev, 0x09, 0x9037);
+    writeReg(dev, 0x09, 0xa025);
+    writeReg(dev, 0x09, 0xb017);
+    writeReg(dev, 0x09, 0xc0e4);
+    writeReg(dev, 0x09, 0xd0cb);
+    writeReg(dev, 0x09, 0xe0b5);
+    writeReg(dev, 0x09, 0xf09f);
 
-    bk4819_writeReg(dev, 0x74, 0xfa02); // 3000Hz AF Response coefficient for Tx
-    bk4819_writeReg(dev, 0x44, 0x8f88); // 300Hz AF Response coefficient for Tx
-    bk4819_writeReg(dev, 0x45, 0x3201); // 300Hz AF Response coefficient for Rx
-    bk4819_writeReg(dev, 0x28, 0x6b38); // Expander
-    bk4819_writeReg(dev, 0x29, 0xb4cb); // Compress
-    // Tx Output power Bias 0xdf = 2,8V PA Tuning 0xbf = Enable PACTKoutput + 7,26dBm
-    bk4819_writeReg(dev, 0x36, 0xdfbf);
-    bk4819_writeReg(dev, 0x47, 0x6040); // AF
+    writeReg(dev, 0x74, 0xfa02); // 3000Hz AF Response coefficient for Tx
+    writeReg(dev, 0x44, 0x8f88); // 300Hz AF Response coefficient for Tx
+    writeReg(dev, 0x45, 0x3201); // 300Hz AF Response coefficient for Rx
+    writeReg(dev, 0x28, 0x6b38); // Expander
+    writeReg(dev, 0x29, 0xb4cb); // Compress
+    // PA bias 0xdf = 2.8 V; 0xbf = PACTL output enabled, +7.26 dBm
+    writeReg(dev, 0x36, pa);
+    writeReg(dev, 0x47, afOutput);
 
     /*
      * Let the microphone input bias settle with only the mic ADC enabled,
      * before any audio starts: otherwise the mic AGC can stay at a low gain.
      */
-    uint16_t power = bk4819_readReg(dev, 0x30);
-    bk4819_writeReg(dev, 0x30, BK4819_REG30_MIC_ADC_ENABLE);
+    uint16_t power = readReg(dev, 0x30);
+    writeReg(dev, 0x30, BK4819_REG30_MIC_ADC_ENABLE);
     delayMs(250);
-    bk4819_writeReg(dev, 0x30, power);
+    writeReg(dev, 0x30, power);
 }
 
 void bk4819_setFrequency(const struct BK4819 *dev, uint32_t freq)

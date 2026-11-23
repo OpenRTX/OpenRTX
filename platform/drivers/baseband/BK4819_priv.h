@@ -13,7 +13,16 @@
 #ifndef BK4819_PRIV_H
 #define BK4819_PRIV_H
 
+#include "drivers/baseband/BK4819.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
+ * Register access and fields, for the BK4819 driver and the driver of its
+ * GPIOs: radio code uses the named setters of BK4819.h.
+ *
  * Register fields used by the BK4819 driver. From the BK4819 (V3) register
  * list and application note:
  * https://github.com/amnemonic/Quansheng_UV-K5_Firmware/tree/main/hardware
@@ -29,6 +38,11 @@
 enum {
     BK4819_REG_READ = BIT(7),
     BK4819_REG_WRITE = 0,
+};
+
+/* REG_0A: GPIO input levels (read only). Pin n is n bits below pin 0 */
+enum {
+    BK4819_REG0A_INPUT_PIN0 = 0x0040,
 };
 
 /* REG_07: CTCSS/CDCSS frequency */
@@ -76,8 +90,31 @@ enum {
     BK4819_REG31_VOX = BIT(2),
 };
 
+/* REG_33: GPIO direction and output levels. Pin n is n bits below pin 0 */
+enum {
+    BK4819_REG33_DIRECTION_PIN0 = 0x4000, ///< Set for input.
+    BK4819_REG33_OUTPUT_PIN0 = 0x0040,    ///< Output level.
+};
+
+/* REG_36: PA bias and gain */
+enum {
+    BK4819_REG36_PA_BIAS_MASK = 0xff00,
+    BK4819_REG36_PA_CTL_ENABLE = BIT(7),
+    BK4819_REG36_PA_GAIN1_MASK = 0x0038,
+    BK4819_REG36_PA_GAIN2_MASK = 0x0007,
+};
+
+#define BK4819_REG36_PA_BIAS(x) (((x) << 8) & BK4819_REG36_PA_BIAS_MASK)
+#define BK4819_REG36_PA_GAIN1(x) (((x) << 3) & BK4819_REG36_PA_GAIN1_MASK)
+#define BK4819_REG36_PA_GAIN2(x) ((x) & BK4819_REG36_PA_GAIN2_MASK)
+
 /* REG_37: power and LDOs */
 enum {
+    /*
+     * As BK4819_REG37_ACTIVE with the RF LDO at 2.4 V: the value of the
+     * A36Plus init sequence, see bk4819_init().
+     */
+    BK4819_REG37_STARTUP = 0x1d0f,
     /*
      * DSP voltage 1, ANA, VCO, RF and PLL LDOs at 2.7 V, reserved bit 3 set,
      * DSP, crystal and band gap on, as the UV-K5 firmware's RX_TurnOn():
@@ -117,6 +154,8 @@ enum {
     BK4819_REG47_BYPASS = BK4819_REG47_AF_TX_FILTER_BYPASS
                         | BK4819_REG47_UNDOC1,
     BK4819_REG47_AF_OUTPUT_MASK = 0x0f00,
+    /* Bits 14, 13 and 6, set by the A36Plus init sequence */
+    BK4819_REG47_UNDOC = 0x6040,
 };
 
 #define BK4819_REG47_AF_OUTPUT(x) (((x) << 8) & BK4819_REG47_AF_OUTPUT_MASK)
@@ -125,6 +164,8 @@ enum {
 enum {
     BK4819_REG48_AF_RX_GAIN1_MASK = 0x0c00,
     BK4819_REG48_AF_RX_GAIN2_MASK = 0x03f0,
+    /* Bits 15, 13, 12 and 0, set by the A36Plus init sequence */
+    BK4819_REG48_UNDOC = 0xb001,
 };
 
 #define BK4819_REG48_AF_RX_GAIN1(x) \
@@ -197,6 +238,8 @@ enum {
 /* REG_7D: microphone sensitivity */
 enum {
     BK4819_REG7D_MIC_GAIN_MASK = 0x001f,
+    /* Bits 15 to 13, 11, 8 and 6, set by the A36Plus init sequence */
+    BK4819_REG7D_UNDOC = 0xe940,
 };
 
 #define BK4819_REG7D_MIC_GAIN(x) ((x) & BK4819_REG7D_MIC_GAIN_MASK)
@@ -218,6 +261,43 @@ enum {
     BK4819_DEFAULT_MIC_GAIN = 0x19,
     BK4819_DEFAULT_TX_DCF_BW = 5,
     BK4819_DEFAULT_RX_DCF_BW = 6,
+    BK4819_DEFAULT_PA_BIAS = 0xdf, ///< 2.8 V.
+    BK4819_DEFAULT_PA_GAIN1 = 7,
+    BK4819_DEFAULT_PA_GAIN2 = 7,
 };
+
+/**
+ * Read a register.
+ *
+ * @param dev: pointer to device data.
+ * @param reg: register address.
+ * @return register value.
+ */
+uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg);
+
+/**
+ * Write a register.
+ *
+ * @param dev: pointer to device data.
+ * @param reg: register address.
+ * @param data: register value.
+ */
+void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data);
+
+/**
+ * Write the bits of a register selected by a mask, holding the bus across
+ * the read and the write.
+ *
+ * @param dev: pointer to device data.
+ * @param reg: register address.
+ * @param mask: bits to write.
+ * @param value: new value of those bits.
+ */
+void bk4819_maskSetRegister(const struct BK4819 *dev, uint8_t reg,
+                            uint16_t mask, uint16_t value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* BK4819_PRIV_H */

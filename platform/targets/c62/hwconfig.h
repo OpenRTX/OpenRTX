@@ -7,8 +7,6 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#define TARGET_C62
-
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
@@ -20,6 +18,7 @@ extern "C" {
 
 #include "drivers/baseband/BK1080.h"
 #include "drivers/baseband/BK4819.h"
+#include "pinmap.h"
 
 /*
  * Display properties are encoded in the devicetree
@@ -28,7 +27,9 @@ extern "C" {
 #define CONFIG_SCREEN_WIDTH DT_PROP(DISPLAY, width)
 #define CONFIG_SCREEN_HEIGHT DT_PROP(DISPLAY, height)
 
+/* The ST7735R takes RGB565 pixels with the high byte first */
 #define CONFIG_PIX_FMT_RGB565
+#define CONFIG_PIX_FMT_RGB565_BE
 
 /* Screen has adjustable brightness */
 #define CONFIG_SCREEN_BRIGHTNESS
@@ -37,39 +38,29 @@ extern "C" {
 #define CONFIG_BAT_LIION
 #define CONFIG_BAT_NCELLS 2
 
+/* ADC channels */
+enum AdcChannels {
+    ADC_CHARGE_CH = 1, ///< Charge detection.
+    ADC_VBAT_CH = 2,   ///< Battery voltage, pin B08.
+};
+
 #define CONFIG_M17
 
-/* Software gain of the M17 microphone input, set for C62_ADC_MIC_GAIN_A/D */
+/* Software gain of the M17 microphone input, set for the codec's mic gains */
 #define CONFIG_MIC_GAIN 13
 
-/*
- * CSK6 codec gains in dB, analog (_A) and digital (_D). The TX DAC sets the
- * level into the BK4819 mic input for both FM and M17; never above 0 dB.
- */
-#define C62_ADC_MIC_GAIN_A 6
-#define C62_ADC_MIC_GAIN_D 10
-#define C62_ADC_RX_GAIN_A 6
-#define C62_ADC_RX_GAIN_D 20
-#define C62_DAC_SPK_GAIN_A -6
-#define C62_DAC_SPK_GAIN_D 0
-#define C62_DAC_TX_GAIN_A -18
-#define C62_DAC_TX_GAIN_D 0
+/* GPIO controllers, for the pins driven through the gpioPin API */
+extern const struct gpioDev GpioA;
+extern const struct gpioDev GpioB;
 
-/**
- * BK4819 and BK1080 device instances. Pin numbers must be kept in sync
- * with the board devicetree (gpioa/gpiob nodes).
- */
+/* BK4819 and BK1080 device instances */
 extern const struct BK4819 c62_bk4819;
 extern const struct gpioDev c62_bk4819_gpio;
 
-/* BK4819 GPIOs */
-#define LNA_VHF_EN &c62_bk4819_gpio, 0
-#define LNA_UHF_EN &c62_bk4819_gpio, 1
-#define PA_VHF_EN &c62_bk4819_gpio, 2
-#define PA_UHF_EN &c62_bk4819_gpio, 3
-#define ALC_TX_LED_EN &c62_bk4819_gpio, 4
-
 extern const struct BK1080 c62_bk1080;
+
+/* CSK6 codec gains: mic and speaker on the left, BK4819 on the right */
+extern const struct csk6codecCfg c62_codecCfg;
 
 extern const struct gpio_dt_spec speaker_enable;
 extern const struct gpio_dt_spec dtmf_enable;
@@ -80,18 +71,6 @@ extern const struct gpio_dt_spec led_keyboard;
 extern const struct pwm_dt_spec pwm_lcd_backlight;
 extern const struct pwm_dt_spec pwm_rf_apc;
 extern const struct device *adc_dev;
-
-/*
- * Persistence policy.
- *
- * The C62 has no graceful shutdown: the power knob cuts power, so
- * state_terminate() never runs and a save on shutdown would be lost. Settings
- * and VFO changes are therefore persisted by a debounced write while the
- * radio is running. Platforms with a clean shutdown leave this undefined and
- * keep saving from state_terminate() only.
- */
-#define NVMEM_DEBOUNCED_WRITE
-#define NVM_WRITE_DEBOUNCE_MS 3000
 
 #ifdef __cplusplus
 }

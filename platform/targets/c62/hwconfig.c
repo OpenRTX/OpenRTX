@@ -5,6 +5,7 @@
  */
 
 #include <hwconfig.h>
+#include <pthread.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pwm.h>
@@ -13,38 +14,54 @@
 #include "drivers/GPIO/gpio_zephyr.h"
 #include "drivers/SPI/spi_zephyr.h"
 #include "drivers/I2C/i2c_bitbang.h"
+#include "drivers/audio/csk6_codec.h"
 
-/*
- * Pin mapping, must match platform/targets/c62/c62.dts:
- * BK4819: SCLK gpioa 13, SDATA gpioa 7, SCN gpioa 8 (active low)
- * BK1080: SCLK gpioa 5, SDATA gpioa 6, PWR gpiob 2 (active low)
- */
+GPIO_ZEPHYR_DEVICE_DEFINE(GpioA, gpioa)
+GPIO_ZEPHYR_DEVICE_DEFINE(GpioB, gpiob)
+
+static pthread_mutex_t c62_bk4819_mutex;
+
 static const struct spiZephyrCfg c62_bk4819_spiCfg = {
     .bus = DEVICE_DT_GET(DT_NODELABEL(bk4819_spi)),
     .frequency = 200000,
-    .flags = SPI_HALF_DUPLEX
+    .flags = SPI_HALF_DUPLEX,
 };
 
-SPI_ZEPHYR_DEVICE_DEFINE(c62_bk4819_spi, c62_bk4819_spiCfg, NULL)
+SPI_ZEPHYR_DEVICE_DEFINE(c62_bk4819_spi, c62_bk4819_spiCfg, &c62_bk4819_mutex)
 
-const struct BK4819 c62_bk4819 = { .spi = &c62_bk4819_spi,
-                                   .scn = { &GpioA, 8 } };
+const struct BK4819 c62_bk4819 = {
+    .spi = &c62_bk4819_spi,
+    .scn = { BK4819_SCN },
+};
 
 GPIO_BK4819_DEVICE_DEFINE(c62_bk4819_gpio, c62_bk4819)
 
 static struct i2cBitbangState c62_bk1080_i2cState;
 
 static const struct i2cBitbangCfg c62_bk1080_i2cCfg = {
-    .sck = { &GpioA, 5 },
-    .sda = { &GpioA, 6 },
+    .sck = { BK1080_SCK },
+    .sda = { BK1080_SDA },
     .clkPeriod = 10,
     .state = &c62_bk1080_i2cState,
 };
 
 I2C_BITBANG_DEVICE_DEFINE(c62_bk1080_i2c, c62_bk1080_i2cCfg, NULL)
 
-const struct BK1080 c62_bk1080 = { .i2c = &c62_bk1080_i2c,
-                                   .pwr = { &GpioB, 2 } };
+const struct BK1080 c62_bk1080 = {
+    .i2c = &c62_bk1080_i2c,
+    .pwr = { BK1080_PWR },
+};
+
+/*
+ * The TX DAC sets the level into the BK4819 mic input for both FM and M17;
+ * never above 0 dB.
+ */
+const struct csk6codecCfg c62_codecCfg = {
+    .adcLeft = { .analog = 6, .digital = 10 },   // Microphone
+    .adcRight = { .analog = 6, .digital = 20 },  // BK4819 RX audio
+    .dacLeft = { .analog = -6, .digital = 0 },   // Speaker
+    .dacRight = { .analog = -18, .digital = 0 }, // BK4819 TX audio
+};
 
 const struct gpio_dt_spec speaker_enable =
     GPIO_DT_SPEC_GET(DT_PATH(gpio_controls, speaker_enable), gpios);

@@ -117,36 +117,6 @@ struct BK4819Priv {
     };
 
 /**
- * Read a register.
- *
- * @param dev: pointer to device data.
- * @param reg: register address.
- * @return register value.
- */
-uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg);
-
-/**
- * Write a register.
- *
- * @param dev: pointer to device data.
- * @param reg: register address.
- * @param data: register value.
- */
-void bk4819_writeReg(const struct BK4819 *dev, uint8_t reg, uint16_t data);
-
-/**
- * Write the bits of a register selected by a mask. For the BK4819 GPIO
- * driver: radio code uses the named setters.
- *
- * @param dev: pointer to device data.
- * @param reg: register address.
- * @param mask: bits to write.
- * @param value: new value of those bits.
- */
-void bk4819_maskSetRegister(const struct BK4819 *dev, uint8_t reg,
-                            uint16_t mask, uint16_t value);
-
-/**
  * Initialise the BK4819 chip.
  *
  * @param dev: pointer to device data.

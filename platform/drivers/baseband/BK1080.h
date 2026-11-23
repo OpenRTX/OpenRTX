@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-enum BK1080_Register_t {
+enum BK1080_Register {
     BK1080_REG_00 = 0x00U,
     BK1080_REG_02_POWER_CONFIGURATION = 0x02U,
     BK1080_REG_03_CHANNEL = 0x03U,
@@ -32,8 +32,6 @@ enum BK1080_Register_t {
     BK1080_REG_10 = 0x0AU,
     BK1080_REG_25_INTERNAL = 0x19U,
 };
-
-typedef enum BK1080_Register_t BK1080_Register_t;
 
 // REG 07
 
@@ -76,7 +74,7 @@ struct BK1080 {
 /**
  * Base frequency and frequency deviation of the last measurement, in Hz.
  */
-extern uint16_t BK1080_BaseFrequency;
+extern uint32_t BK1080_BaseFrequency;
 extern uint16_t BK1080_FrequencyDeviation;
 
 /**
@@ -96,7 +94,7 @@ void BK1080_Init(const struct BK1080 *dev, uint32_t Frequency, uint8_t band);
  * @return register value.
  */
 uint16_t BK1080_ReadRegister(const struct BK1080 *dev,
-                             BK1080_Register_t Register);
+                             enum BK1080_Register Register);
 
 /**
  * Write a chip register.
@@ -105,8 +103,8 @@ uint16_t BK1080_ReadRegister(const struct BK1080 *dev,
  * @param Register register address.
  * @param Value value to be written.
  */
-void BK1080_WriteRegister(const struct BK1080 *dev, BK1080_Register_t Register,
-                          uint16_t Value);
+void BK1080_WriteRegister(const struct BK1080 *dev,
+                          enum BK1080_Register Register, uint16_t Value);
 
 /**
  * Mute or unmute the audio output.

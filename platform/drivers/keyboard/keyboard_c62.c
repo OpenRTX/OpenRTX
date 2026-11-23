@@ -6,11 +6,7 @@
 
 #include <interfaces/keyboard.h>
 #include <zephyr/drivers/gpio.h>
-#include <interfaces/delays.h>
 #include <zephyr/kernel.h>
-
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(keyboard, LOG_LEVEL_DBG);
 #include <zephyr/device.h>
 
 #define ROW1_NODE DT_NODELABEL(row1)
@@ -32,9 +28,13 @@ static const struct gpio_dt_spec col2 = GPIO_DT_SPEC_GET(COL2_NODE, gpios);
 static const struct gpio_dt_spec col3 = GPIO_DT_SPEC_GET(COL3_NODE, gpios);
 static const struct gpio_dt_spec col4 = GPIO_DT_SPEC_GET(COL4_NODE, gpios);
 static const struct gpio_dt_spec col5 = GPIO_DT_SPEC_GET(COL5_NODE, gpios);
-static const struct gpio_dt_spec *cols[] = { &row1, &row2, &row3, &row4 };
-static const struct gpio_dt_spec *rows[] = { &col1, &col2, &col3, &col4,
-                                             &col5 };
+/*
+ * The scan drives one of the five column lines at a time and reads the four
+ * row lines.
+ */
+static const struct gpio_dt_spec *driveLines[] = { &col1, &col2, &col3, &col4,
+                                                   &col5 };
+static const struct gpio_dt_spec *senseLines[] = { &row1, &row2, &row3, &row4 };
 
 #define SIDEKEY_NODE DT_NODELABEL(sidekey)
 
@@ -50,6 +50,13 @@ static const uint32_t keyMap[] = { KEY_ENTER, KEY_UP,   KEY_DOWN, KEY_ESC,
 
 void kbd_init()
 {
+    for (size_t i = 0; i < ARRAY_SIZE(driveLines); i++)
+        gpio_pin_configure_dt(driveLines[i], GPIO_OUTPUT_INACTIVE);
+
+    for (size_t i = 0; i < ARRAY_SIZE(senseLines); i++)
+        gpio_pin_configure_dt(senseLines[i], GPIO_INPUT | GPIO_PULL_UP);
+
+    gpio_pin_configure_dt(&sidekey, GPIO_INPUT);
 }
 
 void kbd_terminate()
@@ -60,58 +67,30 @@ keyboard_t kbd_getKeys()
 {
     uint32_t keys = 0;
 
-    // Configure rows as outputs (initially low)
-    for (int i = 0; i < 5; i++) {
-        gpio_pin_configure_dt(rows[i], GPIO_OUTPUT);
-        gpio_pin_set_dt(rows[i], 0); // Set to low
-    }
-
-    // Configure columns as inputs with pull-ups
-    for (int i = 0; i < 4; i++) {
-        gpio_pin_configure_dt(cols[i], GPIO_INPUT | GPIO_PULL_UP);
-    }
-
-    // Scan the matrix
-    for (int r = 0; r < 5; r++) {
-        // Set the current row high
-        gpio_pin_set_dt(rows[r], 1);
+    for (size_t d = 0; d < ARRAY_SIZE(driveLines); d++) {
+        gpio_pin_set_dt(driveLines[d], 1);
 
         // Small delay to stabilize
         k_busy_wait(1);
 
-        // Read columns
-        for (int c = 0; c < 4; c++) {
-            // If column reads low, key is pressed
-            if (gpio_pin_get_dt(cols[c]) == 1) {
-                // Set corresponding bit in result
-                keys |= (1 << (r * 4 + c));
-            }
+        for (size_t s = 0; s < ARRAY_SIZE(senseLines); s++) {
+            if (gpio_pin_get_dt(senseLines[s]) == 1)
+                keys |= 1U << ((d * ARRAY_SIZE(senseLines)) + s);
         }
 
-        // Set the current row low again
-        gpio_pin_set_dt(rows[r], 0);
+        gpio_pin_set_dt(driveLines[d], 0);
     }
 
     // Map raw keys to KEY_ enum values
     keyboard_t result = 0;
 
-    for (uint8_t i = 0; i < 20; i++) {
-        if (keys & (1 << i) && i < sizeof(keyMap) / sizeof(keyMap[0])) {
+    for (size_t i = 0; i < ARRAY_SIZE(keyMap); i++) {
+        if ((keys & (1U << i)) != 0)
             result |= keyMap[i];
-        }
     }
 
-    // Configure the side key as input with pull-up
-    gpio_pin_configure_dt(&sidekey, GPIO_INPUT);
-    // Read the pin state
-    int pin_val = gpio_pin_get_dt(&sidekey);
-
-    // Log the pin state
-
-    // Check if the side key is pressed
-    if (pin_val == 1) {
+    if (gpio_pin_get_dt(&sidekey) == 1)
         result |= KEY_MONI;
-    }
 
     return result;
 }

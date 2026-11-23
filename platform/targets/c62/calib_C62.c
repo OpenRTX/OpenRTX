@@ -57,9 +57,6 @@ struct C62CalRecord {
     uint32_t squelch[2];
 };
 
-_Static_assert(sizeof(struct C62EntryHdr) == 4, "C62 entry header size");
-_Static_assert(sizeof(struct C62CalRecord) == 36, "C62 record size");
-
 /**
  * Stock default calibration, as the C62 firmware ships it. Its TX deviations
  * are the same at every point.

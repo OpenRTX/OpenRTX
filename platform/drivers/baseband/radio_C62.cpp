@@ -35,7 +35,7 @@ static constexpr uint8_t CTCSS_TX_GAIN = 65;
  * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
  * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
  */
-// Raw deviation tuning (not Hz), set for the TX DAC gain in hwconfig.h
+// Raw deviation tuning (not Hz), set for the TX DAC gain in hwconfig.c
 static constexpr uint16_t M17_TX_DEVIATION = 0x582;
 static constexpr uint8_t M17_RF_BW = 7;          // 4.5 kHz
 static constexpr uint8_t M17_RF_BW_WEAK = 4;     // 3.75 kHz
