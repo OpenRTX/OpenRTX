@@ -50,6 +50,16 @@ By default it is downloaded while configuring. For offline builds, point the
 relative to the repository root or absolute; the build fails if its hash
 differs.
 
+### Debugging over SWD
+
+The speaker enable line shares pin A1 with SWDIO. To attach a debug probe,
+build with `CONFIG_C62_SWD=y`, which leaves that pin alone and so keeps the
+speaker off:
+
+```bash
+west build -b c62 -d build . -- -DCONFIG_C62_SWD=y
+```
+
 ## Flashing
 
 > **Warning:** This may brick your device! Use at your own risk!

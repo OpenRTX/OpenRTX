@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+#
+# Options of the Retevis C62 board. Zephyr sources Kconfig.board inside the
+# board selection choice, where an option would be an alternative to the
+# board itself.
+#
+
+if BOARD_C62
+
+config C62_SWD
+	bool "Keep the SWD pins free for a debugger"
+	help
+	  The speaker enable line shares pin A1 with SWDIO. With this option
+	  the firmware leaves the pin alone, so a debug probe can attach: the
+	  speaker stays off.
+
+menu "DSP Manipulation"
+
+config LSF_DSP
+	bool "DSP Manipulation"
+	default y
+	select FLASH
+	select FLASH_MAP
+
+if LSF_DSP
+
+DT_CHOSEN_LSF_DSP_FIRMWARE := lsf,dsp-firmware
+
+config LSF_DSP_LOAD_ON_BOOT
+	bool "Load DSP firmware on boot"
+	default y
+	depends on $(dt_chosen_enabled,$(DT_CHOSEN_LSF_DSP_FIRMWARE))
+
+endif # LSF_DSP
+
+endmenu
+
+endif # BOARD_C62
