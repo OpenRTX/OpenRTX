@@ -45,8 +45,8 @@ static int processRx(const struct pktDesc *pkt)
 
     auto *packet = static_cast<const struct m17Packet *>(pkt->buffer);
     size_t textLen = 0;
-    const char *text = M17::sms_packet_text(packet->payload, pkt->res,
-                                            &textLen);
+    const char *text = M17::smsPacket_getText(packet->payload, pkt->res,
+                                              &textLen);
     if (text == nullptr)
         return -EPROTO;
 
@@ -76,8 +76,8 @@ static int formatTx(const struct message *msg, struct pktDesc *pkt)
     size_t capacity = std::min<size_t>(pkt->size - M17_PKT_HEADER,
                                        M17_MAX_PACKET_DATA);
 
-    size_t len = M17::sms_format_packet(msg->body, msg->bodyLen,
-                                        packet->payload, capacity);
+    size_t len = M17::smsPacket_format(msg->body, msg->bodyLen, packet->payload,
+                                       capacity);
     if (len == 0)
         return -EMSGSIZE;
 
