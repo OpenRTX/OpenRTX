@@ -23,6 +23,8 @@ static const rtxStatus_t
 
 static enum opstatus radioStatus; // Current operating status
 static enum opmode radioMode;     // Current operating mode
+static bool usbRx;                // Receiver set up for USB
+static bool afOn;                 // AF output on, for the speaker
 
 /*
  * CTCSS TX gain of the stock C62 firmware, REG_51 <6:0> "CTCSS/CDCSS Tx Gain1
@@ -35,7 +37,8 @@ static constexpr uint8_t CTCSS_TX_GAIN = 65;
 static constexpr uint16_t TONE_BURST_FREQ = 1750;
 static constexpr uint8_t TONE_BURST_GAIN = 65;
 
-// CW keyed tone in F2A, at the deviation of the tone burst
+// CW keyed tone in F2A, at the deviation of the tone burst. A1A is received
+// in USB this much below the channel, to beat at the same pitch.
 static constexpr uint16_t CW_TONE_FREQ = 700;
 static constexpr uint8_t CW_TONE_GAIN = TONE_BURST_GAIN;
 
@@ -160,15 +163,26 @@ bool radio_checkRxDigitalSquelch()
     return bk4819_getCtcss(&c62_bk4819);
 }
 
+/**
+ * Check whether the receiver demodulates USB: in CW with A1A, whose keyed
+ * carrier FM does not make audible.
+ */
+static bool cwUsb()
+{
+    return (radioMode == OPMODE_CW) && (config->cwEmission == CW_A1A);
+}
+
 void radio_enableAfOutput()
 {
-    // Only the RTX to speaker path opens it, and only FM uses that path
-    bk4819_setAfOutput(&c62_bk4819, BK4819_AF_FM);
+    // Only the RTX to speaker path opens it: FM, and CW in FM or USB
+    bk4819_setAfOutput(&c62_bk4819, cwUsb() ? BK4819_AF_USB : BK4819_AF_FM);
+    afOn = true;
 }
 
 void radio_disableAfOutput()
 {
     bk4819_setAfOutput(&c62_bk4819, BK4819_AF_MUTE);
+    afOn = false;
 }
 
 void radio_enableRx()
@@ -188,7 +202,20 @@ void radio_enableRx()
         gpioDev_set(LNA_UHF_EN);
     }
 
-    bk4819_setFrequency(&c62_bk4819, config->rxFrequency);
+    // A1A beats at the CW pitch in USB, tuned below the channel
+    freq_t rxFrequency = config->rxFrequency;
+    if (cwUsb())
+        rxFrequency -= CW_TONE_FREQ;
+
+    bk4819_setFrequency(&c62_bk4819, rxFrequency);
+
+    // Only on a change, so that the other modes keep the receiver set-up
+    if (cwUsb() != usbRx) {
+        usbRx = cwUsb();
+        bk4819_setUsb(&c62_bk4819, usbRx);
+        if (afOn)
+            radio_enableAfOutput();
+    }
 
     if (radioMode == OPMODE_M17) {
         // The DSP takes the baseband from the AF output for the whole
