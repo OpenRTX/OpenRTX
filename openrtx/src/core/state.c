@@ -17,41 +17,75 @@
 #include "core/crc.h"
 #include "interfaces/delays.h"
 
+#define STATE_UPDATE_TICK_MS 100
 #define NVM_WRITE_DEBOUNCE_MS 3000
+#define NVM_WRITE_DEBOUNCE_TICKS (NVM_WRITE_DEBOUNCE_MS / STATE_UPDATE_TICK_MS)
 
 struct debouncer {
-    long long lastChange;
+    uint16_t timeout;
     uint16_t crc;
-    bool pending;
 };
 
 state_t state;
 pthread_mutex_t state_mutex;
 static long long int lastUpdate = 0;
-static struct debouncer settingsDebouncer;
-static struct debouncer vfoDebouncer;
+static struct debouncer settingsDb;
+static struct debouncer vfoDb;
 
 // Commonly used frequency steps, expressed in Hz
 const uint32_t freq_steps[] = { 1000,  5000,  6250,  10000, 12500,
                                 15000, 20000, 25000, 50000, 100000 };
 const size_t n_freq_steps = sizeof(freq_steps) / sizeof(freq_steps[0]);
 
-static bool hasChanged(struct debouncer *db, const void *data, const size_t len)
+static void debouncer_init(struct debouncer *db, const void *data,
+                           const size_t len)
+{
+    db->crc = crc_ccitt(data, len);
+    db->timeout = 0;
+}
+
+static bool debouncer_update(struct debouncer *db, const void *data,
+                             const size_t len)
 {
     uint16_t crc = crc_ccitt(data, len);
     if (crc != db->crc) {
         db->crc = crc;
-        db->pending = true;
-        db->lastChange = getTick();
-    } else {
-        long long elapsed = getTick() - db->lastChange;
-        if (db->pending && (elapsed > NVM_WRITE_DEBOUNCE_MS)) {
-            db->pending = false;
-            return true;
-        }
+        db->timeout = NVM_WRITE_DEBOUNCE_TICKS;
+    } else if (db->timeout > 0) {
+        db->timeout -= 1;
+        return (db->timeout == 0);
     }
 
     return false;
+}
+
+static void updatePersistentStorage()
+{
+    settings_t settings;
+    channel_t vfo;
+
+    // A write to the nonvolatile memory can stall the system: never during a
+    // transmission
+    if (rtx_getCurrentStatus().opStatus == TX)
+        return;
+
+    pthread_mutex_lock(&state_mutex);
+    settings = state.settings;
+    vfo = state.channel;
+    pthread_mutex_unlock(&state_mutex);
+
+    // Both are updated at every call, to keep their timeouts running
+    bool save = debouncer_update(&settingsDb, &settings, sizeof(settings));
+    save |= debouncer_update(&vfoDb, &vfo, sizeof(vfo));
+    if (!save)
+        return;
+
+    // The write skips the data which did not change. On failure, try again
+    // after another debounce time
+    if (nvm_writeSettingsAndVfo(&settings, &vfo) < 0) {
+        settingsDb.timeout = NVM_WRITE_DEBOUNCE_TICKS;
+        vfoDb.timeout = NVM_WRITE_DEBOUNCE_TICKS;
+    }
 }
 
 void state_init()
@@ -97,8 +131,8 @@ void state_init()
         state.settings.brightness = 100;
     }
 
-    settingsDebouncer.crc = crc_ccitt(&state.settings, sizeof(settings_t));
-    vfoDebouncer.crc = crc_ccitt(&state.channel, sizeof(channel_t));
+    debouncer_init(&settingsDb, &state.settings, sizeof(settings_t));
+    debouncer_init(&vfoDb, &state.channel, sizeof(channel_t));
 }
 
 void state_terminate()
@@ -114,11 +148,8 @@ void state_terminate()
 
 void state_task()
 {
-    settings_t settings;
-    channel_t vfo;
-
     // Update radio state once every 100ms
-    if ((getTick() - lastUpdate) < 100)
+    if ((getTick() - lastUpdate) < STATE_UPDATE_TICK_MS)
         return;
 
     lastUpdate = getTick();
@@ -157,10 +188,9 @@ void state_task()
     state.time = platform_getCurrentTime();
 #endif
 
-    settings = state.settings;
-    vfo = state.channel;
     pthread_mutex_unlock(&state_mutex);
 
+    updatePersistentStorage();
     ui_pushEvent(EVENT_STATUS, 0);
 }
 
