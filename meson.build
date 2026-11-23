@@ -45,6 +45,7 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/dsp.cpp',
                'openrtx/src/core/cps.c',
                'openrtx/src/core/crc.c',
+               'openrtx/src/core/cw_keyer.c',
                'openrtx/src/core/datetime.c',
                'openrtx/src/core/openrtx.c',
                'openrtx/src/core/audio_codec.c',
@@ -1278,6 +1279,10 @@ gfx_text_test = executable('gfx_text_test',
                             sources : unit_test_src + ['tests/unit/gfx_text.cpp'],
                             kwargs  : unit_test_opts)
 
+cw_keyer_test = executable('cw_keyer_test',
+                           sources : unit_test_src + ['tests/unit/cw_keyer.cpp'],
+                           kwargs  : unit_test_opts)
+
 audio_codec_test = executable('audio_codec_test',
                               sources : unit_test_src + ['tests/unit/audio_codec.cpp'],
                               kwargs  : unit_test_opts)
@@ -1318,4 +1323,5 @@ test('C62 Calibration Test', c62_calib_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
 test('GFX Text Test',        gfx_text_test)
 test('Audio Codec Test',     audio_codec_test)
+test('CW Keyer Test',        cw_keyer_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
