@@ -18,9 +18,9 @@
  *   (C6000modem_useChip()), the analog path otherwise;
  * - microphone, for radios whose microphone reaches the MCU without a mod
  *   only through the HR_C6000's codec: the codec when the radio has picked
- *   the chip, the analog path otherwise. The stream has the rate of the
- *   codec's samples: the analog path is oversampled and low pass filtered
- *   down to it. Each path has its gain.
+ *   the chip, the analog path otherwise. The stream has the rate and level
+ *   of the codec's samples: the analog path is oversampled, low pass
+ *   filtered down to the stream's rate and brought up to that level.
  *
  * The configuration of the output and input devices names their analog path,
  * a struct C6000modemPath; the microphone's names both paths, a struct
@@ -40,10 +40,9 @@ struct C6000modemPath {
  */
 struct C6000micPaths {
     struct C6000modemPath chip;   ///< Through the HR_C6000's codec
-    uint8_t chipGain;             ///< Gain of the codec's samples
     struct C6000modemPath analog; ///< The analog path
     uint8_t analogRatio;          ///< Oversampling of the analog path
-    uint8_t analogGain;           ///< Gain of the filtered samples
+    uint8_t analogGain;           ///< Gain bringing it to the codec's level
 };
 
 /**
