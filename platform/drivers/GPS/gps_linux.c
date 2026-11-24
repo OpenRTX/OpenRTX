@@ -10,9 +10,8 @@
 #include "core/gps.h"
 
 #define MAX_NMEA_LEN 80
-#define NMEA_SAMPLES 8
 
-static const char test_nmea_sentences[NMEA_SAMPLES][MAX_NMEA_LEN] =
+static const char test_nmea_sentences[][MAX_NMEA_LEN] =
 {
     "$GPGGA,223659.522,5333.735,N,00959.130,E,1,12,1.0,0.0,M,0.0,M,,*62",
     "$GPGSA,A,3,01,02,03,04,05,06,07,08,09,10,11,12,1.0,1.0,1.0*30",
@@ -25,7 +24,7 @@ static const char test_nmea_sentences[NMEA_SAMPLES][MAX_NMEA_LEN] =
 
 static long long startTime;
 static bool enabled = true;
-static int currSentence = 0;
+static size_t currSentence = 0;
 
 static inline long long now()
 {
@@ -70,7 +69,7 @@ static int getNmeaSentence(void *priv, char *buf, const size_t bufSize)
 
     strncpy(buf, test_nmea_sentences[currSentence], bufSize);
     currSentence += 1;
-    currSentence %= NMEA_SAMPLES;
+    currSentence %= sizeof(test_nmea_sentences) / sizeof(test_nmea_sentences[0]);
     startTime = currTime;
 
     return (int) len;
