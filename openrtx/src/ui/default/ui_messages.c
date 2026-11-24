@@ -70,6 +70,14 @@ static int _ui_getMessagesEntryName(char *buf, uint8_t max_len, uint8_t index)
          * stay distinguishable; the preview takes what is left. */
         sniprintf(buf, max_len, "%s%-*.*s %s", marker, MSG_ADDR_MAX_LEN - 1,
                   MSG_ADDR_MAX_LEN - 1, other, msg->body);
+
+        /* The body comes off the air as received: keep a line break in it
+         * from moving the rest of the preview onto the next row. */
+        for (size_t i = 0; buf[i] != '\0'; i++) {
+            if ((uint8_t)buf[i] < ' ')
+                buf[i] = ' ';
+        }
+
         return 0;
     }
 
