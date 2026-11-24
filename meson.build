@@ -1301,6 +1301,10 @@ m17_packet_opmode_test = executable('m17_packet_opmode_test',
                                      sources : unit_test_src + ['tests/unit/M17_packet_opmode.cpp'],
                                      kwargs  : unit_test_opts)
 
+ringbuf_test = executable('ringbuf_test',
+                          sources : ['tests/unit/ringbuf.cpp'],
+                          kwargs  : unit_test_opts)
+
 # Built without unit_test_src: the stub replaces the rtx_addPacketRx() and
 # rtx_addPacketTx() definitions from rtx.cpp. The CONFIG_MESSAGES_* sizes are
 # pinned so the size arithmetic in the tests holds whatever the defaults in
@@ -1348,5 +1352,6 @@ test('M17 Packet Disassembly Test', m17_packet_disassembly_test)
 test('M17 Packet Framing Test', m17_packet_framing_test)
 test('M17 SMS Packet Test', m17_sms_packet_test)
 test('M17 Packet OpMode Test', m17_packet_opmode_test)
+test('Ring Buffer Test', ringbuf_test)
 test('Messages Test', messages_test)
 test('M17 SMS Source Test', m17_sms_test)
