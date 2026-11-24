@@ -185,10 +185,9 @@ const char* settings_fm_items[] =
 };
 
 #ifdef CONFIG_CW
-const char *settings_cw_items[] =
-{
-    "Paddle",
+const char *settings_cw_items[] = {
     "Key",
+    "Paddle",
 };
 #endif
 

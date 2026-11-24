@@ -149,10 +149,9 @@ enum settingsM17Items
     M17_CAN_RX
 };
 
-enum settingsCWItems
-{
-    CW_PADDLE = 0,
-    CW_KEY,
+enum settingsCWItems {
+    CW_KEY = 0,
+    CW_PADDLE,
 };
 
 enum settingsFMItems
