@@ -74,7 +74,7 @@ static int _ui_getMessagesEntryName(char *buf, uint8_t max_len, uint8_t index)
     }
 
     /* Virtual "New Message" item at the end of the list */
-    if (index == count && messages_canCompose(last_state.channel.mode)) {
+    if ((index == count) && messages_canCompose(last_state.channel.mode)) {
         sniprintf(buf, max_len, "  %s", currentLanguage->newMessage);
         return 0;
     }
@@ -247,12 +247,12 @@ void _ui_fsmMessagesList(ui_state_t *ui_state, kbd_msg_t msg)
     // across ticks.
     size_t idx = _ui_messagesListSelection(ui_state);
 
-    if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT) {
+    if ((msg.keys & KEY_UP) || (msg.keys & KNOB_LEFT)) {
         if (idx > 0)
             idx--;
         else if (total > 0)
             idx = total - 1;
-    } else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT) {
+    } else if ((msg.keys & KEY_DOWN) || (msg.keys & KNOB_RIGHT)) {
         if (idx + 1 < total)
             idx++;
         else
@@ -264,7 +264,7 @@ void _ui_fsmMessagesList(ui_state_t *ui_state, kbd_msg_t msg)
             return;
         }
 
-        if (idx == count && can_compose) {
+        if ((idx == count) && can_compose) {
             /* Virtual "New Message" item selected. On M17 the channel's
              * destination is the natural default recipient. */
             const char *dest = (mode == OPMODE_M17) ?
@@ -285,7 +285,7 @@ void _ui_fsmMessagesList(ui_state_t *ui_state, kbd_msg_t msg)
     if (idx < count) {
         const struct message *sel = messages_get(idx);
         ui_state->messages_list_seq = (sel != NULL) ? sel->sequence : 0;
-    } else if (idx == count && can_compose) {
+    } else if ((idx == count) && can_compose) {
         ui_state->messages_list_seq = UINT32_MAX;
     } else {
         ui_state->messages_list_seq = 0;
@@ -306,7 +306,7 @@ void _ui_fsmMessagesDetail(ui_state_t *ui_state, kbd_msg_t msg)
     /* Scroll one rendered body line per step. */
     const int16_t scrollStep = (int16_t)gfx_getFontHeight(layout.message_font);
 
-    if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT) {
+    if ((msg.keys & KEY_UP) || (msg.keys & KNOB_LEFT)) {
         if (ui_state->detail_scroll > 0) {
             ui_state->detail_scroll -= scrollStep;
             if (ui_state->detail_scroll < 0)
@@ -317,7 +317,7 @@ void _ui_fsmMessagesDetail(ui_state_t *ui_state, kbd_msg_t msg)
              * message is open cannot skip or repeat one. */
             openMessage(ui_state, idx - 1, INT16_MAX);
         }
-    } else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT) {
+    } else if ((msg.keys & KEY_DOWN) || (msg.keys & KNOB_RIGHT)) {
         if (ui_state->detail_scroll < ui_state->detail_scroll_max) {
             ui_state->detail_scroll += scrollStep;
             if (ui_state->detail_scroll > ui_state->detail_scroll_max)
@@ -349,7 +349,7 @@ static void composeRecipientInput(ui_state_t *ui_state, kbd_msg_t msg)
         /* An untouched field is just the "_" reset placeholder; store it as
          * empty, which means broadcast, rather than the literal "_". */
         const char *entered = ui_state->new_callsign;
-        if (entered[0] == '_' && entered[1] == '\0')
+        if ((entered[0] == '_') && (entered[1] == '\0'))
             entered = "";
         memset(ui_state->compose_recipient, 0,
                sizeof(ui_state->compose_recipient));
@@ -361,8 +361,8 @@ static void composeRecipientInput(ui_state_t *ui_state, kbd_msg_t msg)
         /* Discard: compose_recipient is left unchanged */
         ui_state->compose_editing = false;
         announceComposeFocus(ui_state);
-    } else if (msg.keys & KEY_UP || msg.keys & KEY_DOWN || msg.keys & KEY_LEFT
-               || msg.keys & KEY_RIGHT) {
+    } else if ((msg.keys & KEY_UP) || (msg.keys & KEY_DOWN)
+               || (msg.keys & KEY_LEFT) || (msg.keys & KEY_RIGHT)) {
         _ui_textInputDel(ui_state->new_callsign);
     } else if (input_isCharPressed(msg)) {
         _ui_textInputKeypad(ui_state->new_callsign,
@@ -377,14 +377,14 @@ static void composeBodyInput(ui_state_t *ui_state, kbd_msg_t msg)
 {
     /* Any arrow key or knob deletes the last character, same as M17
      * destination entry on the VFO screen (universally available). */
-    if (msg.keys & KEY_UP || msg.keys & KEY_DOWN || msg.keys & KEY_LEFT
-        || msg.keys & KEY_RIGHT || msg.keys & KNOB_LEFT
-        || msg.keys & KNOB_RIGHT) {
+    if ((msg.keys & KEY_UP) || (msg.keys & KEY_DOWN) || (msg.keys & KEY_LEFT)
+        || (msg.keys & KEY_RIGHT) || (msg.keys & KNOB_LEFT)
+        || (msg.keys & KNOB_RIGHT)) {
         _ui_textInputDel(ui_state->compose_body);
     } else if (input_isCharPressed(msg)) {
         _ui_textInputKeypad(ui_state->compose_body, MSG_BODY_MAX_LEN - 1, msg,
                             false);
-    } else if (msg.keys & KEY_ENTER || msg.keys & KEY_ESC) {
+    } else if ((msg.keys & KEY_ENTER) || (msg.keys & KEY_ESC)) {
         /* Confirm the pending multi-tap char, leave body editing but stay
          * on the body row. */
         _ui_textInputConfirm(ui_state->compose_body);
@@ -437,7 +437,7 @@ void _ui_fsmMessagesCompose(ui_state_t *ui_state, kbd_msg_t msg)
         return;
     }
 
-    if (ui_state->compose_focus == COMPOSE_BODY
+    if ((ui_state->compose_focus == COMPOSE_BODY)
         && ui_state->compose_body_editing) {
         composeBodyInput(ui_state, msg);
         return;
@@ -448,10 +448,10 @@ void _ui_fsmMessagesCompose(ui_state_t *ui_state, kbd_msg_t msg)
      * on the way: that would truncate compose_body at the wrong offset. */
     if (msg.keys & KEY_ESC) {
         _ui_endCompose(ui_state);
-    } else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT) {
+    } else if ((msg.keys & KEY_DOWN) || (msg.keys & KNOB_RIGHT)) {
         ui_state->compose_focus = (ui_state->compose_focus + 1) % COMPOSE_ROWS;
         announceComposeFocus(ui_state);
-    } else if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT) {
+    } else if ((msg.keys & KEY_UP) || (msg.keys & KNOB_LEFT)) {
         ui_state->compose_focus = (ui_state->compose_focus == 0) ?
                                       COMPOSE_ROWS - 1 :
                                       ui_state->compose_focus - 1;
@@ -519,7 +519,7 @@ void _ui_drawMessagesList(ui_state_t *ui_state)
     size_t count = messages_count();
     bool can_compose = messages_canCompose(last_state.channel.mode);
 
-    if (count == 0 && !can_compose) {
+    if ((count == 0) && !can_compose) {
         gfx_print(layout.line2_pos, layout.line2_font, TEXT_ALIGN_CENTER,
                   color_white, currentLanguage->noMessages);
         return;
@@ -623,7 +623,7 @@ void _ui_drawMessagesCompose(ui_state_t *ui_state)
     /* ---- To row ---- */
     point_t to_rpos = layout.line1_pos;
     bool to_selected = !ui_state->compose_editing
-                    && ui_state->compose_focus == COMPOSE_TO;
+                    && (ui_state->compose_focus == COMPOSE_TO);
 
     if (to_selected) {
         point_t rect_pos = { 0, (int16_t)(to_rpos.y - layout.menu_h + 3) };
@@ -653,7 +653,7 @@ void _ui_drawMessagesCompose(ui_state_t *ui_state)
         (uint16_t)(CONFIG_SCREEN_WIDTH - 2u * layout.horizontal_pad);
     uint16_t body_h = (uint16_t)(body_bot - body_top + 1);
     point_t body_orig = { (int16_t)layout.horizontal_pad, body_top };
-    bool body_editing = ui_state->compose_focus == COMPOSE_BODY
+    bool body_editing = (ui_state->compose_focus == COMPOSE_BODY)
                      && ui_state->compose_body_editing;
 
     if (body_editing)
