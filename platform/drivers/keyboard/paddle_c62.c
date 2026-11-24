@@ -52,16 +52,16 @@
 #define MIN_RISE_NS 300 // Faster than both paddles (750 ns): not a GPIO
 #define STABLE_READS 3  // Reads in a row before a new paddle state counts
 
-static uint32_t openNs; // Rise time with the paddles open, 0 if not known
+static uint32_t openNs = 0; // Rise time with the paddles open, 0 if not known
 
 /*
  * Debouncing: a read straddling a bounce of the paddle contact gives a rise
  * time between two states, a dah read as a dit for example, so a new state
  * counts only after STABLE_READS reads in a row.
  */
-static uint8_t reported;  // Paddles reported
-static uint8_t candidate; // Paddles read last
-static uint8_t readCount; // Reads in a row of the candidate
+static uint8_t reported = 0;  // Paddles reported
+static uint8_t candidate = 0; // Paddles read last
+static uint8_t readCount = 0; // Reads in a row of the candidate
 
 /**
  * Discharge the PTT line and time its rise.
@@ -75,7 +75,7 @@ static uint32_t riseTime(uint32_t dischargeUs, uint32_t timeoutUs)
     GPIO_RegDef *port = PTT_PORT;
     const uint32_t mask = BIT(button_ptt.pin);
     const uint32_t limit = k_us_to_cyc_ceil32(timeoutUs);
-    uint32_t elapsed;
+    uint32_t elapsed = 0;
 
     // Other threads change the port direction too, as the bit-banged buses
     unsigned int key = irq_lock();
@@ -96,6 +96,7 @@ static uint32_t riseTime(uint32_t dischargeUs, uint32_t timeoutUs)
     return k_cyc_to_ns_floor32(elapsed);
 }
 
+// 1 if a > b, 0 if a == b and -1 if a < b
 static int compareTimes(const void *a, const void *b)
 {
     uint32_t x = *(const uint32_t *)a;
