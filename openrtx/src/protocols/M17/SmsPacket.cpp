@@ -14,7 +14,7 @@ namespace M17
 size_t smsPacket_format(const char *message, size_t msgLen, uint8_t *buffer,
                         size_t bufferSize)
 {
-    if (msgLen == 0 || message == nullptr || buffer == nullptr)
+    if ((msgLen == 0) || (message == nullptr) || (buffer == nullptr))
         return 0;
 
     /* SMS application format: [0x05][UTF-8 text][0x00] */
@@ -23,7 +23,7 @@ size_t smsPacket_format(const char *message, size_t msgLen, uint8_t *buffer,
     /* Buffer needs room for app data; PacketFramer will append the 2-byte
      * CRC during framing, so the total on-air payload is appDataLen + 2
      * bytes. */
-    if (appDataLen > bufferSize || appDataLen + 2 > M17_MAX_PACKET_DATA)
+    if ((appDataLen > bufferSize) || (appDataLen + 2 > M17_MAX_PACKET_DATA))
         return 0;
 
     buffer[0] = 0x05;
@@ -35,7 +35,7 @@ size_t smsPacket_format(const char *message, size_t msgLen, uint8_t *buffer,
 
 const char *smsPacket_getText(const uint8_t *data, size_t len, size_t *textLen)
 {
-    if (data == nullptr || len < 2 || textLen == nullptr)
+    if ((data == nullptr) || (len < 2) || (textLen == nullptr))
         return nullptr;
 
     /* Check M17 SMS protocol ID byte */
@@ -47,7 +47,7 @@ const char *smsPacket_getText(const uint8_t *data, size_t len, size_t *textLen)
     size_t length = len - 1;
 
     /* Strip trailing NUL if present */
-    if (length > 0 && text[length - 1] == '\0')
+    if ((length > 0) && (text[length - 1] == '\0'))
         length--;
 
     *textLen = length;
