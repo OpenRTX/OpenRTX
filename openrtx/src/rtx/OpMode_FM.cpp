@@ -9,6 +9,7 @@
 #include "interfaces/radio.h"
 #include "rtx/OpMode_FM.hpp"
 #include "rtx/rtx.h"
+#include "core/utils.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "drivers/baseband/AT1846S.h"
@@ -37,7 +38,8 @@ void _setVolume()
 }
 #endif
 
-OpMode_FM::OpMode_FM() : rfSqlOpen(false), sqlOpen(false), enterRx(true)
+OpMode_FM::OpMode_FM() : rfSqlOpen(false), sqlOpen(false), enterRx(true),
+                         burstBeep(false)
 {
 }
 
@@ -61,9 +63,12 @@ void OpMode_FM::disable()
     audioPath_release(rxAudioPath);
     audioPath_release(txAudioPath);
     radio_disableRtx();
+    if(burstBeep)
+        platform_beepStop();
     rfSqlOpen = false;
     sqlOpen   = false;
     enterRx   = false;
+    burstBeep = false;
 }
 
 void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
@@ -78,9 +83,9 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
     // RX logic
     if(status->opStatus == RX)
     {
-        // RF squelch mechanism
-        // This turns squelch (0 to 15) into RSSI (-127.0dbm to -61dbm)
-        rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
+        // RF squelch mechanism: the squelch level is the S-level opening
+        // it, S0 (open) to S9 + 20 dB, as on the S-meter
+        rssi_t squelch = sLevelToRssi(status->sqlLevel);
         rssi_t rssi    = rtx_getRssi();
 
         // Provide a bit of hysteresis, only change state if the RSSI has
@@ -135,6 +140,18 @@ void OpMode_FM::update(rtxStatus_t *const status, const bool newCfg)
         status->opStatus = OFF;
         enterRx = true;
         sqlOpen = false;  // Force squelch to be redetected.
+    }
+
+    // Sound the tone burst locally while it is sent
+    bool burst = (status->opStatus == TX) && status->toneEn;
+    if(burst != burstBeep)
+    {
+        if(burst)
+            platform_beepStart(TONE_BURST_HZ);
+        else
+            platform_beepStop();
+
+        burstBeep = burst;
     }
 
     // Led control logic

@@ -90,6 +90,14 @@ void *ui_threadFunc(void *arg)
             strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
             strncpy(rtx_cfg.destination_address, state.settings.m17_dest, 10);
 
+            #ifdef CONFIG_CW
+            rtx_cfg.cwWpm      = state.settings.cw_wpm;
+            rtx_cfg.cwEmission = state.settings.cw_emission;
+            rtx_cfg.cwBreakIn  = state.settings.cw_breakin;
+            rtx_cfg.cwReverse  = state.settings.cw_reverse;
+            rtx_cfg.cwStraight = state.settings.cw_straight;
+            #endif
+
             pthread_mutex_unlock(&rtx_mutex);
 
             rtx_configure(&rtx_cfg);

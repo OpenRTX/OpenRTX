@@ -482,6 +482,37 @@ int _ui_getFMValueName(char* buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+#ifdef CONFIG_CW
+int _ui_getCWEntryName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_cw_num)
+        return -1;
+
+    sniprintf(buf, max_len, "%s", settings_cw_items[index]);
+    return 0;
+}
+
+int _ui_getCWValueName(char* buf, uint8_t max_len, uint8_t index)
+{
+    if (index >= settings_cw_num)
+        return -1;
+
+    switch (index) {
+        case CW_PADDLE:
+            sniprintf(buf, max_len, "%s",
+                      last_state.settings.cw_reverse ? "Reverse" : "Normal");
+            break;
+
+        case CW_KEY:
+            sniprintf(buf, max_len, "%s",
+                      last_state.settings.cw_straight ? "Straight" : "Paddle");
+            break;
+    }
+
+    return 0;
+}
+#endif
+
 int _ui_getAccessibilityEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= settings_accessibility_num) return -1;
@@ -1056,6 +1087,19 @@ void _ui_drawSettingsFM(ui_state_t* ui_state)
                           _ui_getFMValueName);
 }
 
+#ifdef CONFIG_CW
+void _ui_drawSettingsCW(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "CW" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER, color_white,
+              "CW");
+    // Print CW settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getCWEntryName,
+                          _ui_getCWValueName);
+}
+#endif
+
 void _ui_drawSettingsAccessibility(ui_state_t* ui_state)
 {
     gfx_clearScreen();
@@ -1227,6 +1271,35 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
         gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
                   color_white, " T+");
     }
+#ifdef CONFIG_CW
+    else if (last_state.channel.mode == OPMODE_CW)
+    {
+        // Keyer speed down, speed, speed up, emission
+#if defined(CONFIG_UI_NO_KEYBOARD)
+        if (ui_state->macro_menu_selected == 0)
+#endif // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      yellow_fab413, "1");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "   -   %u", last_state.settings.cw_wpm);
+#if defined(CONFIG_UI_NO_KEYBOARD)
+        if (ui_state->macro_menu_selected == 1)
+#endif // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      yellow_fab413, "2");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                  color_white, "      +");
+#if defined(CONFIG_UI_NO_KEYBOARD)
+        if (ui_state->macro_menu_selected == 2)
+#endif // CONFIG_UI_NO_KEYBOARD
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                      yellow_fab413, "3        ");
+        gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_RIGHT,
+                  color_white, "%s",
+                  (last_state.settings.cw_emission == CW_A1A) ? "A1A"
+                                                              : "F2A");
+    }
+#endif
 #ifdef CONFIG_M17
     else if (last_state.channel.mode == OPMODE_M17)
     {
@@ -1271,6 +1344,13 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 
     }
 #endif
+#ifdef CONFIG_CW
+    else if (last_state.channel.mode == OPMODE_CW)
+    {
+        gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT, color_white,
+                  last_state.settings.cw_breakin ? "  BK ON" : "  BK OFF");
+    }
+#endif
 
 #if defined(CONFIG_UI_NO_KEYBOARD)
         if (ui_state->macro_menu_selected == 4)
@@ -1290,6 +1370,11 @@ bool _ui_drawMacroMenu(ui_state_t* ui_state)
 #ifdef CONFIG_M17
         case OPMODE_M17:
             gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          M17");
+            break;
+#endif
+#ifdef CONFIG_CW
+        case OPMODE_CW:
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER, color_white, "          CW");
             break;
 #endif
     }

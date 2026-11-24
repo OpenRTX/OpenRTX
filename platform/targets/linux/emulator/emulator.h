@@ -39,6 +39,8 @@ typedef struct {
     float chSelector;
     bool PTTstatus;
     bool powerOff;
+    bool dit; // CW paddles
+    bool dah;
 } emulator_state_t;
 
 extern emulator_state_t emulator_state;

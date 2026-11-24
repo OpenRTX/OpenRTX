@@ -39,6 +39,9 @@ extern "C" {
 
 #define CONFIG_M17
 
+/* CW, with a paddle on the 3.5 mm jack */
+#define CONFIG_CW
+
 /* Software gain of the M17 microphone input, set for C62_ADC_MIC_GAIN_A/D */
 #define CONFIG_MIC_GAIN 13
 

@@ -66,6 +66,14 @@ void state_init()
         state.settings = default_settings;
     }
 
+#ifdef CONFIG_CW
+    // Settings saved before CW existed, on targets without a settings CRC
+    if ((state.settings.cw_wpm < CW_WPM_MIN)
+        || (state.settings.cw_wpm > CW_WPM_MAX)) {
+        state.settings.cw_wpm = default_settings.cw_wpm;
+    }
+#endif
+
     /*
      * Try loading VFO configuration from nonvolatile memory and default to sane
      * values in case of failure.

@@ -64,6 +64,15 @@ void csk6codec_setRoute(enum AudioSource source, enum AudioSink sink,
  */
 uint16_t csk6codec_getMicPeak(void);
 
+/**
+ * Play a tone on the speaker channel, mixed with whatever plays there, until
+ * stopped. Once stopped, playback goes on until the tone has left the DSP.
+ * The board layer keeps the speaker on meanwhile.
+ *
+ * @param freq: tone frequency in Hz, 0 to stop it.
+ */
+void csk6codec_setBeep(uint16_t freq);
+
 #ifdef __cplusplus
 }
 #endif

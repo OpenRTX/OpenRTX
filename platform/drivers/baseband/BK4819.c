@@ -15,6 +15,13 @@
 #include "interfaces/delays.h"
 #include "core/utils.h"
 
+/* REG_30 paths of transmission, microphone included */
+static const uint16_t txPaths =
+    BK4819_REG30_VCO_CALIB_ENABLE | BK4819_REG30_UNDOC14
+    | BK4819_REG30_DISC_MODE_ENABLE | BK4819_REG30_PLL_VCO_ENABLE
+    | BK4819_REG30_PA_GAIN_ENABLE | BK4819_REG30_MIC_ADC_ENABLE
+    | BK4819_REG30_TX_DSP_ENABLE;
+
 /*
  * Audio processing fields, with their values by enum bk4819_audioMode: voice
  * (the values bk4819_init() sets), then bypass, as the application note's
@@ -94,14 +101,15 @@ static uint16_t ctcssWord(uint16_t freq)
 }
 
 /**
- * Convert a beep frequency to the tone generator's units.
+ * Convert a tone frequency to the tone generator's units, for a 26 MHz
+ * crystal: 10.32444 from the datasheet.
  *
  * @param freq: frequency, in Hz.
  * @return REG_71 value.
  */
 static uint16_t scaleFreq(const uint16_t freq)
 {
-    return (((uint32_t)freq * 1048576u) + 50000u) / 100000u; /* with rounding */
+    return (((uint32_t)freq * 1032444u) + 50000u) / 100000u; /* with rounding */
 }
 
 uint16_t bk4819_readReg(const struct BK4819 *dev, uint8_t reg)
@@ -250,17 +258,46 @@ void bk4819_enableRx(const struct BK4819 *dev)
 
 void bk4819_enableTx(const struct BK4819 *dev)
 {
-    const uint16_t paths = BK4819_REG30_VCO_CALIB_ENABLE | BK4819_REG30_UNDOC14
-                         | BK4819_REG30_DISC_MODE_ENABLE
-                         | BK4819_REG30_PLL_VCO_ENABLE
-                         | BK4819_REG30_PA_GAIN_ENABLE
-                         | BK4819_REG30_MIC_ADC_ENABLE
-                         | BK4819_REG30_TX_DSP_ENABLE;
-
     bk4819_writeReg(dev, 0x37, BK4819_REG37_ACTIVE);
     delayUs(1);
     bk4819_writeReg(dev, 0x30, 0x00); /* reset */
-    bk4819_writeReg(dev, 0x30, paths);
+    bk4819_writeReg(dev, 0x30, txPaths);
+}
+
+void bk4819_enableTxTone(const struct BK4819 *dev, uint16_t freq, uint8_t gain)
+{
+    const uint16_t tone = BK4819_REG70_TONE1_ENABLE
+                        | BK4819_REG70_TONE1_GAIN(gain);
+
+    bk4819_writeReg(dev, 0x70, tone);
+    bk4819_writeReg(dev, 0x71, scaleFreq(freq));
+
+    // mute microphone to only send the clean tone
+    bk4819_writeReg(dev, 0x30, txPaths & ~BK4819_REG30_MIC_ADC_ENABLE);
+}
+
+void bk4819_disableTxTone(const struct BK4819 *dev)
+{
+    bk4819_maskSetRegister(dev, 0x70, BK4819_REG70_TONE1_ENABLE, 0);
+    bk4819_writeReg(dev, 0x30, txPaths);
+}
+
+void bk4819_setTxToneGain(const struct BK4819 *dev, uint8_t gain)
+{
+    const uint16_t mask = BK4819_REG70_TONE1_ENABLE
+                        | BK4819_REG70_TONE1_GAIN_MASK;
+    uint16_t value = 0;
+
+    if (gain != 0)
+        value = BK4819_REG70_TONE1_ENABLE | BK4819_REG70_TONE1_GAIN(gain);
+
+    bk4819_maskSetRegister(dev, 0x70, mask, value);
+}
+
+void bk4819_enablePa(const struct BK4819 *dev, bool enable)
+{
+    bk4819_maskSetRegister(dev, 0x30, BK4819_REG30_PA_GAIN_ENABLE,
+                           enable ? BK4819_REG30_PA_GAIN_ENABLE : 0);
 }
 
 void bk4819_disableRtx(const struct BK4819 *dev)
@@ -278,6 +315,13 @@ void bk4819_setAfOutput(const struct BK4819 *dev, enum bk4819_afOutput af)
 {
     bk4819_maskSetRegister(dev, 0x47, BK4819_REG47_AF_OUTPUT_MASK,
                            BK4819_REG47_AF_OUTPUT(af));
+}
+
+void bk4819_setUsb(const struct BK4819 *dev, bool usb)
+{
+    bk4819_writeReg(dev, 0x3D, usb ? BK4819_REG3D_USB : BK4819_REG3D_FM_AM);
+    bk4819_maskSetRegister(dev, 0x73, BK4819_REG73_AFC_DISABLE,
+                           usb ? BK4819_REG73_AFC_DISABLE : 0);
 }
 
 void bk4819_enableTxCtcss(const struct BK4819 *dev, uint16_t freq, uint8_t gain)

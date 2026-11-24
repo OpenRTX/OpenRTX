@@ -27,7 +27,9 @@ emulator_state_t emulator_state = {
     4,       // volume level
     1,       // chSelector
     false,   // PTT status
-    false    // power off
+    false,   // power off
+    false,   // CW dit paddle
+    false    // CW dah paddle
 };
 
 typedef int (*_climenu_fn)(void *self, int argc, char **argv);
@@ -262,7 +264,7 @@ static int toggleVariable(void *_self, int _argc, char **_argv)
     (void)_argc;
     (void)_argv;
     _climenu_option *self = (_climenu_option *)_self;
-    *(int *)self->var = !*(int *)self->var;
+    *(bool *)self->var = !*(bool *)self->var;
 
     return SH_CONTINUE; // continue
 }
@@ -303,7 +305,9 @@ static int printState(void *_self, int _argc, char **_argv)
     printf("Mic    : %f\n", emulator_state.micLevel);
     printf("Volume : %f\n", emulator_state.volumeLevel);
     printf("Channel: %f\n", emulator_state.chSelector);
-    printf("PTT    : %s\n\n", emulator_state.PTTstatus ? "true" : "false");
+    printf("PTT    : %s\n", emulator_state.PTTstatus ? "true" : "false");
+    printf("Paddle : %s%s\n\n", emulator_state.dit ? "dit " : "",
+           emulator_state.dah ? "dah" : "");
     return SH_CONTINUE;
 }
 
@@ -328,6 +332,8 @@ static _climenu_option _options[] = {
     {"volume",  "Set volume",   (void *) &emulator_state.volumeLevel, setFloat },
     {"channel", "Set channel",  (void *) &emulator_state.chSelector,  setFloat },
     {"ptt",     "Toggle PTT",   (void *) &emulator_state.PTTstatus,   toggleVariable },
+    {"dit",     "Toggle CW dit paddle", (void *) &emulator_state.dit, toggleVariable },
+    {"dah",     "Toggle CW dah paddle", (void *) &emulator_state.dah, toggleVariable },
     {"key",     "Press keys in sequence (e.g. 'key ENTER DOWN ENTER' will descend through two menus)",
                                 NULL,   pressKey
     },

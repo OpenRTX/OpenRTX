@@ -29,6 +29,8 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/drivers/display/display_c62.c
     ${OPENRTX_ROOT}/platform/drivers/baseband/radio_C62.cpp
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_c62.c
+    ${OPENRTX_ROOT}/platform/drivers/keyboard/paddle_c62.c
+    ${OPENRTX_ROOT}/openrtx/src/rtx/OpMode_CW.cpp
     ${OPENRTX_ROOT}/platform/drivers/audio/audio_c62.c
     ${OPENRTX_ROOT}/platform/drivers/audio/csk6_codec.c
 

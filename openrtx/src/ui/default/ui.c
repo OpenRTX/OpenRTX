@@ -99,6 +99,7 @@ extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsFM(ui_state_t* ui_state);
+extern void _ui_drawSettingsCW(ui_state_t* ui_state);
 extern void _ui_drawSettingsVoicePrompts(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
 extern void _ui_drawSettingsRadio(ui_state_t* ui_state);
@@ -132,6 +133,9 @@ const char *settings_items[] =
     "M17",
 #endif
     "FM",
+#ifdef CONFIG_CW
+    "CW",
+#endif
     "Accessibility",
     "Default Settings"
 };
@@ -179,6 +183,13 @@ const char* settings_fm_items[] =
     "CTCSS Tone",
     "CTCSS En."
 };
+
+#ifdef CONFIG_CW
+const char *settings_cw_items[] = {
+    "Key",
+    "Paddle",
+};
+#endif
 
 const char * settings_accessibility_items[] =
 {
@@ -265,6 +276,9 @@ const uint8_t settings_radio_num = sizeof(settings_radio_items)/sizeof(settings_
 const uint8_t settings_m17_num = sizeof(settings_m17_items)/sizeof(settings_m17_items[0]);
 #endif
 const uint8_t settings_fm_num = sizeof(settings_fm_items) / sizeof(settings_fm_items[0]);
+#ifdef CONFIG_CW
+const uint8_t settings_cw_num = sizeof(settings_cw_items) / sizeof(settings_cw_items[0]);
+#endif
 const uint8_t settings_accessibility_num = sizeof(settings_accessibility_items)/sizeof(settings_accessibility_items[0]);
 const uint8_t backup_restore_num = sizeof(backup_restore_items)/sizeof(backup_restore_items[0]);
 const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
@@ -944,6 +958,15 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                     state.channel.fm.txToneEn, state.channel.fm.txTone,
                     queueFlags | vpqIncludeDescriptions);
             }
+#ifdef CONFIG_CW
+            // Slower CW keyer
+            else if ((state.channel.mode == OPMODE_CW) &&
+                     (state.settings.cw_wpm > CW_WPM_MIN))
+            {
+                state.settings.cw_wpm--;
+                *sync_rtx = true;
+            }
+#endif
             break;
         case 2:
             if (state.channel.mode == OPMODE_FM)
@@ -966,6 +989,15 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                                  state.channel.fm.txTone,
                                  queueFlags);
             }
+#ifdef CONFIG_CW
+            // Faster CW keyer
+            else if ((state.channel.mode == OPMODE_CW) &&
+                     (state.settings.cw_wpm < CW_WPM_MAX))
+            {
+                state.settings.cw_wpm++;
+                *sync_rtx = true;
+            }
+#endif
             break;
 
         case 3:
@@ -981,6 +1013,18 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                                  state.channel.fm.txTone,
                                  queueFlags |vpqIncludeDescriptions);
             }
+#ifdef CONFIG_CW
+            // Toggle the CW emission, A1A or F2A
+            else if (state.channel.mode == OPMODE_CW)
+            {
+                if (state.settings.cw_emission == CW_A1A)
+                    state.settings.cw_emission = CW_F2A;
+                else
+                    state.settings.cw_emission = CW_A1A;
+
+                *sync_rtx = true;
+            }
+#endif
             break;
         case 4:
             if(state.channel.mode == OPMODE_FM)
@@ -990,16 +1034,29 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
                 *sync_rtx = true;
                 vp_announceBandwidth(state.channel.bandwidth, queueFlags);
             }
+#ifdef CONFIG_CW
+            // Toggle CW break-in
+            else if (state.channel.mode == OPMODE_CW)
+            {
+                state.settings.cw_breakin = !state.settings.cw_breakin;
+                *sync_rtx = true;
+            }
+#endif
             break;
         case 5:
-            // Cycle through radio modes
+            // Cycle through radio modes: FM, M17, CW
             #ifdef CONFIG_M17
             if(state.channel.mode == OPMODE_FM)
                 state.channel.mode = OPMODE_M17;
-            else if(state.channel.mode == OPMODE_M17)
-                state.channel.mode = OPMODE_FM;
-            else //catch any invalid states so they don't get locked out
+            else
             #endif
+            #ifdef CONFIG_CW
+            if((state.channel.mode == OPMODE_FM) ||
+               (state.channel.mode == OPMODE_M17))
+                state.channel.mode = OPMODE_CW;
+            else
+            #endif
+            //catch any invalid states so they don't get locked out
                 state.channel.mode = OPMODE_FM;
             *sync_rtx = true;
             vp_announceRadioMode(state.channel.mode, queueFlags);
@@ -1051,6 +1108,8 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     {
 #ifdef CONFIG_KNOB_ABSOLUTE // If the radio has an absolute position knob
         state.settings.sqlLevel = platform_getChSelector() - 1;
+        if(state.settings.sqlLevel > SLEVEL_MAX)
+            state.settings.sqlLevel = SLEVEL_MAX;
 #endif // CONFIG_KNOB_ABSOLUTE
         if(state.settings.sqlLevel > 0)
         {
@@ -1068,8 +1127,14 @@ static void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
     {
 #ifdef CONFIG_KNOB_ABSOLUTE
         state.settings.sqlLevel = platform_getChSelector() - 1;
+        if(state.settings.sqlLevel > SLEVEL_MAX)
+            state.settings.sqlLevel = SLEVEL_MAX;
 #endif
-        if(state.settings.sqlLevel < 15)
+        // Levels saved by older versions went up to 15
+        if(state.settings.sqlLevel > SLEVEL_MAX)
+            state.settings.sqlLevel = SLEVEL_MAX;
+
+        if(state.settings.sqlLevel < SLEVEL_MAX)
         {
             state.settings.sqlLevel += 1;
             *sync_rtx = true;
@@ -1973,6 +2038,11 @@ void ui_updateFSM(bool *sync_rtx)
                         case S_FM:
                             state.ui_screen = SETTINGS_FM;
                             break;
+#ifdef CONFIG_CW
+                        case S_CW:
+                            state.ui_screen = SETTINGS_CW;
+                            break;
+#endif
                         case S_ACCESSIBILITY:
                             state.ui_screen = SETTINGS_ACCESSIBILITY;
                             break;
@@ -2510,6 +2580,43 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
 
+#ifdef CONFIG_CW
+            case SETTINGS_CW:
+                if (ui_state.edit_mode)
+                {
+                    if (msg.keys & (KEY_ESC | KEY_ENTER))
+                    {
+                        ui_state.edit_mode = false;
+                    }
+                    else if (msg.keys & (KEY_UP | KEY_DOWN | KNOB_LEFT |
+                                         KNOB_RIGHT))
+                    {
+                        switch (ui_state.menu_selected)
+                        {
+                            case CW_PADDLE:
+                                state.settings.cw_reverse =
+                                    !state.settings.cw_reverse;
+                                *sync_rtx = true;
+                                break;
+                            case CW_KEY:
+                                state.settings.cw_straight =
+                                    !state.settings.cw_straight;
+                                *sync_rtx = true;
+                                break;
+                        }
+                    }
+                }
+                else if (msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
+                    _ui_menuUp(settings_cw_num);
+                else if (msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
+                    _ui_menuDown(settings_cw_num);
+                else if (msg.keys & KEY_ENTER)
+                    ui_state.edit_mode = true;
+                else if (msg.keys & KEY_ESC)
+                    _ui_menuBack(MENU_SETTINGS);
+                break;
+#endif
+
             case SETTINGS_ACCESSIBILITY:
                 if(msg.keys & KEY_LEFT || (ui_state.edit_mode &&
                    (msg.keys & KEY_DOWN || msg.keys & KNOB_LEFT)))
@@ -2739,6 +2846,12 @@ bool ui_updateGUI()
         case SETTINGS_FM:
             _ui_drawSettingsFM(&ui_state);
             break;
+#ifdef CONFIG_CW
+        // CW settings screen
+        case SETTINGS_CW:
+            _ui_drawSettingsCW(&ui_state);
+            break;
+#endif
         case SETTINGS_ACCESSIBILITY:
             _ui_drawSettingsAccessibility(&ui_state);
             break;

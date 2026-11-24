@@ -25,12 +25,15 @@ extern "C" {
 /**
  * AF output modes, see bk4819_setAfOutput(). From the UV-K5 firmware:
  * https://github.com/DualTachyon/uv-k5-firmware/blob/6f8afac8864e0349ecf8b10f91ce8f69273013db/driver/bk4819.h#L24-L32
+ * for USB, its BK4819_AF_BASEBAND2, from the UV-K5 custom firmware:
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/radio.c#L830-L832
  * and, for bypass, the application note's RF_EnterBypass().
  */
 enum bk4819_afOutput {
     BK4819_AF_MUTE = 0,   ///< Muted.
     BK4819_AF_FM = 1,     ///< FM demodulator.
     BK4819_AF_BEEP = 3,   ///< Tone generator.
+    BK4819_AF_USB = 5,    ///< USB demodulator, with bk4819_setUsb().
     BK4819_AF_AM = 7,     ///< AM demodulator.
     BK4819_AF_BYPASS = 9, ///< Unfiltered discriminator, for digital modes.
 };
@@ -183,6 +186,44 @@ void bk4819_enableTx(const struct BK4819 *dev);
 void bk4819_disableRtx(const struct BK4819 *dev);
 
 /**
+ * Transmit a tone instead of the microphone, as for the 1750 Hz tone burst,
+ * once transmission is on.
+ *
+ * @param dev: pointer to device data.
+ * @param freq: tone frequency, in Hz.
+ * @param gain: tone 1 tuning gain (REG_70), 0 to 127, which sets its
+ * deviation.
+ */
+void bk4819_enableTxTone(const struct BK4819 *dev, uint16_t freq, uint8_t gain);
+
+/**
+ * Stop the tone generator. bk4819_enableTx() brings the microphone back.
+ *
+ * @param dev: pointer to device data.
+ */
+void bk4819_disableTxTone(const struct BK4819 *dev);
+
+/**
+ * Change the gain of the tone transmitted by bk4819_enableTxTone(), as to
+ * key or shape it.
+ *
+ * @param dev: pointer to device data.
+ * @param gain: tone 1 tuning gain (REG_70), 1 to 127, or 0 to switch the
+ * tone off: at its lowest gain it is still heard.
+ */
+void bk4819_setTxToneGain(const struct BK4819 *dev, uint8_t gain);
+
+/**
+ * Switch the power amplifier output on or off while transmitting, as to key
+ * the carrier: only the REG_30 PA enable bit changes, without the REG_30
+ * reset of bk4819_enableTx(), which turns it on.
+ *
+ * @param dev: pointer to device data.
+ * @param enable: true to turn the power amplifier output on.
+ */
+void bk4819_enablePa(const struct BK4819 *dev, bool enable);
+
+/**
  * Select the AM or FM demodulator.
  *
  * @param dev: pointer to device data.
@@ -197,6 +238,17 @@ void bk4819_setModulation(const struct BK4819 *dev, bool fm);
  * @param af: AF output mode.
  */
 void bk4819_setAfOutput(const struct BK4819 *dev, enum bk4819_afOutput af);
+
+/**
+ * Set up the receiver for USB, or back for FM and AM, as the UV-K5 custom
+ * firmware's RADIO_SetModulation(): the REG_3D IF setting, and the AFC off in
+ * USB. bk4819_setAfOutput() selects the USB demodulator itself.
+ * https://github.com/egzumer/uv-k5-firmware-custom/blob/7607f0a4bd6203d1f06b70556fc1ce0d7399d6b3/radio.c#L819-L850
+ *
+ * @param dev: pointer to device data.
+ * @param usb: true for USB.
+ */
+void bk4819_setUsb(const struct BK4819 *dev, bool usb);
 
 /**
  * Enable the TX CTCSS tone.

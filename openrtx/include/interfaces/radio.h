@@ -84,6 +84,16 @@ void radio_enableTx();
 void radio_disableRtx();
 
 /**
+ * Key a CW transmission, between radio_enableTx() and radio_disableRtx(),
+ * with the emission in the rtxStatus_t configuration: the carrier in A1A, the
+ * keying tone in F2A. radio_enableTx() starts a CW transmission key up. Only
+ * targets defining CONFIG_CW implement it.
+ *
+ * @param down: true for key down.
+ */
+void radio_setCwKey(const bool down);
+
+/**
  * Update configuration of the radio module to match the one currently described
  * by the rtxStatus_t configuration data structure.
  * This function has to be called whenever the configuration data structure has
