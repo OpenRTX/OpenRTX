@@ -66,7 +66,8 @@ typedef struct
             _reserved_cw    : 1;
     uint8_t cw_breakin      : 1,  // CW keying transmits
             cw_reverse      : 1,  // CW dit and dah paddles swapped
-            _reserved_cw2   : 6;
+            cw_straight     : 1,  // CW straight key on the dit contact
+            _reserved_cw2   : 5;
 #endif
 }
 __attribute__((packed)) settings_t;
@@ -102,6 +103,7 @@ static const settings_t default_settings =
     0,                            // not used
     1,                            // CW break-in on
     0,                            // CW paddles not swapped
+    0,                            // CW paddles, not a straight key
     0,                            // not used
 #endif
 };
