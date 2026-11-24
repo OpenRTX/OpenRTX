@@ -50,8 +50,18 @@
 #define DAH_DIV 5       // Dah under 1/5 of the open time
 #define DIT_DIV 2       // Dit under 1/2 of the open time
 #define MIN_RISE_NS 300 // Faster than both paddles (750 ns): not a GPIO
+#define STABLE_READS 3  // Reads in a row before a new paddle state counts
 
 static uint32_t openNs; // Rise time with the paddles open, 0 if not known
+
+/*
+ * Debouncing: a read straddling a bounce of the paddle contact gives a rise
+ * time between two states, a dah read as a dit for example, so a new state
+ * counts only after STABLE_READS reads in a row.
+ */
+static uint8_t reported;  // Paddles reported
+static uint8_t candidate; // Paddles read last
+static uint8_t readCount; // Reads in a row of the candidate
 
 /**
  * Discharge the PTT line and time its rise.
@@ -116,6 +126,9 @@ void paddle_init(void)
     // GPIO input with the pull-up, as platform_init_csk6() sets the PTT key
     gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
     openNs = 0;
+    reported = 0;
+    candidate = 0;
+    readCount = 0;
     calibrate();
 }
 
@@ -125,10 +138,27 @@ void paddle_terminate(void)
     gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
 }
 
+/**
+ * Tell the paddles closed from a rise time.
+ *
+ * @param ns: rise time, in ns.
+ * @return paddles closed, enum cwPaddle bits.
+ */
+static uint8_t classify(uint32_t ns)
+{
+    if ((ns * BOTH_DIV) < openNs)
+        return CW_PADDLE_DIT | CW_PADDLE_DAH;
+    if ((ns * DAH_DIV) < openNs)
+        return CW_PADDLE_DAH;
+    if ((ns * DIT_DIV) < openNs)
+        return CW_PADDLE_DIT;
+
+    return 0;
+}
+
 uint8_t paddle_read(void)
 {
     uint32_t ns = riseTime(DISCHARGE_US, TIMEOUT_US);
-    uint8_t paddles = 0;
 
     if (ns < MIN_RISE_NS) {
         paddle_init();
@@ -140,12 +170,16 @@ uint8_t paddle_read(void)
         return 0;
     }
 
-    if ((ns * BOTH_DIV) < openNs)
-        paddles = CW_PADDLE_DIT | CW_PADDLE_DAH;
-    else if ((ns * DAH_DIV) < openNs)
-        paddles = CW_PADDLE_DAH;
-    else if ((ns * DIT_DIV) < openNs)
-        paddles = CW_PADDLE_DIT;
+    uint8_t paddles = classify(ns);
+    if (paddles != candidate) {
+        candidate = paddles;
+        readCount = 0;
+    }
 
-    return paddles;
+    if (readCount < STABLE_READS)
+        readCount++;
+    if (readCount == STABLE_READS)
+        reported = candidate;
+
+    return reported;
 }
