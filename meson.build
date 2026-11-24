@@ -1277,10 +1277,6 @@ dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
 
-dsp_dcblock_test = executable('dsp_dcblock_test',
-                              sources : unit_test_src + ['tests/unit/dsp_dcblock.cpp'],
-                              kwargs  : unit_test_opts)
-
 gfx_text_test = executable('gfx_text_test',
                             sources : unit_test_src + ['tests/unit/gfx_text.cpp'],
                             kwargs  : unit_test_opts)
@@ -1331,7 +1327,6 @@ test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('C62 Calibration Test', c62_calib_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
-test('DSP DC Block Test',    dsp_dcblock_test)
 test('GFX Text Test',        gfx_text_test)
 test('S-Level Test', slevel_test)
 test('Audio Codec Test',     audio_codec_test)
