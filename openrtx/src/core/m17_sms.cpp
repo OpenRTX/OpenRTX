@@ -19,8 +19,6 @@
  * NUL-padded 10-byte fields, in front of the packet payload. On reception
  * pktDesc::res holds the payload length.
  */
-static constexpr size_t M17_PKT_HEADER = offsetof(struct m17Packet, payload);
-
 static_assert(sizeof(struct m17Packet) <= MSG_PKT_MAX_SIZE,
               "M17 packets must fit in an inbox packet buffer");
 static_assert(sizeof(m17Packet::src) <= MSG_ADDR_MAX_LEN,
