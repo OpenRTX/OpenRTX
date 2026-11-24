@@ -351,6 +351,13 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
         metaText.reset();
 
+        // A packet cut short can no longer complete: hand its descriptor back
+        if (currRxPkt != nullptr) {
+            currRxPkt->res = -EIO;
+            currRxPkt->status = PKT_STATUS_ERROR;
+            currRxPkt = nullptr;
+        }
+
         // Let the codec play the audio already queued, unless leaving RX
         if ((status->opStatus != RX) || codec_queueEmpty(rxAudioPath)) {
             codec_stop(rxAudioPath);
