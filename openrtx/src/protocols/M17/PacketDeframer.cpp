@@ -16,6 +16,10 @@ PacketDeframer::PacketDeframer() :
 {
 }
 
+PacketDeframer::~PacketDeframer()
+{
+}
+
 bool PacketDeframer::init(uint8_t *buf, size_t cap)
 {
     buffer = nullptr;
@@ -24,7 +28,7 @@ bool PacketDeframer::init(uint8_t *buf, size_t cap)
     dataLen = 0;
     nextCounter = 0;
 
-    if (buf == nullptr || cap == 0)
+    if ((buf == nullptr) || (cap == 0))
         return false;
 
     buffer = buf;
@@ -65,7 +69,7 @@ DeframerResult PacketDeframer::pushFrame(const PacketFrame &frame)
 
     // EOF frame: counter holds the number of valid bytes in this chunk.
     // A counter of 0 or greater than DATA_SIZE is malformed.
-    if (counter == 0 || counter > PacketFrame::DATA_SIZE)
+    if ((counter == 0) || (counter > PacketFrame::DATA_SIZE))
         return DeframerResult::ERR_INVALID_FRAME;
 
     if (totalLen + counter > capacity)

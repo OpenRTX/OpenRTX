@@ -44,7 +44,15 @@ enum class DeframerResult {
 class PacketDeframer
 {
 public:
+    /**
+     * Constructor.
+     */
     PacketDeframer();
+
+    /**
+     * Destructor.
+     */
+    ~PacketDeframer();
 
     /**
      * Bind the deframer to a caller-supplied receive buffer.

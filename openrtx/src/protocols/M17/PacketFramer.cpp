@@ -6,6 +6,7 @@
 
 #include "protocols/M17/PacketFramer.hpp"
 #include "core/crc.h"
+#include <algorithm>
 #include <cstring>
 
 namespace M17
@@ -16,9 +17,13 @@ PacketFramer::PacketFramer() :
 {
 }
 
+PacketFramer::~PacketFramer()
+{
+}
+
 bool PacketFramer::init(uint8_t *buffer, size_t len)
 {
-    if (buffer == nullptr || len == 0)
+    if ((buffer == nullptr) || (len == 0))
         return false;
 
     dataLen = len;
@@ -61,9 +66,7 @@ bool PacketFramer::nextFrame(PacketFrame &frame)
     // Copy application-data bytes that fall within this frame
     size_t dataBytes = 0;
     if (offset < dataLen) {
-        dataBytes = dataLen - offset;
-        if (dataBytes > chunkLen)
-            dataBytes = chunkLen;
+        dataBytes = std::min(dataLen - offset, chunkLen);
         memcpy(frame.data(), &src[offset], dataBytes);
     }
 

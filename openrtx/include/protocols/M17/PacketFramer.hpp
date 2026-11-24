@@ -28,7 +28,15 @@ namespace M17
 class PacketFramer
 {
 public:
+    /**
+     * Constructor.
+     */
     PacketFramer();
+
+    /**
+     * Destructor.
+     */
+    ~PacketFramer();
 
     /**
      * Prepare the framer for a new packet.
@@ -58,12 +66,12 @@ public:
     bool nextFrame(PacketFrame &frame);
 
 private:
-    uint8_t *src;
-    size_t dataLen;
-    size_t totalLen;
-    size_t offset;
-    uint8_t counter;
-    uint16_t crc;
+    uint8_t *src;    ///< Application data of the packet being framed
+    size_t dataLen;  ///< Length of the application data in bytes
+    size_t totalLen; ///< Length of the application data plus its CRC
+    size_t offset;   ///< Bytes framed so far
+    uint8_t counter; ///< Counter of the next intermediate frame
+    uint16_t crc;    ///< CRC of the application data
 };
 
 } // namespace M17
