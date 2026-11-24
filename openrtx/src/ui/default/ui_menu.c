@@ -502,6 +502,11 @@ int _ui_getCWValueName(char* buf, uint8_t max_len, uint8_t index)
             sniprintf(buf, max_len, "%s",
                       last_state.settings.cw_reverse ? "Reverse" : "Normal");
             break;
+
+        case CW_KEY:
+            sniprintf(buf, max_len, "%s",
+                      last_state.settings.cw_straight ? "Straight" : "Paddle");
+            break;
     }
 
     return 0;

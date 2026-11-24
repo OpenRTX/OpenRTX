@@ -188,6 +188,7 @@ const char* settings_fm_items[] =
 const char *settings_cw_items[] =
 {
     "Paddle",
+    "Key",
 };
 #endif
 
@@ -2588,6 +2589,11 @@ void ui_updateFSM(bool *sync_rtx)
                             case CW_PADDLE:
                                 state.settings.cw_reverse =
                                     !state.settings.cw_reverse;
+                                *sync_rtx = true;
+                                break;
+                            case CW_KEY:
+                                state.settings.cw_straight =
+                                    !state.settings.cw_straight;
                                 *sync_rtx = true;
                                 break;
                         }

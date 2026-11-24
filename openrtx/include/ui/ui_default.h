@@ -152,6 +152,7 @@ enum settingsM17Items
 enum settingsCWItems
 {
     CW_PADDLE = 0,
+    CW_KEY,
 };
 
 enum settingsFMItems
