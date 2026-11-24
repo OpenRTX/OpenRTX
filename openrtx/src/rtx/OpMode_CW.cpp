@@ -12,6 +12,7 @@
 #include "rtx/rtx.h"
 
 #include "core/settings.h"
+#include "core/utils.h"
 
 OpMode_CW::OpMode_CW()
     : lastKeyDown(0)
@@ -158,13 +159,12 @@ bool OpMode_CW::startTx(rtxStatus_t *const status)
 
 void OpMode_CW::updateSquelch(const rtxStatus_t *const status)
 {
-    // Squelch 0 to 15 is an RSSI of -127 to -61 dBm, with 1 dB of hysteresis
-    rssi_t squelch = -127 + (status->sqlLevel * 66) / 15;
+    rssi_t squelch = sLevelToRssi(status->sqlLevel);
     rssi_t rssi = rtx_getRssi();
 
-    if (!rfSqlOpen && (rssi > (squelch + 1)))
+    if (!rfSqlOpen && (rssi > squelch))
         rfSqlOpen = true;
-    if (rfSqlOpen && (rssi < (squelch - 1)))
+    if (rfSqlOpen && (rssi < squelch))
         rfSqlOpen = false;
 
     if (rfSqlOpen && !sqlOpen) {
