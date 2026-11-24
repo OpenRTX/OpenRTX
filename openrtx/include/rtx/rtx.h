@@ -59,7 +59,8 @@ typedef struct
              cwEmission : 1,           /**< CW emission, enum cwEmission */
              cwBreakIn  : 1;           /**< CW keying transmits        */
     uint8_t  cwReverse  : 1,           /**< CW dit and dah swapped     */
-             _cwUnused  : 7;
+             cwStraight : 1,           /**< CW straight key on dit     */
+             _cwUnused  : 6;
 #endif
 }
 rtxStatus_t;

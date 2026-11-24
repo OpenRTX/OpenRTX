@@ -13,7 +13,8 @@
 
 /**
  * Specialisation of the OpMode class for CW, sent from a paddle through the
- * iambic keyer. The paddle may share the PTT line, so the PTT does not key
+ * iambic keyer, or from a straight key on the dit contact, which keys
+ * directly. The paddle may share the PTT line, so the PTT does not key
  * anything in this mode. With break-in on, the first key down starts
  * transmitting; transmission ends once the key has been up for longer than
  * a word space. With break-in off, keying only sounds the sidetone. Between
@@ -122,6 +123,7 @@ private:
     bool sidetone;         ///< Sidetone sounding.
     bool enterRx;          ///< Flag for RX management.
     bool reverse;          ///< Dit and dah paddles swapped.
+    bool straight;         ///< Straight key on the dit contact.
     bool rfSqlOpen;        ///< RSSI above the squelch level.
     bool sqlOpen;          ///< Receiver audio playing.
     pathId rxAudioPath;    ///< Receiver audio path.

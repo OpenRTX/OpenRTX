@@ -18,6 +18,7 @@ OpMode_CW::OpMode_CW()
     , sidetone(false)
     , enterRx(false)
     , reverse(false)
+    , straight(false)
     , rfSqlOpen(false)
     , sqlOpen(false)
     , rxAudioPath(0)
@@ -56,6 +57,7 @@ void OpMode_CW::update(rtxStatus_t *const status, const bool newCfg)
     if (newCfg) {
         wpm = status->cwWpm;
         reverse = status->cwReverse;
+        straight = status->cwStraight;
         cwKeyer_setSpeed(&keyer, wpm);
         // The radio driver restarts a transmission key up on a new
         // configuration
@@ -129,6 +131,10 @@ bool OpMode_CW::readKey(long long now)
         uint8_t dah = (paddles & CW_PADDLE_DIT) ? CW_PADDLE_DAH : 0;
         paddles = dit | dah;
     }
+
+    // A straight key keys directly; a mono plug also closes the dah contact
+    if (straight)
+        return (paddles & CW_PADDLE_DIT) != 0;
 
     return cwKeyer_update(&keyer, paddles, now);
 }
