@@ -12,6 +12,7 @@
 #include "interfaces/paddle.h"
 #include "gpio.h"
 
+#include <array>
 /*
  * Paddle on the 3.5 mm jack J4: tip dit, ring dah, sleeve common, as paddles
  * are wired (C62 MCU schematic, https://github.com/JKI757/C62_Teardown, file
@@ -52,7 +53,7 @@
 #define MIN_RISE_NS 300 // Faster than both paddles (750 ns): not a GPIO
 #define STABLE_READS 3  // Reads in a row before a new paddle state counts
 
-static uint32_t openNs; // Rise time with the paddles open, 0 if not known
+static uint32_t openNs = 0; // Rise time with the paddles open, 0 if not known
 
 /*
  * Debouncing: a read straddling a bounce of the paddle contact gives a rise
@@ -75,7 +76,7 @@ static uint32_t riseTime(uint32_t dischargeUs, uint32_t timeoutUs)
     GPIO_RegDef *port = PTT_PORT;
     const uint32_t mask = BIT(button_ptt.pin);
     const uint32_t limit = k_us_to_cyc_ceil32(timeoutUs);
-    uint32_t elapsed;
+    uint32_t elapsed = 0;
 
     // Other threads change the port direction too, as the bit-banged buses
     unsigned int key = irq_lock();
@@ -96,25 +97,23 @@ static uint32_t riseTime(uint32_t dischargeUs, uint32_t timeoutUs)
     return k_cyc_to_ns_floor32(elapsed);
 }
 
-static int compareTimes(const void *a, const void *b)
-{
-    uint32_t x = *(const uint32_t *)a;
-    uint32_t y = *(const uint32_t *)b;
-
-    return (x > y) - (x < y);
-}
-
 /**
  * Measure the rise time with the paddles open, if it is plausible.
  */
 static void calibrate(void)
 {
-    uint32_t reads[CALIB_READS];
+    std::array<uint32_t, CALIB_READS> reads;
 
     for (size_t i = 0; i < CALIB_READS; i++)
         reads[i] = riseTime(DISCHARGE_US, TIMEOUT_US);
 
-    qsort(reads, CALIB_READS, sizeof(reads[0]), compareTimes);
+    qsort(reads.begin(), reads.end(), sizeof(reads[0]),
+          [](const uint32_t a, const uint32_t b) {
+        if (a > b)
+            return 1;
+        if (a < b)
+            return -1;
+        return 0;};
 
     uint32_t median = reads[CALIB_READS / 2];
     if ((median >= MIN_RISE_NS) && (median < TIMEOUT_US * 1000U))
