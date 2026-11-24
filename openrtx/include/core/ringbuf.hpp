@@ -50,7 +50,7 @@ public:
     {
         int ret = pthread_mutex_trylock(&mutex);
         if (ret)
-            return ret;
+            return -ret;
 
         if (full()) {
             pthread_mutex_unlock(&mutex);
@@ -74,7 +74,7 @@ public:
     {
         int ret = pthread_mutex_trylock(&mutex);
         if (ret)
-            return ret;
+            return -ret;
 
         if (empty()) {
             pthread_mutex_unlock(&mutex);
