@@ -25,8 +25,8 @@
  *
  * The caller populates src, dst, and payload, then passes a pointer
  * to this struct as pktDesc.buffer to rtx_addPacketTx().  The size
- * field of the descriptor must be 20 + payload_len (the 20 bytes for
- * the src/dst headers plus the number of payload bytes).
+ * field of the descriptor must be M17_PKT_HEADER + payload_len (the
+ * src/dst headers plus the number of payload bytes).
  *
  * On RX, the deframer writes directly into the payload region.  The
  * src/dst fields are populated from the M17 LSF by the OpMode layer.
@@ -36,5 +36,8 @@ struct m17Packet {
     char dst[10]; /**< Destination callsign (10 bytes, null-padded) */
     uint8_t payload[M17_MAX_PACKET_DATA]; /**< Packet payload data */
 } __attribute__((packed));
+
+/** Size of the src/dst callsigns in front of an m17Packet payload. */
+#define M17_PKT_HEADER offsetof(struct m17Packet, payload)
 
 #endif /* M17_PROTOCOL_H */

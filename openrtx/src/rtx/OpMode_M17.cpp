@@ -297,7 +297,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                                 static_cast<struct m17Packet *>(
                                     currRxPkt->buffer);
                             pktDeframer.init(packet->payload,
-                                             currRxPkt->size - 20);
+                                             currRxPkt->size - M17_PKT_HEADER);
                         } else {
                             pktDeframer.init(nullptr, 0);
                         }
@@ -483,7 +483,7 @@ void OpMode_M17::abortPackets()
 
 int OpMode_M17::addPacketRx(struct pktDesc *packet)
 {
-    if ((packet->buffer == NULL) || (packet->size < 20))
+    if ((packet->buffer == NULL) || (packet->size < M17_PKT_HEADER))
         return -EINVAL;
 
     int ret = rxPktQueue.tryPush(packet);
@@ -494,7 +494,7 @@ int OpMode_M17::addPacketRx(struct pktDesc *packet)
 
 int OpMode_M17::addPacketTx(struct pktDesc *packet)
 {
-    if ((packet->buffer == NULL) || (packet->size < 20))
+    if ((packet->buffer == NULL) || (packet->size < M17_PKT_HEADER))
         return -EINVAL;
 
     struct pktDesc *expected = nullptr;
@@ -513,7 +513,7 @@ void OpMode_M17::txPacketState(rtxStatus_t *const status)
     // Phase 0: initialise and transmit preamble + LSF
     if (!pktTxStarted) {
         struct m17Packet *packet = static_cast<struct m17Packet *>(pkt->buffer);
-        size_t payloadLen = pkt->size - 20;
+        size_t payloadLen = pkt->size - M17_PKT_HEADER;
 
         if (!pktFramer.init(packet->payload, payloadLen)) {
             pkt->res = -EINVAL;
@@ -559,7 +559,7 @@ void OpMode_M17::txPacketState(rtxStatus_t *const status)
         modulator.sendFrame(m17Frame);
         modulator.stop();
 
-        pkt->res = (ssize_t)(pkt->size - 20);
+        pkt->res = (ssize_t)(pkt->size - M17_PKT_HEADER);
         pkt->status = PKT_STATUS_DONE;
         currTxPkt.store(nullptr, std::memory_order_release);
         pktTxStarted = false;
