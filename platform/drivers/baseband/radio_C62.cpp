@@ -23,8 +23,8 @@ static const rtxStatus_t
 
 static enum opstatus radioStatus; // Current operating status
 static enum opmode radioMode;     // Current operating mode
-static bool usbRx;                // Receiver set up for USB
-static bool afOn;                 // AF output on, for the speaker
+static bool usbRx = false;        // Receiver set up for USB
+static bool afOn = false;         // AF output on, for the speaker
 
 /*
  * CTCSS TX gain of the stock C62 firmware, REG_51 <6:0> "CTCSS/CDCSS Tx Gain1
