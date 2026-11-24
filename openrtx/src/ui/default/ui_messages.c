@@ -413,10 +413,12 @@ static bool composeSend(ui_state_t *ui_state)
         return false;
 
     /* An empty To field means broadcast, which goes on the air as the
-     * source's wire address, never the localized display string. */
+     * source's wire address, never the localized display string. The mode
+     * may have changed since compose was opened: without a source for it
+     * the message could not even be stored, so keep the draft. */
     uint8_t mode = last_state.channel.mode;
     const char *rcpt = composeRecipient(ui_state, messages_broadcastAddr(mode));
-    if (rcpt == NULL) {
+    if ((rcpt == NULL) || !messages_canCompose(mode)) {
         vp_announceError(vpqInit | vpqPlayImmediately);
         return false;
     }
