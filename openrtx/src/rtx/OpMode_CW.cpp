@@ -11,9 +11,11 @@
 #include "rtx/OpMode_CW.hpp"
 #include "rtx/rtx.h"
 
+#include "core/settings.h"
+
 OpMode_CW::OpMode_CW()
     : lastKeyDown(0)
-    , wpm(1)
+    , wpm(CW_WPM_MIN)
     , keyDown(false)
     , sidetone(false)
     , enterRx(false)
