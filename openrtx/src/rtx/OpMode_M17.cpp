@@ -284,7 +284,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
                     codec_pushFrame(sf.data() + 8, false);
                 }
                 // Handle incoming packet frame; CAN and callsign filters apply
-                else if (type == FrameType::PACKET && canMatch && callMatch) {
+                else if ((type == FrameType::PACKET) && canMatch && callMatch) {
                     PacketFrame pf = decoder.getPacketFrame();
 
                     // Claim an RX descriptor on the first frame of
