@@ -502,6 +502,10 @@ void ui_updateFSM(bool *sync_rtx)
         kbd_msg_t msg;
         msg.value = event.payload;
 
+        // No handler supports repeat events
+        if(msg.repeat)
+            return;
+
         switch(state.ui_screen)
         {
             // VFO screen

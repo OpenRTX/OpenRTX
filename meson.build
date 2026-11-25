@@ -1275,6 +1275,12 @@ m17_replay_test = executable('m17_replay_test',
                              sources : unit_test_src + m17_replay_src + m17_signal_src + ['tests/unit/M17_replay.cpp'],
                              kwargs  : m17_replay_test_opts)
 
+# Built from input.c alone, to stub keyboard and system tick
+input_repeat_test = executable('input_repeat_test',
+                                sources : ['openrtx/src/core/input.c',
+                                           'tests/unit/input_repeat.cpp'],
+                                kwargs  : unit_test_opts)
+
 test('M17 Golay Unit Test',   m17_golay_test)
 test('M17 Viterbi Unit Test', m17_viterbi_test)
 test('M17 Demodulator Test',  m17_demodulator_test)
@@ -1293,3 +1299,4 @@ test('GFX Text Test',        gfx_text_test)
 test('S-Level Test', slevel_test)
 test('Audio Codec Test',     audio_codec_test)
 test('M17 Baseband Replay Test', m17_replay_test, timeout : 120) # ~40 s in CI with coverage
+test('Input Repeat Test',    input_repeat_test)
