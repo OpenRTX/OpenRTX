@@ -20,15 +20,15 @@ extern "C" {
  * @param peripheral: underlying MCU peripheral.
  * @param mutx: pointer to mutex, or NULL.
  */
-#define SPI_MK22_DEVICE_DEFINE(name, peripheral, mutx)                      \
-extern int spiMk22_transfer(const struct spiDevice *dev, const void *txBuf, \
-                            void *rxBuf, const size_t size);                \
-const struct spiDevice name =                                               \
-{                                                                           \
-    .transfer = &spiMk22_transfer,                                          \
-    .priv     = peripheral,                                                 \
-    .mutex    = mutx                                                        \
-};
+#define SPI_MK22_DEVICE_DEFINE(name, peripheral, mutx)          \
+    extern int spiMk22_transfer(const struct spiDevice *dev,    \
+                                const void *txBuf, void *rxBuf, \
+                                const size_t size);             \
+    const struct spiDevice name = {                             \
+        .transfer = &spiMk22_transfer,                          \
+        .priv = peripheral,                                     \
+        .mutex = mutx,                                          \
+    };
 
 /**
  * Initialise an SPI peripheral and driver.
@@ -41,8 +41,8 @@ const struct spiDevice name =                                               \
  * @param flags: SPI configuration flags.
  * @return zero on success, a negative error code otherwise.
  */
-int spiMk22_init(const struct spiDevice *dev, const uint8_t pbr, const uint8_t br,
-                 const uint8_t flags);
+int spiMk22_init(const struct spiDevice *dev, const uint8_t pbr,
+                 const uint8_t br, const uint8_t flags);
 
 /**
  * Shut down an SPI peripheral and driver.
@@ -50,7 +50,6 @@ int spiMk22_init(const struct spiDevice *dev, const uint8_t pbr, const uint8_t b
  * @param dev: SPI device descriptor.
  */
 void spiMk22_terminate(const struct spiDevice *dev);
-
 
 #ifdef __cplusplus
 }

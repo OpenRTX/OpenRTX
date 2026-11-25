@@ -43,12 +43,11 @@ int spiCustom_transfer(const struct spiDevice *dev, const void *txBuf,
 /**
  * Custom SPI device descriptor.
  */
-struct spiCustomDevice
-{
-    spi_transfer_impl transfer; ///< Device-specific implementation of the SPI transfer function
-    const void        *priv;    ///< Pointer to device driver private data
-    pthread_mutex_t   *mutex;   ///< Pointer to mutex for exclusive access
-    spi_func          spiFunc;  ///< Pointer to driver configuration data.
+struct spiCustomDevice {
+    spi_transfer_impl transfer; ///< Implementation of the SPI transfer function
+    const void *priv;           ///< Pointer to device driver private data
+    pthread_mutex_t *mutex;     ///< Pointer to mutex for exclusive access
+    spi_func spiFunc;           ///< Pointer to driver configuration data.
 };
 
 /**
@@ -60,13 +59,12 @@ struct spiCustomDevice
  * @param mutx: pointer to mutex, or NULL.
  */
 #define SPI_CUSTOM_DEVICE_DEFINE(name, impl, args, mutx) \
-const struct spiCustomDevice name =                      \
-{                                                        \
-    .transfer = spiCustom_transfer,                      \
-    .priv     = args,                                    \
-    .mutex    = mutx,                                    \
-    .spiFunc  = impl                                     \
-};
+    const struct spiCustomDevice name = {                \
+        .transfer = spiCustom_transfer,                  \
+        .priv = args,                                    \
+        .mutex = mutx,                                   \
+        .spiFunc = impl,                                 \
+    };
 
 #ifdef __cplusplus
 }

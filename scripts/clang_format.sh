@@ -61,7 +61,6 @@ openrtx/include/interfaces/platform.h
 openrtx/include/peripherals/adc.h
 openrtx/include/peripherals/gpio.h
 openrtx/include/peripherals/i2c.h
-openrtx/include/peripherals/spi.h
 openrtx/include/protocols/M17/ClockRecovery.hpp
 openrtx/include/protocols/M17/CodePuncturing.hpp
 openrtx/include/protocols/M17/Constants.hpp
@@ -166,15 +165,6 @@ platform/drivers/NVM/nvmem_Mod17.c
 platform/drivers/NVM/nvmem_linux.c
 platform/drivers/NVM/nvmem_settings_MDx.c
 platform/drivers/NVM/nvmem_ttwrplus.c
-platform/drivers/SPI/spi_bitbang.c
-platform/drivers/SPI/spi_bitbang.h
-platform/drivers/SPI/spi_custom.c
-platform/drivers/SPI/spi_custom.h
-platform/drivers/SPI/spi_mk22.c
-platform/drivers/SPI/spi_mk22.h
-platform/drivers/SPI/spi_stm32.h
-platform/drivers/SPI/spi_stm32f4.c
-platform/drivers/SPI/spi_stm32h7.c
 platform/drivers/USB/usb_MDx.cpp
 platform/drivers/USB/usb_descriptors.c
 platform/drivers/audio/Cx000_dac.cpp

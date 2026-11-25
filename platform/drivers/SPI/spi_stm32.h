@@ -20,15 +20,15 @@ extern "C" {
  * @param peripheral: underlying MCU peripheral.
  * @param mutx: pointer to mutex, or NULL.
  */
-#define SPI_STM32_DEVICE_DEFINE(name, peripheral, mutx)                      \
-extern int spiStm32_transfer(const struct spiDevice *dev, const void *txBuf, \
-                             void *rxBuf, const size_t size);                \
-const struct spiDevice name =                                                \
-{                                                                            \
-    .transfer = &spiStm32_transfer,                                          \
-    .priv     = peripheral,                                                  \
-    .mutex    = mutx                                                         \
-};
+#define SPI_STM32_DEVICE_DEFINE(name, peripheral, mutx)          \
+    extern int spiStm32_transfer(const struct spiDevice *dev,    \
+                                 const void *txBuf, void *rxBuf, \
+                                 const size_t size);             \
+    const struct spiDevice name = {                              \
+        .transfer = &spiStm32_transfer,                          \
+        .priv = peripheral,                                      \
+        .mutex = mutx,                                           \
+    };
 
 /**
  * Initialise an SPI peripheral and driver.
@@ -40,7 +40,8 @@ const struct spiDevice name =                                                \
  * @param flags: SPI configuration flags.
  * @return zero on success, a negative error code otherwise.
  */
-int spiStm32_init(const struct spiDevice *dev, const uint32_t speed, const uint8_t flags);
+int spiStm32_init(const struct spiDevice *dev, const uint32_t speed,
+                  const uint8_t flags);
 
 /**
  * Shut down an SPI peripheral and driver.
@@ -48,7 +49,6 @@ int spiStm32_init(const struct spiDevice *dev, const uint32_t speed, const uint8
  * @param dev: SPI device descriptor.
  */
 void spiStm32_terminate(const struct spiDevice *dev);
-
 
 #ifdef __cplusplus
 }

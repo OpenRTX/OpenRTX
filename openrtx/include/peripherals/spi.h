@@ -18,12 +18,11 @@ extern "C" {
 /**
  * Enumeration type for SPI configuration flags
  */
-enum SPIFlags
-{
-    SPI_FLAG_CPOL   = 1,  ///< Clock line is high when idle.
-    SPI_FLAG_CPHA   = 2,  ///< Data lines are sampled on clock falling edge.
-    SPI_LSB_FIRST   = 4,  ///< Transfer data LSB first.
-    SPI_HALF_DUPLEX = 8   ///< Half-duplex data transfer mode, on a single data line
+enum SPIFlags {
+    SPI_FLAG_CPOL = 1,   ///< Clock line is high when idle.
+    SPI_FLAG_CPHA = 2,   ///< Data lines are sampled on clock falling edge.
+    SPI_LSB_FIRST = 4,   ///< Transfer data LSB first.
+    SPI_HALF_DUPLEX = 8, ///< Half-duplex data transfer mode
 };
 
 struct spiDevice;
@@ -43,11 +42,10 @@ typedef int (*spi_transfer_impl)(const struct spiDevice *dev, const void *txBuf,
 /**
  * SPI peripheral descriptor.
  */
-struct spiDevice
-{
-    spi_transfer_impl transfer; ///< Device-specific implementation of the SPI transfer function
-    const void        *priv;    ///< Pointer to device driver private data
-    pthread_mutex_t   *mutex;   ///< Pointer to mutex for exclusive access
+struct spiDevice {
+    spi_transfer_impl transfer; ///< Implementation of the SPI transfer function
+    const void *priv;           ///< Pointer to device driver private data
+    pthread_mutex_t *mutex;     ///< Pointer to mutex for exclusive access
 };
 
 /**
@@ -57,7 +55,7 @@ struct spiDevice
  */
 static inline void spi_init(const struct spiDevice *dev)
 {
-    if(dev->mutex != NULL)
+    if (dev->mutex != NULL)
         pthread_mutex_init(dev->mutex, NULL);
 }
 
@@ -68,7 +66,7 @@ static inline void spi_init(const struct spiDevice *dev)
  */
 static inline void spi_terminate(const struct spiDevice *dev)
 {
-    if(dev->mutex != NULL)
+    if (dev->mutex != NULL)
         pthread_mutex_destroy(dev->mutex);
 }
 
@@ -80,7 +78,7 @@ static inline void spi_terminate(const struct spiDevice *dev)
  */
 static inline int spi_acquire(const struct spiDevice *dev)
 {
-    if(dev->mutex == NULL)
+    if (dev->mutex == NULL)
         return 0;
 
     return pthread_mutex_lock(dev->mutex);
@@ -94,7 +92,7 @@ static inline int spi_acquire(const struct spiDevice *dev)
  */
 static inline int spi_tryAcquire(const struct spiDevice *dev)
 {
-    if(dev->mutex == NULL)
+    if (dev->mutex == NULL)
         return 0;
 
     return pthread_mutex_trylock(dev->mutex);
@@ -108,7 +106,7 @@ static inline int spi_tryAcquire(const struct spiDevice *dev)
  */
 static inline int spi_release(const struct spiDevice *dev)
 {
-    if(dev->mutex == NULL)
+    if (dev->mutex == NULL)
         return 0;
 
     return pthread_mutex_unlock(dev->mutex);
