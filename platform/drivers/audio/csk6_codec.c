@@ -15,6 +15,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/sys_io.h>
 #include <hwconfig.h>
+#include "core/dsp.h"
 #include "csk6_codec.h"
 #include "AudioSystem.h"
 #include "AudioTrack.h"
@@ -23,7 +24,8 @@
 /* One worker services the DSP's 48 kHz stereo transport:
  *   capture: microphone left, radio right -> application buffers or FM queues
  *   playback: application buffers or FM queues -> speaker left, radio right
- * Application rates use sample selection/repetition without filtering.
+ * Application rates use sample selection/repetition; 8 kHz inputs are
+ * low-pass filtered first, so the mic's highs don't alias into the voice band.
  * Circular streams run continuously; callers process the idle half between
  * boundary notifications. FM routes have no application buffer and use queues.
  * The worker sleeps while nothing is captured or played.
@@ -115,8 +117,10 @@ struct endpoint {
 };
 
 struct inputState {
-    struct endpoint endpoint; ///< Stream state
-    unsigned int phase;       ///< 48 kHz samples since the last one kept
+    struct endpoint endpoint;        ///< Stream state
+    struct lowPassDecimator lowPass; ///< Anti-alias filter
+    unsigned int phase;              ///< 48 kHz samples since the last one kept
+    bool filtered;                   ///< Decimated through lowPass
 };
 
 struct outputState {
@@ -278,6 +282,9 @@ static void detach(struct endpoint *ep)
 {
     failStream(ep, -ECANCELED);
     ep->ctx = NULL;
+
+    if (ep->input)
+        dsp_lowPassTerminate(&inputs[ep->channel].lowPass);
 }
 
 /**
@@ -626,8 +633,32 @@ static void inputAdvance(struct endpoint *ep, size_t count)
 }
 
 /**
+ * Hand 48 kHz samples to an input stream through its anti-alias filter.
+ *
+ * @param in: input stream.
+ * @param src: first sample.
+ * @param stride: distance between samples, in samples.
+ * @param count: samples.
+ */
+static void captureFiltered(struct inputState *in, const int16_t *src,
+                            size_t stride, size_t count)
+{
+    struct endpoint *ep = &in->endpoint;
+
+    for (size_t i = 0; (i < count) && endpointActive(ep); i++) {
+        int16_t sample = src[i * stride];
+        if (!dsp_lowPassDecimate(&in->lowPass, &sample))
+            continue;
+
+        ep->ctx->buffer[ep->position] = sample;
+        inputAdvance(ep, 1);
+    }
+}
+
+/**
  * Hand 48 kHz samples to an input stream, keeping every divisor-th sample.
- * Copies a run up to each block boundary. The phase persists across DSP
+ * Copies a run up to each block boundary; filtered streams go through
+ * captureFiltered() instead. The phase and the filter persist across DSP
  * frames.
  *
  * @param in: input stream.
@@ -641,6 +672,11 @@ static void captureToStream(struct inputState *in, const int16_t *src,
     struct endpoint *ep = &in->endpoint;
     if (!endpointActive(ep))
         return;
+
+    if (in->filtered) {
+        captureFiltered(in, src, stride, count);
+        return;
+    }
 
     const unsigned int divisor = ep->divisor;
     size_t next = (divisor - in->phase) % divisor; /* First sample kept */
@@ -1093,8 +1129,13 @@ static void attach(struct endpoint *ep, struct streamCtx *ctx, bool rearm)
     ep->divisor = DSP_SAMPLE_RATE / ctx->sampleRate;
 
     if (ep->input) {
-        if (!rearm)
-            inputs[ep->channel].phase = 0;
+        struct inputState *in = &inputs[ep->channel];
+        if (!rearm) {
+            in->phase = 0;
+            /* Filter every ratio the core has a filter for */
+            dsp_lowPassTerminate(&in->lowPass);
+            in->filtered = dsp_lowPassInit(&in->lowPass, ep->divisor) == 0;
+        }
     } else {
         struct outputState *out = &outputs[ep->channel];
         out->phase = 0;
