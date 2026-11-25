@@ -14,7 +14,7 @@
 #include "drivers/SPI/spi_stm32.h"
 #include "SSD1309_Mod17.h"
 
-extern const struct spiDevice spi2;
+extern const struct spiBus spi2;
 
 void SSD1309_init()
 {

@@ -30,10 +30,10 @@ static inline uint8_t spi_sendRecv(SPI_Type *spi, const uint8_t val)
     return spi->POPR;
 }
 
-int spiMk22_init(const struct spiDevice *dev, const uint8_t pbr,
-                 const uint8_t br, const uint8_t flags)
+int spiMk22_init(const struct spiBus *bus, const uint8_t pbr, const uint8_t br,
+                 const uint8_t flags)
 {
-    SPI_Type *spi = (SPI_Type *)dev->priv;
+    SPI_Type *spi = (SPI_Type *)bus->priv;
     switch ((uint32_t)spi) {
         case SPI0_BASE:
             SIM->SCGC6 |= SIM_SCGC6_SPI0_MASK;
@@ -72,15 +72,15 @@ int spiMk22_init(const struct spiDevice *dev, const uint8_t pbr,
     if ((flags & SPI_LSB_FIRST) != 0)
         spi->CTAR[0] |= SPI_CTAR_LSBFE_MASK;
 
-    if (dev->mutex != NULL)
-        pthread_mutex_init((pthread_mutex_t *)dev->mutex, NULL);
+    if (bus->mutex != NULL)
+        pthread_mutex_init((pthread_mutex_t *)bus->mutex, NULL);
 
     return 0;
 }
 
-void spiMk22_terminate(const struct spiDevice *dev)
+void spiMk22_terminate(const struct spiBus *bus)
 {
-    SPI_Type *spi = (SPI_Type *)dev->priv;
+    SPI_Type *spi = (SPI_Type *)bus->priv;
     switch ((uint32_t)spi) {
         case SPI0_BASE:
             SIM->SCGC6 &= ~SIM_SCGC6_SPI0_MASK;
@@ -96,14 +96,14 @@ void spiMk22_terminate(const struct spiDevice *dev)
             break;
     }
 
-    if (dev->mutex != NULL)
-        pthread_mutex_destroy((pthread_mutex_t *)dev->mutex);
+    if (bus->mutex != NULL)
+        pthread_mutex_destroy((pthread_mutex_t *)bus->mutex);
 }
 
-int spiMk22_transfer(const struct spiDevice *dev, const void *txBuf,
-                     void *rxBuf, const size_t size)
+int spiMk22_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
+                     const size_t size)
 {
-    SPI_Type *spi = (SPI_Type *)dev->priv;
+    SPI_Type *spi = (SPI_Type *)bus->priv;
     uint8_t *rxData = (uint8_t *)rxBuf;
     const uint8_t *txData = (const uint8_t *)txBuf;
 

@@ -101,7 +101,7 @@ void HR_Cx000< C6000_SpiOpModes >::setInputGain(int8_t value)
     writeReg(C6000_SpiOpModes::CONFIG, 0xE4, regValue);
 }
 
-ScopedChipSelect::ScopedChipSelect(const struct spiDevice *spi,
+ScopedChipSelect::ScopedChipSelect(const struct spiBus *spi,
                                    const struct gpioPin& cs) : spi(spi), cs(cs)
 {
     spi_acquire(spi);

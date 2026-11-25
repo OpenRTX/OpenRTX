@@ -51,7 +51,7 @@ public:
      * @param uSpi: pointer to SPI device for "user" SPI interface.
      * @param uCs: gpioPin object for "user" SPI chip select.
      */
-    HR_Cx000(const struct spiDevice *uSpi, const struct gpioPin uCs) : uSpi(uSpi), uCs(uCs)
+    HR_Cx000(const struct spiBus *uSpi, const struct gpioPin uCs) : uSpi(uSpi), uCs(uCs)
     {
         // Configure chip select pin
         gpioPin_setMode(&uCs, OUTPUT);
@@ -257,7 +257,7 @@ protected:
         SPI_FLAGS_EXTD = 0x40,    ///< Use 16-bit addressing (HR_C6000 only)
     };
 
-    const struct spiDevice *uSpi;
+    const struct spiBus *uSpi;
     const struct gpioPin uCs;
 };
 
@@ -283,7 +283,7 @@ public:
      *
      * @param dev: pointer to device interface.
      */
-    ScopedChipSelect(const struct spiDevice *spi, const struct gpioPin& cs);
+    ScopedChipSelect(const struct spiBus *spi, const struct gpioPin& cs);
 
     /**
      * Destructor.
@@ -293,7 +293,7 @@ public:
     ~ScopedChipSelect();
 
 private:
-    const struct spiDevice *spi;
+    const struct spiBus *spi;
     const struct gpioPin& cs;
 };
 

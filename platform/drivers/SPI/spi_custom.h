@@ -22,7 +22,7 @@ extern "C" {
 /**
  * Transfer single byte on the SPI bus.
  *
- * @param dev: SPI device handle.
+ * @param bus: SPI device handle.
  * @param tx: byte to be sent.
  * @return byte received from remote device.
  */
@@ -31,14 +31,14 @@ typedef uint8_t (*spi_func)(const void *priv, uint8_t tx);
 /**
  * Implementation of the SPI transfer function.
  *
- * @param dev: SPI device handle.
+ * @param bus: SPI device handle.
  * @param txBuf: pointer to TX buffer, can be NULL.
  * @param rxBuf: pointer to RX buffer, can be NULL.
  * @param size: number of bytes to transfer.
  * @return zero on success, a negative error code otherwise.
  */
-int spiCustom_transfer(const struct spiDevice *dev, const void *txBuf,
-                       void *rxBuf, const size_t size);
+int spiCustom_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
+                       const size_t size);
 
 /**
  * Custom SPI device descriptor.

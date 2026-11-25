@@ -14,7 +14,7 @@
 #include "hwconfig.h"
 #include "drivers/SPI/spi_stm32.h"
 
-extern const struct spiDevice spi2;
+extern const struct spiBus spi2;
 
 /**
  * \internal

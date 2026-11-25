@@ -42,7 +42,7 @@ void platform_init()
     gpio_setMode(GPIOEXT_CLK, OUTPUT);
     gpio_setMode(GPIOEXT_DAT, OUTPUT);
 
-    spi_init((const struct spiDevice *) &spiSr);
+    spi_init((const struct spiBus *) &spiSr);
     gpioShiftReg_init(&extGpio);
     adcStm32_init(&adc1);
     nvm_init();

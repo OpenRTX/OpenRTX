@@ -22,7 +22,7 @@ enum adcChannel {
 };
 
 extern const struct gpsDevice gps;
-extern const struct spiDevice nvm_spi;
+extern const struct spiBus nvm_spi;
 extern const struct spiCustomDevice pll_spi;
 extern const struct spiCustomDevice c5000_spi;
 extern const struct sky73210 pll;

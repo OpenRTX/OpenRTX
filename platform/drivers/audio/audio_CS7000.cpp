@@ -34,7 +34,7 @@ const struct audioDevice inputDevices[] =
     {&stm32_adc_audio_driver, (const void *) ADC_MIC_CH,  STM32_ADC_ADC2, SOURCE_MIC},
 };
 
-HR_C6000 C6000((const struct spiDevice *) &c6000_spi, { C6K_CS });
+HR_C6000 C6000((const struct spiBus *) &c6000_spi, { C6K_CS });
 static bool spkEnabled = false;
 
 static inline void selectSpk()

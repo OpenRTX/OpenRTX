@@ -19,7 +19,7 @@
 
 static const struct W25QxCfg eflashCfg =
 {
-    .spi = (const struct spiDevice *) &nvm_spi,
+    .spi = (const struct spiBus *) &nvm_spi,
     .cs  = { FLASH_CS }
 };
 

@@ -139,7 +139,7 @@ void audio_init()
     gpio_setMode(DMR_CLK,  OUTPUT);
     gpio_setMode(DMR_MOSI, OUTPUT);
     gpio_setMode(DMR_MISO, INPUT);
-    spi_init((const struct spiDevice *) &c6000_spi);
+    spi_init((const struct spiBus *) &c6000_spi);
     C6000.init();
 
     pthread_attr_t attr;

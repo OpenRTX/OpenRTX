@@ -31,7 +31,7 @@ public:
      * @param uSpi: pointer to SPI device for "user" SPI interface.
      * @param uCs: gpioPin object for "user" SPI chip select.
      */
-    HR_C6000(const struct spiDevice *uSpi, const struct gpioPin uCs) :
+    HR_C6000(const struct spiBus *uSpi, const struct gpioPin uCs) :
         HR_Cx000< C6000_SpiOpModes >(uSpi, uCs) { }
 
     /**

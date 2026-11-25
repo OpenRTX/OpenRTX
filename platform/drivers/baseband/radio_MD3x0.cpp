@@ -29,7 +29,7 @@ static uint8_t txpwr_hi  = 0;                   // APC voltage for TX output pow
 
 static enum opstatus radioStatus;               // Current operating status
 
-static HR_C5000 C5000((const struct spiDevice *) &c5000_spi, { DMR_CS });
+static HR_C5000 C5000((const struct spiBus *) &c5000_spi, { DMR_CS });
 
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.

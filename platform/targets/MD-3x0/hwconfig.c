@@ -54,7 +54,7 @@ ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adc1Mutex, ADC_COUNTS_TO_UV(3300000, 12))
 
 const struct sky73210 pll =
 {
-    .spi    = (const struct spiDevice *) &pll_spi,
+    .spi    = (const struct spiBus *) &pll_spi,
     .cs     = { PLL_CS },
     .refClk = 16800000
 };

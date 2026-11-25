@@ -26,7 +26,7 @@ extern "C" {
  */
 struct gpioShiftRegPriv
 {
-    const struct spiDevice *spi;        ///< SPI interface device driver
+    const struct spiBus *spi;           ///< SPI interface device driver
     const struct gpioPin   strobe;      ///< Gpio for output strobe line
     const size_t           numOutputs;  ///< Number of actual outputs
     uint8_t *const         outData;     ///< Pointer to gpio state storage

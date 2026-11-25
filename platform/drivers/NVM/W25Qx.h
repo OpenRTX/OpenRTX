@@ -24,7 +24,7 @@
  */
 struct W25QxCfg
 {
-    const struct spiDevice *spi;
+    const struct spiBus *spi;
     const struct gpioPin    cs;
 };
 

@@ -14,7 +14,7 @@
 #include "drivers/SPI/spi_stm32.h"
 #include "SH110x_Mod17.h"
 
-extern const struct spiDevice spi2;
+extern const struct spiBus spi2;
 
 void SH110x_init()
 {

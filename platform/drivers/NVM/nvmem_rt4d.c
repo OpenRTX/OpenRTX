@@ -17,7 +17,7 @@
 #include "drivers/NVM/W25Qx.h"
 
 static const struct W25QxCfg cfg = {
-    .spi = (struct spiDevice *)&flash_spi,
+    .spi = (struct spiBus *)&flash_spi,
     .cs = { EFLASH_CS },
 };
 

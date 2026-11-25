@@ -17,10 +17,10 @@ static inline uint8_t spi_sendRecv(SPI_TypeDef *spi, const uint8_t val)
     return spi->DR;
 }
 
-int spiStm32_init(const struct spiDevice *dev, const uint32_t speed,
+int spiStm32_init(const struct spiBus *bus, const uint32_t speed,
                   const uint8_t flags)
 {
-    SPI_TypeDef *spi = (SPI_TypeDef *)dev->priv;
+    SPI_TypeDef *spi = (SPI_TypeDef *)bus->priv;
     uint8_t busId;
 
     switch ((uint32_t)spi) {
@@ -77,15 +77,15 @@ int spiStm32_init(const struct spiDevice *dev, const uint32_t speed,
 
     spi->CR1 |= SPI_CR1_SPE; // Enable peripheral
 
-    if (dev->mutex != NULL)
-        pthread_mutex_init((pthread_mutex_t *)dev->mutex, NULL);
+    if (bus->mutex != NULL)
+        pthread_mutex_init((pthread_mutex_t *)bus->mutex, NULL);
 
     return 0;
 }
 
-void spiStm32_terminate(const struct spiDevice *dev)
+void spiStm32_terminate(const struct spiBus *bus)
 {
-    SPI_TypeDef *spi = (SPI_TypeDef *)dev->priv;
+    SPI_TypeDef *spi = (SPI_TypeDef *)bus->priv;
 
     switch ((uint32_t)spi) {
         case SPI1_BASE:
@@ -104,14 +104,14 @@ void spiStm32_terminate(const struct spiDevice *dev)
             break;
     }
 
-    if (dev->mutex != NULL)
-        pthread_mutex_destroy((pthread_mutex_t *)dev->mutex);
+    if (bus->mutex != NULL)
+        pthread_mutex_destroy((pthread_mutex_t *)bus->mutex);
 }
 
-int spiStm32_transfer(const struct spiDevice *dev, const void *txBuf,
-                      void *rxBuf, const size_t size)
+int spiStm32_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
+                      const size_t size)
 {
-    SPI_TypeDef *spi = (SPI_TypeDef *)dev->priv;
+    SPI_TypeDef *spi = (SPI_TypeDef *)bus->priv;
     uint8_t *rxData = (uint8_t *)rxBuf;
     const uint8_t *txData = (const uint8_t *)txBuf;
 

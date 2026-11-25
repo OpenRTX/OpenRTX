@@ -51,17 +51,17 @@ struct spiConfig {
 /**
  * Initialise a bitbang SPI driver.
  *
- * @param dev: SPI bitbang device descriptor.
+ * @param bus: SPI bitbang device descriptor.
  * @return zero on success, a negative error code otherwise.
  */
-int spiBitbang_init(const struct spiCustomDevice *dev);
+int spiBitbang_init(const struct spiCustomDevice *bus);
 
 /**
  * Shut down a bitbang SPI driver.
  *
- * @param dev: SPI bitbang device descriptor.
+ * @param bus: SPI bitbang device descriptor.
  */
-void spiBitbang_terminate(const struct spiCustomDevice *dev);
+void spiBitbang_terminate(const struct spiCustomDevice *bus);
 
 #ifdef __cplusplus
 }

@@ -48,8 +48,7 @@ void display_init()
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_CD); /* RS low -> command mode   */
-    spi_send((const struct spiDevice *)&display_spi, initData,
-             sizeof(initData));
+    spi_send((const struct spiBus *)&display_spi, initData, sizeof(initData));
     gpio_clearPin(LCD_CS);
 }
 
@@ -75,7 +74,7 @@ static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
             }
         }
 
-        spi_send((const struct spiDevice *)&display_spi, tmp, 8);
+        spi_send((const struct spiBus *)&display_spi, tmp, 8);
     }
 }
 
@@ -91,7 +90,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         };
 
         gpio_clearPin(LCD_CD); /* RS low -> command mode */
-        spi_send((const struct spiDevice *)&display_spi, command, 3);
+        spi_send((const struct spiBus *)&display_spi, command, 3);
         gpio_setPin(LCD_CD);   /* RS high -> data mode   */
         display_renderRow(row, (uint8_t *)fb);
     }
@@ -114,6 +113,6 @@ void display_setContrast(uint8_t contrast)
     gpio_clearPin(LCD_CS);
 
     gpio_clearPin(LCD_CD); /* RS low -> command mode              */
-    spi_send((const struct spiDevice *)&display_spi, command, 2);
+    spi_send((const struct spiBus *)&display_spi, command, 2);
     gpio_setPin(LCD_CS);
 }

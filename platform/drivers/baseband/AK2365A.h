@@ -35,7 +35,7 @@ enum AK2365A_BPF
  */
 struct ak2365a
 {
-    const struct spiDevice *spi;   ///< SPI bus device driver
+    const struct spiBus *spi; ///< SPI bus device driver
     const struct gpioPin   cs;     ///< Chip select gpio
     const struct gpioPin   res;    ///< Reset gpio
 };
