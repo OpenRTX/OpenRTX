@@ -36,7 +36,7 @@ void SSD1306_renderRow(uint8_t row, uint8_t *frameBuffer)
             out |= ((tmp >> (7-j)) & 0x01) << j;
         }
 
-        spi_send(&spi2, &out, 1);
+        spiBus_send(&spi2, &out, 1);
     }
 }
 
@@ -79,7 +79,7 @@ void SSD1306_init()
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);
-    spi_send(&spi2, init, sizeof(init));
+    spiBus_send(&spi2, init, sizeof(init));
     gpio_setPin(LCD_CS);
 }
 
@@ -100,7 +100,7 @@ void SSD1306_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         cmd[2] = 0x10;
 
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
-        spi_send(&spi2, cmd, sizeof(cmd));
+        spiBus_send(&spi2, cmd, sizeof(cmd));
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
         SSD1306_renderRow(row, (uint8_t *) fb);
     }
@@ -121,6 +121,6 @@ void SSD1306_setContrast(uint8_t contrast)
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);  /* RS low -> command mode              */
-    spi_send(&spi2, cmd, sizeof(cmd));
+    spiBus_send(&spi2, cmd, sizeof(cmd));
     gpio_setPin(LCD_CS);
 }

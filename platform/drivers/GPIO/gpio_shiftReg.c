@@ -21,7 +21,7 @@ void gpioShiftReg_init(const struct gpioDev *dev)
 
     // Clear all outputs
     memset(cfg->outData, 0x00, nBytes);
-    spi_send(cfg->spi, cfg->outData, nBytes);
+    spiBus_send(cfg->spi, cfg->outData, nBytes);
     gpioDev_set(cfg->strobe.port, cfg->strobe.pin);
 }
 
@@ -55,7 +55,7 @@ static void gpioShiftReg_set(const struct gpioDev *dev, const uint8_t pin)
     cfg->outData[byte] |= (1 << bit);
 
     gpioDev_clear(cfg->strobe.port, cfg->strobe.pin);
-    spi_send(cfg->spi, cfg->outData, nBytes);
+    spiBus_send(cfg->spi, cfg->outData, nBytes);
     gpioDev_set(cfg->strobe.port, cfg->strobe.pin);
 
     __enable_irq();
@@ -76,7 +76,7 @@ static void gpioShiftReg_clear(const struct gpioDev *dev, const uint8_t pin)
     cfg->outData[byte] &= ~(1 << bit);
 
     gpioDev_clear(cfg->strobe.port, cfg->strobe.pin);
-    spi_send(cfg->spi, cfg->outData, nBytes);
+    spiBus_send(cfg->spi, cfg->outData, nBytes);
     gpioDev_set(cfg->strobe.port, cfg->strobe.pin);
 
     __enable_irq();

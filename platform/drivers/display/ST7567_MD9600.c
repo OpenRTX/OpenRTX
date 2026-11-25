@@ -43,7 +43,7 @@ static void display_renderRow(uint8_t row, uint8_t *frameBuffer)
             }
         }
 
-        spi_send(&spi2, tmp, 8);
+        spiBus_send(&spi2, tmp, 8);
     }
 }
 
@@ -74,12 +74,12 @@ void display_init()
         0xAF, /* Set Display Enable             */
     };
 
-    spi_acquire(&spi2);
+    spiBus_lock(&spi2);
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_RS);      /* RS low -> command mode   */
-    spi_send(&spi2, initData, sizeof(initData));
+    spiBus_send(&spi2, initData, sizeof(initData));
     gpio_clearPin(LCD_CS);
-    spi_release(&spi2);
+    spiBus_release(&spi2);
 }
 
 void display_terminate()
@@ -89,7 +89,7 @@ void display_terminate()
 
 void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
-    spi_acquire(&spi2);
+    spiBus_lock(&spi2);
     gpio_clearPin(LCD_CS);
 
     for(uint8_t row = startRow; row < endRow; row++)
@@ -100,13 +100,13 @@ void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         command[2] = 0x04;
 
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
-        spi_send(&spi2, command, 3);
+        spiBus_send(&spi2, command, 3);
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
         display_renderRow(row, (uint8_t *) fb);
     }
 
     gpio_setPin(LCD_CS);
-    spi_release(&spi2);
+    spiBus_release(&spi2);
 }
 
 void display_render(void *fb)
@@ -120,13 +120,13 @@ void display_setContrast(uint8_t contrast)
     command[0] = 0x81;             /* Set Electronic Volume               */
     command[1] = contrast >> 2;    /* Controller contrast range is 0 - 63 */
 
-    spi_acquire(&spi2);
+    spiBus_lock(&spi2);
     gpio_clearPin(LCD_CS);
 
     gpio_clearPin(LCD_RS);          /* RS low -> command mode              */
-    spi_send(&spi2, command, 2);
+    spiBus_send(&spi2, command, 2);
     gpio_setPin(LCD_CS);
-    spi_release(&spi2);
+    spiBus_release(&spi2);
 }
 
 /*

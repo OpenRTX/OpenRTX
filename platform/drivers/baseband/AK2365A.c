@@ -15,7 +15,7 @@ static inline void writeReg(const struct ak2365a *dev, uint8_t reg, uint8_t valu
     data[1] = value;
 
     gpioPin_clear(&dev->cs);
-    spi_send(dev->spi, &data, 2);
+    spiBus_send(dev->spi, &data, 2);
     gpioPin_set(&dev->cs);
 }
 

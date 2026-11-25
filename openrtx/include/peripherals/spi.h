@@ -53,7 +53,7 @@ struct spiBus {
  *
  * @param bus: pointer to bus descriptor.
  */
-static inline void spi_init(const struct spiBus *bus)
+static inline void spiBus_init(const struct spiBus *bus)
 {
     if (bus->mutex != NULL)
         pthread_mutex_init(bus->mutex, NULL);
@@ -64,7 +64,7 @@ static inline void spi_init(const struct spiBus *bus)
  *
  * @param bus: pointer to bus descriptor.
  */
-static inline void spi_terminate(const struct spiBus *bus)
+static inline void spiBus_terminate(const struct spiBus *bus)
 {
     if (bus->mutex != NULL)
         pthread_mutex_destroy(bus->mutex);
@@ -76,7 +76,7 @@ static inline void spi_terminate(const struct spiBus *bus)
  * @param bus: pointer to bus descriptor.
  * @return zero on success, a negative error code on failure.
  */
-static inline int spi_acquire(const struct spiBus *bus)
+static inline int spiBus_lock(const struct spiBus *bus)
 {
     if (bus->mutex == NULL)
         return 0;
@@ -90,7 +90,7 @@ static inline int spi_acquire(const struct spiBus *bus)
  * @param bus: pointer to bus descriptor.
  * @return zero on success, a negative error code on failure.
  */
-static inline int spi_tryAcquire(const struct spiBus *bus)
+static inline int spiBus_tryLock(const struct spiBus *bus)
 {
     if (bus->mutex == NULL)
         return 0;
@@ -104,7 +104,7 @@ static inline int spi_tryAcquire(const struct spiBus *bus)
  * @param bus: pointer to bus descriptor.
  * @return zero on success, a negative error code on failure.
  */
-static inline int spi_release(const struct spiBus *bus)
+static inline int spiBus_release(const struct spiBus *bus)
 {
     if (bus->mutex == NULL)
         return 0;
@@ -121,8 +121,8 @@ static inline int spi_release(const struct spiBus *bus)
  * @param size: number of bytes to transfer.
  * @return zero on success, a negative error code otherwise.
  */
-static inline int spi_transfer(const struct spiBus *bus, const void *txBuf,
-                               void *rxBuf, const size_t size)
+static inline int spiBus_transfer(const struct spiBus *bus, const void *txBuf,
+                                  void *rxBuf, const size_t size)
 {
     return bus->transfer(bus, txBuf, rxBuf, size);
 }
@@ -134,8 +134,8 @@ static inline int spi_transfer(const struct spiBus *bus, const void *txBuf,
  * @param txSize: number of bytes to send.
  * @return zero on success, a negative error code otherwise.
  */
-static inline int spi_send(const struct spiBus *bus, const void *txBuf,
-                           const size_t txSize)
+static inline int spiBus_send(const struct spiBus *bus, const void *txBuf,
+                              const size_t txSize)
 {
     return bus->transfer(bus, txBuf, NULL, txSize);
 }
@@ -147,8 +147,8 @@ static inline int spi_send(const struct spiBus *bus, const void *txBuf,
  * @param rxSize: number of bytes to receive.
  * @return zero on success, a negative error code otherwise.
  */
-static inline int spi_receive(const struct spiBus *bus, void *rxBuf,
-                              const size_t rxSize)
+static inline int spiBus_receive(const struct spiBus *bus, void *rxBuf,
+                                 const size_t rxSize)
 {
     return bus->transfer(bus, NULL, rxBuf, rxSize);
 }

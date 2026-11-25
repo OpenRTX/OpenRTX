@@ -104,7 +104,7 @@ void HR_Cx000< C6000_SpiOpModes >::setInputGain(int8_t value)
 ScopedChipSelect::ScopedChipSelect(const struct spiBus *spi,
                                    const struct gpioPin& cs) : spi(spi), cs(cs)
 {
-    spi_acquire(spi);
+    spiBus_lock(spi);
     gpioPin_clear(&cs);
 }
 
@@ -116,7 +116,7 @@ ScopedChipSelect::~ScopedChipSelect()
     delayUs(2);
     gpioPin_set(&cs);
     delayUs(2);
-    spi_release(spi);
+    spiBus_release(spi);
 }
 
 FmConfig operator |(FmConfig lhs, FmConfig rhs)

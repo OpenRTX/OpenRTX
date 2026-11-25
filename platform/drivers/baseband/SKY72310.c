@@ -17,15 +17,15 @@ static inline void writeReg(const struct sky73210 *dev, const uint16_t value)
      * chip select assertion/deassertion and the SPI transaction. For lower
      * values the PLL seems to go nuts.
      */
-    spi_acquire(dev->spi);
+    spiBus_lock(dev->spi);
     gpioPin_clear(&dev->cs);
     delayUs(10);
 
-    spi_send(dev->spi, &tmp, 2);
+    spiBus_send(dev->spi, &tmp, 2);
 
     delayUs(10);
     gpioPin_set(&dev->cs);
-    spi_release(dev->spi);
+    spiBus_release(dev->spi);
 }
 
 void SKY73210_init(const struct sky73210 *dev, const uint8_t gain)

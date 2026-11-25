@@ -49,7 +49,7 @@ static int waitUntilReady(const struct W25QxCfg *cfg, uint32_t timeout)
         uint8_t ret[2];
 
         gpioPin_clear(&cfg->cs);
-        spi_transfer(cfg->spi, cmd, ret, 2);
+        spiBus_transfer(cfg->spi, cmd, ret, 2);
         gpioPin_set(&cfg->cs);
 
         /* If busy flag is low, we're done */
@@ -65,7 +65,7 @@ static inline void enableWrite(const struct W25QxCfg *cfg)
     const uint8_t cmd = CMD_WREN;
 
     gpioPin_clear(&cfg->cs);
-    spi_send(cfg->spi, &cmd, 1);
+    spiBus_send(cfg->spi, &cmd, 1);
     gpioPin_set(&cfg->cs);
 
     delayUs(5);
@@ -85,7 +85,7 @@ void W25Qx_init(const struct nvmDevice *dev)
     const uint8_t cmd = CMD_EXADD;
 
     gpioPin_clear(&cfg->cs);
-    spi_send(cfg->spi, &cmd, 1);
+    spiBus_send(cfg->spi, &cmd, 1);
     gpioPin_set(&cfg->cs);
 #endif
 }
@@ -103,13 +103,13 @@ void W25Qx_wakeup(const struct nvmDevice *dev)
     const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
     const uint8_t cmd = CMD_WKUP;
 
-    spi_acquire(cfg->spi);
+    spiBus_lock(cfg->spi);
 
     gpioPin_clear(&cfg->cs);
-    spi_send(cfg->spi, &cmd, 1);
+    spiBus_send(cfg->spi, &cmd, 1);
     gpioPin_set(&cfg->cs);
 
-    spi_release(cfg->spi);
+    spiBus_release(cfg->spi);
 }
 
 void W25Qx_sleep(const struct nvmDevice *dev)
@@ -117,13 +117,13 @@ void W25Qx_sleep(const struct nvmDevice *dev)
     const struct W25QxCfg *cfg = (const struct W25QxCfg *) dev->priv;
     const uint8_t cmd = CMD_PDWN;
 
-    spi_acquire(cfg->spi);
+    spiBus_lock(cfg->spi);
 
     gpioPin_clear(&cfg->cs);
-    spi_send(cfg->spi, &cmd, 1);
+    spiBus_send(cfg->spi, &cmd, 1);
     gpioPin_set(&cfg->cs);
 
-    spi_release(cfg->spi);
+    spiBus_release(cfg->spi);
 }
 
 static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t address, void *data, size_t len)
@@ -144,14 +144,14 @@ static int nvm_api_readSecReg(const struct nvmDevice *dev, uint32_t address, voi
         0x00                    // Dummy byte
     };
 
-    spi_acquire(cfg->spi);
+    spiBus_lock(cfg->spi);
     gpioPin_clear(&cfg->cs);
 
-    spi_send(cfg->spi, command, sizeof(command));
-    spi_receive(cfg->spi, data, len);
+    spiBus_send(cfg->spi, command, sizeof(command));
+    spiBus_receive(cfg->spi, data, len);
 
     gpioPin_set(&cfg->cs);
-    spi_release(cfg->spi);
+    spiBus_release(cfg->spi);
 
     return 0;
 }
@@ -171,14 +171,14 @@ static int nvm_api_read(const struct nvmDevice *dev, uint32_t offset, void *data
         offset & 0xFF,          // Address low
     };
 
-    spi_acquire(cfg->spi);
+    spiBus_lock(cfg->spi);
     gpioPin_clear(&cfg->cs);
 
-    spi_send(cfg->spi, command, sizeof(command));
-    spi_receive(cfg->spi, data, len);
+    spiBus_send(cfg->spi, command, sizeof(command));
+    spiBus_receive(cfg->spi, data, len);
 
     gpioPin_set(&cfg->cs);
-    spi_release(cfg->spi);
+    spiBus_release(cfg->spi);
 
     return 0;
 }
@@ -191,7 +191,7 @@ static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t si
     if(((offset % SECT_SIZE) != 0) || ((size % SECT_SIZE) != 0))
         return -EINVAL;
 
-    spi_acquire(cfg->spi);
+    spiBus_lock(cfg->spi);
 
     int ret = 0;
     while(size > 0)
@@ -212,7 +212,7 @@ static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t si
         };
 
         gpioPin_clear(&cfg->cs);
-        spi_send(cfg->spi, command, sizeof(command));
+        spiBus_send(cfg->spi, command, sizeof(command));
         gpioPin_set(&cfg->cs);
 
         ret = waitUntilReady(cfg, 500);
@@ -223,7 +223,7 @@ static int nvm_api_erase(const struct nvmDevice *dev, uint32_t offset, size_t si
         offset += SECT_SIZE;
     }
 
-    spi_release(cfg->spi);
+    spiBus_release(cfg->spi);
 
     return ret;
 }
@@ -241,7 +241,7 @@ static ssize_t W25Qx_writePage(const struct nvmDevice *dev, uint32_t addr,
         writeLen = PAGE_SIZE - addrRange;
     }
 
-    spi_acquire(cfg->spi);
+    spiBus_lock(cfg->spi);
 
     // Write enable bit has to be set before each page program
     enableWrite(cfg);
@@ -259,13 +259,13 @@ static ssize_t W25Qx_writePage(const struct nvmDevice *dev, uint32_t addr,
     };
 
     gpioPin_clear(&cfg->cs);
-    spi_send(cfg->spi, command, sizeof(command));
-    spi_send(cfg->spi, buf, writeLen);
+    spiBus_send(cfg->spi, command, sizeof(command));
+    spiBus_send(cfg->spi, buf, writeLen);
     gpioPin_set(&cfg->cs);
 
     // Wait until write terminates, timeout after 500ms.
     int ret = waitUntilReady(cfg, 500);
-    spi_release(cfg->spi);
+    spiBus_release(cfg->spi);
 
     if(ret < 0)
         return (ssize_t) ret;

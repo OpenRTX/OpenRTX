@@ -44,7 +44,7 @@ void SSD1309_init()
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);
-    spi_send(&spi2, init, sizeof(init));
+    spiBus_send(&spi2, init, sizeof(init));
     gpio_setPin(LCD_CS);
 }
 
@@ -54,7 +54,7 @@ void SSD1309_terminate()
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);  /* DC low -> command mode          */
-    spi_send(&spi2, &dispOff, 1);
+    spiBus_send(&spi2, &dispOff, 1);
     gpio_setPin(LCD_CS);
 }
 
@@ -70,7 +70,7 @@ void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
     gpio_clearPin(LCD_DC);
     cmd[0] = 0x20; // Set page addressing mode
     cmd[1] = 0x02;
-    spi_send(&spi2, cmd, 2);
+    spiBus_send(&spi2, cmd, 2);
 
     uint8_t *framebuffer = (uint8_t *)fb;
 
@@ -80,7 +80,7 @@ void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
         cmd[0] = 0xB0 | page;
         cmd[1] = 0x00;
         cmd[1] = 0x10;
-        spi_send(&spi2, cmd, 3);
+        spiBus_send(&spi2, cmd, 3);
         gpio_setPin(LCD_DC); // DC high -> data mode
 
         uint8_t topRow = page * 8;
@@ -96,7 +96,7 @@ void SSD1309_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
                 data |= ((cell >> bit_offset) & 0x01) << row;
             }
 
-            spi_send(&spi2, &data, 1);
+            spiBus_send(&spi2, &data, 1);
         }
     }
 
@@ -116,7 +116,7 @@ void SSD1309_render(void *fb)
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);
-    spi_send(&spi2, cmd, sizeof(cmd));
+    spiBus_send(&spi2, cmd, sizeof(cmd));
     gpio_setPin(LCD_DC); // DC high -> data mode
 
     uint8_t *framebuffer = (uint8_t *)fb;
@@ -136,7 +136,7 @@ void SSD1309_render(void *fb)
                 data |= ((cell >> bit_offset) & 0x01) << subRow;
             }
 
-            spi_send(&spi2, &data, 1);
+            spiBus_send(&spi2, &data, 1);
         }
     }
 
@@ -151,6 +151,6 @@ void SSD1309_setContrast(uint8_t contrast)
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);  /* RS low -> command mode              */
-    spi_send(&spi2, cmd, sizeof(cmd));
+    spiBus_send(&spi2, cmd, sizeof(cmd));
     gpio_setPin(LCD_CS);
 }

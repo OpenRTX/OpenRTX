@@ -54,7 +54,7 @@ void SH110x_init()
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);  /* DC low -> command mode          */
-    spi_send(&spi2, init, sizeof(init));
+    spiBus_send(&spi2, init, sizeof(init));
     gpio_setPin(LCD_CS);
 }
 
@@ -64,7 +64,7 @@ void SH110x_terminate()
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);  /* DC low -> command mode          */
-    spi_send(&spi2, &dispOff, 1);
+    spiBus_send(&spi2, &dispOff, 1);
     gpio_setPin(LCD_CS);
 }
 
@@ -83,11 +83,11 @@ void SH110x_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
             cmd[2] = (0xB0 | x);     /* Set X position         */
 
             gpio_clearPin(LCD_DC);              /* RS low -> command mode */
-            spi_send(&spi2, cmd, sizeof(cmd));
+            spiBus_send(&spi2, cmd, sizeof(cmd));
             gpio_setPin(LCD_DC);                /* RS high -> data mode   */
 
             size_t pos = x + y * (CONFIG_SCREEN_WIDTH/8);
-            spi_send(&spi2, &frameBuffer[pos], 1);
+            spiBus_send(&spi2, &frameBuffer[pos], 1);
         }
     }
 
@@ -107,6 +107,6 @@ void SH110x_setContrast(uint8_t contrast)
 
     gpio_clearPin(LCD_CS);
     gpio_clearPin(LCD_DC);  /* RS low -> command mode              */
-    spi_send(&spi2, cmd, sizeof(cmd));
+    spiBus_send(&spi2, cmd, sizeof(cmd));
     gpio_setPin(LCD_CS);
 }

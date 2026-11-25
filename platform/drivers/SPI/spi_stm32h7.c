@@ -9,7 +9,7 @@
 #include "stm32h7xx.h"
 #include "spi_stm32.h"
 
-static inline uint8_t spi_sendRecv(SPI_TypeDef *spi, const uint8_t val)
+static inline uint8_t spiBus_sendRecv(SPI_TypeDef *spi, const uint8_t val)
 {
     // Of course, setting the SPI frame size is not enough: to actually send
     // 8 bits instead of 32, we have to access the TXDR register with an 8 bit
@@ -167,7 +167,7 @@ int spiStm32_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
     // Send only
     if (rxBuf == NULL) {
         for (size_t i = 0; i < size; i++)
-            spi_sendRecv(spi, txData[i]);
+            spiBus_sendRecv(spi, txData[i]);
 
         return 0;
     }
@@ -175,14 +175,14 @@ int spiStm32_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
     // Receive only
     if (txBuf == NULL) {
         for (size_t i = 0; i < size; i++)
-            rxData[i] = spi_sendRecv(spi, 0x00);
+            rxData[i] = spiBus_sendRecv(spi, 0x00);
 
         return 0;
     }
 
     // Transmit and receive
     for (size_t i = 0; i < size; i++)
-        rxData[i] = spi_sendRecv(spi, txData[i]);
+        rxData[i] = spiBus_sendRecv(spi, txData[i]);
 
     spi->CR1 &= ~SPI_CR1_SPE;
 

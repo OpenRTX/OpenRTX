@@ -49,7 +49,7 @@ int spiBitbang_init(const struct spiCustomDevice *bus)
     const struct spiConfig *cfg = (const struct spiConfig *)bus->priv;
 
     // Basic driver init
-    spi_init((const struct spiBus *)bus);
+    spiBus_init((const struct spiBus *)bus);
 
     // Setup MOSI and clock lines as output, low level
     gpio_setMode(cfg->clk.port, cfg->clk.pin, OUTPUT);
@@ -73,5 +73,5 @@ void spiBitbang_terminate(const struct spiCustomDevice *bus)
     gpio_setMode(cfg->mosi.port, cfg->mosi.pin, INPUT);
 
     // Final driver cleanup
-    spi_terminate((const struct spiBus *)bus);
+    spiBus_terminate((const struct spiBus *)bus);
 }

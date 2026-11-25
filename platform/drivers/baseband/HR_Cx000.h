@@ -189,8 +189,8 @@ public:
         cmd[1] = 0x00;
 
         ScopedChipSelect cs(uSpi, uCs);
-        spi_send(uSpi, cmd, 2);
-        spi_send(uSpi, audio, 64);
+        spiBus_send(uSpi, cmd, 2);
+        spiBus_send(uSpi, audio, 64);
     }
 
 private:
@@ -211,7 +211,7 @@ private:
         data[2] = value;
 
         ScopedChipSelect cs(uSpi, uCs);
-        spi_send(uSpi, data, 3);
+        spiBus_send(uSpi, data, 3);
     }
 
     /**
@@ -231,7 +231,7 @@ private:
         cmd[2] = 0x00;
 
         ScopedChipSelect cs(uSpi, uCs);
-        spi_transfer(uSpi, cmd, ret, 3);
+        spiBus_transfer(uSpi, cmd, ret, 3);
 
         return ret[2];
     }
@@ -246,7 +246,7 @@ private:
     void sendSequence(const uint8_t *seq, const size_t len)
     {
         ScopedChipSelect cs(uSpi, uCs);
-        spi_send(uSpi, seq, len);
+        spiBus_send(uSpi, seq, len);
     }
 
 protected:
