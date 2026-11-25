@@ -153,3 +153,13 @@ target_sources(app
     lib/minmea/minmea.c
     lib/QRCode/qrcode.c
 )
+
+# The FPUs of the supported targets are mostly single precision only. Without
+# -fsingle-precision-constant the double literals are computed by the software
+# floating point routines instead of the FPU, -Wdouble-promotion flags the
+# remaining implicit float to double conversions.
+target_compile_options(app
+  PRIVATE
+    -fsingle-precision-constant
+    -Wdouble-promotion
+)
