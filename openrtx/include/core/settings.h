@@ -45,7 +45,8 @@ typedef struct
     uint8_t vpLevel         : 3,  // Voice prompt level
             vpPhoneticSpell : 1,  // Phonetic spell enabled
             macroMenuLatch  : 1,  // Automatic latch of macro menu
-            _reserved       : 3;
+            m17_chip_modem  : 1,  // M17 through the baseband chip's modem
+            _reserved       : 2;
     bool    m17_can_rx;           // Check M17 CAN on RX
     char    m17_dest[10];         // M17 destination
     bool    showBatteryIcon;      // Battery display true: icon, false: percentage
@@ -73,6 +74,7 @@ static const settings_t default_settings =
     0,                            // Voice prompts off
     0,                            // Phonetic spell off
     1,                            // Automatic latch of macro menu enabled
+    0,                            // M17 through the analog baseband path
     0,                            // not used
     false,                        // Check M17 CAN on RX
     "",                           // Empty M17 destination

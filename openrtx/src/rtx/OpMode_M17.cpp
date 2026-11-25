@@ -28,6 +28,7 @@ using namespace std;
 using namespace M17;
 
 OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
+                           chipModem(false),
                            dataValid(false), extendedCall(false),
                            invertTxPhase(false), invertRxPhase(false)
 {
@@ -91,6 +92,20 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     invertTxPhase = true;
     invertRxPhase = true;
     #endif
+
+    // A modem change takes effect at once: receive again from the new source
+    const bool chip = (status->m17Chip != 0);
+    if(chip != chipModem)
+    {
+        chipModem = chip;
+        if(status->opStatus == RX)
+        {
+            demodulator.stopBasebandSampling();
+            locked  = false;
+            startRx = true;
+            status->opStatus = OFF;
+        }
+    }
 
     // Main FSM logic
     switch(status->opStatus)
@@ -347,7 +362,10 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         codec_startEncode(txAudioPath);
         radio_enableTx();
 
-        modulator.invertPhase(invertTxPhase);
+        // The baseband chip takes symbols, and its own mapping is the right
+        // phase: the inversions are for the analog path
+        modulator.outputSymbols(status->m17Chip);
+        modulator.invertPhase(invertTxPhase && (status->m17Chip == 0));
         modulator.start();
         modulator.sendPreamble();
         modulator.sendFrame(m17Frame);

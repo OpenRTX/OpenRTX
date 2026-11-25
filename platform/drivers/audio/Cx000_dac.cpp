@@ -99,10 +99,16 @@ void Cx000dac_task()
         return;
     }
 
-    // Stream mode: copy a new block of samples, update the read index and
-    // manage thread synchronization.
-    uint8_t *sound = (uint8_t *)(&stream->buffer[readPos]);
-    c6000->sendAudio(sound);
+    // Stream mode: send a new block of samples, in the big endian format the
+    // HR_Cx000 DAC requires, update the read index and manage thread
+    // synchronization. The stream's buffer keeps the native format: swapped
+    // in place by the writer's sync, a half whose writer was late played
+    // unswapped, as noise.
+    uint16_t sound[DAC_FIFO_SIZE];
+    for(size_t i = 0; i < DAC_FIFO_SIZE; i++)
+        sound[i] = __builtin_bswap16(stream->buffer[readPos + i]);
+
+    c6000->sendAudio((uint8_t *) sound);
     readPos += 32;
 
     // For circular buffer mode, check if the half of the buffer has been
@@ -195,13 +201,6 @@ static int Cx000dac_start(const uint8_t instance, const void *config,
     readPos   = 0;
     stream    = ctx;
 
-    // HR_Cx000 DAC requires data to be in big endian format
-    for(size_t i = 0; i < ctx->bufSize; i++)
-    {
-        stream_sample_t tmp = ctx->buffer[i];
-        ctx->buffer[i] = __builtin_bswap16(tmp);
-    }
-
     // Set the "OpenMusic" bit
     c6000->writeCfgRegister(0x06, 0x22);
 
@@ -239,18 +238,7 @@ static int Cx000dac_sync(struct streamCtx *ctx, uint8_t dirty)
     if(ctx->running == 0)
         return -1;
 
-    // HR_Cx000 DAC requires data to be in big endian format
-    if((ctx->bufMode == BUF_CIRC_DOUBLE) && (dirty != 0))
-    {
-        stream_sample_t *ptr;
-        Cx000dac_idleBuf(ctx, &ptr);
-
-        for(size_t i = 0; i < ctx->bufSize/2; i++)
-        {
-            stream_sample_t tmp = ptr[i];
-            ptr[i] = __builtin_bswap16(tmp);
-        }
-    }
+    (void) dirty;
 
     pthread_mutex_lock(&mutex);
 

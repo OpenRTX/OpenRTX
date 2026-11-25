@@ -450,6 +450,10 @@ mduv3x0_src = ['platform/drivers/CPS/cps_io_native_MDUV3x0.c',
                'platform/drivers/backlight/backlight_MDx.c',
                'platform/drivers/chSelector/chSelector_UV3x0.c',
                'platform/drivers/audio/Cx000_dac.cpp',
+               'platform/drivers/audio/C6000_symbols.cpp',
+               'platform/drivers/audio/C6000_fmcopy.cpp',
+               'platform/drivers/audio/C6000_modem.cpp',
+               'platform/drivers/audio/stm32_i2s.cpp',
                'platform/drivers/baseband/radio_UV3x0.cpp',
                'platform/drivers/baseband/AT1846S_UV3x0.cpp',
                'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
@@ -544,6 +548,9 @@ cs7000_src = ['platform/drivers/NVM/nvmem_CS7000.c',
              'platform/drivers/backlight/backlight_CS7000.c',
              'platform/drivers/audio/Cx000_dac.cpp',
              'platform/drivers/audio/audio_CS7000.cpp',
+             'platform/drivers/audio/C6000_symbols.cpp',
+             'platform/drivers/audio/C6000_fmcopy.cpp',
+             'platform/drivers/audio/C6000_modem.cpp',
              'platform/drivers/GPIO/gpio_shiftReg.c',
              'platform/drivers/SPI/spi_custom.c',
              'platform/drivers/SPI/spi_bitbang.c',
@@ -573,6 +580,9 @@ cs7000p_src = ['platform/drivers/NVM/nvmem_CS7000.c',
                'platform/drivers/baseband/SKY72310.c',
                'platform/drivers/audio/Cx000_dac.cpp',
                'platform/drivers/audio/audio_CS7000.cpp',
+               'platform/drivers/audio/C6000_symbols.cpp',
+               'platform/drivers/audio/C6000_fmcopy.cpp',
+               'platform/drivers/audio/C6000_modem.cpp',
                'platform/drivers/stubs/cps_io_stub.c',
                'platform/drivers/display/ST7735R_CS7000.c',
                'platform/drivers/keyboard/keyboard_CS7000.c',
@@ -601,6 +611,10 @@ dm1701_src = ['platform/targets/DM-1701/platform.c',
               'platform/drivers/backlight/backlight_MDx.c',
               'platform/drivers/chSelector/chSelector_UV3x0.c',
               'platform/drivers/audio/Cx000_dac.cpp',
+              'platform/drivers/audio/C6000_symbols.cpp',
+              'platform/drivers/audio/C6000_fmcopy.cpp',
+              'platform/drivers/audio/C6000_modem.cpp',
+              'platform/drivers/audio/stm32_i2s.cpp',
               'platform/drivers/baseband/radio_UV3x0.cpp',
               'platform/drivers/baseband/AT1846S_UV3x0.cpp',
               'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
@@ -1238,6 +1252,10 @@ dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
 
+dsp_lowpass_test = executable('dsp_lowpass_test',
+                              sources : unit_test_src + ['tests/unit/dsp_lowpass.cpp'],
+                              kwargs  : unit_test_opts)
+
 dsp_dcblock_test = executable('dsp_dcblock_test',
                               sources : unit_test_src + ['tests/unit/dsp_dcblock.cpp'],
                               kwargs  : unit_test_opts)
@@ -1288,6 +1306,7 @@ test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('M17 Frame Decoder Test', m17_decoder_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
+test('DSP Low Pass Decimator Test', dsp_lowpass_test)
 test('DSP DC Block Test',    dsp_dcblock_test)
 test('GFX Text Test',        gfx_text_test)
 test('S-Level Test', slevel_test)

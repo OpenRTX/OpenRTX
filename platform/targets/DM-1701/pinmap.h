@@ -65,6 +65,7 @@
 /* Audio control */
 #define AUDIO_AMP_EN GPIOB,9
 #define SPK_MUTE     GPIOB,8
+#define RX_AUDIO_MUX GPIOD,9
 #define MIC_PWR      GPIOA,13
 
 /* RTX stage control */
@@ -85,5 +86,12 @@
 #define DMR_CLK   GPIOE,3
 #define DMR_MOSI  GPIOE,4
 #define DMR_MISO  GPIOE,5
+#define DMR_TS_INT  GPIOC,0 /* Timeslot interrupt */
+#define DMR_SYS_INT GPIOC,1 /* System interrupt */
+
+/* HR_C6000 codec audio interface, the codec drives the clocks */
+#define I2S3_WS GPIOA,15
+#define I2S3_CK GPIOC,10
+#define I2S3_SD GPIOC,12 /* Microphone, codec to MCU */
 
 #endif /* PINMAP_H */

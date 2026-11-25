@@ -83,6 +83,15 @@ public:
      */
     void invertPhase(const bool status);
 
+    /**
+     * Send one sample per symbol, at the symbol rate, instead of the
+     * RRC-filtered baseband: for radios that shape and modulate the symbols
+     * themselves. Takes effect at the next start().
+     *
+     * @param status: if set to true symbols are sent.
+     */
+    void outputSymbols(const bool status);
+
 private:
 
     /**
@@ -109,6 +118,7 @@ private:
     pathId                       outPath;          ///< Baseband output path ID.
     bool                         txRunning;        ///< Transmission running.
     bool                         invPhase;        ///< Invert signal phase
+    bool                         symbolOut;       ///< Send symbols, not baseband
 
     #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     PwmCompensator pwmComp;
