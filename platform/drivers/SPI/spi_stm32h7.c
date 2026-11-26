@@ -154,8 +154,8 @@ void spiStm32_terminate(const struct spiBus *bus)
         pthread_mutex_destroy((pthread_mutex_t *)bus->mutex);
 }
 
-int spiStm32_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
-                      const size_t size)
+static int transfer_impl(const struct spiBus *bus, const void *txBuf,
+                         void *rxBuf, const size_t size)
 {
     SPI_TypeDef *spi = (SPI_TypeDef *)bus->priv;
     uint8_t *rxData = (uint8_t *)rxBuf;
@@ -164,23 +164,6 @@ int spiStm32_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
     spi->CR1 |= SPI_CR1_SPE;
     spi->CR1 |= SPI_CR1_CSTART;
 
-    // Send only
-    if (rxBuf == NULL) {
-        for (size_t i = 0; i < size; i++)
-            spiBus_sendRecv(spi, txData[i]);
-
-        return 0;
-    }
-
-    // Receive only
-    if (txBuf == NULL) {
-        for (size_t i = 0; i < size; i++)
-            rxData[i] = spiBus_sendRecv(spi, 0x00);
-
-        return 0;
-    }
-
-    // Transmit and receive
     for (size_t i = 0; i < size; i++)
         rxData[i] = spiBus_sendRecv(spi, txData[i]);
 
@@ -188,3 +171,43 @@ int spiStm32_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
 
     return 0;
 }
+
+static int send_impl(const struct spiBus *bus, const void *txBuf,
+                     const size_t size)
+{
+    SPI_TypeDef *spi = (SPI_TypeDef *)bus->priv;
+    const uint8_t *txData = (const uint8_t *)txBuf;
+
+    spi->CR1 |= SPI_CR1_SPE;
+    spi->CR1 |= SPI_CR1_CSTART;
+
+    for (size_t i = 0; i < size; i++)
+        spiBus_sendRecv(spi, txData[i]);
+
+    spi->CR1 &= ~SPI_CR1_SPE;
+
+    return 0;
+}
+
+static int receive_impl(const struct spiBus *bus, void *rxBuf,
+                        const size_t size)
+{
+    SPI_TypeDef *spi = (SPI_TypeDef *)bus->priv;
+    uint8_t *rxData = (uint8_t *)rxBuf;
+
+    spi->CR1 |= SPI_CR1_SPE;
+    spi->CR1 |= SPI_CR1_CSTART;
+
+    for (size_t i = 0; i < size; i++)
+        rxData[i] = spiBus_sendRecv(spi, 0x00);
+
+    spi->CR1 &= ~SPI_CR1_SPE;
+
+    return 0;
+}
+
+const struct spiOps stm32_spi_ops = {
+    .transfer = transfer_impl,
+    .send = send_impl,
+    .receive = receive_impl,
+};

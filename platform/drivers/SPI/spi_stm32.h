@@ -14,20 +14,15 @@ extern "C" {
 #endif
 
 /**
- *  Instantiate an STM32 SPI master device.
+ *  Instantiate an STM32 SPI bus.
  *
  * @param name: device name.
  * @param peripheral: underlying MCU peripheral.
  * @param mutx: pointer to mutex, or NULL.
  */
-#define SPI_STM32_DEVICE_DEFINE(name, peripheral, mutx)                       \
-    extern int spiStm32_transfer(const struct spiBus *bus, const void *txBuf, \
-                                 void *rxBuf, const size_t size);             \
-    const struct spiBus name = {                                              \
-        .transfer = &spiStm32_transfer,                                       \
-        .priv = peripheral,                                                   \
-        .mutex = mutx,                                                        \
-    };
+#define STM32_SPI_BUS_DEFINE(name, peripheral, mutx) \
+    extern const struct spiOps stm32_spi_ops;        \
+    SPI_BUS_DEFINE(name, &stm32_spi_ops, peripheral, mutx)
 
 /**
  * Initialise an SPI peripheral and driver.

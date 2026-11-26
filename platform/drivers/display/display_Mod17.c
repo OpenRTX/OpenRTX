@@ -15,7 +15,7 @@
 #include "SH110x_Mod17.h"
 #include "SSD1309_Mod17.h"
 
-SPI_STM32_DEVICE_DEFINE(spi2, SPI2, NULL)
+STM32_SPI_BUS_DEFINE(spi2, SPI2, NULL);
 
 struct displayFuncs
 {

@@ -27,7 +27,7 @@ static void gpsDisable(void *priv)
 static pthread_mutex_t spi2Mutex;
 static pthread_mutex_t adcMutex;
 
-SPI_STM32_DEVICE_DEFINE(spi2, SPI2, &spi2Mutex)
+STM32_SPI_BUS_DEFINE(spi2, SPI2, &spi2Mutex)
 ADC_STM32_DEVICE_DEFINE(adc1, ADC1, &adcMutex, ADC_COUNTS_TO_UV(3300000, 12))
 
 const struct gpsDevice gps =
