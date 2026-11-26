@@ -28,24 +28,49 @@ enum SPIFlags {
 struct spiBus;
 
 /**
- * Transfer data on the SPI bus.
- *
- * @param bus: SPI device handle.
- * @param txBuf: pointer to TX buffer, can be NULL.
- * @param rxBuf: pointer to RX buffer, can be NULL.
- * @param size: number of bytes to transfer.
- * @return zero on success, a negative error code otherwise.
+ * SPI bus access API
  */
-typedef int (*spi_transfer_impl)(const struct spiBus *bus, const void *txBuf,
-                                 void *rxBuf, const size_t size);
+struct spiOps {
+    /**
+     * Transfer data on the SPI bus.
+     *
+     * @param bus: SPI device handle.
+     * @param txBuf: pointer to TX buffer, can be NULL.
+     * @param rxBuf: pointer to RX buffer, can be NULL.
+     * @param size: number of bytes to transfer.
+     * @return zero on success, a negative error code otherwise.
+     */
+    int (*transfer)(const struct spiBus *bus, const void *txBuf, void *rxBuf,
+                    const size_t size);
+
+    /**
+     * Transmit data on the SPI bus.
+     *
+     * @param bus: SPI device handle.
+     * @param txBuf: pointer to TX buffer, can be NULL.
+     * @param size: number of bytes to transfer.
+     * @return zero on success, a negative error code otherwise.
+     */
+    int (*send)(const struct spiBus *bus, const void *txBuf, const size_t size);
+
+    /**
+     * Receive data from the SPI bus.
+     *
+     * @param bus: SPI device handle.
+     * @param rxBuf: pointer to RX buffer, can be NULL.
+     * @param size: number of bytes to transfer.
+     * @return zero on success, a negative error code otherwise.
+     */
+    int (*receive)(const struct spiBus *bus, void *rxBuf, const size_t size);
+};
 
 /**
  * SPI bus descriptor.
  */
 struct spiBus {
-    spi_transfer_impl transfer; ///< Implementation of the SPI transfer function
-    const void *priv;           ///< Pointer to device driver private data
-    pthread_mutex_t *mutex;     ///< Pointer to mutex for exclusive access
+    const void *priv;         ///< Pointer to device driver private data
+    const struct spiOps *ops; ///< Bus access functions
+    pthread_mutex_t *mutex;   ///< Pointer to mutex for exclusive access
 };
 
 /**
@@ -124,7 +149,7 @@ static inline int spiBus_release(const struct spiBus *bus)
 static inline int spiBus_transfer(const struct spiBus *bus, const void *txBuf,
                                   void *rxBuf, const size_t size)
 {
-    return bus->transfer(bus, txBuf, rxBuf, size);
+    return bus->ops->transfer(bus, txBuf, rxBuf, size);
 }
 
 /**
@@ -137,7 +162,7 @@ static inline int spiBus_transfer(const struct spiBus *bus, const void *txBuf,
 static inline int spiBus_send(const struct spiBus *bus, const void *txBuf,
                               const size_t txSize)
 {
-    return bus->transfer(bus, txBuf, NULL, txSize);
+    return bus->ops->send(bus, txBuf, txSize);
 }
 
 /**
@@ -150,7 +175,7 @@ static inline int spiBus_send(const struct spiBus *bus, const void *txBuf,
 static inline int spiBus_receive(const struct spiBus *bus, void *rxBuf,
                                  const size_t rxSize)
 {
-    return bus->transfer(bus, NULL, rxBuf, rxSize);
+    return bus->ops->receive(bus, rxBuf, rxSize);
 }
 
 #ifdef __cplusplus
