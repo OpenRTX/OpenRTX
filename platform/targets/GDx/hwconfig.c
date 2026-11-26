@@ -19,4 +19,4 @@ static const struct spiConfig spiFlashCfg =
 };
 
 SPI_BITBANG_DEVICE_DEFINE(nvm_spi, spiFlashCfg, NULL)
-SPI_MK22_DEVICE_DEFINE(c6000_spi, SPI0, NULL)
+MK22_SPI_BUS_DEFINE(c6000_spi, SPI0, NULL);

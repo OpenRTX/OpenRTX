@@ -100,32 +100,47 @@ void spiMk22_terminate(const struct spiBus *bus)
         pthread_mutex_destroy((pthread_mutex_t *)bus->mutex);
 }
 
-int spiMk22_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
+static int transfer_impl(const struct spiBus *bus, const void *txBuf,
+                         void *rxBuf, const size_t size)
+{
+    SPI_Type *spi = (SPI_Type *)bus->priv;
+    uint8_t *rxData = (uint8_t *)rxBuf;
+    const uint8_t *txData = (const uint8_t *)txBuf;
+
+    for (size_t i = 0; i < size; i++)
+        rxData[i] = spiBus_sendRecv(spi, txData[i]);
+
+    return 0;
+}
+
+static int send_impl(const struct spiBus *bus, const void *txBuf,
                      const size_t size)
 {
     SPI_Type *spi = (SPI_Type *)bus->priv;
     uint8_t *rxData = (uint8_t *)rxBuf;
     const uint8_t *txData = (const uint8_t *)txBuf;
 
-    // Send only
-    if (rxBuf == NULL) {
-        for (size_t i = 0; i < size; i++)
-            spiBus_sendRecv(spi, txData[i]);
-
-        return 0;
-    }
-
-    // Receive only
-    if (txBuf == NULL) {
-        for (size_t i = 0; i < size; i++)
-            rxData[i] = spiBus_sendRecv(spi, 0x00);
-
-        return 0;
-    }
-
-    // Transmit and receive
     for (size_t i = 0; i < size; i++)
-        rxData[i] = spiBus_sendRecv(spi, txData[i]);
+        spiBus_sendRecv(spi, txData[i]);
 
     return 0;
 }
+
+static int receive_impl(const struct spiBus *bus, void *rxBuf,
+                        const size_t size)
+{
+    SPI_Type *spi = (SPI_Type *)bus->priv;
+    uint8_t *rxData = (uint8_t *)rxBuf;
+    const uint8_t *txData = (const uint8_t *)txBuf;
+
+    for (size_t i = 0; i < size; i++)
+        rxData[i] = spiBus_sendRecv(spi, 0x00);
+
+    return 0;
+}
+
+const struct spiOps mk22_spi_ops = {
+    .transfer = transfer_impl,
+    .send = send_impl,
+    .receive = receive_impl,
+};

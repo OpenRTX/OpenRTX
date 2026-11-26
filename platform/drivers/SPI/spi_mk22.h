@@ -14,20 +14,15 @@ extern "C" {
 #endif
 
 /**
- *  Instantiate an MK22 SPI master device.
+ *  Instantiate an MK22 SPI bus.
  *
- * @param name: device name.
+ * @param name: bus name.
  * @param peripheral: underlying MCU peripheral.
  * @param mutx: pointer to mutex, or NULL.
  */
-#define SPI_MK22_DEVICE_DEFINE(name, peripheral, mutx)                       \
-    extern int spiMk22_transfer(const struct spiBus *bus, const void *txBuf, \
-                                void *rxBuf, const size_t size);             \
-    const struct spiBus name = {                                             \
-        .transfer = &spiMk22_transfer,                                       \
-        .priv = peripheral,                                                  \
-        .mutex = mutx,                                                       \
-    };
+#define MK22_SPI_BUS_DEFINE(name, peripheral, mutx) \
+    extern const struct spiOps mk22_spi_ops;        \
+    SPI_BUS_DEFINE(name, &mk22_spi_ops, peripheral, mutx)
 
 /**
  * Initialise an SPI peripheral and driver.
