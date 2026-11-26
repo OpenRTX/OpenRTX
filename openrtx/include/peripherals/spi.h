@@ -74,6 +74,21 @@ struct spiBus {
 };
 
 /**
+ *  Instantiate a SPI bus.
+ *
+ * @param name: bus name.
+ * @param _ops: pointer to bus access API.
+ * @param _priv: pointer to driver private data.
+ * @param _mutex: pointer to mutex, or NULL.
+ */
+#define SPI_BUS_DEFINE(name, _ops, _priv, _mutex) \
+    const struct spiBus name = {                  \
+        .priv = _priv,                            \
+        .ops = _ops,                              \
+        .mutex = _mutex,                          \
+    }
+
+/**
  * Perform basic initialization of a generic SPI device.
  *
  * @param bus: pointer to bus descriptor.
