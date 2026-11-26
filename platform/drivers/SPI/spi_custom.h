@@ -19,52 +19,34 @@ extern "C" {
  * an high-performance bitbanging routine.
  */
 
-/**
- * Transfer single byte on the SPI bus.
- *
- * @param bus: SPI device handle.
- * @param tx: byte to be sent.
- * @return byte received from remote device.
- */
-typedef uint8_t (*spi_func)(const void *priv, uint8_t tx);
+#define to_custom_spi(x) ((const struct spiBusCustom *)x)
 
 /**
- * Implementation of the SPI transfer function.
- *
- * @param bus: SPI device handle.
- * @param txBuf: pointer to TX buffer, can be NULL.
- * @param rxBuf: pointer to RX buffer, can be NULL.
- * @param size: number of bytes to transfer.
- * @return zero on success, a negative error code otherwise.
+ * Custom SPI bus descriptor.
  */
-int spiCustom_transfer(const struct spiBus *bus, const void *txBuf, void *rxBuf,
-                       const size_t size);
-
-/**
- * Custom SPI device descriptor.
- */
-struct spiCustomDevice {
-    spi_transfer_impl transfer; ///< Implementation of the SPI transfer function
-    const void *priv;           ///< Pointer to device driver private data
-    pthread_mutex_t *mutex;     ///< Pointer to mutex for exclusive access
-    spi_func spiFunc;           ///< Pointer to driver configuration data.
+struct spiBusCustom {
+    const void *priv;
+    const struct spiOps *ops;
+    pthread_mutex_t *mutex;
+    uint8_t (*spi_func)(const void *priv, uint8_t tx);
 };
 
 /**
- *  Instantiate a custom SPI device.
+ *  Instantiate a custom SPI bus.
  *
- * @param name: device name.
+ * @param name: bus name.
  * @param impl: user-provided implementation of the single byte transfer function.
  * @param args: pointer to user-defined arguments.
  * @param mutx: pointer to mutex, or NULL.
  */
-#define SPI_CUSTOM_DEVICE_DEFINE(name, impl, args, mutx) \
-    const struct spiCustomDevice name = {                \
-        .transfer = spiCustom_transfer,                  \
-        .priv = args,                                    \
-        .mutex = mutx,                                   \
-        .spiFunc = impl,                                 \
-    };
+#define CUSTOM_SPI_BUS_DEFINE(name, impl, args, mutx) \
+    extern const struct spiOps custom_spi_ops;        \
+    const struct spiBusCustom name = {                \
+        .priv = args,                                 \
+        .ops = &custom_spi_ops,                       \
+        .mutex = mutx,                                \
+        .spi_func = impl,                             \
+    }
 
 #ifdef __cplusplus
 }

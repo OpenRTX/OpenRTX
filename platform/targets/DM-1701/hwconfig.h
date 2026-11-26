@@ -26,7 +26,7 @@ enum AdcChannel {
     ADC_MIC_CH = 3,
 };
 
-extern const struct spiCustomDevice c6000_spi;
+extern const struct spiBusCustom c6000_spi;
 extern const struct spiBus nvm_spi;
 extern const struct Adc adc1;
 

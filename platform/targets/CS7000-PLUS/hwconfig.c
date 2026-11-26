@@ -81,7 +81,7 @@ static const struct gpioPin shiftRegStrobe = { GPIOEXT_STR };
 static pthread_mutex_t adc1Mutex;
 static pthread_mutex_t c6000_mutex;
 
-SPI_CUSTOM_DEVICE_DEFINE(spiSr, spiSr_func, NULL, NULL)
+CUSTOM_SPI_BUS_DEFINE(spiSr, spiSr_func, NULL, NULL);
 SPI_BITBANG_DEVICE_DEFINE(det_spi, spiDetCfg, NULL)
 SPI_BITBANG_DEVICE_DEFINE(pll_spi, spiPllCfg, NULL)
 STM32_SPI_BUS_DEFINE(flash_spi, SPI4, NULL);
