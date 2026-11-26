@@ -1238,6 +1238,10 @@ dsp_oversampling_test = executable('dsp_oversampling_test',
                                     sources : unit_test_src + ['tests/unit/dsp_oversampling.cpp'],
                                     kwargs  : unit_test_opts)
 
+dsp_lowpass_test = executable('dsp_lowpass_test',
+                              sources : unit_test_src + ['tests/unit/dsp_lowpass.cpp'],
+                              kwargs  : unit_test_opts)
+
 dsp_dcblock_test = executable('dsp_dcblock_test',
                               sources : unit_test_src + ['tests/unit/dsp_dcblock.cpp'],
                               kwargs  : unit_test_opts)
@@ -1288,6 +1292,7 @@ test('UI Check Standby Test', ui_check_standby_test)
 test('M17 Packet Frame Test', m17_packet_test)
 test('M17 Frame Decoder Test', m17_decoder_test)
 test('DSP Oversampling Test', dsp_oversampling_test)
+test('DSP Low Pass Decimator Test', dsp_lowpass_test)
 test('DSP DC Block Test',    dsp_dcblock_test)
 test('GFX Text Test',        gfx_text_test)
 test('S-Level Test', slevel_test)
