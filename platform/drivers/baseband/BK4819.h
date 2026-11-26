@@ -183,6 +183,24 @@ void bk4819_enableTx(const struct BK4819 *dev);
 void bk4819_disableRtx(const struct BK4819 *dev);
 
 /**
+ * Transmit a tone instead of the microphone, as for the 1750 Hz tone burst,
+ * once transmission is on.
+ *
+ * @param dev: pointer to device data.
+ * @param freq: tone frequency, in Hz.
+ * @param gain: tone 1 tuning gain (REG_70), 0 to 127, which sets its
+ * deviation.
+ */
+void bk4819_enableTxTone(const struct BK4819 *dev, uint16_t freq, uint8_t gain);
+
+/**
+ * Stop the tone generator. bk4819_enableTx() brings the microphone back.
+ *
+ * @param dev: pointer to device data.
+ */
+void bk4819_disableTxTone(const struct BK4819 *dev);
+
+/**
  * Select the AM or FM demodulator.
  *
  * @param dev: pointer to device data.

@@ -31,6 +31,10 @@ static enum opmode radioMode;     // Current operating mode
  */
 static constexpr uint8_t CTCSS_TX_GAIN = 65;
 
+// Use the same gain as the CTCSS tone for the tone burst
+static constexpr uint16_t TONE_BURST_FREQ = 1750;
+static constexpr uint8_t TONE_BURST_GAIN = 65;
+
 /*
  * C62 BK4819 settings for M17, on top of the audio bypass mode, from the
  * A36Plus profile: https://wiki.m17foundation.org/index.php?title=A36Plus
@@ -207,12 +211,20 @@ void radio_enableTx()
     set_tx_power(config->txPower);
 
     bk4819_enableTx(&c62_bk4819);
+
+    // Tone burst in place of the microphone, while the UI asks for it
+    if ((radioMode == OPMODE_FM) && config->toneEn)
+        bk4819_enableTxTone(&c62_bk4819, TONE_BURST_FREQ, TONE_BURST_GAIN);
+    else
+        bk4819_disableTxTone(&c62_bk4819);
+
     radioStatus = TX;
 }
 
 void radio_disableRtx()
 {
     bk4819_disableCtdcss(&c62_bk4819);
+    bk4819_disableTxTone(&c62_bk4819);
 
     gpioDev_clear(LNA_VHF_EN);
     gpioDev_clear(LNA_UHF_EN);
