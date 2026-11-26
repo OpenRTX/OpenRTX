@@ -27,6 +27,6 @@ const struct spiConfig spi_flash_config = {
     .flags = 0,
 };
 
-SPI_BITBANG_DEVICE_DEFINE(display_spi, spi_display_config, NULL)
-SPI_BITBANG_DEVICE_DEFINE(flash_spi, spi_flash_config, NULL)
+BITBANG_SPI_BUS_DEFINE(display_spi, spi_display_config, NULL);
+BITBANG_SPI_BUS_DEFINE(flash_spi, spi_flash_config, NULL);
 ADC_AT32_DEVICE_DEFINE(adc1, ADC1, &adcMutex, 3300000)

@@ -33,20 +33,15 @@ struct spiConfig {
 };
 
 /**
- *  Instantiate an SPI bitbang device.
+ *  Instantiate an SPI bitbang bus.
  *
- * @param name: device name.
+ * @param name: bus name.
  * @param cfg: driver configuration data.
  * @param mutx: pointer to mutex, or NULL.
  */
-#define SPI_BITBANG_DEVICE_DEFINE(name, cfg, mutx)               \
+#define BITBANG_SPI_BUS_DEFINE(name, cfg, mutx)                  \
     uint8_t spiBitbang_sendRecv(const void *priv, uint8_t data); \
-    const struct spiCustomDevice name = {                        \
-        .transfer = spiCustom_transfer,                          \
-        .priv = &cfg,                                            \
-        .mutex = mutx,                                           \
-        .spiFunc = spiBitbang_sendRecv,                          \
-    };
+    CUSTOM_SPI_BUS_DEFINE(name, spiBitbang_sendRecv, &cfg, mutx)
 
 /**
  * Initialise a bitbang SPI driver.
@@ -54,14 +49,14 @@ struct spiConfig {
  * @param bus: SPI bitbang device descriptor.
  * @return zero on success, a negative error code otherwise.
  */
-int spiBitbang_init(const struct spiCustomDevice *bus);
+int spiBitbang_init(const struct spiBusCustom *bus);
 
 /**
  * Shut down a bitbang SPI driver.
  *
  * @param bus: SPI bitbang device descriptor.
  */
-void spiBitbang_terminate(const struct spiCustomDevice *bus);
+void spiBitbang_terminate(const struct spiBusCustom *bus);
 
 #ifdef __cplusplus
 }

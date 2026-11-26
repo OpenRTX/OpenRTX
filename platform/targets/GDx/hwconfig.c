@@ -5,7 +5,6 @@
  */
 
 #include "drivers/SPI/spi_bitbang.h"
-#include "drivers/SPI/spi_custom.h"
 #include "drivers/SPI/spi_mk22.h"
 #include "hwconfig.h"
 
@@ -18,5 +17,5 @@ static const struct spiConfig spiFlashCfg =
     .flags     = 0
 };
 
-SPI_BITBANG_DEVICE_DEFINE(nvm_spi, spiFlashCfg, NULL)
+BITBANG_SPI_BUS_DEFINE(nvm_spi, spiFlashCfg, NULL);
 MK22_SPI_BUS_DEFINE(c6000_spi, SPI0, NULL);

@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-extern const struct spiCustomDevice nvm_spi;
+extern const struct spiBus nvm_spi;
 extern const struct spiBus c6000_spi;
 
 /* Screen dimensions */

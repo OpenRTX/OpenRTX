@@ -14,8 +14,8 @@ enum adcChannel {
     ADC_VBAT_CH = 20,
 };
 
-extern const struct spiCustomDevice display_spi;
-extern const struct spiCustomDevice flash_spi;
+extern const struct spiBus display_spi;
+extern const struct spiBus flash_spi;
 extern const struct Adc adc1;
 
 /* Screen dimensions */

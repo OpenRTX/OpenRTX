@@ -44,7 +44,7 @@ uint8_t spiBitbang_sendRecv(const void *priv, uint8_t data)
     return incoming;
 }
 
-int spiBitbang_init(const struct spiCustomDevice *bus)
+int spiBitbang_init(const struct spiBusCustom *bus)
 {
     const struct spiConfig *cfg = (const struct spiConfig *)bus->priv;
 
@@ -64,7 +64,7 @@ int spiBitbang_init(const struct spiCustomDevice *bus)
     return 0;
 }
 
-void spiBitbang_terminate(const struct spiCustomDevice *bus)
+void spiBitbang_terminate(const struct spiBusCustom *bus)
 {
     const struct spiConfig *cfg = (const struct spiConfig *)bus->priv;
 

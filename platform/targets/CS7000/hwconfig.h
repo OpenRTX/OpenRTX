@@ -31,9 +31,9 @@ enum AdcChannels {
 
 extern const struct Adc adc1;
 extern const struct spiBusCustom spiSr;
-extern const struct spiCustomDevice flash_spi;
-extern const struct spiCustomDevice det_spi;
-extern const struct spiCustomDevice pll_spi;
+extern const struct spiBusCustom flash_spi;
+extern const struct spiBusCustom det_spi;
+extern const struct spiBusCustom pll_spi;
 extern const struct spiBus c6000_spi;
 extern const struct gpioDev extGpio;
 extern const struct ak2365a detector;
