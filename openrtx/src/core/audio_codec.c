@@ -34,6 +34,18 @@
 #define CONFIG_MIC_OVERSAMPLE 1
 #endif
 
+#ifdef CONFIG_MIC_AGC
+// Speech level the mic AGC aims at, inside codec2 3200's best range and at
+// its louder end, which listeners at a fixed volume prefer
+#define MIC_AGC_TARGET_DB -18.0f
+
+// Kept across transmissions, so each one starts at the gain the last ended
+// on, with the noise floor found again; reset when the encoder next starts
+// after codec_init()
+static struct agc micAgc;
+static bool micAgcReset;
+#endif
+
 static pathId audioPath;
 
 static uint8_t initCnt = 0;
@@ -60,6 +72,9 @@ void codec_init()
 {
     pthread_mutex_lock(&init_mutex);
     initCnt += 1;
+#ifdef CONFIG_MIC_AGC
+    micAgcReset = true;
+#endif
     pthread_mutex_unlock(&init_mutex);
 
     if (initCnt > 0)
@@ -182,7 +197,13 @@ static void *encodeFunc(void *arg)
     pathId iPath = *((pathId *)arg);
     struct CODEC2 *codec2;
     struct dcBlock dcBlock;
-    struct decimatorState decimator;
+
+#if CONFIG_MIC_OVERSAMPLE > 1
+    // Decimate through a low pass filter, so mic audio above 4 kHz does not
+    // fold into the band. Set up first: the exit path terminates it.
+    struct lowPassDecimator lowPass;
+    const int lowPassErr = dsp_lowPassInit(&lowPass, CONFIG_MIC_OVERSAMPLE);
+#endif
 
     // Allocate on the heap, as the stack isn't big enough for oversampling
     // above 2 or so.
@@ -190,6 +211,11 @@ static void *encodeFunc(void *arg)
                                      * sizeof(stream_sample_t));
     if (adcBuf == NULL)
         goto exit;
+
+#if CONFIG_MIC_OVERSAMPLE > 1
+    if (lowPassErr < 0)
+        goto exit;
+#endif
 
     iStream = audioStream_start(iPath, adcBuf,
                                 DMA_BUF_SAMPLES * CONFIG_MIC_OVERSAMPLE,
@@ -199,7 +225,6 @@ static void *encodeFunc(void *arg)
         goto exit;
 
     dsp_resetState(dcBlock);
-    dsp_resetState(decimator);
     codec2 = codec2_create(CODEC2_MODE_3200);
 
     while (reqStop == false) {
@@ -214,19 +239,28 @@ static void *encodeFunc(void *arg)
         // Each inputStream_getData call returns exactly
         // CODEC2_FRAME_SAMPLES * CONFIG_MIC_OVERSAMPLE raw samples
         // (one half of the double-buffered DMA transfer).  Decimate
-        // by averaging each group of CONFIG_MIC_OVERSAMPLE samples.
+        // by CONFIG_MIC_OVERSAMPLE.
         size_t outIdx = 0;
         for (size_t i = 0; i < audio.len; i++) {
             int16_t sample = audio.data[i];
 
 #if CONFIG_MIC_OVERSAMPLE > 1
-            if (!dsp_decimator(&decimator, &sample, CONFIG_MIC_OVERSAMPLE))
+            if (!dsp_lowPassDecimate(&lowPass, &sample))
                 continue;
 #endif
 
             sample = dsp_dcBlockFilter(&dcBlock, sample);
+#ifdef CONFIG_MIC_AGC
+            // The AGC applies the mic gain, without saturating
+            audio.data[outIdx++] = sample;
+#else
             audio.data[outIdx++] = s16_mulSat(sample, CONFIG_MIC_GAIN);
+#endif
         }
+
+#ifdef CONFIG_MIC_AGC
+        dsp_agcProcess(&micAgc, audio.data, outIdx);
+#endif
 
         // CODEC2 encodes 160 speech samples (20 ms), into 8 bytes: here we
         // write the new encoded data into a buffer of 16 bytes, writing the
@@ -258,6 +292,9 @@ static void *encodeFunc(void *arg)
     codec2_destroy(codec2);
 
 exit:
+#if CONFIG_MIC_OVERSAMPLE > 1
+    dsp_lowPassTerminate(&lowPass);
+#endif
     free(adcBuf);
 
     // In case thread terminates due to invalid path or stream error, detach it
@@ -380,6 +417,18 @@ static bool startThread(const pathId path, void *(*func)(void *))
 
     running = true;
     audioPath = path;
+
+#ifdef CONFIG_MIC_AGC
+    // No encoder is running here: the previous one, if any, has finished
+    if (func == encodeFunc) {
+        if (micAgcReset)
+            dsp_agcInit(&micAgc, MIC_AGC_TARGET_DB, CONFIG_MIC_GAIN / 32768.0f);
+        else
+            dsp_agcRestart(&micAgc);
+
+        micAgcReset = false;
+    }
+#endif
     pthread_mutex_unlock(&init_mutex);
 
     readPos = 0;
