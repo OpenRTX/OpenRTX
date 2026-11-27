@@ -10,13 +10,9 @@
 #include "NoisyChannel.hpp"
 
 NoisyChannel::NoisyChannel(const uint32_t rate, const uint32_t seed,
-                           const float idleRms, const float signalRms)
-    : sampleRate(rate)
-    , idleRms(idleRms)
-    , signalRms(signalRms)
-    , rng(seed)
-    , spare(0.0f)
-    , haveSpare(false)
+                           const float idleRms, const float signalRms) :
+    sampleRate(rate), idleRms(idleRms), signalRms(signalRms), rng(seed),
+    spare(0.0f), haveSpare(false)
 {
 }
 
