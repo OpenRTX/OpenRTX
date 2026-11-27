@@ -152,15 +152,14 @@ struct agc {
     float floorDb;                 ///< Noise floor before the AGC
     float winMin[DSP_AGC_WINDOWS]; ///< Quietest block of each recent window
     uint16_t winCount;             ///< Blocks into the current window
-    uint16_t run;                  ///< Consecutive blocks above the gate
+    uint16_t run;                  ///< Blocks above the gate, up to confirmed
     uint16_t acquire;              ///< Blocks left of faster rise
 };
 
 /**
- * Initialise an automatic gain control at a starting gain, as if the last
- * speech had needed it. During its first second of speech the gain may rise
- * faster than afterwards, so that the first transmission settles quickly; a
- * start near a radio's usual talker saves even that rise.
+ * Initialise an automatic gain control at 0 dB gain. During its first second
+ * of speech the gain may rise faster than afterwards, so that the first
+ * transmission settles quickly.
  *
  * @param agc: pointer to the AGC state.
  * @param targetDb: speech level to aim at, in dBFS. The level estimate rises
@@ -168,10 +167,8 @@ struct agc {
  * RMS settles about 3 dB under the target.
  * @param baseGain: fixed gain applied to the samples before the AGC's own,
  * in units of full scale per sample (for example, mic gain / 32768).
- * @param startGainDb: the AGC's own gain to start at, in dB.
  */
-void dsp_agcInit(struct agc *agc, float targetDb, float baseGain,
-                 float startGainDb);
+void dsp_agcInit(struct agc *agc, float targetDb, float baseGain);
 
 /**
  * Start a new transmission: forget the noise floor, which may have changed

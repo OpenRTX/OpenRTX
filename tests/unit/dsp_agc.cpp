@@ -120,7 +120,7 @@ TEST_CASE("AGC brings speech of any level to the target", "[dsp][agc]")
     // arrives over full scale
     for (float level : { -40.0f, -30.0f, -18.0f, -6.0f, 10.0f }) {
         struct agc agc;
-        dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+        dsp_agcInit(&agc, TARGET, BASE);
 
         size_t phase = 0;
         uint32_t seed = 1;
@@ -132,7 +132,7 @@ TEST_CASE("AGC brings speech of any level to the target", "[dsp][agc]")
 TEST_CASE("AGC limits every sample under -1 dBFS", "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     // A sudden full-scale burst after settling on a quiet talker
     float peak;
@@ -147,7 +147,7 @@ TEST_CASE("AGC limits every sample under -1 dBFS", "[dsp][agc]")
 TEST_CASE("AGC holds the gain through a pause", "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     size_t phase = 0;
     uint32_t seed = 1;
@@ -162,7 +162,7 @@ TEST_CASE("AGC holds the gain through a pause", "[dsp][agc]")
 TEST_CASE("AGC turns digital silence into silence", "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     int16_t buf[BLK] = { 0 };
     for (size_t b = 0; b < 100; b++)
@@ -176,7 +176,7 @@ TEST_CASE("AGC turns digital silence into silence", "[dsp][agc]")
 TEST_CASE("AGC finds a loud noise floor within its window", "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     float peak;
     size_t phase = 0;
@@ -191,7 +191,7 @@ TEST_CASE("AGC finds a loud noise floor within its window", "[dsp][agc]")
 TEST_CASE("AGC does not raise the gain on short noise bursts", "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     // Settle on a talker over quiet noise, then 10 s of 80 ms bursts
     size_t phase = 0;
@@ -210,7 +210,7 @@ TEST_CASE("AGC does not raise the gain on short noise bursts", "[dsp][agc]")
 TEST_CASE("AGC bounds the gain rise when a noise bed starts", "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     // Until the floor window forgets the quiet gaps, about 1.6 s, the new
     // noise reads as speech: the gain may creep up, then holds
@@ -229,7 +229,7 @@ TEST_CASE("AGC bounds the gain rise when a noise bed starts", "[dsp][agc]")
 TEST_CASE("AGC finds the noise floor again at each transmission", "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     // Settle on a talker in a quiet room, then key up again in a louder one
     // with nobody talking yet: the louder noise is not speech, the gain holds
@@ -247,7 +247,7 @@ TEST_CASE("AGC turns down a loud talker from the first block after a restart",
           "[dsp][agc]")
 {
     struct agc agc;
-    dsp_agcInit(&agc, TARGET, BASE, 0.0f);
+    dsp_agcInit(&agc, TARGET, BASE);
 
     // A quiet talker leaves a high gain; the next over starts loud at once,
     // with no pause yet to show the noise floor
@@ -262,23 +262,4 @@ TEST_CASE("AGC turns down a loud talker from the first block after a restart",
 
     // 1.5 dB a block for 10 blocks
     REQUIRE(agc.gainDb < settled - 10.0f);
-}
-
-TEST_CASE("AGC holds a starting gain until speech says otherwise", "[dsp][agc]")
-{
-    // A start of +12 dB: a talker who needs about that is at the target
-    // from the first word, and a loud one is turned down at once
-    size_t phase = 0;
-    uint32_t seed = 17;
-    float peak;
-    struct agc quiet;
-    dsp_agcInit(&quiet, TARGET, BASE, 12.0f);
-    const float first = runTalker(&quiet, TARGET - 12.0f, 2, &phase, &seed);
-    REQUIRE_THAT(first, WithinAbs(TARGET, 1.5));
-    REQUIRE_THAT(quiet.gainDb, WithinAbs(12.0f, 1.5));
-
-    struct agc loud;
-    dsp_agcInit(&loud, TARGET, BASE, 12.0f);
-    runTone(&loud, -6.0f, 10, &phase, &peak);
-    REQUIRE(loud.gainDb < 0.0f);
 }

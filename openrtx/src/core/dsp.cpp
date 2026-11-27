@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <cmath>
 #include <new>
+#include <numeric>
 
 #include "core/dsp.h"
 #include "core/fir.hpp"
@@ -192,7 +193,7 @@ static constexpr int32_t AGC_GAIN_ONE = 1 << 16;
 // reaches 1 with slope 0 at t = 3, where it is held
 static constexpr int32_t AGC_CURVE_STEPS = 64;
 static constexpr int32_t AGC_CURVE_SPAN = 3 * (AGC_CEILING - AGC_KNEE);
-static constexpr uint16_t AGC_CURVE[AGC_CURVE_STEPS + 1] = {
+static constexpr std::array<uint16_t, AGC_CURVE_STEPS + 1> AGC_CURVE = {
     0,     1535,  3064,  4581,  6081,  7557,  9006,  10421, 11799, 13136, 14428,
     15673, 16869, 18013, 19104, 20142, 21127, 22057, 22935, 23759, 24533, 25256,
     25931, 26559, 27142, 27682, 28180, 28640, 29063, 29451, 29807, 30132, 30427,
@@ -262,7 +263,7 @@ static void agcTrackFloor(struct agc *agc, float blkDb)
 
     float floor = agc->winMin[0];
     for (size_t i = 1; i < DSP_AGC_WINDOWS; i++)
-        floor = fminf(floor, agc->winMin[i]);
+        floor = std::min(floor, agc->winMin[i]);
     agc->floorDb = floor;
 
     agc->winCount++;
@@ -273,15 +274,12 @@ static void agcTrackFloor(struct agc *agc, float blkDb)
     }
 }
 
-void dsp_agcInit(struct agc *agc, float targetDb, float baseGain,
-                 float startGainDb)
+void dsp_agcInit(struct agc *agc, float targetDb, float baseGain)
 {
     agc->targetDb = targetDb;
     agc->baseGain = baseGain;
-    agc->gainDb = startGainDb;
-    // The speech level the starting gain brings to the target, so the gain
-    // isn't pulled back to 0 dB before the first speech is measured
-    agc->levelDb = targetDb - startGainDb;
+    agc->gainDb = 0.0f;
+    agc->levelDb = targetDb;
     agc->acquire = AGC_ACQUIRE_BLOCKS;
     dsp_agcRestart(agc);
 }
@@ -307,12 +305,10 @@ void dsp_agcRestart(struct agc *agc)
  */
 static void agcUpdateGain(struct agc *agc, float blkDb)
 {
-    const float gate = fmaxf(agc->floorDb + AGC_GATE_DB, AGC_GATE_MIN_DB);
+    const float gate = std::max(agc->floorDb + AGC_GATE_DB, AGC_GATE_MIN_DB);
     const bool speech = (blkDb > gate);
-    if (speech == false)
-        agc->run = 0;
-    else if (agc->run < UINT16_MAX)
-        agc->run++;
+    agc->run = speech ? std::min<uint16_t>(agc->run + 1, AGC_CONFIRM_BLOCKS)
+                      : 0;
 
     // Below the gate the gain holds, so pauses keep their level
     if (speech) {
@@ -328,7 +324,7 @@ static void agcUpdateGain(struct agc *agc, float blkDb)
         }
 
         float want = agc->targetDb - agc->levelDb;
-        want = fminf(fmaxf(want, AGC_MIN_GAIN_DB), AGC_MAX_GAIN_DB);
+        want = std::min(std::max(want, AGC_MIN_GAIN_DB), AGC_MAX_GAIN_DB);
         if ((confirmed == false) && (want > agc->gainDb))
             want = agc->gainDb;
 
@@ -340,12 +336,12 @@ static void agcUpdateGain(struct agc *agc, float blkDb)
             want = agc->gainDb - over;
 
         if (want < agc->gainDb) {
-            agc->gainDb -= fminf(agc->gainDb - want, AGC_ATTACK_DB);
+            agc->gainDb -= std::min(agc->gainDb - want, AGC_ATTACK_DB);
         } else {
             float rise = AGC_RELEASE_DB;
             if (agc->acquire > 0)
                 rise *= AGC_ACQUIRE_SPEEDUP;
-            agc->gainDb += fminf(want - agc->gainDb, rise);
+            agc->gainDb += std::min(want - agc->gainDb, rise);
         }
 
         if (confirmed && (agc->acquire > 0))
@@ -355,17 +351,16 @@ static void agcUpdateGain(struct agc *agc, float blkDb)
         // gain never lifts the noise, so it falls as it would on speech
         const float over = (blkDb + agc->gainDb) - agc->targetDb;
         if (over > AGC_FAST_DOWN_DB) {
-            agc->gainDb = fmaxf(agc->gainDb - fminf(over, AGC_ATTACK_DB),
-                                AGC_MIN_GAIN_DB);
+            agc->gainDb = std::max(agc->gainDb - std::min(over, AGC_ATTACK_DB),
+                                   AGC_MIN_GAIN_DB);
         }
     }
 }
 
 void dsp_agcProcess(struct agc *agc, int16_t *block, size_t len)
 {
-    uint64_t energy = 0;
-    for (size_t i = 0; i < len; i++)
-        energy += static_cast<uint32_t>(block[i] * block[i]);
+    const uint64_t energy = std::inner_product(block, block + len, block,
+                                               uint64_t(0));
 
     const float power = static_cast<float>(energy) * agc->baseGain
                       * agc->baseGain / static_cast<float>(len);
@@ -377,8 +372,8 @@ void dsp_agcProcess(struct agc *agc, int16_t *block, size_t len)
 
     // Ramp the gain across the block, then limit: the result stays under
     // the ceiling, so it fits the samples without clipping. Gains in Q16.16,
-    // from full scale back to samples, at most 33 236 608 at +24 dB with a
-    // mic gain of 32; one division per block.
+    // from full scale back to samples, at most 132 946 432 at +24 dB with a
+    // mic gain of 128; one division per block.
     const float toSamples = agc->baseGain * 32767.0f
                           * static_cast<float>(AGC_GAIN_ONE);
     const int32_t g0 = lrintf(dbToLin(prevGainDb) * toSamples);
