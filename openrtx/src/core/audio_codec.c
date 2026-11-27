@@ -39,13 +39,6 @@
 // its louder end, which listeners at a fixed volume prefer
 #define MIC_AGC_TARGET_DB -18.0f
 
-// The AGC's gain at the first transmission, for a target whose usual talker
-// needs more than the fixed mic gain gives; later ones start where the last
-// one ended
-#ifndef CONFIG_MIC_AGC_START_DB
-#define CONFIG_MIC_AGC_START_DB 0.0f
-#endif
-
 // Kept across transmissions, so each one starts at the gain the last ended
 // on, with the noise floor found again; reset when the encoder next starts
 // after codec_init()
@@ -429,8 +422,7 @@ static bool startThread(const pathId path, void *(*func)(void *))
     // No encoder is running here: the previous one, if any, has finished
     if (func == encodeFunc) {
         if (micAgcReset)
-            dsp_agcInit(&micAgc, MIC_AGC_TARGET_DB, CONFIG_MIC_GAIN / 32768.0f,
-                        CONFIG_MIC_AGC_START_DB);
+            dsp_agcInit(&micAgc, MIC_AGC_TARGET_DB, CONFIG_MIC_GAIN / 32768.0f);
         else
             dsp_agcRestart(&micAgc);
 
