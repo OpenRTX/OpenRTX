@@ -70,11 +70,10 @@ extern const struct gpsDevice gps;
 #define CONFIG_VIBRATION
 
 /* Microphone audio input */
-#define CONFIG_MIC_GAIN 32
+/* Its usual talker arrives about 15 dB under the AGC's target at gain 32 */
+#define CONFIG_MIC_GAIN 128
 #define CONFIG_MIC_OVERSAMPLE 6
 #define CONFIG_MIC_AGC
-/* Its usual talker arrives about 15 dB under the AGC's target at gain 32 */
-#define CONFIG_MIC_AGC_START_DB 12.0f
 
 #ifdef __cplusplus
 }
