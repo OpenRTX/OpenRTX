@@ -381,27 +381,3 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         modulator.stop();
     }
 }
-
-bool OpMode_M17::compareCallsigns(const std::string &localCs,
-                                  const std::string &incomingCs)
-{
-    if ((incomingCs == "ALL") || (incomingCs == "INFO")
-        || (incomingCs == "ECHO"))
-        return true;
-
-    std::string truncatedLocal(localCs);
-    std::string truncatedIncoming(incomingCs);
-
-    int slashPos = localCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedLocal = localCs.substr(slashPos + 1);
-
-    slashPos = incomingCs.find_first_of('/');
-    if (slashPos <= 2)
-        truncatedIncoming = incomingCs.substr(slashPos + 1);
-
-    if (truncatedLocal == truncatedIncoming)
-        return true;
-
-    return false;
-}
