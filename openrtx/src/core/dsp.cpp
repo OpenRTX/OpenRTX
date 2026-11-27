@@ -307,8 +307,10 @@ static void agcUpdateGain(struct agc *agc, float blkDb)
 {
     const float gate = std::max(agc->floorDb + AGC_GATE_DB, AGC_GATE_MIN_DB);
     const bool speech = (blkDb > gate);
-    agc->run = speech ? std::min<uint16_t>(agc->run + 1, AGC_CONFIRM_BLOCKS)
-                      : 0;
+    if (speech)
+        agc->run = std::min<uint16_t>(agc->run + 1, AGC_CONFIRM_BLOCKS);
+    else
+        agc->run = 0;
 
     // Below the gate the gain holds, so pauses keep their level
     if (speech) {
