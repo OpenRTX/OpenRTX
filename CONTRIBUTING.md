@@ -93,6 +93,29 @@ Automated tests can be run locally using meson. For example: `meson setup build 
 
 Unit tests are Catch2 cases under `tests/unit/`, registered in `meson.build` as an executable plus a `test()` line. CI passes `--reporter junit` to every test executable, so each one must be a Catch2 binary rather than a plain program. A test that reads a committed asset should get the asset directory as an absolute path from the build system rather than a path relative to the build directory. Host-side tools that exercise firmware code on recorded data live in `tests/platform/` next to the hardware tests and parse arguments with `getopt`, following `scripts/c2tool.c`.
 
+## Voice Prompts
+
+The spoken voice prompts are built into the firmware from `voiceprompts.vpc`, which `scripts/generate_voice_prompts.py` generates with the Kokoro text-to-speech model. Next to it, the generator writes `voiceprompts.vpc.manifest`: the generation settings and the text spoken for every prompt, one per line. Both files are generated together; never edit either one by hand.
+
+Regenerate them in the same PR whenever you change what the radio says: a string in `ui_strings.h` or `EnglishStrings.h`, a `PROMPT_*` entry in `voicePrompts.h` (the comment on each entry is the text spoken for it), `scripts/voice_overrides.json`, the ToC size in `voicePrompts.c`, or the generator's settings. CI runs `scripts/generate_voice_prompts.py --check`, which fails with a diff of the manifest when they are out of date, so reviewers can see exactly which prompts changed. The check, and the generator's self-test in `scripts/test_generate_voice_prompts.py`, need only the Python standard library.
+
+```bash
+# One-time setup (macOS: brew install ffmpeg codec2)
+sudo apt install ffmpeg codec2
+uv venv && uv pip install -r scripts/requirements-voiceprompts.txt
+
+# From the repository root; the first run downloads the model (about 350 MB)
+.venv/bin/python scripts/generate_voice_prompts.py
+```
+
+Then commit `voiceprompts.vpc` and `voiceprompts.vpc.manifest` together. A few more things to know:
+
+- The audio differs slightly from one machine to another, which is fine: the check compares the manifest, not the audio.
+- If the two files conflict during a rebase, do not merge them by hand. Finish the rebase and regenerate.
+- If you change how the audio is processed without changing any prompt text or setting (resampling, codec2 mode, language), bump `PIPELINE_VERSION` in the script so the change shows up in the manifest.
+- The generator stops rather than guess when a header holds something it cannot number the way the compiler does: an enum entry with an explicit value, a preprocessor line inside the enum, or a string that is not a single plain literal.
+- If you cannot run the generator, say so in your PR and a maintainer will regenerate the files.
+
 ## Making Changes
 
 OpenRTX uses Git for source code management. Each commit should represent a distinct change, and as such often PRs will contain multiple commits. It isn't OK, though, for a commit to contain broken or incomplete changes. Keep your branch's revision history tidy using strategies like squashing.

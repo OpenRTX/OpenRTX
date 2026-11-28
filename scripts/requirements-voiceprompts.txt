@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Only needed to regenerate voiceprompts.vpc with generate_voice_prompts.py;
+# its --check mode needs nothing beyond the Python standard library.
+kokoro-onnx==0.4.7
+onnxruntime==1.31.1
+soundfile==0.14.0

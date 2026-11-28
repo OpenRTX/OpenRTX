@@ -28,3 +28,13 @@ jobs:
         uses: actions/checkout@v3
       - name: Check UI string tables are in sync with stringsTable_t and English
         run: python3 ./scripts/check_strings.py
+
+  check-voice-prompts:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Test the voice prompt generator
+        run: python3 ./scripts/test_generate_voice_prompts.py
+      - name: Check voiceprompts.vpc is up to date with the prompt texts
+        run: python3 ./scripts/generate_voice_prompts.py --check
