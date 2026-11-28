@@ -3,7 +3,7 @@
 # floating tag invalidates that cache (and forces a ~30 min toolchain rebuild
 # from flaky GNU mirrors) every time the base image is republished. Bump the
 # digest deliberately; expect one full rebuild when you do.
-FROM ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+FROM ubuntu:24.04@sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289
 
 LABEL org.opencontainers.image.source=https://github.com/OpenRTX/OpenRTX
 
