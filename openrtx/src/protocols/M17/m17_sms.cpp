@@ -8,9 +8,9 @@
 #include <cstddef>
 #include <cstring>
 #include <algorithm>
-#include "core/m17_sms.h"
 #include "core/messages.h"
 #include "protocols/M17/SmsPacket.hpp"
+#include "protocols/M17/m17_sms.h"
 #include "protocols/M17/m17.h"
 #include "rtx/rtx.h"
 

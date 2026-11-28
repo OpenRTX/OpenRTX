@@ -57,7 +57,6 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/core/voicePromptData.S',
                'openrtx/src/core/nvmem_access.c',
                'openrtx/src/core/messages.c',
-               'openrtx/src/core/m17_sms.cpp',
                'openrtx/src/rtx/rtx.cpp',
                'openrtx/src/rtx/OpMode_FM.cpp',
                'openrtx/src/rtx/OpMode_M17.cpp',
@@ -72,7 +71,8 @@ openrtx_src = ['openrtx/src/core/state.c',
                'openrtx/src/protocols/M17/LinkSetupFrame.cpp',
                'openrtx/src/protocols/M17/PacketDeframer.cpp',
                'openrtx/src/protocols/M17/PacketFramer.cpp',
-               'openrtx/src/protocols/M17/SmsPacket.cpp']
+               'openrtx/src/protocols/M17/SmsPacket.cpp',
+               'openrtx/src/protocols/M17/m17_sms.cpp']
 
 openrtx_inc = ['openrtx/include', 'platform']
 
@@ -1324,7 +1324,7 @@ messages_test = executable('messages_test',
 m17_sms_test = executable('m17_sms_test',
                           sources : ['openrtx/src/core/messages.c',
                                      'tests/unit/rtx_packet_stub.cpp',
-                                     'openrtx/src/core/m17_sms.cpp',
+                                     'openrtx/src/protocols/M17/m17_sms.cpp',
                                      'openrtx/src/protocols/M17/SmsPacket.cpp',
                                      'tests/unit/m17_sms.cpp'],
                           kwargs  : unit_test_opts)

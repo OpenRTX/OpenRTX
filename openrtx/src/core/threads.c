@@ -22,7 +22,7 @@
 #include "core/gps.h"
 #include "core/voicePrompts.h"
 #include "core/messages.h"
-#include "core/m17_sms.h"
+#include "protocols/M17/m17_sms.h"
 #include "core/beeps.h"
 
 #if defined(PLATFORM_TTWRPLUS)

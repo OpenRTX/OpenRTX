@@ -8,9 +8,9 @@
 #include <cstring>
 #include <errno.h>
 #include <string>
-#include "core/m17_sms.h"
 #include "core/messages.h"
 #include "protocols/M17/m17.h"
+#include "protocols/M17/m17_sms.h"
 #include "rtx_packet_stub.h"
 
 static constexpr size_t HEADER = offsetof(struct m17Packet, payload);
