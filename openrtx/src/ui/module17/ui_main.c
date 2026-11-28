@@ -43,7 +43,7 @@ static void _ui_drawModeInfo(ui_state_t* ui_state)
     {
         case OPMODE_M17:
         {
-            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+            rtxStatus_t rtxStatus = *rtx_getStatus();
 
             if(rtxStatus.lsfOk)
             {

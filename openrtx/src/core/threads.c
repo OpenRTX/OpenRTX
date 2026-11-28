@@ -21,6 +21,9 @@
 #include "core/backup.h"
 #include "core/gps.h"
 #include "core/voicePrompts.h"
+#include "core/messages.h"
+#include "protocols/M17/m17_sms.h"
+#include "core/beeps.h"
 
 #if defined(PLATFORM_TTWRPLUS)
 #include "pmu.h"
@@ -40,6 +43,14 @@ void *ui_threadFunc(void *arg)
     rtxStatus_t rtx_cfg = { 0 };
     bool        sync_rtx = true;
     long long   time     = 0;
+
+    #if defined(CONFIG_MESSAGES)
+    messages_init();
+    #endif
+
+    #if defined(CONFIG_M17_SMS)
+    messages_registerSource(&m17_sms_src);
+    #endif
 
     // Load initial state and update the UI
     ui_saveState();
@@ -65,6 +76,11 @@ void *ui_threadFunc(void *arg)
 
         vp_tick();                           // continue playing voice prompts in progress if any.
 
+        #if defined(CONFIG_MESSAGES)
+        if(messages_task(state.channel.mode) > 0)
+            vp_beep(BEEP_NEW_MESSAGE, LONG_BEEP);
+        #endif
+
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
         {
@@ -81,8 +97,10 @@ void *ui_threadFunc(void *arg)
             rtx_cfg.txTone      = ctcss_tone[state.channel.fm.txTone];
             rtx_cfg.toneEn      = state.tone_enabled;
 
-            // Enable Tx if channel allows it and we are in UI main screen
-            rtx_cfg.txDisable = state.channel.rx_only || state.txDisable;
+            // Hard channel TX lockout: rx-only channels block all transmission.
+            // PTT gate: additionally blocked when the UI is outside VFO/MEM screens.
+            rtx_cfg.txDisable  = state.channel.rx_only;
+            rtx_cfg.pttDisable = state.channel.rx_only || state.pttDisable;
 
             // Copy new M17 CAN, source and destination addresses
             rtx_cfg.can = state.settings.m17_can;
@@ -109,6 +127,10 @@ void *ui_threadFunc(void *arg)
 
     ui_terminate();
     gfx_terminate();
+
+    #if defined(CONFIG_MESSAGES)
+    messages_terminate();
+    #endif
 
     return NULL;
 }

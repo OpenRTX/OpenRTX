@@ -14,6 +14,7 @@
 #include "ui/ui_strings.h"
 #include "core/utils.h"
 #include "ui/utils.h"
+#include "core/messages.h"
 
 void _ui_drawMainBackground()
 {
@@ -52,9 +53,15 @@ void _ui_drawMainTop(ui_state_t * ui_state)
         color_white,"%d%%", last_state.charge);
     }
 #endif
+    point_t icon_pos = layout.top_pos;
     if (ui_state->input_locked == true)
-      gfx_drawSymbol(layout.top_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
-                     color_white, SYMBOL_LOCK);
+      icon_pos = gfx_drawSymbol(icon_pos, layout.top_symbol_size,
+                                TEXT_ALIGN_LEFT, color_white, SYMBOL_LOCK);
+#ifdef CONFIG_MESSAGES
+    if (messages_countUnread() > 0)
+      gfx_drawSymbol(icon_pos, layout.top_symbol_size, TEXT_ALIGN_LEFT,
+                     color_white, SYMBOL_MAIL);
+#endif
 }
 
 void _ui_drawBankChannel()
@@ -130,7 +137,7 @@ void _ui_drawModeInfo(ui_state_t* ui_state)
         case OPMODE_M17:
         {
             // Print M17 Destination ID on line 3 of 3
-            rtxStatus_t rtxStatus = rtx_getCurrentStatus();
+            rtxStatus_t rtxStatus = *rtx_getStatus();
 
             if(rtxStatus.lsfOk)
             {
@@ -361,7 +368,7 @@ void _ui_drawMainVFO(ui_state_t* ui_state)
 
     #ifdef CONFIG_M17
     // Show VFO frequency if the OpMode is not M17 or there is no valid LSF data
-    rtxStatus_t status = rtx_getCurrentStatus();
+    rtxStatus_t status = *rtx_getStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
         _ui_drawFrequency();
@@ -385,7 +392,7 @@ void _ui_drawMainMEM(ui_state_t* ui_state)
 
     #ifdef CONFIG_M17
     // Show channel data if the OpMode is not M17 or there is no valid LSF data
-    rtxStatus_t status = rtx_getCurrentStatus();
+    rtxStatus_t status = *rtx_getStatus();
     if((status.opMode != OPMODE_M17) || (status.lsfOk == false))
     #endif
     {

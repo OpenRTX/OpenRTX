@@ -11,81 +11,100 @@
 #include <stdint.h>
 #include "core/cps.h"
 #include <pthread.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct
-{
+typedef struct {
     uint8_t opMode;         /**< Operating mode (FM, DMR, ...) */
 
-    uint8_t bandwidth : 2,  /**< Channel bandwidth             */
-            txDisable : 1,  /**< Disable TX operation          */
-            scan      : 1,  /**< Scan enabled                  */
-            opStatus  : 2,  /**< Operating status (OFF, ...)   */
-            _padding  : 2;  /**< Padding to 8 bits             */
+    uint8_t bandwidth  : 2; /**< Channel bandwidth              */
+    uint8_t txDisable  : 1; /**< Hard channel TX lockout        */
+    uint8_t pttDisable : 1; /**< PTT/voice TX gate              */
+    uint8_t scan       : 1; /**< Scan enabled                   */
+    uint8_t opStatus   : 2; /**< Operating status (OFF, ...)    */
+    uint8_t            : 1; /**< Padding to 8 bits              */
 
     freq_t rxFrequency;     /**< RX frequency, in Hz           */
     freq_t txFrequency;     /**< TX frequency, in Hz           */
 
     uint32_t txPower;       /**< TX power, in mW               */
-    uint8_t  sqlLevel;      /**< Squelch opening level         */
+    uint8_t sqlLevel;       /**< Squelch opening level         */
 
-    uint16_t rxToneEn : 1,  /**< RX CTC/DCS tone enable        */
-             rxTone   : 15; /**< RX CTC/DCS tone               */
+    uint16_t rxToneEn : 1;  /**< RX CTC/DCS tone enable        */
+    uint16_t rxTone   : 15; /**< RX CTC/DCS tone               */
 
-    uint16_t txToneEn : 1,  /**< TX CTC/DCS tone enable        */
-             txTone   : 15; /**< TX CTC/DCS tone               */
+    uint16_t txToneEn : 1;  /**< TX CTC/DCS tone enable        */
+    uint16_t txTone   : 15; /**< TX CTC/DCS tone               */
 
-    bool     toneEn;
+    bool toneEn;
 
-    uint8_t  can      : 4,  /**< M17 Channel Access Number     */
-             canRxEn  : 1,  /**< M17 Check CAN on RX           */
-             _unused  : 3;
+    uint8_t can     : 4; /**< M17 Channel Access Number     */
+    uint8_t canRxEn : 1; /**< M17 Check CAN on RX           */
+    uint8_t         : 3;
 
-    char     source_address[10];       /**< M17 call source address    */
-    char     destination_address[10];  /**< M17 call routing address   */
-    bool     invertRxPhase;            /**< M17 RX phase inversion     */
-    bool     lsfOk;                    /**  M17 LSF is valid           */
-    char     M17_dst[10];              /**  M17 LSF destination        */
-    char     M17_src[10];              /**  M17 LSF source             */
-    char     M17_link[10];             /**  M17 LSF traffic originator */
-    char     M17_refl[10];             /**  M17 LSF reflector module   */
-    char     M17_meta_text[53];        /**< M17 Meta Text              */
-}
-rtxStatus_t;
+    char source_address[10];      /**< M17 call source address    */
+    char destination_address[10]; /**< M17 call routing address   */
+    bool invertRxPhase;           /**< M17 RX phase inversion     */
+    bool lsfOk;                   /**  M17 LSF is valid           */
+    char M17_dst[10];             /**  M17 LSF destination        */
+    char M17_src[10];             /**  M17 LSF source             */
+    char M17_link[10];            /**  M17 LSF traffic originator */
+    char M17_refl[10];            /**  M17 LSF reflector module   */
+    char M17_meta_text[53];       /**< M17 Meta Text              */
+} rtxStatus_t;
 
 /**
  * \enum bandwidth Enumeration type defining the current rtx bandwidth.
  */
-enum bandwidth
-{
-    BW_12_5 = 0,    /**< 12.5kHz bandwidth */
-    BW_25   = 1     /**< 25kHz bandwidth   */
+enum bandwidth {
+    BW_12_5 = 0, /**< 12.5kHz bandwidth */
+    BW_25 = 1    /**< 25kHz bandwidth   */
 };
 
 /**
  * \enum opmode Enumeration type defining the current rtx operating mode.
  */
-enum opmode
-{
-    OPMODE_NONE = 0,        /**< No opMode selected */
-    OPMODE_FM   = 1,        /**< Analog FM          */
-    OPMODE_DMR  = 2,        /**< DMR                */
-    OPMODE_M17  = 3         /**< M17                */
+enum opmode {
+    OPMODE_NONE = 0, /**< No opMode selected */
+    OPMODE_FM = 1,   /**< Analog FM          */
+    OPMODE_DMR = 2,  /**< DMR                */
+    OPMODE_M17 = 3   /**< M17                */
 };
 
 /**
  * \enum opstatus Enumeration type defining the current rtx operating status.
  */
-enum opstatus
-{
-    OFF = 0,        /**< OFF          */
-    RX  = 1,        /**< Receiving    */
-    TX  = 2         /**< Transmitting */
+enum opstatus {
+    OFF = 0, /**< OFF          */
+    RX = 1,  /**< Receiving    */
+    TX = 2   /**< Transmitting */
 };
 
+/**
+ * \enum pktStatus Enumeration type describing the status of a data packet.
+ */
+enum pktStatus {
+    PKT_STATUS_IDLE,      /**< No operation in progress */
+    PKT_STATUS_SUBMITTED, /**< Acquired by the rtx subsystem; descriptor
+                           *   fields must not be modified by the
+                           *   application layer until status transitions
+                           *   to DONE or ERROR. */
+    PKT_STATUS_DONE,      /**< RX/TX done */
+    PKT_STATUS_ERROR,     /**< RX/TX error */
+};
+
+/**
+ * Data packet descriptor
+ */
+struct pktDesc {
+    enum pktStatus status;
+    void *buffer;
+    size_t size;
+    ssize_t res;
+};
 
 /**
  * Initialise rtx stage.
@@ -109,10 +128,13 @@ void rtx_terminate();
 void rtx_configure(const rtxStatus_t *cfg);
 
 /**
- * Obtain a copy of the RTX driver's internal status data structure.
- * @return copy of the RTX driver's internal status data structure.
+ * Obtain a read-only pointer to the RTX driver's internal status data
+ * structure. The pointer is valid for the lifetime of the process.
+ * Callers must not write through it.  No copy is made; suitable for
+ * use on threads with small stacks (e.g. the embedded RTX thread).
+ * @return pointer to the RTX driver's internal status data structure.
  */
-rtxStatus_t rtx_getCurrentStatus();
+const rtxStatus_t *rtx_getStatus();
 
 /**
  * High-level code is in charge of calling this function periodically, since it
@@ -132,6 +154,22 @@ rssi_t rtx_getRssi();
  * @return true if RX squelch is open.
  */
 bool rtx_rxSquelchOpen();
+
+/**
+ * Submit a packet reception request.
+ *
+ * @param packet: pointer to packet descriptor.
+ * @return zero on success a negative error code otherwise.
+ */
+int rtx_addPacketRx(struct pktDesc *packet);
+
+/**
+ * Submit a packet transmission request.
+ *
+ * @param packet: pointer to packet descriptor.
+ * @return zero on success a negative error code otherwise.
+ */
+int rtx_addPacketTx(struct pktDesc *packet);
 
 #ifdef __cplusplus
 }

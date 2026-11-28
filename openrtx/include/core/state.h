@@ -49,7 +49,7 @@ typedef struct {
     bool gpsDetected;
     bool backup_eflash;
     bool restore_eflash;
-    bool txDisable;
+    bool pttDisable;
     uint8_t step_index;
 } state_t;
 

@@ -186,8 +186,8 @@ std::vector<frame_t> M17Signal::smsFrames(const size_t numFrames,
     return frames;
 }
 
-M17NoisyChannel::M17NoisyChannel(const uint32_t seed)
-    : NoisyChannel(RATE, seed, IDLE_RMS, CARRIER_RMS)
+M17NoisyChannel::M17NoisyChannel(const uint32_t seed) :
+    NoisyChannel(RATE, seed, IDLE_RMS, CARRIER_RMS)
 {
 }
 

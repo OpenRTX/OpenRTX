@@ -1,12 +1,13 @@
 /*
  * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
- * 
+ *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #ifndef OPMODE_H
 #define OPMODE_H
 
+#include <errno.h>
 #include "interfaces/delays.h"
 #include "rtx/rtx.h"
 
@@ -20,16 +21,19 @@
 class OpMode
 {
 public:
-
     /**
      * Constructor.
      */
-    OpMode() { }
+    OpMode()
+    {
+    }
 
     /**
      * Destructor.
      */
-    virtual ~OpMode() { }
+    virtual ~OpMode()
+    {
+    }
 
     /**
      * Enable the operating mode.
@@ -37,7 +41,9 @@ public:
      * Application must ensure this function is being called when entering the
      * new operating mode and always before the first call of "update".
      */
-    virtual void enable() { }
+    virtual void enable()
+    {
+    }
 
     /**
      * Disable the operating mode. This function ensures that, after being
@@ -46,7 +52,9 @@ public:
      * Application must ensure this function is being called when exiting the
      * current operating mode.
      */
-    virtual void disable() { }
+    virtual void disable()
+    {
+    }
 
     /**
      * Update the internal FSM.
@@ -60,8 +68,8 @@ public:
      */
     virtual void update(rtxStatus_t *const status, const bool newCfg)
     {
-        (void) status;
-        (void) newCfg;
+        (void)status;
+        (void)newCfg;
         sleepFor(0u, 30u);
     }
 
@@ -83,6 +91,30 @@ public:
     virtual bool rxSquelchOpen()
     {
         return false;
+    }
+
+    /**
+     * Submit a packet reception request.
+     *
+     * @param packet: pointer to packet descriptor.
+     * @return zero on success a negative error code otherwise.
+     */
+    virtual int addPacketRx(struct pktDesc *packet)
+    {
+        (void)packet;
+        return -ENOTSUP;
+    }
+
+    /**
+     * Submit a packet transmission request.
+     *
+     * @param packet: pointer to packet descriptor.
+     * @return zero on success a negative error code otherwise.
+     */
+    virtual int addPacketTx(struct pktDesc *packet)
+    {
+        (void)packet;
+        return -ENOTSUP;
     }
 };
 
