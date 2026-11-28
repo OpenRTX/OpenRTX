@@ -1,0 +1,811 @@
+/*
+ * SPDX-FileCopyrightText: Copyright 2020-2026 OpenRTX Contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * Unit test for Horse protocol frame encode/decode round-trip.
+ */
+
+#include "protocols/horse/HorseFrameEncoder.hpp"
+#include "protocols/horse/HorseFrameDecoder.hpp"
+#include "protocols/horse/HorseConstants.hpp"
+#include "protocols/horse/HorseUtils.hpp"
+#include "protocols/horse/HorseVoiceCodec.hpp"
+#include "protocols/horse/HorseSoft.hpp"
+#include "protocols/horse/horse_crypto.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdint>
+
+using namespace horse;
+
+static int test_lsf_roundtrip()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = { { 'A', 'B', '1', '2', '3', '4' } };
+    call_t dst = { { 'C', 'D', '5', '6', '7', '8' } };
+    frame_t frames[LSF_OPENING_FRAMES];
+
+    enc.encodeLsf(src, dst, nullptr, 0, frames);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+        HorseFrameType type = dec.decodeFrame(frames[i]);
+        if (type != HorseFrameType::LINK_SETUP) {
+            std::printf("horse_frame_test: LSF type fail at %zu\n", i);
+            return -1;
+        }
+    }
+    if (!dec.lsfReady()) {
+        std::printf("horse_frame_test: LSF not ready after 3 frames\n");
+        return -1;
+    }
+    call_t outSrc, outDst;
+    dec.getLsfCallsigns(outSrc, outDst);
+    if (outSrc != src || outDst != dst) {
+        std::printf("horse_frame_test: LSF callsign round-trip fail\n");
+        return -1;
+    }
+    uint8_t flags = 0xFF, ver = 0xFF;
+    uint8_t eph[32];
+    if (!dec.getLsfCrypto(eph, &flags, &ver) || flags != 0
+        || ver != LSF_PROTOCOL_VERSION) {
+        std::printf("horse_frame_test: LSF crypto fields fail\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_lsf_crc_tamper()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = { { 'A', 'B', '1', '2', '3', '4' } };
+    call_t dst = { { 'C', 'D', '5', '6', '7', '8' } };
+    frame_t frames[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, frames);
+    for (size_t i = 2; i < FRAME_BYTES; i++)
+        frames[1][i] ^= 0xFF;
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++)
+        dec.decodeFrame(frames[i]);
+    if (dec.lsfReady()) {
+        std::printf("horse_frame_test: tampered LSF accepted\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_voice_roundtrip()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12] = { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB,
+                          0xCD, 0xEF, 0x11, 0x22, 0x33, 0x44 };
+    uint8_t tag[4] = { 0xAA, 0xBB, 0xCC, 0xDD };
+    frame_t frame;
+
+    enc.encodeVoiceFrame(melpe, tag, frame, false);
+    HorseFrameType type = dec.decodeFrame(frame);
+    if (type != HorseFrameType::VOICE) {
+        std::printf("horse_frame_test: voice decode type fail (got %u)\n",
+                    static_cast<unsigned>(type));
+        return -1;
+    }
+    uint8_t outMelpe[12], outTag[4];
+    uint16_t outFn = 0;
+    dec.getVoicePayload(frame, outMelpe, outTag, &outFn);
+    if (std::memcmp(outMelpe, melpe, 12) != 0
+        || std::memcmp(outTag, tag, 4) != 0) {
+        std::printf("horse_frame_test: voice payload round-trip fail\n");
+        return -1;
+    }
+    if (outFn != 0) {
+        std::printf("horse_frame_test: voice frame number fail (got %u)\n",
+                    outFn);
+        return -1;
+    }
+    return 0;
+}
+
+/* Fails on repeat-2: M17 coded bytes must not equal bit-duplication. */
+static int test_voice_m17_not_repeat2()
+{
+    uint8_t info[HORSE_VOICE_INFO_BYTES];
+    uint8_t coded[HORSE_VOICE_CODED_BYTES];
+    uint8_t out[HORSE_VOICE_INFO_BYTES];
+    uint8_t repeat2[HORSE_VOICE_CODED_BYTES];
+    std::memset(info, 0xA5, sizeof info);
+    info[0] = 0x00;
+    info[1] = 0x07;
+    voice_encode(info, coded);
+    voice_decode(coded, out);
+    if (std::memcmp(out, info, sizeof info) != 0) {
+        std::printf("horse_frame_test: M17 voice round-trip fail\n");
+        return -1;
+    }
+    std::memset(repeat2, 0, sizeof repeat2);
+    for (size_t i = 0; i < HORSE_VOICE_INFO_BYTES * 8 && (2 * i + 1) < 368;
+         i++) {
+        bool b = (info[i / 8] >> (7 - (i % 8))) & 1u;
+        if (b) {
+            repeat2[i / 4] |= static_cast<uint8_t>(0xC0u >> (2 * (i % 4)));
+        }
+    }
+    if (std::memcmp(coded, repeat2, sizeof coded) == 0) {
+        std::printf("horse_frame_test: voice still looks like repeat-2\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_eot_detect()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    frame_t frame;
+
+    enc.encodeEotFrame(frame);
+    HorseFrameType type = dec.decodeFrame(frame);
+    if (type != HorseFrameType::EOT) {
+        std::printf("horse_frame_test: EOT decode type fail (got %u)\n",
+                    static_cast<unsigned>(type));
+        return -1;
+    }
+    return 0;
+}
+
+static int test_voice_frame_number()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12] = { 0 };
+    uint8_t tag[4] = { 0 };
+    frame_t frame;
+
+    enc.reset();
+    enc.encodeVoiceFrame(melpe, tag, frame, false);
+    dec.decodeFrame(frame);
+    uint16_t fn0 = 0;
+    dec.getVoicePayload(frame, nullptr, nullptr, &fn0);
+
+    enc.encodeVoiceFrame(melpe, tag, frame, false);
+    dec.decodeFrame(frame);
+    uint16_t fn1 = 0;
+    dec.getVoicePayload(frame, nullptr, nullptr, &fn1);
+
+    if (fn0 != 0 || fn1 != 1) {
+        std::printf(
+            "horse_frame_test: voice frame number sequence fail (fn0=%u fn1=%u)\n",
+            fn0, fn1);
+        return -1;
+    }
+    return 0;
+}
+
+static int test_lsf_crypto_roundtrip()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = { { 'H', 'O', 'R', 'S', 'E', '1' } };
+    call_t dst = { { 'H', 'O', 'R', 'S', 'E', '2' } };
+    uint8_t eph_pk[32];
+    for (size_t i = 0; i < sizeof eph_pk; i++)
+        eph_pk[i] = (uint8_t)(i + 1);
+    frame_t frames[LSF_OPENING_FRAMES];
+
+    enc.encodeLsf(src, dst, eph_pk, 0x01, frames);
+    for (size_t i = 0; i < LSF_OPENING_FRAMES; i++) {
+        if (dec.decodeFrame(frames[i]) != HorseFrameType::LINK_SETUP)
+            return -1;
+    }
+    if (!dec.lsfReady())
+        return -1;
+
+    uint8_t out_pk[32];
+    uint8_t flags = 0;
+    uint8_t version = 0;
+    if (!dec.getLsfCrypto(out_pk, &flags, &version))
+        return -1;
+    if (flags != 0x01 || version != LSF_PROTOCOL_VERSION
+        || std::memcmp(out_pk, eph_pk, 32) != 0)
+        return -1;
+    return 0;
+}
+
+static int test_lsf_unknown_version_is_rejected()
+{
+    if (horse_crypto_lsf_version_ok(99))
+        return -1;
+    if (horse_crypto_lsf_version_ok(1))
+        return -1;
+    if (!horse_crypto_lsf_version_ok(LSF_PROTOCOL_VERSION))
+        return -1;
+    if (LSF_PROTOCOL_VERSION != 2)
+        return -1;
+    return 0;
+}
+
+static int test_v1_sync_not_recognized()
+{
+    frame_t f{};
+    f[0] = LSF_SYNC_WORD_V1[0];
+    f[1] = LSF_SYNC_WORD_V1[1];
+    HorseFrameDecoder dec;
+    if (dec.decodeFrame(f) != HorseFrameType::UNKNOWN) {
+        std::printf("horse_frame_test: v1 LSF sync accepted\n");
+        return -1;
+    }
+    f[0] = VOICE_SYNC_WORD_V1[0];
+    f[1] = VOICE_SYNC_WORD_V1[1];
+    if (dec.decodeFrame(f) != HorseFrameType::UNKNOWN) {
+        std::printf("horse_frame_test: v1 voice sync accepted\n");
+        return -1;
+    }
+    f[0] = EOT_SYNC_WORD_V1[0];
+    f[1] = EOT_SYNC_WORD_V1[1];
+    if (dec.decodeFrame(f) != HorseFrameType::UNKNOWN) {
+        std::printf("horse_frame_test: v1 EOT sync accepted\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_sig_frames_roundtrip()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t signature[64];
+    uint8_t rebuilt[64];
+    uint8_t zeroTag[4] = { 0 };
+    frame_t frame;
+
+    for (size_t i = 0; i < sizeof signature; i++)
+        signature[i] = (uint8_t)(i ^ 0x5A);
+
+    memset(rebuilt, 0, sizeof rebuilt);
+    for (uint16_t i = 0; i < SIG_FRAME_COUNT; i++) {
+        const size_t n = sig_chunk_bytes(i);
+        enc.encodeVoiceFrameWithFn(signature + (i * SIG_CHUNK_BYTES), zeroTag,
+                                   SIG_FRAME_BASE + i, frame, false, n);
+        HorseFrameType type = dec.decodeFrame(frame);
+        if (type != HorseFrameType::VOICE)
+            return -1;
+
+        uint8_t chunk[12];
+        uint16_t fn = 0;
+        dec.getVoicePayload(frame, chunk, nullptr, &fn);
+        if (fn != SIG_FRAME_BASE + i)
+            return -1;
+        memcpy(rebuilt + (i * SIG_CHUNK_BYTES), chunk, n);
+    }
+
+    if (std::memcmp(rebuilt, signature, sizeof signature) != 0)
+        return -1;
+    return 0;
+}
+
+static int test_sig_chunk_last_is_partial()
+{
+    if (sig_chunk_bytes(0) != 12)
+        return -1;
+    if (sig_chunk_bytes(4) != 12)
+        return -1;
+    if (sig_chunk_bytes(5) != 4)
+        return -1;
+    if (sig_chunk_bytes(6) != 0)
+        return -1;
+    return 0;
+}
+
+static int test_sig_last_chunk_does_not_overflow()
+{
+    uint8_t buf[SIG_BYTES + 8];
+    uint8_t src[SIG_CHUNK_BYTES];
+
+    memset(buf, 0xA5, sizeof buf);
+    memset(src, 0x3C, sizeof src);
+    if (!horse_sig_store_chunk(buf, 5, src))
+        return -1;
+    if (memcmp(buf + SIG_BYTES, "\xA5\xA5\xA5\xA5\xA5\xA5\xA5\xA5", 8) != 0)
+        return -1;
+    if (buf[60] != 0x3C || buf[63] != 0x3C)
+        return -1;
+    return 0;
+}
+
+static int test_sig_last_frame_payload_pad_zero()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t chunk[12];
+    uint8_t last[4] = { 0x11, 0x22, 0x33, 0x44 };
+    uint8_t tag[4] = { 0 };
+    frame_t frame;
+    uint16_t fn = 0;
+
+    enc.encodeVoiceFrameWithFn(last, tag, SIG_FRAME_BASE + 5, frame, false, 4);
+    if (dec.decodeFrame(frame) != HorseFrameType::VOICE)
+        return -1;
+    memset(chunk, 0xFF, sizeof chunk);
+    dec.getVoicePayload(frame, chunk, nullptr, &fn);
+    if (fn != SIG_FRAME_BASE + 5)
+        return -1;
+    if (chunk[0] != 0x11 || chunk[1] != 0x22 || chunk[2] != 0x33
+        || chunk[3] != 0x44)
+        return -1;
+    for (size_t i = 4; i < 12; i++) {
+        if (chunk[i] != 0)
+            return -1;
+    }
+    return 0;
+}
+
+static int test_sig_incomplete_does_not_fill_64()
+{
+    uint8_t sig[SIG_BYTES];
+    uint8_t src[12];
+    unsigned i;
+
+    memset(sig, 0, sizeof sig);
+    memset(src, 0x7E, sizeof src);
+    for (i = 0; i < 5; i++) {
+        if (!horse_sig_store_chunk(sig, i, src))
+            return -1;
+    }
+    for (i = 60; i < SIG_BYTES; i++) {
+        if (sig[i] != 0)
+            return -1;
+    }
+    return 0;
+}
+
+static int test_voice_fn_never_enters_sig_range()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12] = { 0 };
+    uint8_t tag[4] = { 0 };
+    frame_t frame;
+
+    if (!voice_fn_newer(false, 0, 0))
+        return -1;
+    if (voice_fn_newer(true, 5, 5) || voice_fn_newer(true, 5, 4))
+        return -1;
+    if (!voice_fn_newer(true, 5, 8))
+        return -1;
+    if (voice_fn_newer(true, 5, SIG_FRAME_BASE))
+        return -1;
+
+    enc.reset();
+    for (uint32_t i = 0; i < 4; i++) {
+        uint16_t fn = enc.encodeVoiceFrame(melpe, tag, frame, false);
+        dec.decodeFrame(frame);
+        uint16_t got = 0;
+        dec.getVoicePayload(frame, nullptr, nullptr, &got);
+        if (fn != i || got != i || !voice_fn_in_session(fn))
+            return -1;
+    }
+    enc.encodeVoiceFrameWithFn(melpe, tag, VOICE_FN_MAX, frame, false);
+    dec.decodeFrame(frame);
+    uint16_t got = 0;
+    dec.getVoicePayload(frame, nullptr, nullptr, &got);
+    if (got != VOICE_FN_MAX)
+        return -1;
+    return 0;
+}
+
+static int test_lsf_syncword_symbols()
+{
+    const std::array<int8_t, 8> lsf = { +1, +3, +3, +3, +3, +3, +3, -3 };
+    const std::array<int8_t, 8> voice = { +3, +1, +3, +3, -3, -3, -3, +3 };
+    const std::array<int8_t, 8> eot = { +3, -3, +3, -3, +3, -3, +3, +1 };
+    if (syncwordSymbols(LSF_SYNC_WORD) != lsf)
+        return -1;
+    if (syncwordSymbols(VOICE_SYNC_WORD) != voice)
+        return -1;
+    if (syncwordSymbols(EOT_SYNC_WORD) != eot)
+        return -1;
+    return 0;
+}
+
+static int test_frag_lsf_rebuild_from_voice()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = { { 'F', 'R', 'A', 'G', '0', '1' } };
+    call_t dst = { { 'F', 'R', 'A', 'G', '0', '2' } };
+    frame_t opening[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, opening);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    std::memset(melpe, 0x5A, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_LSF_SLOTS; fn++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        if (dec.decodeFrame(voice) != HorseFrameType::VOICE)
+            return -1;
+    }
+    if (!dec.lsfReady()) {
+        std::printf("horse_frame_test: frag LSF not ready after slots 0..3\n");
+        return -1;
+    }
+    call_t outSrc, outDst;
+    dec.getLsfCallsigns(outSrc, outDst);
+    if (outSrc != src || outDst != dst) {
+        std::printf("horse_frame_test: frag LSF callsigns mismatch\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_frag_tamper_rejected()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = { { 'T', 'A', 'M', 'P', 'E', 'R' } };
+    call_t dst = { { 'C', 'H', 'E', 'C', 'K', '1' } };
+    frame_t opening[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, 0, opening);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 0 };
+    std::memset(melpe, 0x11, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_LSF_SLOTS; fn++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        if (fn == 1) {
+            uint8_t info[HORSE_VOICE_INFO_BYTES];
+            uint8_t spare[HORSE_FRAG_BYTES];
+            voice_decode(voice.data() + 2, info);
+            voice_extract_spare(voice.data() + 2, spare);
+            for (size_t i = 0; i < HORSE_FRAG_BYTES; i++)
+                spare[i] ^= 0xFF;
+            voice_encode_with_spare(info, spare, voice.data() + 2);
+        }
+        dec.decodeFrame(voice);
+    }
+    if (dec.lsfReady()) {
+        std::printf("horse_frame_test: tampered frag LSF accepted\n");
+        return -1;
+    }
+    /* Two good copies of slot 1 outvote the bad one. */
+    for (int r = 0; r < 2; r++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, 1, voice, false, 12);
+        dec.decodeFrame(voice);
+    }
+    if (!dec.lsfReady()) {
+        std::printf("horse_frame_test: majority did not recover frag LSF\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_frag_mixed_tx_rejected()
+{
+    HorseFrameEncoder encA;
+    HorseFrameEncoder encB;
+    HorseFrameDecoder dec;
+    call_t srcA = { { 'A', 'A', 'A', 'A', 'A', 'A' } };
+    call_t dstA = { { 'B', 'B', 'B', 'B', 'B', 'B' } };
+    call_t srcB = { { 'C', 'C', 'C', 'C', 'C', 'C' } };
+    call_t dstB = { { 'D', 'D', 'D', 'D', 'D', 'D' } };
+    frame_t openA[LSF_OPENING_FRAMES], openB[LSF_OPENING_FRAMES];
+    encA.encodeLsf(srcA, dstA, nullptr, 0, openA);
+    encB.encodeLsf(srcB, dstB, nullptr, 0x01, openB);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 0 };
+    std::memset(melpe, 0x22, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_LSF_SLOTS; fn++) {
+        frame_t voice{};
+        if ((fn & 1u) == 0)
+            encA.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        else
+            encB.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        dec.decodeFrame(voice);
+    }
+    if (dec.lsfReady()) {
+        std::printf("horse_frame_test: mixed-TX fragments accepted\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_frag_sig_slots()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    call_t src = { { 'S', 'I', 'G', 'F', 'R', 'G' } };
+    call_t dst = { { 'S', 'I', 'G', 'D', 'S', 'T' } };
+    frame_t opening[LSF_OPENING_FRAMES];
+    enc.encodeLsf(src, dst, nullptr, LSF_FLAG_SIGNED, opening);
+    uint8_t sig[64];
+    for (size_t i = 0; i < sizeof sig; i++)
+        sig[i] = static_cast<uint8_t>(i ^ 0xA5);
+    enc.setSignatureFragments(sig);
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 0 };
+    std::memset(melpe, 0x33, sizeof melpe);
+    for (uint16_t fn = 0; fn < HORSE_FRAG_CYCLE; fn++) {
+        frame_t voice{};
+        enc.encodeVoiceFrameWithFn(melpe, tag, fn, voice, false, 12);
+        dec.decodeFrame(voice);
+    }
+    if (!dec.lsfReady())
+        return -1;
+    uint8_t out[64];
+    if (!dec.getSigFragments(out)) {
+        std::printf("horse_frame_test: sig fragments incomplete\n");
+        return -1;
+    }
+    if (std::memcmp(out, sig, 64) != 0) {
+        std::printf("horse_frame_test: sig fragment mismatch\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_voice_codec_owns_viterbi()
+{
+    /* Decoder embeds HorseVoiceCodec (HardViterbi off the call stack). */
+    if (sizeof(HorseFrameDecoder) < sizeof(HorseVoiceCodec)) {
+        std::printf(
+            "horse_frame_test: decoder too small to hold voice codec\n");
+        return -1;
+    }
+    HorseVoiceCodec codec;
+    uint8_t info[HORSE_VOICE_INFO_BYTES];
+    uint8_t coded[HORSE_VOICE_CODED_BYTES];
+    uint8_t out[HORSE_VOICE_INFO_BYTES];
+    std::memset(info, 0x5A, sizeof info);
+    codec.encode(info, coded);
+    codec.decode(coded, out);
+    if (std::memcmp(info, out, sizeof info) != 0) {
+        std::printf("horse_frame_test: HorseVoiceCodec round-trip fail\n");
+        return -1;
+    }
+    return 0;
+}
+
+static int test_soft_decode_not_worse()
+{
+    HorseVoiceCodec codec;
+    uint8_t info[HORSE_VOICE_INFO_BYTES];
+    uint8_t coded[HORSE_VOICE_CODED_BYTES];
+    uint8_t hard_out[HORSE_VOICE_INFO_BYTES];
+    uint8_t soft_out[HORSE_VOICE_INFO_BYTES];
+    uint16_t soft[HORSE_VOICE_CODED_BITS];
+    for (int n = 0; n < 32; n++) {
+        std::memset(info, (uint8_t)(n * 17 + 3), sizeof info);
+        info[0] = (uint8_t)n;
+        codec.encode(info, coded);
+        codec.decode(coded, hard_out);
+        soft_from_hard_payload(coded, soft);
+        codec.decode_soft(soft, soft_out);
+        if (std::memcmp(hard_out, info, sizeof info) != 0) {
+            std::printf("horse_frame_test: hard decode fail n=%d\n", n);
+            return -1;
+        }
+        if (std::memcmp(soft_out, info, sizeof info) != 0) {
+            std::printf("horse_frame_test: soft worse than hard n=%d\n", n);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int test_soft_saturate_clip()
+{
+    uint16_t msb = 0, lsb = 0;
+    symbol_soft(32767, 20000, -20000, msb, lsb);
+    if (msb != 0) {
+        std::printf("horse_frame_test: +clip MSB not strong 0 (%u)\n", msb);
+        return -1;
+    }
+    symbol_soft(-32768, 20000, -20000, msb, lsb);
+    if (msb != 65535) {
+        std::printf("horse_frame_test: -clip MSB not strong 1 (%u)\n", msb);
+        return -1;
+    }
+    symbol_soft(0, 1, -1, msb, lsb);
+    if (msb != 32767) {
+        std::printf("horse_frame_test: zero sample MSB not erasure (%u)\n",
+                    msb);
+        return -1;
+    }
+    uint16_t prev = pack_soft_bit(20000, 20000);
+    for (int y = 19999; y >= -20000; y -= 2000) {
+        uint16_t cur = pack_soft_bit(y, 20000);
+        if (cur < prev) {
+            std::printf("horse_frame_test: MSB not monotonic at y=%d\n", y);
+            return -1;
+        }
+        prev = cur;
+    }
+    uint16_t p = pack_soft_bit(1000000, 1);
+    uint16_t n = pack_soft_bit(-1000000, 1);
+    if (p != 0 || n != 65535) {
+        std::printf("horse_frame_test: pack_soft_bit saturate fail %u %u\n", p,
+                    n);
+        return -1;
+    }
+    return 0;
+}
+
+static int test_locked_sync_flywheel()
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 9, 8, 7, 6 };
+    uint8_t got_m[12], got_t[4];
+    uint16_t fn = 0;
+    std::memset(melpe, 0xA5, sizeof melpe);
+    frame_t f0{}, f1{};
+    enc.encodeVoiceFrameWithFn(melpe, tag, 0, f0, false, 12);
+    enc.encodeVoiceFrameWithFn(melpe, tag, 1, f1, false, 12);
+    if (dec.decodeFrame(f0) != HorseFrameType::VOICE)
+        return -1;
+    f1[0] ^= 0x07;
+    uint8_t hd = 0;
+    for (int b = 0; b < 8; b++)
+        hd += (uint8_t)((f1[0] ^ VOICE_SYNC_WORD[0]) >> b) & 1u;
+    for (int b = 0; b < 8; b++)
+        hd += (uint8_t)((f1[1] ^ VOICE_SYNC_WORD[1]) >> b) & 1u;
+    if (hd <= HAMMING_SYNC_MAX || hd > HAMMING_LOCKED_MAX)
+        return -1;
+    if (dec.decodeFrame(f1) != HorseFrameType::VOICE) {
+        std::printf("horse_frame_test: locked flywheel missed HD=%u\n", hd);
+        return -1;
+    }
+    dec.getVoicePayload(f1, got_m, got_t, &fn);
+    if (fn != 1 || std::memcmp(got_m, melpe, 12) != 0
+        || std::memcmp(got_t, tag, 4) != 0)
+        return -1;
+    HorseFrameDecoder fresh;
+    if (fresh.decodeFrame(f1) != HorseFrameType::UNKNOWN)
+        return -1;
+    return 0;
+}
+
+static int test_tag_decided_after_auth(void)
+{
+    HorseFrameEncoder enc;
+    HorseFrameDecoder dec;
+    uint8_t melpe[12];
+    uint8_t tag[4] = { 1, 2, 3, 4 };
+    std::memset(melpe, 0x5A, sizeof melpe);
+    frame_t f0{}, f1{};
+    enc.encodeVoiceFrameWithFn(melpe, tag, 0, f0, false, 12);
+    enc.encodeVoiceFrameWithFn(melpe, tag, 1, f1, false, 12);
+    if (dec.decodeFrame(f0) != HorseFrameType::VOICE)
+        return -1;
+    dec.setAuthenticated(true);
+    f1[0] = 0x00;
+    f1[1] = 0x00;
+    uint8_t eotHd = 0;
+    for (int b = 0; b < 8; b++)
+        eotHd += (uint8_t)((f1[0] ^ EOT_SYNC_WORD[0]) >> b) & 1u;
+    for (int b = 0; b < 8; b++)
+        eotHd += (uint8_t)((f1[1] ^ EOT_SYNC_WORD[1]) >> b) & 1u;
+    if (eotHd <= HAMMING_SYNC_MAX)
+        return -1;
+    if (dec.decodeFrame(f1) != HorseFrameType::VOICE) {
+        std::printf("horse_frame_test: tag-decided voice missed\n");
+        return -1;
+    }
+    HorseFrameDecoder before;
+    if (before.decodeFrame(f1) != HorseFrameType::UNKNOWN)
+        return -1;
+    frame_t eot{};
+    enc.encodeEotFrame(eot);
+    if (dec.decodeFrame(eot) != HorseFrameType::EOT)
+        return -1;
+    return 0;
+}
+
+static int16_t sat16(int32_t s)
+{
+    if (s > 32767)
+        s = 32767;
+    if (s < -32768)
+        s = -32768;
+    return (int16_t)s;
+}
+
+static int test_frag_soft_int16_matches_int32(void)
+{
+    const int nbit = 32;
+    int32_t a32[nbit];
+    int16_t a16[nbit];
+    std::memset(a32, 0, sizeof a32);
+    std::memset(a16, 0, sizeof a16);
+    uint16_t copies[4][nbit];
+    unsigned rng = 1;
+    for (int c = 0; c < 4; c++) {
+        for (int b = 0; b < nbit; b++) {
+            rng = rng * 1103515245u + 12345u;
+            copies[c][b] = (uint16_t)(rng >> 16);
+        }
+    }
+    copies[0][0] = 65535;
+    copies[1][0] = 65535;
+    copies[2][0] = 0;
+    copies[3][0] = 65535;
+    for (int c = 0; c < 4; c++) {
+        for (int b = 0; b < nbit; b++) {
+            a32[b] += (int32_t)copies[c][b] - 32767;
+            int32_t d = ((int32_t)copies[c][b] - 32767) / 3;
+            a16[b] = sat16((int32_t)a16[b] + d);
+        }
+    }
+    for (int b = 0; b < nbit; b++) {
+        int s32 = a32[b] > 0 ? 1 : 0;
+        int s16 = a16[b] > 0 ? 1 : 0;
+        if (s32 != s16) {
+            std::printf("horse_frame_test: frag acc sign mismatch bit %d "
+                        "i32=%d i16=%d\n",
+                        b, a32[b], (int)a16[b]);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int main()
+{
+    if (test_lsf_roundtrip() != 0)
+        return -1;
+    if (test_lsf_crc_tamper() != 0)
+        return -1;
+    if (test_lsf_crypto_roundtrip() != 0)
+        return -1;
+    if (test_lsf_unknown_version_is_rejected() != 0)
+        return -1;
+    if (test_v1_sync_not_recognized() != 0)
+        return -1;
+    if (test_voice_roundtrip() != 0)
+        return -1;
+    if (test_voice_m17_not_repeat2() != 0)
+        return -1;
+    if (test_voice_codec_owns_viterbi() != 0)
+        return -1;
+    if (test_eot_detect() != 0)
+        return -1;
+    if (test_voice_frame_number() != 0)
+        return -1;
+    if (test_sig_frames_roundtrip() != 0)
+        return -1;
+    if (test_sig_chunk_last_is_partial() != 0)
+        return -1;
+    if (test_sig_last_chunk_does_not_overflow() != 0)
+        return -1;
+    if (test_sig_last_frame_payload_pad_zero() != 0)
+        return -1;
+    if (test_sig_incomplete_does_not_fill_64() != 0)
+        return -1;
+    if (test_voice_fn_never_enters_sig_range() != 0)
+        return -1;
+    if (test_lsf_syncword_symbols() != 0)
+        return -1;
+    if (test_frag_lsf_rebuild_from_voice() != 0)
+        return -1;
+    if (test_frag_tamper_rejected() != 0)
+        return -1;
+    if (test_frag_mixed_tx_rejected() != 0)
+        return -1;
+    if (test_frag_sig_slots() != 0)
+        return -1;
+    if (test_soft_decode_not_worse() != 0)
+        return -1;
+    if (test_soft_saturate_clip() != 0)
+        return -1;
+    if (test_locked_sync_flywheel() != 0)
+        return -1;
+    if (test_tag_decided_after_auth() != 0)
+        return -1;
+    if (test_frag_soft_int16_matches_int32() != 0)
+        return -1;
+    std::printf("horse_frame_test: sizeof decoder=%zu\n",
+                sizeof(HorseFrameDecoder));
+    std::printf("horse_frame_test: all tests passed\n");
+    return 0;
+}

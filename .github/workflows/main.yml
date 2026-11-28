@@ -19,8 +19,10 @@ concurrency:
 
 jobs:
   unit-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      HORSE_REQUIRE_CRYPTO: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +31,11 @@ jobs:
       - name: install-deps
         run: |
           sudo apt update
-          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2
+          sudo apt install -y git pkg-config build-essential meson libsdl2-dev libreadline-dev dfu-util cmake libusb-1.0-0 libusb-1.0-0-dev libcodec2-dev codec2 catch2 libsodium-dev gnupg sq
+          # Ubuntu 24.04 ships sequoia-sq 0.33 (`sq version`, not --version).
+          sq version
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       # gcovr is a standalone CLI rather than an import dependency, so install
@@ -38,11 +44,39 @@ jobs:
         run: |
           uv tool install "gcovr>=7.2"
           uv --color never tool dir --bin >> "$GITHUB_PATH"
+          uv venv .venv
+          # shellcheck disable=SC1091
+          source .venv/bin/activate
+          uv pip install pynacl pyserial pytest ruff
+          echo "${{ github.workspace }}/.venv/bin" >> "$GITHUB_PATH"
+      - name: Cache horse-openpgp cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            tools/horse-openpgp/target
+          # Include sources so a restored target/ cannot skip rebuilding
+          # an outdated release binary (mtime from cache looks "fresh").
+          key: horse-openpgp-${{ runner.os }}-${{ hashFiles('tools/horse-openpgp/Cargo.lock', 'tools/horse-openpgp/Cargo.toml', 'tools/horse-openpgp/src/**') }}
+      - name: Build horse-openpgp helper
+        run: |
+          cd tools/horse-openpgp
+          # Drop the binary so cargo always relinks after cache restore.
+          rm -f target/release/horse-openpgp target/release/horse-openpgp.d
+          cargo test --locked
+          cargo build --release --locked
+          test -x target/release/horse-openpgp
+          echo "HORSE_OPENPGP_HELPER=${{ github.workspace }}/tools/horse-openpgp/target/release/horse-openpgp" >> "$GITHUB_ENV"
+          echo "${{ github.workspace }}/tools/horse-openpgp/target/release" >> "$GITHUB_PATH"
       - name: setup meson
         run: |
           cd ${{github.workspace}}
           meson setup build -Db_coverage=true
       - name: Run unit tests
+        env:
+          HORSE_OPENPGP_HELPER: ${{ env.HORSE_OPENPGP_HELPER }}
+          HORSE_REQUIRE_CRYPTO: "1"
         run: meson test -C build --print-errorlogs --test-args '--reporter junit'
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v6
@@ -223,3 +257,45 @@ jobs:
           name: openrtx-${{ matrix.radio }}
           path: firmware/openrtx_${{ matrix.radio }}_*
           if-no-files-found: error
+
+  # Non-Horse flash images must stay byte-identical to upstream/master when
+  # built with the same -Dgit_version (Horse stays behind CONFIG_HORSE).
+  byte-identical:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Compile fork and upstream master, compare
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ${{ env.DEVCONTAINER_NAME }}
+          push: never
+          runCmd: |
+            set -euo pipefail
+            GV=ci-byte-identical
+            PIN="$PWD/scripts/pin_git_version.py"
+            git clone --recurse-submodules --branch master --depth 1 \
+              https://github.com/OpenRTX/OpenRTX.git /tmp/openrtx-upstream
+            meson setup --cross-file cross_cm4.txt build_cm4_fork -Dgit_version="$GV"
+            meson compile -C build_cm4_fork openrtx_mduv3x0 openrtx_gd77 openrtx_md3x0
+            arm-miosix-eabi-objcopy -O binary build_cm4_fork/openrtx_mduv3x0 /tmp/fork_mduv3x0.bin
+            arm-miosix-eabi-objcopy -O binary build_cm4_fork/openrtx_gd77 /tmp/fork_gd77.bin
+            arm-miosix-eabi-size build_cm4_fork/openrtx_md3x0 | tee /tmp/md3x0_size.txt
+            (
+              cd /tmp/openrtx-upstream
+              # upstream/master has no -Dgit_version; pin GIT_VERSION the same way.
+              python3 "$PIN" "$GV" meson.build
+              meson setup --cross-file cross_cm4.txt build_cm4
+              meson compile -C build_cm4 openrtx_mduv3x0 openrtx_gd77
+              arm-miosix-eabi-objcopy -O binary build_cm4/openrtx_mduv3x0 /tmp/up_mduv3x0.bin
+              arm-miosix-eabi-objcopy -O binary build_cm4/openrtx_gd77 /tmp/up_gd77.bin
+            )
+            cmp -s /tmp/fork_mduv3x0.bin /tmp/up_mduv3x0.bin
+            cmp -s /tmp/fork_gd77.bin /tmp/up_gd77.bin
+            echo "## Byte-identical (mduv3x0, gd77)" >> "$GITHUB_STEP_SUMMARY"
+            echo "Compared this branch vs OpenRTX/OpenRTX@master with -Dgit_version=$GV: OK" >> "$GITHUB_STEP_SUMMARY"
+            echo "## openrtx_md3x0 size (this branch)" >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/md3x0_size.txt >> "$GITHUB_STEP_SUMMARY"
